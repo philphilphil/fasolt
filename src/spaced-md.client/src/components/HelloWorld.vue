@@ -8,10 +8,13 @@
         </div>
 
         <div v-if="post" class="content">
+          <DatePicker v-model="date" />
+            <p>Selected date: {{ date }}</p>
+
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
+                        <th>Datse</th>
                         <th>Temp. (C)</th>
                         <th>Temp. (F)</th>
                         <th>Summary</th>
@@ -31,8 +34,11 @@
 </template>
 
 <script lang="ts">
-    import { defineComponent } from 'vue';
 
+import DatePicker from 'primevue/datepicker';
+
+    import { defineComponent } from 'vue';
+const date = new Date();
     type Forecasts = {
         date: string,
         temperatureC: string,
@@ -42,14 +48,16 @@
 
     interface Data {
         loading: boolean,
-        post: null | Forecasts
+        post: null | Forecasts,
+        date: Date
     }
 
     export default defineComponent({
         data(): Data {
             return {
                 loading: false,
-                post: null
+                post: null,
+                date: date
             };
         },
         async created() {

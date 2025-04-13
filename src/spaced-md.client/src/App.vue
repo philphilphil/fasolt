@@ -11,10 +11,6 @@ import TheWelcome from './components/TheWelcome.vue'
       <HelloWorld msg="You did it!" />
     </div>
   </header>
-
-  <main>
-    <TheWelcome />
-  </main>
 </template>
 
 <style scoped>
