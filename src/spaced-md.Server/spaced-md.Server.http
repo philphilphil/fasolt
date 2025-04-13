@@ -1,0 +1,6 @@
+@spaced_md.Server_HostAddress = http://localhost:5041
+
+GET {{spaced_md.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
