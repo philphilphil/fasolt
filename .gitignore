@@ -52,4 +52,5 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
-/src/.vs/spaced-md
+/src/.vs
+.vs

@@ -8,52 +8,49 @@ namespace spaced_md.Infrastructure.Database
 {
     public class ApplicationUser : IdentityUser
     {
-        public ICollection<MarkdownFile> MarkdownFiles { get; set; }
-        public ICollection<Card> Cards { get; set; }
-        public ICollection<Group> Groups { get; set; }
+        public ICollection<MarkdownFile>? MarkdownFiles { get; set; }
+        public ICollection<Card>? Cards { get; set; }
+        public ICollection<Group>? Groups { get; set; }
     }
 
     public class MarkdownFile
     {
-        public int Id { get; set; }
-        public string FileName { get; set; }
-        public string Content { get; set; }
+        public Guid Id { get; set; }
+        public required string FileName { get; set; }
+        public required string Content { get; set; }
         public DateTime UploadedAt { get; set; }
-        public string ApplicationUserId { get; set; }
-        public ApplicationUser ApplicationUser { get; set; }
-        public ICollection<Card> Cards { get; set; }
+        public required string ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+        public ICollection<Card>? Cards { get; set; }
     }
 
     public class Card
     {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Content { get; set; }
-        // Optional property to support spaced repetition
-        public DateTime? NextReviewDate { get; set; }
-        public int MarkdownFileId { get; set; }
-        public MarkdownFile MarkdownFile { get; set; }
-        // Card directly assigned to a user
-        public string ApplicationUserId { get; set; }
-        public ApplicationUser ApplicationUser { get; set; }
-        public ICollection<GroupCard> GroupCards { get; set; }
+        public Guid Id { get; set; }
+        public required string Title { get; set; }
+        public required string Content { get; set; }
+        public Guid MarkdownFileId { get; set; }
+        public required MarkdownFile MarkdownFile { get; set; }
+        public required string ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+        public ICollection<GroupCard>? Groups { get; set; }
     }
 
     public class Group
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string ApplicationUserId { get; set; }
-        public ApplicationUser ApplicationUser { get; set; }
-        public ICollection<GroupCard> GroupCards { get; set; }
+        public Guid Id { get; set; }
+        public required string Name { get; set; }
+        public required string ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+        public ICollection<GroupCard>? Cards { get; set; }
     }
 
     public class GroupCard
     {
-        public int CardId { get; set; }
-        public Card Card { get; set; }
-        public int GroupId { get; set; }
-        public Group Group { get; set; }
+        public Guid CardId { get; set; }
+        public required Card Card { get; set; }
+        public Guid GroupId { get; set; }
+        public required Group Group { get; set; }
     }
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -75,12 +72,12 @@ namespace spaced_md.Infrastructure.Database
 
             builder.Entity<GroupCard>()
                 .HasOne(gc => gc.Group)
-                .WithMany(g => g.GroupCards)
+                .WithMany(g => g.Cards)
                 .HasForeignKey(gc => gc.GroupId);
 
             builder.Entity<GroupCard>()
                 .HasOne(gc => gc.Card)
-                .WithMany(c => c.GroupCards)
+                .WithMany(c => c.Groups)
                 .HasForeignKey(gc => gc.CardId);
         }
     }
