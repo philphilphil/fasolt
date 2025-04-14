@@ -1,4 +1,12 @@
-<script setup lang="ts">
+<script setup></script>
+
+<template>
+    <router-view />
+</template>
+
+<style scoped></style>
+
+<!-- <script setup lang="ts">
 import HelloWorld from './components/HelloWorld.vue'
 import TheWelcome from './components/TheWelcome.vue'
 </script>
@@ -40,4 +48,4 @@ header {
     flex-wrap: wrap;
   }
 }
-</style>
+</style> -->
