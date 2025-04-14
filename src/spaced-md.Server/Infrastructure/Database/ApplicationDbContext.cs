@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using spaced_md.Infrastructure.Auth;
 
 namespace spaced_md.Infrastructure.Database
 {
-    public class ApplicationUser : IdentityUser
-    {
-        public ICollection<MarkdownFile>? MarkdownFiles { get; set; }
-        public ICollection<Card>? Cards { get; set; }
-        public ICollection<Group>? Groups { get; set; }
-    }
+    // public class User : IdentityUser
+    // {
+    //     public ICollection<MarkdownFile>? MarkdownFiles { get; set; }
+    //     public ICollection<Card>? Cards { get; set; }
+    //     public ICollection<Group>? Groups { get; set; }
+    // }
 
     public class MarkdownFile
     {
@@ -20,7 +21,7 @@ namespace spaced_md.Infrastructure.Database
         public required string Content { get; set; }
         public DateTime UploadedAt { get; set; }
         public required string ApplicationUserId { get; set; }
-        public ApplicationUser? ApplicationUser { get; set; }
+        public User? ApplicationUser { get; set; }
         public ICollection<Card>? Cards { get; set; }
     }
 
@@ -32,7 +33,7 @@ namespace spaced_md.Infrastructure.Database
         public Guid MarkdownFileId { get; set; }
         public required MarkdownFile MarkdownFile { get; set; }
         public required string ApplicationUserId { get; set; }
-        public ApplicationUser? ApplicationUser { get; set; }
+        public User? ApplicationUser { get; set; }
         public ICollection<GroupCard>? Groups { get; set; }
     }
 
@@ -41,7 +42,7 @@ namespace spaced_md.Infrastructure.Database
         public Guid Id { get; set; }
         public required string Name { get; set; }
         public required string ApplicationUserId { get; set; }
-        public ApplicationUser? ApplicationUser { get; set; }
+        public User? ApplicationUser { get; set; }
         public ICollection<GroupCard>? Cards { get; set; }
     }
 
@@ -53,7 +54,7 @@ namespace spaced_md.Infrastructure.Database
         public required Group Group { get; set; }
     }
 
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<User>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }

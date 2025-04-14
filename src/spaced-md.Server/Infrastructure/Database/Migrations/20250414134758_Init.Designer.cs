@@ -11,7 +11,7 @@ using spaced_md.Infrastructure.Database;
 namespace spaced_md.Server.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250414132042_Init")]
+    [Migration("20250414134758_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -148,7 +148,7 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("spaced_md.Infrastructure.Database.ApplicationUser", b =>
+            modelBuilder.Entity("spaced_md.Infrastructure.Auth.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
@@ -317,7 +317,7 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", null)
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -326,7 +326,7 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", null)
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -341,7 +341,7 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", null)
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -350,7 +350,7 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", null)
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -359,8 +359,8 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("spaced_md.Infrastructure.Database.Card", b =>
                 {
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", "ApplicationUser")
-                        .WithMany("Cards")
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", "ApplicationUser")
+                        .WithMany()
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -378,8 +378,8 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("spaced_md.Infrastructure.Database.Group", b =>
                 {
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", "ApplicationUser")
-                        .WithMany("Groups")
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", "ApplicationUser")
+                        .WithMany()
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -408,22 +408,13 @@ namespace spaced_md.Server.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("spaced_md.Infrastructure.Database.MarkdownFile", b =>
                 {
-                    b.HasOne("spaced_md.Infrastructure.Database.ApplicationUser", "ApplicationUser")
-                        .WithMany("MarkdownFiles")
+                    b.HasOne("spaced_md.Infrastructure.Auth.User", "ApplicationUser")
+                        .WithMany()
                         .HasForeignKey("ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ApplicationUser");
-                });
-
-            modelBuilder.Entity("spaced_md.Infrastructure.Database.ApplicationUser", b =>
-                {
-                    b.Navigation("Cards");
-
-                    b.Navigation("Groups");
-
-                    b.Navigation("MarkdownFiles");
                 });
 
             modelBuilder.Entity("spaced_md.Infrastructure.Database.Card", b =>

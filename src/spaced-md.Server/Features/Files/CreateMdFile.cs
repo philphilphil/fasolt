@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Hosting.Server;
 using spaced_md.Infrastructure.Database;
 
@@ -12,10 +13,11 @@ namespace spaced_md.Server
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("file", Handler)
-                .WithTags("files");
+                .WithTags("MdFiles")
+                .RequireAuthorization();
         }
 
-        public static IResult Handler(IServer sender, Request request, ApplicationDbContext context)
+        public static IResult Handler(HttpContext httpContext, Request request, ApplicationDbContext context)
         {
             var mdfile = new MarkdownFile
             {
@@ -23,7 +25,7 @@ namespace spaced_md.Server
                 FileName = request.Name,
                 Content = request.Content,
                 UploadedAt = DateTime.UtcNow,
-                ApplicationUserId = string.Empty,
+                ApplicationUserId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception("User not found"),
             };
 
             context.MarkdownFiles.Add(mdfile);
