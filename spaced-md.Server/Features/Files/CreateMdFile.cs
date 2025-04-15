@@ -13,8 +13,8 @@ namespace spaced_md.Server
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapPut("file", Handler)
-                .WithTags("MdFiles")
-                .RequireAuthorization();
+                .WithTags("MdFiles");
+                // .RequireAuthorization();
         }
 
         public static IResult Handler(HttpContext httpContext, Request request, ApplicationDbContext context)
