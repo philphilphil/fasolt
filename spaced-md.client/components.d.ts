@@ -31,6 +31,7 @@ declare module 'vue' {
     FeaturesWidget: typeof import('./src/components/landing/FeaturesWidget.vue')['default']
     Fieldset: typeof import('primevue/fieldset')['default']
     FileUpload: typeof import('primevue/fileupload')['default']
+    FileView: typeof import('./src/components/mdfiles/FileView.vue')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
     FloatLabel: typeof import('primevue/floatlabel')['default']
     FooterWidget: typeof import('./src/components/landing/FooterWidget.vue')['default']

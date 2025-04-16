@@ -99,7 +99,6 @@
       "useLeafType": false,
       "classTypes": [],
       "extendedClasses": [],
-      "extensionCode": "api-ext.ts",
       "generateDefaultValues": true,
       "excludedTypeNames": [
         "DataSourceRequest"

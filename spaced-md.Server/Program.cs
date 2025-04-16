@@ -24,11 +24,29 @@ builder.Services.AddIdentityCore<User>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowVueDev", policy =>
+        policy.WithOrigins("http://localhost:5041") 
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+    );
+});
+
 var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapOpenApi();
+
+app.UseCors(builder =>
+{
+    builder
+        .SetIsOriginAllowed(_ => true)
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
+});
 
 
 if (app.Environment.IsDevelopment())

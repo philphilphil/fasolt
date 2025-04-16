@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import { Client } from './api/apiClient.ts';
 import App from './App.vue';
 import router from './router/index.ts';
 
@@ -16,7 +17,10 @@ import DatePicker from 'primevue/datepicker';
 
 import '@/assets/styles.scss';
 
+
 const app = createApp(App);
+
+const api: Client = new Client("http://localhost:5041");
 
 app.use(router);
 app.use(PrimeVue, {
@@ -29,6 +33,7 @@ app.use(PrimeVue, {
 });
 app.use(ToastService);
 app.use(ConfirmationService);
+app.provide('api', api)
 app.component('Toast', Toast);
 app.component('Select', Select);
 app.component('Fluid', Fluid);

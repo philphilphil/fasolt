@@ -14,9 +14,9 @@ const router = createRouter({
                     component: () => import('@/views/Dashboard.vue')
                 },
                 {
-                    path: '/uikit/formlayout',
-                    name: 'formlayout',
-                    component: () => import('@/views/uikit/FormLayout.vue')
+                    path: '/mdfiles/list',
+                    name: 'mdfiles-list',
+                    component: () => import('@/components/mdfiles/FileView.vue')
                 },
                 {
                     path: '/uikit/input',
