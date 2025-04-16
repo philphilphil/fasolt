@@ -56,6 +56,20 @@ export default defineConfig({
     https: {
       key: fs.readFileSync(keyFilePath),
       cert: fs.readFileSync(certFilePath),
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5041',
+        changeOrigin: true,
+        secure: false, // if using self-signed certs or HTTPS
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        ws: false, // if WebSocket support needed
+        configure: (proxy, options) => {
+          proxy.on('error', (err) => {
+            console.error('Proxy error:', err);
+          });
+        }
+      }
     }
   }
 })

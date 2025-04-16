@@ -56,6 +56,7 @@ declare module 'vue' {
     OrderList: typeof import('primevue/orderlist')['default']
     Panel: typeof import('primevue/panel')['default']
     PanelMenu: typeof import('primevue/panelmenu')['default']
+    Password: typeof import('primevue/password')['default']
     PickList: typeof import('primevue/picklist')['default']
     PricingWidget: typeof import('./src/components/landing/PricingWidget.vue')['default']
     ProgressBar: typeof import('primevue/progressbar')['default']

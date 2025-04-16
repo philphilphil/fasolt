@@ -30,16 +30,16 @@
         "tags": [
           "MdFiles"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MdFileRequest"
-              }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
-          },
-          "required": true
-        },
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -538,18 +538,6 @@
           "twoFactorRecoveryCode": {
             "type": "string",
             "nullable": true
-          }
-        }
-      },
-      "MdFileRequest": {
-        "required": [
-          "id"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
           }
         }
       },

@@ -14,8 +14,15 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()
-    .AddCookie(IdentityConstants.ApplicationScheme)
-    .AddBearerToken(IdentityConstants.BearerScheme);
+    .AddCookie(IdentityConstants.ApplicationScheme, options =>
+    {
+        options.Cookie.Name = "spaced-md";
+        options.LoginPath = "/auth/login";
+        options.LogoutPath = "/auth/logout";
+        options.AccessDeniedPath = "/access-denied";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromDays(10);
+    });
 
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddRoles<IdentityRole>()
@@ -26,11 +33,20 @@ builder.Services.AddIdentityCore<IdentityUser>()
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowVueDev", policy =>
-        policy.WithOrigins("http://localhost:5041")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-    );
+    options.AddPolicy("CookiesPolicy", builder =>
+    {
+        builder.WithOrigins("http://localhost:52325")
+               .AllowCredentials()
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
+    options.AddPolicy("CookiesPolicy", builder =>
+    {
+        builder.WithOrigins("http://localhost:5041")
+               .AllowCredentials()
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
 });
 
 var app = builder.Build();
@@ -53,7 +69,14 @@ app.UseCors(builder =>
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithHttpBearerAuthentication(bearer =>
+            {
+                bearer.Token = "";
+            });
+    });
 
     using (var scope = app.Services.CreateScope())
     {

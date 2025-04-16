@@ -12,18 +12,16 @@ import Select from 'primevue/select';
 import Fluid from 'primevue/fluid';
 import ToggleSwitch  from 'primevue/toggleswitch';
 import DatePicker from 'primevue/datepicker';
-
-
-import '@/assets/styles.scss';
-
-
 import { AnonymousAuthenticationProvider } from "@microsoft/kiota-abstractions";
 import { FetchRequestAdapter } from "@microsoft/kiota-http-fetchlibrary";
 import { createSpacedMdApiClient } from './api/spacedMdApiClient.ts';
 
+import '@/assets/styles.scss';
+
+
 const authProvider = new AnonymousAuthenticationProvider();
 const adapter = new FetchRequestAdapter(authProvider);
-adapter.baseUrl = "http://localhost:5041";
+adapter.baseUrl = "/api";
 const client = createSpacedMdApiClient(adapter);
 
 const app = createApp(App);
