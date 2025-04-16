@@ -13,6 +13,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddOpenApi();
+builder.Services.AddOpenApiDocument();
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()
@@ -28,6 +29,7 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapOpenApi();
+
 
 if (app.Environment.IsDevelopment())
 {

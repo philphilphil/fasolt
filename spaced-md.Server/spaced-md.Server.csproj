@@ -42,6 +42,10 @@
     <NSwag.MSBuild.NSwag NSwagFile="$(ProjectDir)nswag.json" Command="run" />
   </Target>
   
+    <Target Name="NSwag" AfterTargets="PostBuildEvent">
+    <Exec WorkingDirectory="$(ProjectDir)" Command="$(NSwagExe_Net90) run $(ProjectDir)nswag.json /variables:Configuration=$(Configuration),RuntimeIdentifier=$(RuntimeIdentifier),Platform=$(Platform),TargetFramework=$(TargetFramework),SolutionDir=$(SolutionDir)" />
+  </Target>
+  
 
 
 </Project>
