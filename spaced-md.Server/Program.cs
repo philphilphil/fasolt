@@ -1,9 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using spaced_md.Infrastructure.Database;
-using Microsoft.AspNetCore.OpenApi;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Identity;
-using spaced_md.Infrastructure.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,14 +11,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Add services to the container.
 builder.Services.AddOpenApi();
-builder.Services.AddOpenApiDocument();
 builder.Services.AddEndpoints(typeof(Program).Assembly);
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication()
     .AddCookie(IdentityConstants.ApplicationScheme)
     .AddBearerToken(IdentityConstants.BearerScheme);
 
-builder.Services.AddIdentityCore<User>()
+builder.Services.AddIdentityCore<IdentityUser>()
+    .AddRoles<IdentityRole>()
+    .AddUserManager<UserManager<IdentityUser>>()
+    .AddRoleManager<RoleManager<IdentityRole>>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddApiEndpoints();
 
@@ -34,6 +34,12 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await InitUserSeeder.Initialize(services);
+}
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -57,7 +63,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapEndpoints();
 app.MapFallbackToFile("/index.html");
-app.MapIdentityApi<User>()
+app.MapIdentityApi<IdentityUser>()
     .WithTags("Identity");
 
 app.Run();

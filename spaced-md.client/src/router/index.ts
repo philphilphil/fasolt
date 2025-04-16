@@ -19,6 +19,11 @@ const router = createRouter({
                     component: () => import('@/components/mdfiles/FileView.vue')
                 },
                 {
+                  path: '/mdfiles/upload',
+                  name: 'mdfiles-upload',
+                  component: () => import('@/components/mdfiles/FileUpload.vue')
+              },
+                {
                     path: '/uikit/input',
                     name: 'input',
                     component: () => import('@/views/uikit/InputDoc.vue')

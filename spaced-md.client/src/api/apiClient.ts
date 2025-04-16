@@ -24,8 +24,8 @@ export class Client {
 
     }
 
-    putFile(request: Request, cancelToken?: CancelToken): Promise<void> {
-        let url_ = this.baseUrl + "/file";
+    putMdfile(request: MdFileUploadRequest, cancelToken?: CancelToken): Promise<void> {
+        let url_ = this.baseUrl + "/mdfile";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(request);
@@ -47,11 +47,11 @@ export class Client {
                 throw _error;
             }
         }).then((_response: AxiosResponse) => {
-            return this.processPutFile(_response);
+            return this.processPutMdfile(_response);
         });
     }
 
-    protected processPutFile(response: AxiosResponse): Promise<void> {
+    protected processPutMdfile(response: AxiosResponse): Promise<void> {
         const status = response.status;
         let _headers: any = {};
         if (response.headers && typeof response.headers === "object") {
@@ -688,11 +688,11 @@ export class Client {
     }
 }
 
-export class Request implements IRequest {
+export class MdFileUploadRequest implements IMdFileUploadRequest {
     name?: string;
     content?: string;
 
-    constructor(data?: IRequest) {
+    constructor(data?: IMdFileUploadRequest) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -708,9 +708,9 @@ export class Request implements IRequest {
         }
     }
 
-    static fromJS(data: any): Request {
+    static fromJS(data: any): MdFileUploadRequest {
         data = typeof data === 'object' ? data : {};
-        let result = new Request();
+        let result = new MdFileUploadRequest();
         result.init(data);
         return result;
     }
@@ -722,15 +722,15 @@ export class Request implements IRequest {
         return data;
     }
 
-    clone(): Request {
+    clone(): MdFileUploadRequest {
         const json = this.toJSON();
-        let result = new Request();
+        let result = new MdFileUploadRequest();
         result.init(json);
         return result;
     }
 }
 
-export interface IRequest {
+export interface IMdFileUploadRequest {
     name?: string;
     content?: string;
 }

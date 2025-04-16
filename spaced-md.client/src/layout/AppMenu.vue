@@ -12,6 +12,7 @@ const model = ref([
         label: 'Manage',
         items: [
             { label: 'Md Files', icon: 'pi pi-fw pi-id-card', to: '/mdfiles/list' },
+            { label: 'Md File Upload', icon: 'pi pi-fw pi-id-card', to: '/mdfiles/upload' },
             { label: 'Cards', icon: 'pi pi-fw pi-check-square', to: '/uikit/input' },
             { label: 'Learn', icon: 'pi pi-fw pi-check-square', to: '/uikit/button', class: 'rotated-icon' },
             { label: 'Table', icon: 'pi pi-fw pi-table', to: '/uikit/table' },

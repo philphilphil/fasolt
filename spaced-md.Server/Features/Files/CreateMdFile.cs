@@ -7,17 +7,17 @@ namespace spaced_md.Server
     public class CreateCard : IEndpoint
     {
 
-    public record Request(string Name, string Content);
-    public record Response(Guid Id);
+    public record MdFileUploadRequest(string Name, string Content);
+    public record MdFileResponse(Guid Id);
 
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPut("file", Handler)
+            app.MapPut("mdfile", Handler)
                 .WithTags("MdFiles");
                 // .RequireAuthorization();
         }
 
-        public static IResult Handler(HttpContext httpContext, Request request, ApplicationDbContext context)
+        public static IResult Handler(HttpContext httpContext, MdFileUploadRequest request, ApplicationDbContext context)
         {
             var mdfile = new MarkdownFile
             {
@@ -32,7 +32,7 @@ namespace spaced_md.Server
             context.SaveChanges();
 
             return Results.Ok(
-                new Response(mdfile.Id));
+                new MdFileResponse(mdfile.Id));
 
         }
     }

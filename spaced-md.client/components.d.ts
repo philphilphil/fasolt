@@ -30,7 +30,7 @@ declare module 'vue' {
     Divider: typeof import('primevue/divider')['default']
     FeaturesWidget: typeof import('./src/components/landing/FeaturesWidget.vue')['default']
     Fieldset: typeof import('primevue/fieldset')['default']
-    FileUpload: typeof import('primevue/fileupload')['default']
+    FileUpload: typeof import('./src/components/mdfiles/FileUpload.vue')['default']
     FileView: typeof import('./src/components/mdfiles/FileView.vue')['default']
     FloatingConfigurator: typeof import('./src/components/FloatingConfigurator.vue')['default']
     FloatLabel: typeof import('primevue/floatlabel')['default']
@@ -86,5 +86,6 @@ declare module 'vue' {
     Tree: typeof import('primevue/tree')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']
     TreeTable: typeof import('primevue/treetable')['default']
+    UploadFile: typeof import('./src/components/mdfiles/UploadFile.vue')['default']
   }
 }
