@@ -1,5 +1,4 @@
 import { createApp } from 'vue';
-import { Client } from './api/apiClient.ts';
 import App from './App.vue';
 import router from './router/index.ts';
 
@@ -18,9 +17,16 @@ import DatePicker from 'primevue/datepicker';
 import '@/assets/styles.scss';
 
 
-const app = createApp(App);
+import { AnonymousAuthenticationProvider } from "@microsoft/kiota-abstractions";
+import { FetchRequestAdapter } from "@microsoft/kiota-http-fetchlibrary";
+import { createSpacedMdApiClient } from './api/spacedMdApiClient.ts';
 
-const api: Client = new Client("http://localhost:5041");
+const authProvider = new AnonymousAuthenticationProvider();
+const adapter = new FetchRequestAdapter(authProvider);
+adapter.baseUrl = "http://localhost:5041";
+const client = createSpacedMdApiClient(adapter);
+
+const app = createApp(App);
 
 app.use(router);
 app.use(PrimeVue, {
@@ -33,7 +39,7 @@ app.use(PrimeVue, {
 });
 app.use(ToastService);
 app.use(ConfirmationService);
-app.provide('api', api)
+app.provide('api', client)
 app.component('Toast', Toast);
 app.component('Select', Select);
 app.component('Fluid', Fluid);

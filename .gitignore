@@ -55,3 +55,6 @@ nunit-*.xml
 /src/.vs
 .vs
 .DS_Store
+spaced-md.Server/spaced-md.db-shm
+.gitignore
+spaced-md.Server/spaced-md.db-wal

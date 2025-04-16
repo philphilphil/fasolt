@@ -1,74 +1,50 @@
 <script setup lang="ts">
-import { Client, MdFileUploadRequest } from '@/api/apiClient';
-import { ref } from 'vue';
-import { inject } from 'vue';
+import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
+import { ref, inject } from 'vue';
 
-const api = inject<Client>('api');
-if (!api) throw new Error('API client not provided');
+const api = inject<SpacedMdApiClient>('api');
 
-const selectedFile = ref<File | null>(null);
-const fileContent = ref<string>('');
-const errorMessage = ref<string>('');
-const successMessage = ref<string>('');
+const isUploading = ref(false);
+const message = ref('');
 
-function handleFileChange(event: Event) {
+const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    const file = target.files[0];
-    // Only allow Markdown files
-    if (file.type === "text/markdown" || file.name.endsWith(".md")) {
-      selectedFile.value = file;
-      errorMessage.value = '';
-    } else {
-      errorMessage.value = 'Please select a markdown (.md) file.';
-      selectedFile.value = null;
-    }
-  }
-}
-
-async function uploadFile() {
-  if (!selectedFile.value) {
-    errorMessage.value = 'No file selected.';
-    return;
-  }
-
+  if (!target.files || target.files.length === 0) return;
+  const file = target.files[0];
   const reader = new FileReader();
+
   reader.onload = async (e: ProgressEvent<FileReader>) => {
     const content = e.target?.result;
-    if (typeof content === 'string') {
-      fileContent.value = content;
+    if (typeof content === 'string' && api) {
       try {
-        api?.putMdfile(
-          new MdFileUploadRequest({
-            name: selectedFile.value?.name,
-            content: fileContent.value,
-          })
-        );
-        successMessage.value = 'File uploaded successfully!';
+        isUploading.value = true;
+        var MdFileUploadRequest = {
+          name: file.name,
+          content: content,
+        };
+        await api.mdfile.put(MdFileUploadRequest);
+        message.value = 'File uploaded successfully!';
       } catch (error) {
-        errorMessage.value = 'File upload failed.';
-        console.error("Upload failed:", error);
+        message.value = 'Error uploading file.';
+      } finally {
+        isUploading.value = false;
       }
-    } else {
-      errorMessage.value = 'Unable to read file.';
     }
   };
-  reader.onerror = () => {
-    errorMessage.value = 'Error reading file.';
-  };
-  reader.readAsText(selectedFile.value);
-}
+
+  reader.readAsText(file);
+};
 </script>
 
 <template>
   <div>
-    <input type="file" accept=".md" @change="handleFileChange" />
-    <button @click="uploadFile">Upload File</button>
-    <div v-if="errorMessage" style="color: red;">{{ errorMessage }}</div>
-    <div v-if="successMessage" style="color: green;">{{ successMessage }}</div>
+    <h2>Upload File</h2>
+    <input type="file" @change="handleFileUpload" />
+    <p v-if="isUploading">Uploading...</p>
+    <p v-if="message">{{ message }}</p>
   </div>
 </template>
 
 <style scoped>
-/* Styling for file input area - adjust as needed */
+/* Add your styles here */
 </style>

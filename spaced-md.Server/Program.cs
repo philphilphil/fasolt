@@ -27,7 +27,7 @@ builder.Services.AddIdentityCore<IdentityUser>()
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueDev", policy =>
-        policy.WithOrigins("http://localhost:5041") 
+        policy.WithOrigins("http://localhost:5041")
               .AllowAnyHeader()
               .AllowAnyMethod()
     );
@@ -35,11 +35,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    await InitUserSeeder.Initialize(services);
-}
+
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -58,6 +54,12 @@ app.UseCors(builder =>
 if (app.Environment.IsDevelopment())
 {
     app.MapScalarApiReference();
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        await InitUserSeeder.Initialize(services);
+    }
 }
 
 app.UseHttpsRedirection();

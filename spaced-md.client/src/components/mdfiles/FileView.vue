@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { Client, WeatherForecast } from '@/api/apiClient';
-import type { AxiosInstance } from 'axios';
+import type { WeatherForecast } from '@/api/models';
+import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
 import { ref, onMounted } from 'vue'
 import { inject } from 'vue';
 
+const api = inject<SpacedMdApiClient>('api');
+if (!api) throw new Error('API client not provided');
 
-const api = inject<Client>('api')
-if (!api) throw new Error('API client not provided')
-
-const forecast = ref<WeatherForecast[]>([])
+var forecast = ref<WeatherForecast[]>([]);
 
 onMounted(async () => {
     try {
-        const result = await api.getWeatherforecast();
-        forecast.value = result;
+        const result = await api.weatherforecast.get();
+        forecast.value = result || [];
     } catch (error) {
         console.error("Failed to fetch weather forecast:", error);
     }
