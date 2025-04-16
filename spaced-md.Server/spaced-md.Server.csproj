@@ -42,7 +42,10 @@
   <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
   <OpenApiDocumentsDirectory>../spaced-md.client/src/api</OpenApiDocumentsDirectory>
 </PropertyGroup>
-  
 
+<Target Name="GenerateKiotaClient" AfterTargets="Build">
+  <Message Importance="High" Text="GenerateKiotaClient target is running" />
+  <Exec Command="kiota generate -l typescript -d ../spaced-md.client/src/api/spaced-md.Server.json -c SpacedMdApiClient -o ../spaced-md.client/src/api" />
+</Target>
 
 </Project>
