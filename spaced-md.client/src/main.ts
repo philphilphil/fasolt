@@ -1,7 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router/index.ts';
-
+import { createPinia } from 'pinia'
 import Aura from '@primeuix/themes/aura';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
@@ -18,7 +18,7 @@ import { createSpacedMdApiClient } from './api/spacedMdApiClient.ts';
 import { definePreset } from '@primeuix/themes';
 
 import '@/assets/styles.scss';
-
+const pinia = createPinia()
 
 const authProvider = new AnonymousAuthenticationProvider();
 const adapter = new FetchRequestAdapter(authProvider);
@@ -56,6 +56,7 @@ app.use(PrimeVue, {
 });
 app.use(ToastService);
 app.use(ConfirmationService);
+app.use(pinia);
 app.provide('api', client)
 app.component('Toast', Toast);
 app.component('Select', Select);

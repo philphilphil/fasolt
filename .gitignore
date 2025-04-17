@@ -58,3 +58,4 @@ nunit-*.xml
 spaced-md.Server/spaced-md.db-shm
 .gitignore
 spaced-md.Server/spaced-md.db-wal
+spaced-md.Server/spaced-md.db

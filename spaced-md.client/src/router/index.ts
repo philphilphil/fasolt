@@ -91,21 +91,11 @@ const router = createRouter({
                     component: () => import('@/views/pages/Empty.vue')
                 },
                 {
-                    path: '/pages/crud',
-                    name: 'crud',
-                    component: () => import('@/views/pages/Crud.vue')
-                },
-                {
                     path: '/documentation',
                     name: 'documentation',
                     component: () => import('@/views/pages/Documentation.vue')
                 }
             ]
-        },
-        {
-            path: '/landing',
-            name: 'landing',
-            component: () => import('@/views/pages/Landing.vue')
         },
         {
             path: '/pages/notfound',
