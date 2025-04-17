@@ -15,6 +15,7 @@ import DatePicker from 'primevue/datepicker';
 import { AnonymousAuthenticationProvider } from "@microsoft/kiota-abstractions";
 import { FetchRequestAdapter } from "@microsoft/kiota-http-fetchlibrary";
 import { createSpacedMdApiClient } from './api/spacedMdApiClient.ts';
+import { definePreset } from '@primeuix/themes';
 
 import '@/assets/styles.scss';
 
@@ -26,10 +27,28 @@ const client = createSpacedMdApiClient(adapter);
 
 const app = createApp(App);
 
+const spacedPreset = definePreset(Aura, {
+  semantic: {
+    primary: {
+      50:  '#fff8f3',
+      100: '#ffe7d8',
+      200: '#ffd0ad',
+      300: '#ffb079',
+      400: '#ff944b',
+      500: '#f88232',
+      600: '#db6517',
+      700: '#b44f12',
+      800: '#8f3d11',
+      900: '#733210',
+      950: '#401b08',
+    }
+  }
+});
+
 app.use(router);
 app.use(PrimeVue, {
     theme: {
-        preset: Aura,
+        preset: spacedPreset,
         options: {
             darkModeSelector: '.app-dark'
         }

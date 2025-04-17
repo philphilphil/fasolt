@@ -19,7 +19,7 @@ const model = ref([
         ]
     },
     {
-        label: 'Get Started',
+        label: 'Misc',
         items: [
             {
                 label: 'Documentation',
