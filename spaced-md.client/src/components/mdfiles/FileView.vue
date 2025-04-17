@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { WeatherForecast } from '@/api/models';
+import type { MdFileResponse } from '@/api/models';
 import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
 import { ref, onMounted } from 'vue'
 import { inject } from 'vue';
@@ -7,12 +7,12 @@ import { inject } from 'vue';
 const api = inject<SpacedMdApiClient>('api');
 if (!api) throw new Error('API client not provided');
 
-var forecast = ref<WeatherForecast[]>([]);
+var mdFIles = ref<MdFileResponse[]>([]);
 
 onMounted(async () => {
     try {
-        const result = await api.weatherforecast.get();
-        forecast.value = result || [];
+        const result = await api.mdfile.get();
+        mdFIles.value = result || [];
     } catch (error) {
         console.error("Failed to fetch weather forecast:", error);
     }
@@ -20,20 +20,19 @@ onMounted(async () => {
 </script>
 
 <template>
-  asdaa
-<table>
+<table border="1" class="table-auto w-full text-left">
   <thead>
     <tr>
-      <th>Date</th>
-      <th>Temperature (C)</th>
-      <th>Summary</th>
+      <th class="px-4 py-2">Id</th>
+      <th class="px-4 py-2">Name</th>
+      <th class="px-4 py-2">Content</th>
     </tr>
   </thead>
   <tbody>
-    <tr v-for="item in forecast">
-      <td>{{ item.date }}</td>
-      <td>{{ item.temperatureC }}</td>
-      <td>{{ item.summary }}</td>
+    <tr v-for="item in mdFIles" :key="item.id">
+      <td class="border px-4 py-2">{{ item.id }}</td>
+      <td class="border px-4 py-2">{{ item.fileName }}</td>
+      <td class="border px-4 py-2">{{ item.content.length > 100 ? item.content.slice(0, 100) + '...' : item.content }}</td>
     </tr>
   </tbody>
 </table>

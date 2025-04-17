@@ -10,7 +10,7 @@ import { LoginRequestBuilderRequestsMetadata, type LoginRequestBuilder } from '.
 // @ts-ignore
 import { ManageRequestBuilderNavigationMetadata, type ManageRequestBuilder } from './manage/index.js';
 // @ts-ignore
-import { MdfileRequestBuilderRequestsMetadata, type MdfileRequestBuilder } from './mdfile/index.js';
+import { MdfileRequestBuilderNavigationMetadata, MdfileRequestBuilderRequestsMetadata, type MdfileRequestBuilder } from './mdfile/index.js';
 // @ts-ignore
 import { RefreshRequestBuilderRequestsMetadata, type RefreshRequestBuilder } from './refresh/index.js';
 // @ts-ignore
@@ -137,6 +137,7 @@ export const SpacedMdApiClientNavigationMetadata: Record<Exclude<keyof SpacedMdA
     },
     mdfile: {
         requestsMetadata: MdfileRequestBuilderRequestsMetadata,
+        navigationMetadata: MdfileRequestBuilderNavigationMetadata,
     },
     refresh: {
         requestsMetadata: RefreshRequestBuilderRequestsMetadata,
