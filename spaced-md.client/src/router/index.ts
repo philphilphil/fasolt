@@ -24,7 +24,7 @@ const router = createRouter({
         {
           path: '/mdfiles/list',
           name: 'mdfiles-list',
-          component: () => import('@/components/mdfiles/FileView.vue')
+          component: () => import('@/views/mdfiles/MdFiles.vue')
         },
         {
           path: '/documentation',
