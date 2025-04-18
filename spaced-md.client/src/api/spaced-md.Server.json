@@ -5,6 +5,18 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/logout": {
+      "post": {
+        "tags": [
+          "Identity"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/mdfile": {
       "put": {
         "tags": [
@@ -760,13 +772,13 @@
   },
   "tags": [
     {
+      "name": "Identity"
+    },
+    {
       "name": "MdFiles"
     },
     {
       "name": "Weather"
-    },
-    {
-      "name": "Identity"
     }
   ]
 }

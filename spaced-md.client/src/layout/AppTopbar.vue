@@ -9,16 +9,20 @@ const { toggleDarkMode, isDarkTheme } = useLayout();
 const api = inject('api');
 if (!api) throw new Error('API client not provided');
 
+const authService = inject('authService');
+if (!authService) throw new Error('AuthService not provided');
 
 onMounted(async () => {
-  try {
-    const userInfo = await api.manage.info.get();
-    console.log(userInfo);
-    authStore.setUser(userInfo);
-  } catch (error) {
-    console.error('Failed to fetch user info:', error);
-  }
+  authService.getUserInfo();
 });
+
+const logout = async () => {
+  try {
+    await authService.logout();
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
 
 </script>
 
@@ -48,18 +52,24 @@ onMounted(async () => {
 
       <div class="layout-topbar-menu hidden lg:block">
         <div class="layout-topbar-menu-content">
-          <router-link to="/auth/login">
-            <button type="button" class="layout-topbar-action">
-              <i class="pi pi-user"></i>
-              <span>Profile</span>
+
+          <button type="button" class="layout-topbar-action">
+            <i class="pi pi-user"></i>
+            <span>Profile</span>
+          </button>
+          <span v-if="authStore.isAuthenticated">
+            <router-link to="/profile">
+              {{ authStore.user?.email }}
+            </router-link>
+            <button type="button" class="layout-topbar-action" @click="logout">
+              <i class="pi pi-sign-out"></i>
             </button>
-            <span v-if="authStore.isAuthenticated">
-             {{ authStore.user?.email }}
-            </span>
-            <span v-else>
+          </span>
+          <span v-else>
+            <router-link to="/auth/login">
               Not logged in
-            </span>
-          </router-link>
+            </router-link>
+          </span>
         </div>
       </div>
     </div>

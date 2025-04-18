@@ -8,6 +8,8 @@ import { ForgotPasswordRequestBuilderRequestsMetadata, type ForgotPasswordReques
 // @ts-ignore
 import { LoginRequestBuilderRequestsMetadata, type LoginRequestBuilder } from './login/index.js';
 // @ts-ignore
+import { LogoutRequestBuilderRequestsMetadata, type LogoutRequestBuilder } from './logout/index.js';
+// @ts-ignore
 import { ManageRequestBuilderNavigationMetadata, type ManageRequestBuilder } from './manage/index.js';
 // @ts-ignore
 import { MdfileRequestBuilderNavigationMetadata, MdfileRequestBuilderRequestsMetadata, type MdfileRequestBuilder } from './mdfile/index.js';
@@ -87,6 +89,10 @@ export interface SpacedMdApiClient extends BaseRequestBuilder<SpacedMdApiClient>
      */
     get login(): LoginRequestBuilder;
     /**
+     * The logout property
+     */
+    get logout(): LogoutRequestBuilder;
+    /**
      * The manage property
      */
     get manage(): ManageRequestBuilder;
@@ -131,6 +137,9 @@ export const SpacedMdApiClientNavigationMetadata: Record<Exclude<keyof SpacedMdA
     },
     login: {
         requestsMetadata: LoginRequestBuilderRequestsMetadata,
+    },
+    logout: {
+        requestsMetadata: LogoutRequestBuilderRequestsMetadata,
     },
     manage: {
         navigationMetadata: ManageRequestBuilderNavigationMetadata,

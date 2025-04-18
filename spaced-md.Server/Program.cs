@@ -17,8 +17,8 @@ builder.Services.AddAuthentication()
     .AddCookie(IdentityConstants.ApplicationScheme, options =>
     {
         options.Cookie.Name = "spaced-md";
-        options.LoginPath = "/auth/login";
-        options.LogoutPath = "/auth/logout";
+        options.LoginPath = "/login";
+        options.LogoutPath = "/logout";
         options.AccessDeniedPath = "/access-denied";
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromDays(10);

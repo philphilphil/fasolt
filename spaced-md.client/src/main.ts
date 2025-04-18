@@ -18,6 +18,7 @@ import { createSpacedMdApiClient } from './api/spacedMdApiClient.ts';
 import { definePreset } from '@primeuix/themes';
 
 import '@/assets/styles.scss';
+import AuthService from './service/authService.ts';
 const pinia = createPinia()
 
 const authProvider = new AnonymousAuthenticationProvider();
@@ -57,11 +58,16 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.use(ConfirmationService);
 app.use(pinia);
+
 app.provide('api', client)
+app.provide('authService', new AuthService(client));
+
 app.component('Toast', Toast);
 app.component('Select', Select);
 app.component('Fluid', Fluid);
 app.component('DatePicker', DatePicker);
 app.component('ToggleSwitch', ToggleSwitch);
+
 app.directive('styleclass', StyleClass);
+
 app.mount('#app');
