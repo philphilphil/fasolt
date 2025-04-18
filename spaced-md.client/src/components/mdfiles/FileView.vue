@@ -69,8 +69,8 @@ const filters = ref({
 <template>
   <div style="display: flex; justify-content: flex-start; margin-bottom: 1em;">
     <FileUpload mode="basic" :auto="true" :customUpload="true" @uploader="onUpload" chooseLabel="Upload Markdown File"
-      :multiple="true" />
-  </div>
+      :multiple="true" accept=".md,text/markdown" invalidFileTypeMessage="Only .md allowed."/>
+    </div>
 
   <DataTable :value="mdFiles" paginator :rows="20" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem"
     v-model:filters="filters" filterDisplay="row"
