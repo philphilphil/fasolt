@@ -21,14 +21,12 @@ const { login } = useAuthService(api);
 
 const handleLogin = async () => {
   errorMessage.value = '';
-
   var loginResult = await login(email.value, password.value);
   if (loginResult.success) {
     router.push("/home");
   } else {
     errorMessage.value = loginResult.message!;
   }
-
 };
 </script>
 
@@ -39,16 +37,20 @@ const handleLogin = async () => {
         <img src="../../../assets/images/logo_full.png" alt="Logo" class="h-50" />
       </div>
       <h2 class="text-2xl font-bold text-center mb-4">Login</h2>
-      <div class="mb-4">
-        <label class="block font-bold text-gray-700 mb-2">Email</label>
-        <InputText v-model="email" type="text" placeholder="Enter your email" class="w-full" />
-      </div>
-      <div class="mb-4">
-        <label class="block font-bold text-gray-700 mb-2">Password</label>
-        <Password v-model="password" placeholder="Enter your password" toggleMask class="w-full" :feedback="false"
-          :style="{ width: '100%' }" :inputStyle="{ width: '100%' }" />
-      </div>
-      <Button label="Sign In" class="w-full" @click="handleLogin" />
+
+      <form @submit.prevent="handleLogin">
+        <div class="mb-4">
+          <label class="block font-bold text-gray-700 mb-2">Email</label>
+          <InputText v-model="email" type="text" placeholder="Enter your email" class="w-full" />
+        </div>
+        <div class="mb-4">
+          <label class="block font-bold text-gray-700 mb-2">Password</label>
+          <Password v-model="password" placeholder="Enter your password" toggleMask class="w-full" :feedback="false"
+            :style="{ width: '100%' }" :inputStyle="{ width: '100%' }" />
+        </div>
+        <Button label="Sign In" class="w-full" type="submit" />
+      </form>
+
       <div v-if="errorMessage" class="mt-4 text-red-500 text-sm text-center">
         {{ errorMessage }}
       </div>
@@ -56,7 +58,5 @@ const handleLogin = async () => {
   </div>
 </template>
 
-
 <style scoped>
-/* Add any additional custom styling here */
 </style>
