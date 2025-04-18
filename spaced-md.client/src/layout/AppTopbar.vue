@@ -23,7 +23,8 @@ onMounted(async () => {
       <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
         <i class="pi pi-bars"></i>
       </button>
-      <router-link to="/" class="layout-topbar-logo">
+      <router-link to="/home" class="layout-topbar-logo">
+
         <img src="../assets/images/logo.png" alt="Logo" width="40px" />
         <span>spaced md</span>
       </router-link>

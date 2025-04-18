@@ -1,5 +1,6 @@
 import type { LoginResponse } from '@/api/models';
 import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
+import router from '@/router';
 import { useAuthStore } from '@/stores/authStore';
 
 export function useAuthService(api: SpacedMdApiClient) {
@@ -13,6 +14,7 @@ export function useAuthService(api: SpacedMdApiClient) {
           password,
         }
       );
+      authStore.setUser({ email })
       return loginResult!;
     } catch (error) {
       throw new Error('Login failed: ' + error);
@@ -24,6 +26,7 @@ export function useAuthService(api: SpacedMdApiClient) {
       await api.logout.post();
       authStore.isAuthenticated = false;
       authStore.user = null;
+      router.push("/");
     } catch (error) {
       console.error("Failed to log out:", error);
     }

@@ -24,7 +24,7 @@ const handleLogin = async () => {
 
   var loginResult = await login(email.value, password.value);
   if (loginResult.success) {
-    router.push("/");
+    router.push("/home");
   } else {
     errorMessage.value = loginResult.message!;
   }
