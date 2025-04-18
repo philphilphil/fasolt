@@ -22,9 +22,24 @@ const router = createRouter({
           component: () => import('@/views/Dashboard.vue')
         },
         {
-          path: '/mdfiles/list',
-          name: 'mdfiles-list',
-          component: () => import('@/views/mdfiles/MdFiles.vue')
+          path: '/mdfiles',
+          name: 'mdfiles',
+          component: () => import('@/views/MdFiles.vue')
+        },
+        {
+          path: '/cards',
+          name: 'cards',
+          component: () => import('@/views/Cards.vue')
+        },
+        {
+          path: '/groups',
+          name: 'groups',
+          component: () => import('@/views/Groups.vue')
+        },
+        {
+          path: '/study',
+          name: 'study',
+          component: () => import('@/views/Study.vue')
         },
         {
           path: '/documentation',
@@ -41,17 +56,17 @@ const router = createRouter({
     {
       path: '/auth/login',
       name: 'login',
-      component: () => import('@/views/pages/auth/Login.vue')
+      component: () => import('@/views/auth/Login.vue')
     },
     {
       path: '/auth/access',
       name: 'accessDenied',
-      component: () => import('@/views/pages/auth/Access.vue')
+      component: () => import('@/views/auth/Access.vue')
     },
     {
       path: '/auth/error',
       name: 'error',
-      component: () => import('@/views/pages/auth/Error.vue')
+      component: () => import('@/views/auth/Error.vue')
     }
   ]
 });

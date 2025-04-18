@@ -8,13 +8,14 @@ const model = ref([
     label: 'Home',
     items: [
       { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/home' },
-      { label: 'Study', icon: 'pi pi-fw pi-chart-line', to: '/uikit/button'  }]
+      { label: 'Study', icon: 'pi pi-fw pi-chart-line', to: '/study'  }]
   },
   {
     label: 'Manage',
     items: [
-      { label: 'Files', icon: 'pi pi-fw pi-hashtag', to: '/mdfiles/list' },
-      { label: 'Cards', icon: 'pi pi-fw pi-book', to: '/uikit/input' },
+      { label: 'Files', icon: 'pi pi-fw pi-hashtag', to: '/mdfiles' },
+      { label: 'Cards', icon: 'pi pi-fw pi-book', to: '/cards' },
+      { label: 'Groups', icon: 'pi pi-fw pi-objects-column', to: '/groups' },
     ]
   },
   {
