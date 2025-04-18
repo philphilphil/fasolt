@@ -24,7 +24,15 @@ builder.Services.AddAuthentication()
         options.ExpireTimeSpan = TimeSpan.FromDays(10);
     });
 
-builder.Services.AddIdentityCore<IdentityUser>()
+builder.Services.AddIdentityCore<IdentityUser>(options =>
+    {
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+        options.Password.RequiredUniqueChars = 3;
+    })
     .AddRoles<IdentityRole>()
     .AddUserManager<UserManager<IdentityUser>>()
     .AddRoleManager<RoleManager<IdentityRole>>()

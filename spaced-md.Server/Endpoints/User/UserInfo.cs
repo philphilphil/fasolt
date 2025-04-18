@@ -8,19 +8,21 @@ public sealed class ManageInfoEndpoint : IEndpoint
     public record UserInfoResponse(string Email, bool IsEmailConfirmed);
     public record UserInfoUpdateRequest(string? NewEmail, string? NewPassword, string OldPassword);
 
+    public record ProblemDetails(string error);
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/user/info", GetInfo)
             .Produces<UserInfoResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization()
             .WithOpenApi()
             .WithTags("User");
 
         app.MapPost("/user/info", UpdateInfo)
             .Produces<UserInfoResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
             .RequireAuthorization()
             .WithOpenApi()
             .WithTags("User");
@@ -45,13 +47,20 @@ public sealed class ManageInfoEndpoint : IEndpoint
         if (identityUser == null) return Results.Unauthorized();
 
         var passwordValid = await userManager.CheckPasswordAsync(identityUser, request.OldPassword);
-        if (!passwordValid) return Results.BadRequest("Invalid password");
+        if (!passwordValid) return Results.Problem("Invalid password.", statusCode: StatusCodes.Status401Unauthorized);
 
         if (!string.IsNullOrEmpty(request.NewEmail))
             identityUser.Email = request.NewEmail;
 
         if (!string.IsNullOrEmpty(request.NewPassword))
-            await userManager.ChangePasswordAsync(identityUser, request.OldPassword, request.NewPassword);
+        {
+            var changePassResult = await userManager.ChangePasswordAsync(identityUser, request.OldPassword, request.NewPassword);
+            if (!changePassResult.Succeeded)
+            {
+                var errors = string.Join("\n", changePassResult.Errors.Select(e => e.Description));
+                return Results.Problem(errors, statusCode: StatusCodes.Status400BadRequest);
+            }
+        }
 
         await userManager.UpdateAsync(identityUser);
 

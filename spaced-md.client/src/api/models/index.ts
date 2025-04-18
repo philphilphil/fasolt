@@ -52,6 +52,15 @@ export function createMdFileUploadRequestFromDiscriminatorValue(parseNode: Parse
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
+ * @returns {ProblemDetails}
+ */
+// @ts-ignore
+export function createProblemDetailsFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoProblemDetails;
+}
+/**
+ * Creates a new instance of the appropriate class based on discriminator value
+ * @param parseNode The parse node to use to read the discriminator value and create the object
  * @returns {RegisterRequest}
  */
 // @ts-ignore
@@ -141,6 +150,16 @@ export function deserializeIntoMdFileUploadRequest(mdFileUploadRequest: Partial<
     return {
         "content": n => { mdFileUploadRequest.content = n.getStringValue(); },
         "name": n => { mdFileUploadRequest.name = n.getStringValue(); },
+    }
+}
+/**
+ * The deserialization information for the current model
+ * @returns {Record<string, (node: ParseNode) => void>}
+ */
+// @ts-ignore
+export function deserializeIntoProblemDetails(problemDetails: Partial<ProblemDetails> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+    return {
+        "error": n => { problemDetails.errorEscaped = n.getStringValue(); },
     }
 }
 /**
@@ -272,6 +291,16 @@ export interface MdFileUploadRequest extends AdditionalDataHolder, Parsable {
      */
     name?: string | null;
 }
+export interface ProblemDetails extends AdditionalDataHolder, ApiError, Parsable {
+    /**
+     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+     */
+    additionalData?: Record<string, unknown>;
+    /**
+     * The error property
+     */
+    errorEscaped?: string | null;
+}
 export interface RegisterRequest extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
@@ -347,6 +376,17 @@ export function serializeMdFileUploadRequest(writer: SerializationWriter, mdFile
         writer.writeStringValue("content", mdFileUploadRequest.content);
         writer.writeStringValue("name", mdFileUploadRequest.name);
         writer.writeAdditionalData(mdFileUploadRequest.additionalData);
+    }
+}
+/**
+ * Serializes information the current object
+ * @param writer Serialization writer to use to serialize this model
+ */
+// @ts-ignore
+export function serializeProblemDetails(writer: SerializationWriter, problemDetails: Partial<ProblemDetails> | undefined | null = {}) : void {
+    if (problemDetails) {
+        writer.writeStringValue("error", problemDetails.errorEscaped);
+        writer.writeAdditionalData(problemDetails.additionalData);
     }
 }
 /**
