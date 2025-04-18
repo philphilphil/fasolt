@@ -28,8 +28,8 @@ builder.Services.AddIdentityCore<IdentityUser>()
     .AddRoles<IdentityRole>()
     .AddUserManager<UserManager<IdentityUser>>()
     .AddRoleManager<RoleManager<IdentityRole>>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddApiEndpoints();
+    .AddSignInManager<SignInManager<IdentityUser>>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddCors(options =>
 {
@@ -50,8 +50,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -88,9 +86,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.MapEndpoints();
 app.MapFallbackToFile("/index.html");
-app.MapIdentityApi<IdentityUser>()
-    .WithTags("Identity");
 
 app.Run();
 
-
+public class LoginRequest
+{
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+}

@@ -2,27 +2,18 @@
 import { inject, onMounted } from 'vue';
 import { useLayout } from '@/layout/composables/layout';
 import { useAuthStore } from '@/stores/authStore'
-
-const authStore = useAuthStore()
-const { toggleDarkMode, isDarkTheme } = useLayout();
+import { useAuthService } from '@/service/authService';
 
 const api = inject('api');
 if (!api) throw new Error('API client not provided');
 
-const authService = inject('authService');
-if (!authService) throw new Error('AuthService not provided');
+const authStore = useAuthStore()
+const { toggleDarkMode, isDarkTheme } = useLayout();
+const { logout, getUserInfo } = useAuthService(api);
 
 onMounted(async () => {
-  authService.getUserInfo();
+  getUserInfo();
 });
-
-const logout = async () => {
-  try {
-    await authService.logout();
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
 
 </script>
 

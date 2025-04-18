@@ -1,58 +1,43 @@
-import type { LoginRequestBuilderPostQueryParameters } from '@/api/login';
+import type { LoginResponse } from '@/api/models';
 import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
 import { useAuthStore } from '@/stores/authStore';
-import { inject } from 'vue';
 
+export function useAuthService(api: SpacedMdApiClient) {
+  const authStore = useAuthStore();
 
-export default class AuthService {
-
-  private api: SpacedMdApiClient;
-
-  constructor(api: SpacedMdApiClient) {
-    this.api = api;
-  }
-
-  private get authStore() {
-    return useAuthStore();
-  }
-
-  async login(email: string, password: string): Promise<boolean> {
+  async function login(email: string, password: string): Promise<LoginResponse> {
     try {
-      const loginQueryParameters: LoginRequestBuilderPostQueryParameters = {
-        useCookies: true,
-        useSessionCookies: false,
-      };
-
-      await this.api.login.post(
+      var loginResult = await api.login.post(
         {
-          email: email,
-          password: password,
-        },
-        { queryParameters: loginQueryParameters }
+          email,
+          password,
+        }
       );
+      return loginResult!;
     } catch (error) {
-      // errorMessage.value = "Error during login." + error;
-    }
-    return true;
-  }
-
-  async logout(): Promise<void> {
-    try {
-      await this.api.logout.post();
-      this.authStore.isAuthenticated = false;
-      this.authStore.user = null;
-    } catch (error) {
-      console.error('Failed to log out:', error);
+      throw new Error('Login failed: ' + error);
     }
   }
 
-  async getUserInfo(): Promise<string | null> {
+  async function logout(): Promise<void> {
     try {
-      const userInfo = await this.api.manage.info.get();
-      this.authStore.setUser(userInfo ? { ...userInfo, email: userInfo.email ?? '' } : null);
+      await api.logout.post();
+      authStore.isAuthenticated = false;
+      authStore.user = null;
+    } catch (error) {
+      console.error("Failed to log out:", error);
+    }
+  }
+
+  async function getUserInfo(): Promise<string | null> {
+    try {
+      const userInfo = await api.user.info.get();
+      authStore.setUser(userInfo ? { ...userInfo, email: userInfo.email ?? '' } : null);
     } catch (error) {
       console.error('Failed to fetch user info:', error);
     }
-    return "";
+    return null;
   }
+
+  return { login, logout, getUserInfo };
 }

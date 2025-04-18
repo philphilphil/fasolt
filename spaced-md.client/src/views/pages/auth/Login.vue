@@ -2,11 +2,11 @@
 import { ref, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
-import type { LoginRequestBuilderPostQueryParameters } from '@/api/login';
 
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
 import Button from 'primevue/button';
+import { useAuthService } from '@/service/authService';
 
 const api = inject<SpacedMdApiClient>('api');
 if (!api) throw new Error('API client not provided');
@@ -17,24 +17,18 @@ const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 
-const handleLogin = async () => {
-  try {
-    const loginQueryParameters: LoginRequestBuilderPostQueryParameters = {
-      useCookies: true,
-      useSessionCookies: false,
-    };
+const { login } = useAuthService(api);
 
-    await api.login.post(
-      {
-        email: email.value,
-        password: password.value,
-      },
-      { queryParameters: loginQueryParameters }
-    );
-    router.push('/');
-  } catch (error) {
-    errorMessage.value = "Error during login." + error;
+const handleLogin = async () => {
+  errorMessage.value = '';
+
+  var loginResult = await login(email.value, password.value);
+  if (loginResult.success) {
+    router.push("/");
+  } else {
+    errorMessage.value = loginResult.message!;
   }
+
 };
 </script>
 

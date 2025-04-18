@@ -4,81 +4,14 @@
 // @ts-ignore
 import { type AdditionalDataHolder, type ApiError, type DateOnly, type Guid, type Parsable, type ParseNode, type SerializationWriter } from '@microsoft/kiota-abstractions';
 
-export interface AccessTokenResponse extends AdditionalDataHolder, Parsable {
-    /**
-     * The accessToken property
-     */
-    accessToken?: string | null;
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The expiresIn property
-     */
-    expiresIn?: number | null;
-    /**
-     * The refreshToken property
-     */
-    refreshToken?: string | null;
-    /**
-     * The tokenType property
-     */
-    tokenType?: string | null;
-}
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {AccessTokenResponse}
+ * @returns {IdentityError}
  */
 // @ts-ignore
-export function createAccessTokenResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoAccessTokenResponse;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {ForgotPasswordRequest}
- */
-// @ts-ignore
-export function createForgotPasswordRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoForgotPasswordRequest;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {HttpValidationProblemDetails_errors}
- */
-// @ts-ignore
-export function createHttpValidationProblemDetails_errorsFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoHttpValidationProblemDetails_errors;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {HttpValidationProblemDetails}
- */
-// @ts-ignore
-export function createHttpValidationProblemDetailsFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoHttpValidationProblemDetails;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {InfoRequest}
- */
-// @ts-ignore
-export function createInfoRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoInfoRequest;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {InfoResponse}
- */
-// @ts-ignore
-export function createInfoResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoInfoResponse;
+export function createIdentityErrorFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoIdentityError;
 }
 /**
  * Creates a new instance of the appropriate class based on discriminator value
@@ -88,6 +21,15 @@ export function createInfoResponseFromDiscriminatorValue(parseNode: ParseNode | 
 // @ts-ignore
 export function createLoginRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
     return deserializeIntoLoginRequest;
+}
+/**
+ * Creates a new instance of the appropriate class based on discriminator value
+ * @param parseNode The parse node to use to read the discriminator value and create the object
+ * @returns {LoginResponse}
+ */
+// @ts-ignore
+export function createLoginResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoLoginResponse;
 }
 /**
  * Creates a new instance of the appropriate class based on discriminator value
@@ -110,15 +52,6 @@ export function createMdFileUploadRequestFromDiscriminatorValue(parseNode: Parse
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {RefreshRequest}
- */
-// @ts-ignore
-export function createRefreshRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoRefreshRequest;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
  * @returns {RegisterRequest}
  */
 // @ts-ignore
@@ -128,38 +61,20 @@ export function createRegisterRequestFromDiscriminatorValue(parseNode: ParseNode
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {ResendConfirmationEmailRequest}
+ * @returns {UserInfoResponse}
  */
 // @ts-ignore
-export function createResendConfirmationEmailRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoResendConfirmationEmailRequest;
+export function createUserInfoResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoUserInfoResponse;
 }
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {ResetPasswordRequest}
+ * @returns {UserInfoUpdateRequest}
  */
 // @ts-ignore
-export function createResetPasswordRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoResetPasswordRequest;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {TwoFactorRequest}
- */
-// @ts-ignore
-export function createTwoFactorRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoTwoFactorRequest;
-}
-/**
- * Creates a new instance of the appropriate class based on discriminator value
- * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {TwoFactorResponse}
- */
-// @ts-ignore
-export function createTwoFactorResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoTwoFactorResponse;
+export function createUserInfoUpdateRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoUserInfoUpdateRequest;
 }
 /**
  * Creates a new instance of the appropriate class based on discriminator value
@@ -175,69 +90,10 @@ export function createWeatherForecastFromDiscriminatorValue(parseNode: ParseNode
  * @returns {Record<string, (node: ParseNode) => void>}
  */
 // @ts-ignore
-export function deserializeIntoAccessTokenResponse(accessTokenResponse: Partial<AccessTokenResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+export function deserializeIntoIdentityError(identityError: Partial<IdentityError> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
-        "accessToken": n => { accessTokenResponse.accessToken = n.getStringValue(); },
-        "expiresIn": n => { accessTokenResponse.expiresIn = n.getNumberValue(); },
-        "refreshToken": n => { accessTokenResponse.refreshToken = n.getStringValue(); },
-        "tokenType": n => { accessTokenResponse.tokenType = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoForgotPasswordRequest(forgotPasswordRequest: Partial<ForgotPasswordRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "email": n => { forgotPasswordRequest.email = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoHttpValidationProblemDetails(httpValidationProblemDetails: Partial<HttpValidationProblemDetails> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "detail": n => { httpValidationProblemDetails.detail = n.getStringValue(); },
-        "errors": n => { httpValidationProblemDetails.errors = n.getObjectValue<HttpValidationProblemDetails_errors>(createHttpValidationProblemDetails_errorsFromDiscriminatorValue); },
-        "instance": n => { httpValidationProblemDetails.instance = n.getStringValue(); },
-        "status": n => { httpValidationProblemDetails.status = n.getNumberValue(); },
-        "title": n => { httpValidationProblemDetails.title = n.getStringValue(); },
-        "type": n => { httpValidationProblemDetails.type = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoHttpValidationProblemDetails_errors(httpValidationProblemDetails_errors: Partial<HttpValidationProblemDetails_errors> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoInfoRequest(infoRequest: Partial<InfoRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "newEmail": n => { infoRequest.newEmail = n.getStringValue(); },
-        "newPassword": n => { infoRequest.newPassword = n.getStringValue(); },
-        "oldPassword": n => { infoRequest.oldPassword = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoInfoResponse(infoResponse: Partial<InfoResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "email": n => { infoResponse.email = n.getStringValue(); },
-        "isEmailConfirmed": n => { infoResponse.isEmailConfirmed = n.getBooleanValue(); },
+        "code": n => { identityError.code = n.getStringValue(); },
+        "description": n => { identityError.description = n.getStringValue(); },
     }
 }
 /**
@@ -249,8 +105,18 @@ export function deserializeIntoLoginRequest(loginRequest: Partial<LoginRequest> 
     return {
         "email": n => { loginRequest.email = n.getStringValue(); },
         "password": n => { loginRequest.password = n.getStringValue(); },
-        "twoFactorCode": n => { loginRequest.twoFactorCode = n.getStringValue(); },
-        "twoFactorRecoveryCode": n => { loginRequest.twoFactorRecoveryCode = n.getStringValue(); },
+        "rememberMe": n => { loginRequest.rememberMe = n.getBooleanValue(); },
+    }
+}
+/**
+ * The deserialization information for the current model
+ * @returns {Record<string, (node: ParseNode) => void>}
+ */
+// @ts-ignore
+export function deserializeIntoLoginResponse(loginResponse: Partial<LoginResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+    return {
+        "message": n => { loginResponse.message = n.getStringValue(); },
+        "success": n => { loginResponse.success = n.getBooleanValue(); },
     }
 }
 /**
@@ -282,16 +148,6 @@ export function deserializeIntoMdFileUploadRequest(mdFileUploadRequest: Partial<
  * @returns {Record<string, (node: ParseNode) => void>}
  */
 // @ts-ignore
-export function deserializeIntoRefreshRequest(refreshRequest: Partial<RefreshRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "refreshToken": n => { refreshRequest.refreshToken = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
 export function deserializeIntoRegisterRequest(registerRequest: Partial<RegisterRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
         "email": n => { registerRequest.email = n.getStringValue(); },
@@ -303,9 +159,10 @@ export function deserializeIntoRegisterRequest(registerRequest: Partial<Register
  * @returns {Record<string, (node: ParseNode) => void>}
  */
 // @ts-ignore
-export function deserializeIntoResendConfirmationEmailRequest(resendConfirmationEmailRequest: Partial<ResendConfirmationEmailRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+export function deserializeIntoUserInfoResponse(userInfoResponse: Partial<UserInfoResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
-        "email": n => { resendConfirmationEmailRequest.email = n.getStringValue(); },
+        "email": n => { userInfoResponse.email = n.getStringValue(); },
+        "isEmailConfirmed": n => { userInfoResponse.isEmailConfirmed = n.getBooleanValue(); },
     }
 }
 /**
@@ -313,39 +170,11 @@ export function deserializeIntoResendConfirmationEmailRequest(resendConfirmation
  * @returns {Record<string, (node: ParseNode) => void>}
  */
 // @ts-ignore
-export function deserializeIntoResetPasswordRequest(resetPasswordRequest: Partial<ResetPasswordRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+export function deserializeIntoUserInfoUpdateRequest(userInfoUpdateRequest: Partial<UserInfoUpdateRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
-        "email": n => { resetPasswordRequest.email = n.getStringValue(); },
-        "newPassword": n => { resetPasswordRequest.newPassword = n.getStringValue(); },
-        "resetCode": n => { resetPasswordRequest.resetCode = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoTwoFactorRequest(twoFactorRequest: Partial<TwoFactorRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "enable": n => { twoFactorRequest.enable = n.getBooleanValue(); },
-        "forgetMachine": n => { twoFactorRequest.forgetMachine = n.getBooleanValue(); },
-        "resetRecoveryCodes": n => { twoFactorRequest.resetRecoveryCodes = n.getBooleanValue(); },
-        "resetSharedKey": n => { twoFactorRequest.resetSharedKey = n.getBooleanValue(); },
-        "twoFactorCode": n => { twoFactorRequest.twoFactorCode = n.getStringValue(); },
-    }
-}
-/**
- * The deserialization information for the current model
- * @returns {Record<string, (node: ParseNode) => void>}
- */
-// @ts-ignore
-export function deserializeIntoTwoFactorResponse(twoFactorResponse: Partial<TwoFactorResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
-    return {
-        "isMachineRemembered": n => { twoFactorResponse.isMachineRemembered = n.getBooleanValue(); },
-        "isTwoFactorEnabled": n => { twoFactorResponse.isTwoFactorEnabled = n.getBooleanValue(); },
-        "recoveryCodes": n => { twoFactorResponse.recoveryCodes = n.getCollectionOfPrimitiveValues<string>(); },
-        "recoveryCodesLeft": n => { twoFactorResponse.recoveryCodesLeft = n.getNumberValue(); },
-        "sharedKey": n => { twoFactorResponse.sharedKey = n.getStringValue(); },
+        "newEmail": n => { userInfoUpdateRequest.newEmail = n.getStringValue(); },
+        "newPassword": n => { userInfoUpdateRequest.newPassword = n.getStringValue(); },
+        "oldPassword": n => { userInfoUpdateRequest.oldPassword = n.getStringValue(); },
     }
 }
 /**
@@ -361,83 +190,19 @@ export function deserializeIntoWeatherForecast(weatherForecast: Partial<WeatherF
         "temperatureF": n => { weatherForecast.temperatureF = n.getNumberValue(); },
     }
 }
-export interface ForgotPasswordRequest extends AdditionalDataHolder, Parsable {
+export interface IdentityError extends AdditionalDataHolder, ApiError, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
     additionalData?: Record<string, unknown>;
     /**
-     * The email property
+     * The code property
      */
-    email?: string | null;
-}
-export interface HttpValidationProblemDetails extends AdditionalDataHolder, ApiError, Parsable {
+    code?: string | null;
     /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+     * The description property
      */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The detail property
-     */
-    detail?: string | null;
-    /**
-     * The errors property
-     */
-    errors?: HttpValidationProblemDetails_errors | null;
-    /**
-     * The instance property
-     */
-    instance?: string | null;
-    /**
-     * The status property
-     */
-    status?: number | null;
-    /**
-     * The title property
-     */
-    title?: string | null;
-    /**
-     * The type property
-     */
-    type?: string | null;
-}
-export interface HttpValidationProblemDetails_errors extends AdditionalDataHolder, Parsable {
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-}
-export interface InfoRequest extends AdditionalDataHolder, Parsable {
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The newEmail property
-     */
-    newEmail?: string | null;
-    /**
-     * The newPassword property
-     */
-    newPassword?: string | null;
-    /**
-     * The oldPassword property
-     */
-    oldPassword?: string | null;
-}
-export interface InfoResponse extends AdditionalDataHolder, Parsable {
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The email property
-     */
-    email?: string | null;
-    /**
-     * The isEmailConfirmed property
-     */
-    isEmailConfirmed?: boolean | null;
+    description?: string | null;
 }
 export interface LoginRequest extends AdditionalDataHolder, Parsable {
     /**
@@ -453,13 +218,23 @@ export interface LoginRequest extends AdditionalDataHolder, Parsable {
      */
     password?: string | null;
     /**
-     * The twoFactorCode property
+     * The rememberMe property
      */
-    twoFactorCode?: string | null;
+    rememberMe?: boolean | null;
+}
+export interface LoginResponse extends AdditionalDataHolder, Parsable {
     /**
-     * The twoFactorRecoveryCode property
+     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
-    twoFactorRecoveryCode?: string | null;
+    additionalData?: Record<string, unknown>;
+    /**
+     * The message property
+     */
+    message?: string | null;
+    /**
+     * The success property
+     */
+    success?: boolean | null;
 }
 export interface MdFileResponse extends AdditionalDataHolder, Parsable {
     /**
@@ -497,16 +272,6 @@ export interface MdFileUploadRequest extends AdditionalDataHolder, Parsable {
      */
     name?: string | null;
 }
-export interface RefreshRequest extends AdditionalDataHolder, Parsable {
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The refreshToken property
-     */
-    refreshToken?: string | null;
-}
 export interface RegisterRequest extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
@@ -521,108 +286,16 @@ export interface RegisterRequest extends AdditionalDataHolder, Parsable {
      */
     password?: string | null;
 }
-export interface ResendConfirmationEmailRequest extends AdditionalDataHolder, Parsable {
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The email property
-     */
-    email?: string | null;
-}
-export interface ResetPasswordRequest extends AdditionalDataHolder, Parsable {
-    /**
-     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
-     */
-    additionalData?: Record<string, unknown>;
-    /**
-     * The email property
-     */
-    email?: string | null;
-    /**
-     * The newPassword property
-     */
-    newPassword?: string | null;
-    /**
-     * The resetCode property
-     */
-    resetCode?: string | null;
-}
 /**
  * Serializes information the current object
  * @param writer Serialization writer to use to serialize this model
  */
 // @ts-ignore
-export function serializeAccessTokenResponse(writer: SerializationWriter, accessTokenResponse: Partial<AccessTokenResponse> | undefined | null = {}) : void {
-    if (accessTokenResponse) {
-        writer.writeStringValue("accessToken", accessTokenResponse.accessToken);
-        writer.writeNumberValue("expiresIn", accessTokenResponse.expiresIn);
-        writer.writeStringValue("refreshToken", accessTokenResponse.refreshToken);
-        writer.writeStringValue("tokenType", accessTokenResponse.tokenType);
-        writer.writeAdditionalData(accessTokenResponse.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeForgotPasswordRequest(writer: SerializationWriter, forgotPasswordRequest: Partial<ForgotPasswordRequest> | undefined | null = {}) : void {
-    if (forgotPasswordRequest) {
-        writer.writeStringValue("email", forgotPasswordRequest.email);
-        writer.writeAdditionalData(forgotPasswordRequest.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeHttpValidationProblemDetails(writer: SerializationWriter, httpValidationProblemDetails: Partial<HttpValidationProblemDetails> | undefined | null = {}) : void {
-    if (httpValidationProblemDetails) {
-        writer.writeStringValue("detail", httpValidationProblemDetails.detail);
-        writer.writeObjectValue<HttpValidationProblemDetails_errors>("errors", httpValidationProblemDetails.errors, serializeHttpValidationProblemDetails_errors);
-        writer.writeStringValue("instance", httpValidationProblemDetails.instance);
-        writer.writeNumberValue("status", httpValidationProblemDetails.status);
-        writer.writeStringValue("title", httpValidationProblemDetails.title);
-        writer.writeStringValue("type", httpValidationProblemDetails.type);
-        writer.writeAdditionalData(httpValidationProblemDetails.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeHttpValidationProblemDetails_errors(writer: SerializationWriter, httpValidationProblemDetails_errors: Partial<HttpValidationProblemDetails_errors> | undefined | null = {}) : void {
-    if (httpValidationProblemDetails_errors) {
-        writer.writeAdditionalData(httpValidationProblemDetails_errors.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeInfoRequest(writer: SerializationWriter, infoRequest: Partial<InfoRequest> | undefined | null = {}) : void {
-    if (infoRequest) {
-        writer.writeStringValue("newEmail", infoRequest.newEmail);
-        writer.writeStringValue("newPassword", infoRequest.newPassword);
-        writer.writeStringValue("oldPassword", infoRequest.oldPassword);
-        writer.writeAdditionalData(infoRequest.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeInfoResponse(writer: SerializationWriter, infoResponse: Partial<InfoResponse> | undefined | null = {}) : void {
-    if (infoResponse) {
-        writer.writeStringValue("email", infoResponse.email);
-        writer.writeBooleanValue("isEmailConfirmed", infoResponse.isEmailConfirmed);
-        writer.writeAdditionalData(infoResponse.additionalData);
+export function serializeIdentityError(writer: SerializationWriter, identityError: Partial<IdentityError> | undefined | null = {}) : void {
+    if (identityError) {
+        writer.writeStringValue("code", identityError.code);
+        writer.writeStringValue("description", identityError.description);
+        writer.writeAdditionalData(identityError.additionalData);
     }
 }
 /**
@@ -634,9 +307,20 @@ export function serializeLoginRequest(writer: SerializationWriter, loginRequest:
     if (loginRequest) {
         writer.writeStringValue("email", loginRequest.email);
         writer.writeStringValue("password", loginRequest.password);
-        writer.writeStringValue("twoFactorCode", loginRequest.twoFactorCode);
-        writer.writeStringValue("twoFactorRecoveryCode", loginRequest.twoFactorRecoveryCode);
+        writer.writeBooleanValue("rememberMe", loginRequest.rememberMe);
         writer.writeAdditionalData(loginRequest.additionalData);
+    }
+}
+/**
+ * Serializes information the current object
+ * @param writer Serialization writer to use to serialize this model
+ */
+// @ts-ignore
+export function serializeLoginResponse(writer: SerializationWriter, loginResponse: Partial<LoginResponse> | undefined | null = {}) : void {
+    if (loginResponse) {
+        writer.writeStringValue("message", loginResponse.message);
+        writer.writeBooleanValue("success", loginResponse.success);
+        writer.writeAdditionalData(loginResponse.additionalData);
     }
 }
 /**
@@ -670,17 +354,6 @@ export function serializeMdFileUploadRequest(writer: SerializationWriter, mdFile
  * @param writer Serialization writer to use to serialize this model
  */
 // @ts-ignore
-export function serializeRefreshRequest(writer: SerializationWriter, refreshRequest: Partial<RefreshRequest> | undefined | null = {}) : void {
-    if (refreshRequest) {
-        writer.writeStringValue("refreshToken", refreshRequest.refreshToken);
-        writer.writeAdditionalData(refreshRequest.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
 export function serializeRegisterRequest(writer: SerializationWriter, registerRequest: Partial<RegisterRequest> | undefined | null = {}) : void {
     if (registerRequest) {
         writer.writeStringValue("email", registerRequest.email);
@@ -693,10 +366,11 @@ export function serializeRegisterRequest(writer: SerializationWriter, registerRe
  * @param writer Serialization writer to use to serialize this model
  */
 // @ts-ignore
-export function serializeResendConfirmationEmailRequest(writer: SerializationWriter, resendConfirmationEmailRequest: Partial<ResendConfirmationEmailRequest> | undefined | null = {}) : void {
-    if (resendConfirmationEmailRequest) {
-        writer.writeStringValue("email", resendConfirmationEmailRequest.email);
-        writer.writeAdditionalData(resendConfirmationEmailRequest.additionalData);
+export function serializeUserInfoResponse(writer: SerializationWriter, userInfoResponse: Partial<UserInfoResponse> | undefined | null = {}) : void {
+    if (userInfoResponse) {
+        writer.writeStringValue("email", userInfoResponse.email);
+        writer.writeBooleanValue("isEmailConfirmed", userInfoResponse.isEmailConfirmed);
+        writer.writeAdditionalData(userInfoResponse.additionalData);
     }
 }
 /**
@@ -704,42 +378,12 @@ export function serializeResendConfirmationEmailRequest(writer: SerializationWri
  * @param writer Serialization writer to use to serialize this model
  */
 // @ts-ignore
-export function serializeResetPasswordRequest(writer: SerializationWriter, resetPasswordRequest: Partial<ResetPasswordRequest> | undefined | null = {}) : void {
-    if (resetPasswordRequest) {
-        writer.writeStringValue("email", resetPasswordRequest.email);
-        writer.writeStringValue("newPassword", resetPasswordRequest.newPassword);
-        writer.writeStringValue("resetCode", resetPasswordRequest.resetCode);
-        writer.writeAdditionalData(resetPasswordRequest.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeTwoFactorRequest(writer: SerializationWriter, twoFactorRequest: Partial<TwoFactorRequest> | undefined | null = {}) : void {
-    if (twoFactorRequest) {
-        writer.writeBooleanValue("enable", twoFactorRequest.enable);
-        writer.writeBooleanValue("forgetMachine", twoFactorRequest.forgetMachine);
-        writer.writeBooleanValue("resetRecoveryCodes", twoFactorRequest.resetRecoveryCodes);
-        writer.writeBooleanValue("resetSharedKey", twoFactorRequest.resetSharedKey);
-        writer.writeStringValue("twoFactorCode", twoFactorRequest.twoFactorCode);
-        writer.writeAdditionalData(twoFactorRequest.additionalData);
-    }
-}
-/**
- * Serializes information the current object
- * @param writer Serialization writer to use to serialize this model
- */
-// @ts-ignore
-export function serializeTwoFactorResponse(writer: SerializationWriter, twoFactorResponse: Partial<TwoFactorResponse> | undefined | null = {}) : void {
-    if (twoFactorResponse) {
-        writer.writeBooleanValue("isMachineRemembered", twoFactorResponse.isMachineRemembered);
-        writer.writeBooleanValue("isTwoFactorEnabled", twoFactorResponse.isTwoFactorEnabled);
-        writer.writeCollectionOfPrimitiveValues<string>("recoveryCodes", twoFactorResponse.recoveryCodes);
-        writer.writeNumberValue("recoveryCodesLeft", twoFactorResponse.recoveryCodesLeft);
-        writer.writeStringValue("sharedKey", twoFactorResponse.sharedKey);
-        writer.writeAdditionalData(twoFactorResponse.additionalData);
+export function serializeUserInfoUpdateRequest(writer: SerializationWriter, userInfoUpdateRequest: Partial<UserInfoUpdateRequest> | undefined | null = {}) : void {
+    if (userInfoUpdateRequest) {
+        writer.writeStringValue("newEmail", userInfoUpdateRequest.newEmail);
+        writer.writeStringValue("newPassword", userInfoUpdateRequest.newPassword);
+        writer.writeStringValue("oldPassword", userInfoUpdateRequest.oldPassword);
+        writer.writeAdditionalData(userInfoUpdateRequest.additionalData);
     }
 }
 /**
@@ -756,57 +400,37 @@ export function serializeWeatherForecast(writer: SerializationWriter, weatherFor
         writer.writeAdditionalData(weatherForecast.additionalData);
     }
 }
-export interface TwoFactorRequest extends AdditionalDataHolder, Parsable {
+export interface UserInfoResponse extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
     additionalData?: Record<string, unknown>;
     /**
-     * The enable property
+     * The email property
      */
-    enable?: boolean | null;
+    email?: string | null;
     /**
-     * The forgetMachine property
+     * The isEmailConfirmed property
      */
-    forgetMachine?: boolean | null;
-    /**
-     * The resetRecoveryCodes property
-     */
-    resetRecoveryCodes?: boolean | null;
-    /**
-     * The resetSharedKey property
-     */
-    resetSharedKey?: boolean | null;
-    /**
-     * The twoFactorCode property
-     */
-    twoFactorCode?: string | null;
+    isEmailConfirmed?: boolean | null;
 }
-export interface TwoFactorResponse extends AdditionalDataHolder, Parsable {
+export interface UserInfoUpdateRequest extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
     additionalData?: Record<string, unknown>;
     /**
-     * The isMachineRemembered property
+     * The newEmail property
      */
-    isMachineRemembered?: boolean | null;
+    newEmail?: string | null;
     /**
-     * The isTwoFactorEnabled property
+     * The newPassword property
      */
-    isTwoFactorEnabled?: boolean | null;
+    newPassword?: string | null;
     /**
-     * The recoveryCodes property
+     * The oldPassword property
      */
-    recoveryCodes?: string[] | null;
-    /**
-     * The recoveryCodesLeft property
-     */
-    recoveryCodesLeft?: number | null;
-    /**
-     * The sharedKey property
-     */
-    sharedKey?: string | null;
+    oldPassword?: string | null;
 }
 export interface WeatherForecast extends AdditionalDataHolder, Parsable {
     /**
