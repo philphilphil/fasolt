@@ -7,7 +7,6 @@ namespace spaced_md.Server
 {
     public class GetMdFiles : IEndpoint
     {
-
         public record MdFileResponse(Guid Id, string FileName, string Content, DateTime UploadedAt, DateTime? UpdatedAt = null, DateTime? DeletedAt = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
@@ -42,7 +41,11 @@ namespace spaced_md.Server
             if (usersMdFiles.Count == 0)
                 return Results.NotFound("No files found");
 
-            return Results.Ok(usersMdFiles.Select(x => new MdFileResponse(x.Id, x.FileName, x.Content, x.UploadedAt)));
+            return Results.Ok(usersMdFiles.Select(x => new MdFileResponse(
+                x.Id,
+                x.FileName,
+                x.Content.Length > 200 ? x.Content.Substring(0, 200) + "..." : x.Content,
+                x.UploadedAt)));
         }
     }
 }

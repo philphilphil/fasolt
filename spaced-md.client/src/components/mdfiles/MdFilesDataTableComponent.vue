@@ -60,6 +60,6 @@ const filters = ref({
         <td>{{ formatDate(data.updatedAt) }}</td>
       </template>
     </Column>
-    <Column field="content" header="Content"></Column>
+    <Column field="content" header="Content preview"></Column>
   </DataTable>
 </template>
