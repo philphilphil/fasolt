@@ -9,7 +9,7 @@ public static class InitUserSeeder
 
         string adminRole = "Administrator";
         string userName = "local@spaced-md.com";
-        string hardcodedPassword = "sp4cEd!"; // Hardcoded for local/dev only
+        string hardcodedPassword = "sp4cEeEd!"; // Hardcoded for local/dev only
 
         if (!await roleManager.RoleExistsAsync(adminRole))
         {

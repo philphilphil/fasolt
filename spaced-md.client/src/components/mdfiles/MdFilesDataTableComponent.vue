@@ -6,6 +6,7 @@ import InputText from 'primevue/inputtext';
 import { FilterMatchMode } from '@primevue/core/api';
 import type { MdFileResponse } from '@/api/models';
 import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
+import { format } from 'date-fns'
 
 const api = inject<SpacedMdApiClient>('api');
 if (!api) throw new Error('API client not provided');
@@ -19,6 +20,11 @@ async function loadData() {
   } catch (error) {
     console.error("Failed to load md files:", error);
   }
+}
+
+function formatDate(dateString: string) {
+  if (!dateString) return "-";
+  return format(new Date(dateString), 'yyyy-MM-dd HH:mm')
 }
 
 defineExpose({ loadData });
@@ -39,11 +45,21 @@ const filters = ref({
     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
     currentPageReportTemplate="Total: {totalRecords}">
 
-    <Column field="fileName" header="Filename" style="width: 25%" sortable>
+    <Column field="fileName" header="Filename" style="min-width: 10rem" sortable>
       <template #filter="{ filterModel, filterCallback }">
         <InputText v-model="filterModel.value" placeholder="Filter by filename" @input="filterCallback()" />
       </template>
     </Column>
-    <Column field="content" header="Content" style="width: 50%"></Column>
+    <Column header="Uploaded at" dataType="date" style="min-width: 10rem">
+      <template #body="{ data }">
+        <td>{{ formatDate(data.uploadedAt) }}</td>
+      </template>
+    </Column>
+    <Column header="Updated at" dataType="date" style="min-width: 10rem">
+      <template #body="{ data }">
+        <td>{{ formatDate(data.updatedAt) }}</td>
+      </template>
+    </Column>
+    <Column field="content" header="Content"></Column>
   </DataTable>
 </template>

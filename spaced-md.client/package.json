@@ -16,6 +16,7 @@
     "@primeuix/themes": "^1.0.3",
     "@primevue/themes": "^4.3.3",
     "chart.js": "^4.4.8",
+    "date-fns": "^4.1.0",
     "pinia": "^3.0.2",
     "primevue": "^4.3.3",
     "tailwind": "^4.0.0",

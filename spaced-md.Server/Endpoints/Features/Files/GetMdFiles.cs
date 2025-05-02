@@ -8,8 +8,7 @@ namespace spaced_md.Server
     public class GetMdFiles : IEndpoint
     {
 
-        public record MdFileResponse(Guid Id, string FileName, string Content, DateTime UploadedAt);
-
+        public record MdFileResponse(Guid Id, string FileName, string Content, DateTime UploadedAt, DateTime? UpdatedAt = null, DateTime? DeletedAt = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
             app.MapGet("mdfile/{id}", SingleHandler)
@@ -31,7 +30,7 @@ namespace spaced_md.Server
                 return Results.NotFound("File not found");
 
             return Results.Ok(
-                new MdFileResponse(mdFile.Id, mdFile.FileName, mdFile.Content, mdFile.UploadedAt));
+                new MdFileResponse(mdFile.Id, mdFile.FileName, mdFile.Content, mdFile.UploadedAt, mdFile.UpdatedAt, mdFile.DeletedAt));
         }
 
         public static IResult AllHandler(HttpContext httpContext, Guid? id, ApplicationDbContext context)

@@ -239,24 +239,24 @@
         }
       }
     },
-    "/weatherforecast": {
-      "get": {
+    "/card": {
+      "post": {
         "tags": [
-          "Weather"
+          "Cards"
         ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WeatherForecast"
-                  }
-                }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardCreateRequest"
               }
             }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -264,6 +264,26 @@
   },
   "components": {
     "schemas": {
+      "CardCreateRequest": {
+        "required": [
+          "title",
+          "content",
+          "markdownFileId"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "markdownFileId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "IdentityError": {
         "type": "object",
         "properties": {
@@ -331,6 +351,18 @@
           "uploadedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "default": null,
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "default": null,
+            "nullable": true
           }
         }
       },
@@ -410,32 +442,6 @@
             "type": "string"
           }
         }
-      },
-      "WeatherForecast": {
-        "required": [
-          "date",
-          "temperatureC",
-          "summary"
-        ],
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "temperatureC": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "summary": {
-            "type": "string",
-            "nullable": true
-          },
-          "temperatureF": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
       }
     }
   },
@@ -450,7 +456,7 @@
       "name": "MdFiles"
     },
     {
-      "name": "Weather"
+      "name": "Cards"
     }
   ]
 }
