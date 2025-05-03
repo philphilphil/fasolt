@@ -22,6 +22,44 @@ export interface CardCreateRequest extends AdditionalDataHolder, Parsable {
      */
     title?: string | null;
 }
+export interface CardResponse extends AdditionalDataHolder, Parsable {
+    /**
+     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+     */
+    additionalData?: Record<string, unknown>;
+    /**
+     * The content property
+     */
+    content?: string | null;
+    /**
+     * The id property
+     */
+    id?: Guid | null;
+    /**
+     * The mdFileId property
+     */
+    mdFileId?: Guid | null;
+    /**
+     * The mdFileName property
+     */
+    mdFileName?: string | null;
+    /**
+     * The name property
+     */
+    name?: string | null;
+    /**
+     * The updatedAt property
+     */
+    updatedAt?: Date | null;
+    /**
+     * The uploadedAt property
+     */
+    uploadedAt?: Date | null;
+    /**
+     * The usageType property
+     */
+    usageType?: number | null;
+}
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
@@ -30,6 +68,15 @@ export interface CardCreateRequest extends AdditionalDataHolder, Parsable {
 // @ts-ignore
 export function createCardCreateRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
     return deserializeIntoCardCreateRequest;
+}
+/**
+ * Creates a new instance of the appropriate class based on discriminator value
+ * @param parseNode The parse node to use to read the discriminator value and create the object
+ * @returns {CardResponse}
+ */
+// @ts-ignore
+export function createCardResponseFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoCardResponse;
 }
 /**
  * Creates a new instance of the appropriate class based on discriminator value
@@ -131,6 +178,23 @@ export function deserializeIntoCardCreateRequest(cardCreateRequest: Partial<Card
         "content": n => { cardCreateRequest.content = n.getStringValue(); },
         "markdownFileId": n => { cardCreateRequest.markdownFileId = n.getGuidValue(); },
         "title": n => { cardCreateRequest.title = n.getStringValue(); },
+    }
+}
+/**
+ * The deserialization information for the current model
+ * @returns {Record<string, (node: ParseNode) => void>}
+ */
+// @ts-ignore
+export function deserializeIntoCardResponse(cardResponse: Partial<CardResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+    return {
+        "content": n => { cardResponse.content = n.getStringValue(); },
+        "id": n => { cardResponse.id = n.getGuidValue(); },
+        "mdFileId": n => { cardResponse.mdFileId = n.getGuidValue(); },
+        "mdFileName": n => { cardResponse.mdFileName = n.getStringValue(); },
+        "name": n => { cardResponse.name = n.getStringValue(); },
+        "updatedAt": n => { cardResponse.updatedAt = n.getDateValue(); },
+        "uploadedAt": n => { cardResponse.uploadedAt = n.getDateValue(); },
+        "usageType": n => { cardResponse.usageType = n.getNumberValue(); },
     }
 }
 /**
@@ -397,6 +461,24 @@ export function serializeCardCreateRequest(writer: SerializationWriter, cardCrea
         writer.writeGuidValue("markdownFileId", cardCreateRequest.markdownFileId);
         writer.writeStringValue("title", cardCreateRequest.title);
         writer.writeAdditionalData(cardCreateRequest.additionalData);
+    }
+}
+/**
+ * Serializes information the current object
+ * @param writer Serialization writer to use to serialize this model
+ */
+// @ts-ignore
+export function serializeCardResponse(writer: SerializationWriter, cardResponse: Partial<CardResponse> | undefined | null = {}) : void {
+    if (cardResponse) {
+        writer.writeStringValue("content", cardResponse.content);
+        writer.writeGuidValue("id", cardResponse.id);
+        writer.writeGuidValue("mdFileId", cardResponse.mdFileId);
+        writer.writeStringValue("mdFileName", cardResponse.mdFileName);
+        writer.writeStringValue("name", cardResponse.name);
+        writer.writeDateValue("updatedAt", cardResponse.updatedAt);
+        writer.writeDateValue("uploadedAt", cardResponse.uploadedAt);
+        writer.writeNumberValue("usageType", cardResponse.usageType);
+        writer.writeAdditionalData(cardResponse.additionalData);
     }
 }
 /**

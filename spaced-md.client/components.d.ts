@@ -18,6 +18,7 @@ declare module 'vue' {
     Breadcrumb: typeof import('primevue/breadcrumb')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
+    CardsDataTableComponent: typeof import('./src/components/cards/CardsDataTableComponent.vue')['default']
     Carousel: typeof import('primevue/carousel')['default']
     Chart: typeof import('primevue/chart')['default']
     Checkbox: typeof import('primevue/checkbox')['default']

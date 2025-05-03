@@ -157,6 +157,88 @@
         }
       }
     },
+    "/card/{id}": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/card": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CardResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/mdfile": {
       "put": {
         "tags": [
@@ -238,28 +320,6 @@
           }
         }
       }
-    },
-    "/card": {
-      "post": {
-        "tags": [
-          "Cards"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CardCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -281,6 +341,50 @@
           "markdownFileId": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "CardResponse": {
+        "required": [
+          "id",
+          "name",
+          "content",
+          "usageType",
+          "mdFileName",
+          "mdFileId",
+          "uploadedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "usageType": {
+            "$ref": "#/components/schemas/UsageType"
+          },
+          "mdFileName": {
+            "type": "string"
+          },
+          "mdFileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "default": null,
+            "nullable": true
           }
         }
       },
@@ -436,6 +540,9 @@
           }
         }
       },
+      "UsageType": {
+        "type": "integer"
+      },
       "UserInfoResponse": {
         "required": [
           "email",
@@ -482,10 +589,10 @@
       "name": "User"
     },
     {
-      "name": "MdFiles"
+      "name": "Cards"
     },
     {
-      "name": "Cards"
+      "name": "MdFiles"
     }
   ]
 }

@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import Card from 'primevue/card';
 import AddCardDialog from '@/components/cards/AddCardDialog.vue';
+import CardsDataTableComponent from '@/components/cards/CardsDataTableComponent.vue';
 
 interface CardItem {
   id: number;
@@ -32,6 +33,7 @@ const dialogVisible = ref(false);
       </template>
     </Card>
   </div>
+  <CardsDataTableComponent />
   <AddCardDialog v-model:visible="dialogVisible" />
   Todo:<br />
   - Add automatic generation of cards from a file (a card for each heading)

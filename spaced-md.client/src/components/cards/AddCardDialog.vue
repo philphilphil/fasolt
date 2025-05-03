@@ -4,7 +4,6 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
-import ToggleButton from 'primevue/togglebutton';
 import { useToastService } from '@/service/toastService';
 import { useToast } from 'primevue';
 import type { SpacedMdApiClient } from '@/api/spacedMdApiClient';
