@@ -79,6 +79,15 @@ export function createMdFileUploadRequestFromDiscriminatorValue(parseNode: Parse
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
+ * @returns {MdHeading}
+ */
+// @ts-ignore
+export function createMdHeadingFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoMdHeading;
+}
+/**
+ * Creates a new instance of the appropriate class based on discriminator value
+ * @param parseNode The parse node to use to read the discriminator value and create the object
  * @returns {ProblemDetails}
  */
 // @ts-ignore
@@ -168,6 +177,7 @@ export function deserializeIntoMdFileResponse(mdFileResponse: Partial<MdFileResp
         "content": n => { mdFileResponse.content = n.getStringValue(); },
         "deletedAt": n => { mdFileResponse.deletedAt = n.getDateValue(); },
         "fileName": n => { mdFileResponse.fileName = n.getStringValue(); },
+        "headings": n => { mdFileResponse.headings = n.getCollectionOfObjectValues<MdHeading>(createMdHeadingFromDiscriminatorValue); },
         "id": n => { mdFileResponse.id = n.getGuidValue(); },
         "updatedAt": n => { mdFileResponse.updatedAt = n.getDateValue(); },
         "uploadedAt": n => { mdFileResponse.uploadedAt = n.getDateValue(); },
@@ -182,6 +192,18 @@ export function deserializeIntoMdFileUploadRequest(mdFileUploadRequest: Partial<
     return {
         "content": n => { mdFileUploadRequest.content = n.getStringValue(); },
         "name": n => { mdFileUploadRequest.name = n.getStringValue(); },
+    }
+}
+/**
+ * The deserialization information for the current model
+ * @returns {Record<string, (node: ParseNode) => void>}
+ */
+// @ts-ignore
+export function deserializeIntoMdHeading(mdHeading: Partial<MdHeading> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+    return {
+        "heading": n => { mdHeading.heading = n.getStringValue(); },
+        "level": n => { mdHeading.level = n.getNumberValue(); },
+        "lineNumber": n => { mdHeading.lineNumber = n.getNumberValue(); },
     }
 }
 /**
@@ -292,6 +314,10 @@ export interface MdFileResponse extends AdditionalDataHolder, Parsable {
      */
     fileName?: string | null;
     /**
+     * The headings property
+     */
+    headings?: MdHeading[] | null;
+    /**
      * The id property
      */
     id?: Guid | null;
@@ -317,6 +343,24 @@ export interface MdFileUploadRequest extends AdditionalDataHolder, Parsable {
      * The name property
      */
     name?: string | null;
+}
+export interface MdHeading extends AdditionalDataHolder, Parsable {
+    /**
+     * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+     */
+    additionalData?: Record<string, unknown>;
+    /**
+     * The heading property
+     */
+    heading?: string | null;
+    /**
+     * The level property
+     */
+    level?: number | null;
+    /**
+     * The lineNumber property
+     */
+    lineNumber?: number | null;
 }
 export interface ProblemDetails extends AdditionalDataHolder, ApiError, Parsable {
     /**
@@ -402,6 +446,7 @@ export function serializeMdFileResponse(writer: SerializationWriter, mdFileRespo
         writer.writeStringValue("content", mdFileResponse.content);
         writer.writeDateValue("deletedAt", mdFileResponse.deletedAt);
         writer.writeStringValue("fileName", mdFileResponse.fileName);
+        writer.writeCollectionOfObjectValues<MdHeading>("headings", mdFileResponse.headings, serializeMdHeading);
         writer.writeGuidValue("id", mdFileResponse.id);
         writer.writeDateValue("updatedAt", mdFileResponse.updatedAt);
         writer.writeDateValue("uploadedAt", mdFileResponse.uploadedAt);
@@ -418,6 +463,19 @@ export function serializeMdFileUploadRequest(writer: SerializationWriter, mdFile
         writer.writeStringValue("content", mdFileUploadRequest.content);
         writer.writeStringValue("name", mdFileUploadRequest.name);
         writer.writeAdditionalData(mdFileUploadRequest.additionalData);
+    }
+}
+/**
+ * Serializes information the current object
+ * @param writer Serialization writer to use to serialize this model
+ */
+// @ts-ignore
+export function serializeMdHeading(writer: SerializationWriter, mdHeading: Partial<MdHeading> | undefined | null = {}) : void {
+    if (mdHeading) {
+        writer.writeStringValue("heading", mdHeading.heading);
+        writer.writeNumberValue("level", mdHeading.level);
+        writer.writeNumberValue("lineNumber", mdHeading.lineNumber);
+        writer.writeAdditionalData(mdHeading.additionalData);
     }
 }
 /**

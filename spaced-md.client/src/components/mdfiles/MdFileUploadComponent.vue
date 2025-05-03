@@ -26,7 +26,7 @@ const onUpload = async (event: any) => {
         try {
           const MdFileUploadRequest = {
             name: file.name,
-            content: String(content)
+            content: String(content),
           };
           await api.mdfile.put(MdFileUploadRequest);
           await tempSuccessToast(`File ${file.name} uploaded.`);

@@ -6,21 +6,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace spaced_md.Infrastructure.Database
 {
-    public class MarkdownFile
+    public class MarkdownFile : AuditableEntity
     {
         public Guid Id { get; set; }
         public required string FileName { get; set; }
         public required string Content { get; set; }
+        public required string Md5 { get; set; }
         public required string ApplicationUserId { get; set; }
         public IdentityUser? ApplicationUser { get; set; }
         public ICollection<Card>? Cards { get; set; }
-        public DateTime UploadedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; }
-        public bool IsDeleted => DeletedAt.HasValue;
     }
 
-    public class Card
+    public enum UsageType
+    {
+        EntireFile,
+        PartialFile
+    }
+
+    public class Card : AuditableEntity
     {
         public Guid Id { get; set; }
         public required string Title { get; set; }
@@ -30,10 +33,8 @@ namespace spaced_md.Infrastructure.Database
         public required string ApplicationUserId { get; set; }
         public IdentityUser? ApplicationUser { get; set; }
         public ICollection<GroupCard>? Groups { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public DateTime? DeletedAt { get; set; }
-        public bool IsDeleted => DeletedAt.HasValue;
+        public UsageType UsageType { get; set; }
+        public string? HeadingLineNr { get; set; }
     }
 
     public class Group

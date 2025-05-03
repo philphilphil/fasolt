@@ -352,6 +352,14 @@
             "type": "string",
             "format": "date-time"
           },
+          "headings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MdHeading"
+            },
+            "default": null,
+            "nullable": true
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time",
@@ -378,6 +386,27 @@
           },
           "content": {
             "type": "string"
+          }
+        }
+      },
+      "MdHeading": {
+        "required": [
+          "heading",
+          "level",
+          "lineNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "heading": {
+            "type": "string"
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

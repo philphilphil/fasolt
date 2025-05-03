@@ -24,7 +24,8 @@ namespace spaced_md.Server
                 Id = Guid.CreateVersion7(),
                 FileName = request.Name,
                 Content = request.Content,
-                UploadedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                Md5 = "", // TODO
                 ApplicationUserId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new Exception("User not found"),
             };
 

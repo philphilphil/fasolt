@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using spaced_md.Infrastructure.Database;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Identity;
+using SpacedMd.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +58,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<IMarkdownService, MarkdownService>();
 var app = builder.Build();
 
 app.UseDefaultFiles();
