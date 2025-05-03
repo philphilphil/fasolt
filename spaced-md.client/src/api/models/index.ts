@@ -4,7 +4,7 @@
 // @ts-ignore
 import { type AdditionalDataHolder, type ApiError, type Guid, type Parsable, type ParseNode, type SerializationWriter } from '@microsoft/kiota-abstractions';
 
-export interface CardCreateRequest extends AdditionalDataHolder, Parsable {
+export interface CardRequest extends AdditionalDataHolder, Parsable {
     /**
      * Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
      */
@@ -14,13 +14,25 @@ export interface CardCreateRequest extends AdditionalDataHolder, Parsable {
      */
     content?: string | null;
     /**
-     * The markdownFileId property
+     * The heading property
      */
-    markdownFileId?: Guid | null;
+    heading?: string | null;
+    /**
+     * The headingLineNr property
+     */
+    headingLineNr?: string | null;
+    /**
+     * The mdFileId property
+     */
+    mdFileId?: Guid | null;
     /**
      * The title property
      */
     title?: string | null;
+    /**
+     * The usageType property
+     */
+    usageType?: CardUsageType | null;
 }
 export interface CardResponse extends AdditionalDataHolder, Parsable {
     /**
@@ -31,6 +43,10 @@ export interface CardResponse extends AdditionalDataHolder, Parsable {
      * The content property
      */
     content?: string | null;
+    /**
+     * The heading property
+     */
+    heading?: string | null;
     /**
      * The id property
      */
@@ -44,9 +60,9 @@ export interface CardResponse extends AdditionalDataHolder, Parsable {
      */
     mdFileName?: string | null;
     /**
-     * The name property
+     * The title property
      */
-    name?: string | null;
+    title?: string | null;
     /**
      * The updatedAt property
      */
@@ -58,16 +74,17 @@ export interface CardResponse extends AdditionalDataHolder, Parsable {
     /**
      * The usageType property
      */
-    usageType?: number | null;
+    usageType?: CardUsageType | null;
 }
+export type CardUsageType = (typeof CardUsageTypeObject)[keyof typeof CardUsageTypeObject];
 /**
  * Creates a new instance of the appropriate class based on discriminator value
  * @param parseNode The parse node to use to read the discriminator value and create the object
- * @returns {CardCreateRequest}
+ * @returns {CardRequest}
  */
 // @ts-ignore
-export function createCardCreateRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
-    return deserializeIntoCardCreateRequest;
+export function createCardRequestFromDiscriminatorValue(parseNode: ParseNode | undefined) : ((instance?: Parsable) => Record<string, (node: ParseNode) => void>) {
+    return deserializeIntoCardRequest;
 }
 /**
  * Creates a new instance of the appropriate class based on discriminator value
@@ -173,11 +190,14 @@ export function createUserInfoUpdateRequestFromDiscriminatorValue(parseNode: Par
  * @returns {Record<string, (node: ParseNode) => void>}
  */
 // @ts-ignore
-export function deserializeIntoCardCreateRequest(cardCreateRequest: Partial<CardCreateRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
+export function deserializeIntoCardRequest(cardRequest: Partial<CardRequest> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
-        "content": n => { cardCreateRequest.content = n.getStringValue(); },
-        "markdownFileId": n => { cardCreateRequest.markdownFileId = n.getGuidValue(); },
-        "title": n => { cardCreateRequest.title = n.getStringValue(); },
+        "content": n => { cardRequest.content = n.getStringValue(); },
+        "heading": n => { cardRequest.heading = n.getStringValue(); },
+        "headingLineNr": n => { cardRequest.headingLineNr = n.getStringValue(); },
+        "mdFileId": n => { cardRequest.mdFileId = n.getGuidValue(); },
+        "title": n => { cardRequest.title = n.getStringValue(); },
+        "usageType": n => { cardRequest.usageType = n.getEnumValue<CardUsageType>(CardUsageTypeObject); },
     }
 }
 /**
@@ -188,13 +208,14 @@ export function deserializeIntoCardCreateRequest(cardCreateRequest: Partial<Card
 export function deserializeIntoCardResponse(cardResponse: Partial<CardResponse> | undefined = {}) : Record<string, (node: ParseNode) => void> {
     return {
         "content": n => { cardResponse.content = n.getStringValue(); },
+        "heading": n => { cardResponse.heading = n.getStringValue(); },
         "id": n => { cardResponse.id = n.getGuidValue(); },
         "mdFileId": n => { cardResponse.mdFileId = n.getGuidValue(); },
         "mdFileName": n => { cardResponse.mdFileName = n.getStringValue(); },
-        "name": n => { cardResponse.name = n.getStringValue(); },
+        "title": n => { cardResponse.title = n.getStringValue(); },
         "updatedAt": n => { cardResponse.updatedAt = n.getDateValue(); },
         "uploadedAt": n => { cardResponse.uploadedAt = n.getDateValue(); },
-        "usageType": n => { cardResponse.usageType = n.getNumberValue(); },
+        "usageType": n => { cardResponse.usageType = n.getEnumValue<CardUsageType>(CardUsageTypeObject); },
     }
 }
 /**
@@ -455,12 +476,15 @@ export interface RegisterRequest extends AdditionalDataHolder, Parsable {
  * @param writer Serialization writer to use to serialize this model
  */
 // @ts-ignore
-export function serializeCardCreateRequest(writer: SerializationWriter, cardCreateRequest: Partial<CardCreateRequest> | undefined | null = {}) : void {
-    if (cardCreateRequest) {
-        writer.writeStringValue("content", cardCreateRequest.content);
-        writer.writeGuidValue("markdownFileId", cardCreateRequest.markdownFileId);
-        writer.writeStringValue("title", cardCreateRequest.title);
-        writer.writeAdditionalData(cardCreateRequest.additionalData);
+export function serializeCardRequest(writer: SerializationWriter, cardRequest: Partial<CardRequest> | undefined | null = {}) : void {
+    if (cardRequest) {
+        writer.writeStringValue("content", cardRequest.content);
+        writer.writeStringValue("heading", cardRequest.heading);
+        writer.writeStringValue("headingLineNr", cardRequest.headingLineNr);
+        writer.writeGuidValue("mdFileId", cardRequest.mdFileId);
+        writer.writeStringValue("title", cardRequest.title);
+        writer.writeEnumValue<CardUsageType>("usageType", cardRequest.usageType);
+        writer.writeAdditionalData(cardRequest.additionalData);
     }
 }
 /**
@@ -471,13 +495,14 @@ export function serializeCardCreateRequest(writer: SerializationWriter, cardCrea
 export function serializeCardResponse(writer: SerializationWriter, cardResponse: Partial<CardResponse> | undefined | null = {}) : void {
     if (cardResponse) {
         writer.writeStringValue("content", cardResponse.content);
+        writer.writeStringValue("heading", cardResponse.heading);
         writer.writeGuidValue("id", cardResponse.id);
         writer.writeGuidValue("mdFileId", cardResponse.mdFileId);
         writer.writeStringValue("mdFileName", cardResponse.mdFileName);
-        writer.writeStringValue("name", cardResponse.name);
+        writer.writeStringValue("title", cardResponse.title);
         writer.writeDateValue("updatedAt", cardResponse.updatedAt);
         writer.writeDateValue("uploadedAt", cardResponse.uploadedAt);
-        writer.writeNumberValue("usageType", cardResponse.usageType);
+        writer.writeEnumValue<CardUsageType>("usageType", cardResponse.usageType);
         writer.writeAdditionalData(cardResponse.additionalData);
     }
 }
@@ -640,5 +665,9 @@ export interface UserInfoUpdateRequest extends AdditionalDataHolder, Parsable {
      */
     oldPassword?: string | null;
 }
+export const CardUsageTypeObject = {
+    EntireFile: "EntireFile",
+    PartialFile: "PartialFile",
+} as const;
 /* tslint:enable */
 /* eslint-enable */

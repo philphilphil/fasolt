@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, defineExpose, inject } from 'vue';
+import { ref, onMounted, defineExpose, inject, defineEmits } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import { useConfirm } from "primevue/useconfirm";
 
 const confirm = useConfirm();
+const emit = defineEmits(['editCard']);
 
 const api = inject<SpacedMdApiClient>('api');
 if (!api) throw new Error('API client not provided');
@@ -53,9 +54,13 @@ function deleteCard(id: string) {
   });
 }
 
+function editCard(id: string) {
+  emit('editCard', id);
+}
+
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  name: { value: null, matchMode: FilterMatchMode.CONTAINS }
+  title: { value: null, matchMode: FilterMatchMode.CONTAINS }
 });
 </script>
 
@@ -66,12 +71,12 @@ const filters = ref({
     currentPageReportTemplate="Total: {totalRecords}">
     <Column header="Actions" style="min-width: 11rem;">
       <template #body="{ data }">
-        <Button icon="pi pi-eye" class="p-button-info m-1" @click="viewCard(data.id)" />
+        <!-- <Button icon="pi pi-eye" class="p-button-info m-1" @click="viewCard(data.id)" /> -->
         <Button icon="pi pi-pencil" class="p-button-warning m-1" @click="editCard(data.id)" />
         <Button icon="pi pi-trash" class="p-button-danger m-1" @click="deleteCard(data.id)" severity="danger" />
       </template>
     </Column>
-    <Column field="name" header="Name" style="min-width: 10rem" sortable>
+    <Column field="title" header="Name" style="min-width: 10rem" sortable>
       <template #filter="{ filterModel, filterCallback }">
         <InputText v-model="filterModel.value" placeholder="Filter by name" @input="filterCallback()" />
       </template>

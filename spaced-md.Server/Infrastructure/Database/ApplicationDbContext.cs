@@ -1,8 +1,7 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using spaced_md.Server;
 
 namespace spaced_md.Infrastructure.Database
 {
@@ -17,11 +16,7 @@ namespace spaced_md.Infrastructure.Database
         public ICollection<Card>? Cards { get; set; }
     }
 
-    public enum UsageType
-    {
-        EntireFile,
-        PartialFile
-    }
+
 
     public class Card : AuditableEntity
     {
@@ -33,8 +28,10 @@ namespace spaced_md.Infrastructure.Database
         public required string ApplicationUserId { get; set; }
         public IdentityUser? ApplicationUser { get; set; }
         public ICollection<GroupCard>? Groups { get; set; }
-        public UsageType UsageType { get; set; }
+        public CardUsageType UsageType { get; set; }
+        public string? Heading { get; set; }
         public string? HeadingLineNr { get; set; }
+
     }
 
     public class Group

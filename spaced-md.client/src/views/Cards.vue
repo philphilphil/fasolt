@@ -1,40 +1,31 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import Card from 'primevue/card';
-import AddCardDialog from '@/components/cards/AddCardDialog.vue';
+import CardDialog from '@/components/cards/AddCardDialog.vue';
 import CardsDataTableComponent from '@/components/cards/CardsDataTableComponent.vue';
 
-interface CardItem {
-  id: number;
-  title: string;
-  content: string;
+const dialogVisible = ref(false);
+const cardToEdit = ref<string | null>("");
+
+function openAddDialog() {
+  cardToEdit.value = null;
+  dialogVisible.value = true;
 }
 
-const cards = ref<CardItem[]>([
-  { id: 1, title: 'Card 1', content: 'This is the first cue card.' },
-  { id: 2, title: 'Card 2', content: 'This is the second cue card.' },
-  { id: 3, title: 'Card 3', content: 'This is the third cue card.' }
-]);
+function openEditDialog(id: string) {
+  cardToEdit.value = id;
+  dialogVisible.value = true;
+}
 
-const dialogVisible = ref(false);
+function refreshCards() {
+  // Trigger a reload in CardsDataTableComponent
+}
 </script>
 
 <template>
-  <Button label="Add Card" icon="pi pi-plus" @click="dialogVisible = true" />
-  <div class="card-container">
-    <Card
-      v-for="card in cards"
-      :key="card.id"
-      :title="card.title"
-      class="cue-card"
-    >
-      <template #content>
-        <p>{{ card.content }}</p>
-      </template>
-    </Card>
-  </div>
-  <CardsDataTableComponent />
-  <AddCardDialog v-model:visible="dialogVisible" />
+  <Button label="Add Card" icon="pi pi-plus" @click="openAddDialog" class="mb-5"/>
+  <CardsDataTableComponent @editCard="openEditDialog" />
+  <CardDialog v-model:visible="dialogVisible" :cardId="cardToEdit!" @refreshCards="refreshCards" />
   Todo:<br />
   - Add automatic generation of cards from a file (a card for each heading)
 </template>

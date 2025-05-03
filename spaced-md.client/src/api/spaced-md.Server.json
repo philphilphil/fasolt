@@ -240,6 +240,28 @@
         }
       }
     },
+    "/card": {
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/mdfiles": {
       "put": {
         "tags": [
@@ -321,37 +343,18 @@
           }
         }
       }
-    },
-    "/card": {
-      "post": {
-        "tags": [
-          "Cards"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CardCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
     }
   },
   "components": {
     "schemas": {
-      "CardCreateRequest": {
+      "CardRequest": {
         "required": [
           "title",
           "content",
-          "markdownFileId"
+          "mdFileId",
+          "usageType",
+          "heading",
+          "headingLineNr"
         ],
         "type": "object",
         "properties": {
@@ -361,21 +364,33 @@
           "content": {
             "type": "string"
           },
-          "markdownFileId": {
+          "mdFileId": {
             "type": "string",
             "format": "uuid"
+          },
+          "usageType": {
+            "$ref": "#/components/schemas/CardUsageType"
+          },
+          "heading": {
+            "type": "string",
+            "nullable": true
+          },
+          "headingLineNr": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
       "CardResponse": {
         "required": [
           "id",
-          "name",
+          "title",
           "content",
           "usageType",
           "mdFileName",
           "mdFileId",
-          "uploadedAt"
+          "uploadedAt",
+          "heading"
         ],
         "type": "object",
         "properties": {
@@ -383,14 +398,14 @@
             "type": "string",
             "format": "uuid"
           },
-          "name": {
+          "title": {
             "type": "string"
           },
           "content": {
             "type": "string"
           },
           "usageType": {
-            "$ref": "#/components/schemas/UsageType"
+            "$ref": "#/components/schemas/CardUsageType"
           },
           "mdFileName": {
             "type": "string"
@@ -403,6 +418,10 @@
             "type": "string",
             "format": "date-time"
           },
+          "heading": {
+            "type": "string",
+            "nullable": true
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time",
@@ -410,6 +429,12 @@
             "nullable": true
           }
         }
+      },
+      "CardUsageType": {
+        "enum": [
+          "EntireFile",
+          "PartialFile"
+        ]
       },
       "IdentityError": {
         "type": "object",
@@ -562,9 +587,6 @@
             "type": "string"
           }
         }
-      },
-      "UsageType": {
-        "type": "integer"
       },
       "UserInfoResponse": {
         "required": [
