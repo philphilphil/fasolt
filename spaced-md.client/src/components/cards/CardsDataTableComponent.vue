@@ -15,7 +15,7 @@ const cards = ref<CardResponse[]>([]);
 
 async function loadData() {
   try {
-    const result = await api!.card.get();
+    const result = await api!.cards.get();
     cards.value = result || [];
   } catch (error) {
     console.error("Failed to load cards:", error);

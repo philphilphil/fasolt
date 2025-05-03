@@ -7,9 +7,9 @@ import { createCardResponseFromDiscriminatorValue, type CardResponse } from '../
 import { type BaseRequestBuilder, type Parsable, type ParsableFactory, type RequestConfiguration, type RequestInformation, type RequestsMetadata } from '@microsoft/kiota-abstractions';
 
 /**
- * Builds and executes requests for operations under /card/{id}
+ * Builds and executes requests for operations under /cards/{id}
  */
-export interface CardItemRequestBuilder extends BaseRequestBuilder<CardItemRequestBuilder> {
+export interface CardsItemRequestBuilder extends BaseRequestBuilder<CardsItemRequestBuilder> {
     /**
      * @param requestConfiguration Configuration for the request such as headers, query parameters, and middleware options.
      * @returns {Promise<ArrayBuffer>}
@@ -34,18 +34,18 @@ export interface CardItemRequestBuilder extends BaseRequestBuilder<CardItemReque
 /**
  * Uri template for the request builder.
  */
-export const CardItemRequestBuilderUriTemplate = "{+baseurl}/card/{id}";
+export const CardsItemRequestBuilderUriTemplate = "{+baseurl}/cards/{id}";
 /**
  * Metadata for all the requests in the request builder.
  */
-export const CardItemRequestBuilderRequestsMetadata: RequestsMetadata = {
+export const CardsItemRequestBuilderRequestsMetadata: RequestsMetadata = {
     delete: {
-        uriTemplate: CardItemRequestBuilderUriTemplate,
+        uriTemplate: CardsItemRequestBuilderUriTemplate,
         adapterMethodName: "sendPrimitive",
         responseBodyFactory:  "ArrayBuffer",
     },
     get: {
-        uriTemplate: CardItemRequestBuilderUriTemplate,
+        uriTemplate: CardsItemRequestBuilderUriTemplate,
         responseBodyContentType: "application/json",
         adapterMethodName: "send",
         responseBodyFactory:  createCardResponseFromDiscriminatorValue,

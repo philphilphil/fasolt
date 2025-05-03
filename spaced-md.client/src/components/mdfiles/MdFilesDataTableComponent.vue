@@ -15,7 +15,7 @@ const mdFiles = ref<MdFileResponse[]>([]);
 
 async function loadData() {
   try {
-    const result = await api!.mdfile.get();
+    const result = await api!.mdfiles.get();
     mdFiles.value = result || [];
   } catch (error) {
     console.error("Failed to load md files:", error);

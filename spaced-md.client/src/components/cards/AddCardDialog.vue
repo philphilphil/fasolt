@@ -43,7 +43,7 @@ const mdRaw = ref<string | null>(null);
 
 async function loadMdFiles() {
   try {
-    const result = await api!.mdfile.get();
+    const result = await api!.mdfiles.get();
     mdFiles.value = result || [];
   } catch (error) {
     failToast("Failed to load md files:");
@@ -63,7 +63,7 @@ watch(selectedMdFile, (selected) => {
 
 async function loadMdFileDetails(mdFileId: string) {
   try {
-    const result = await api!.mdfile.byId(mdFileId).get();
+    const result = await api!.mdfiles.byId(mdFileId).get();
     mdFile.value = result;
     mdRaw.value = mdFile.value!.content!;
     mdPreview.value = await mdToHtml(mdFile.value!.content!);

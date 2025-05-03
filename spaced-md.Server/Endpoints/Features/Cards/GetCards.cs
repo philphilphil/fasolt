@@ -13,14 +13,19 @@ namespace spaced_md.Server
         public record CardResponse(Guid Id, string Name, string Content, UsageType UsageType, string MdFileName, Guid MdFileId, DateTime UploadedAt, DateTime? UpdatedAt = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("card/{id}", SingleHandler)
+            app.MapGet("cards/{id}", SingleHandler)
                 .WithTags("Cards")
                 .Produces<CardResponse>()
                 .RequireAuthorization();
 
-            app.MapGet("card", AllHandler)
+            app.MapGet("cards", AllHandler)
                 .WithTags("Cards")
                 .Produces<CardResponse[]>()
+                .RequireAuthorization();
+
+            app.MapDelete("cards/{id}", DeleteHandler)
+                .WithTags("Cards")
+                .Produces(StatusCodes.Status200OK)
                 .RequireAuthorization();
         }
 
@@ -57,6 +62,21 @@ namespace spaced_md.Server
 
             var cards = usersCards.Select(x => new CardResponse(x.Id, x.Title, x.Content, x.UsageType, x.MarkdownFile!.FileName, x.MarkdownFileId, x.CreatedAt, x.UpdatedAt)).ToArray();
             return Results.Ok(cards);
+        }
+
+        public static IResult DeleteHandler(HttpContext httpContext, Guid? id, ApplicationDbContext context)
+        {
+            var userId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var card = context.Cards
+                .FirstOrDefault(x => x.ApplicationUserId == userId && x.Id == id);
+            if (card == null)
+                return Results.NotFound("Card not found");
+
+            context.Cards.Remove(card);
+            context.SaveChanges();
+
+            return Results.Ok();
         }
     }
 }

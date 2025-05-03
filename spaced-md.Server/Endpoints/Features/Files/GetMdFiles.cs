@@ -12,12 +12,12 @@ namespace spaced_md.Server
         public record MdFileResponse(Guid Id, string FileName, string Content, DateTime UploadedAt, List<MdHeading>? headings = null, DateTime? UpdatedAt = null, DateTime? DeletedAt = null);
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapGet("mdfile/{id}", SingleHandler)
+            app.MapGet("mdfiles/{id}", SingleHandler)
                 .WithTags("MdFiles")
                 .Produces<MdFileResponse>()
                 .RequireAuthorization();
 
-            app.MapGet("mdfile", AllHandler)
+            app.MapGet("mdfiles", AllHandler)
                 .WithTags("MdFiles")
                 .Produces<MdFileResponse[]>()
                 .RequireAuthorization();

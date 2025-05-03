@@ -157,7 +157,7 @@
         }
       }
     },
-    "/card/{id}": {
+    "/cards/{id}": {
       "get": {
         "tags": [
           "Cards"
@@ -185,9 +185,30 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Cards"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
-    "/card": {
+    "/cards": {
       "get": {
         "tags": [
           "Cards"
@@ -217,29 +238,9 @@
             }
           }
         }
-      },
-      "post": {
-        "tags": [
-          "Cards"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CardCreateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
       }
     },
-    "/mdfile": {
+    "/mdfiles": {
       "put": {
         "tags": [
           "MdFiles"
@@ -291,7 +292,7 @@
         }
       }
     },
-    "/mdfile/{id}": {
+    "/mdfiles/{id}": {
       "get": {
         "tags": [
           "MdFiles"
@@ -317,6 +318,28 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/card": {
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
