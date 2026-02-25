@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.1.1",
   "info": {
     "title": "spaced-md.Server | v1",
     "version": "1.0.0"
@@ -372,12 +372,16 @@
             "$ref": "#/components/schemas/CardUsageType"
           },
           "heading": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "headingLineNr": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -419,14 +423,17 @@
             "format": "date-time"
           },
           "heading": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "default": null,
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -505,24 +512,27 @@
             "format": "date-time"
           },
           "headings": {
-            "type": "array",
+            "type": [
+              "null",
+              "array"
+            ],
             "items": {
               "$ref": "#/components/schemas/MdHeading"
-            },
-            "default": null,
-            "nullable": true
+            }
           },
           "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "default": null,
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           },
           "deletedAt": {
-            "type": "string",
-            "format": "date-time",
-            "default": null,
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -553,11 +563,19 @@
             "type": "string"
           },
           "level": {
-            "type": "integer",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "format": "int32"
           },
           "lineNumber": {
-            "type": "integer",
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "format": "int32"
           }
         }
@@ -612,12 +630,16 @@
         "type": "object",
         "properties": {
           "newEmail": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "newPassword": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "oldPassword": {
             "type": "string"
