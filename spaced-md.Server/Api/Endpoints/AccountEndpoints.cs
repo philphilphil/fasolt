@@ -1,0 +1,119 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+using SpacedMd.Server.Application.Dtos;
+using SpacedMd.Server.Domain.Entities;
+
+namespace SpacedMd.Server.Api.Endpoints;
+
+public static class AccountEndpoints
+{
+    public static void MapAccountEndpoints(this WebApplication app)
+    {
+        var group = app.MapGroup("/api/account");
+
+        group.MapGet("/me", GetMe).RequireAuthorization();
+        group.MapPut("/profile", UpdateProfile).RequireAuthorization();
+        group.MapPut("/email", ChangeEmail).RequireAuthorization();
+        group.MapPut("/password", ChangePassword).RequireAuthorization();
+        group.MapPost("/forgot-password", ForgotPassword);
+        group.MapPost("/reset-password", ResetPassword);
+    }
+
+    private static async Task<IResult> GetMe(
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));
+    }
+
+    private static async Task<IResult> UpdateProfile(
+        UpdateProfileRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        user.DisplayName = request.DisplayName;
+        var result = await userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));
+    }
+
+    private static async Task<IResult> ChangeEmail(
+        ChangeEmailRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (!await userManager.CheckPasswordAsync(user, request.CurrentPassword))
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["currentPassword"] = ["Current password is incorrect."]
+            });
+        var existingUser = await userManager.FindByEmailAsync(request.NewEmail);
+        if (existingUser is not null && existingUser.Id != user.Id)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["newEmail"] = ["This email is already in use."]
+            });
+        var token = await userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
+        var result = await userManager.ChangeEmailAsync(user, request.NewEmail, token);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+        user.UserName = request.NewEmail;
+        await userManager.UpdateAsync(user);
+        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));
+    }
+
+    private static async Task<IResult> ChangePassword(
+        ChangePasswordRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> ForgotPassword(
+        ForgotPasswordRequest request,
+        UserManager<AppUser> userManager,
+        IEmailSender<AppUser> emailSender)
+    {
+        var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is not null)
+        {
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var resetLink = $"/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(token)}";
+            await emailSender.SendPasswordResetLinkAsync(user, request.Email, resetLink);
+        }
+        // Always return OK to prevent email enumeration
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> ResetPassword(
+        ResetPasswordRequest request,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.FindByEmailAsync(request.Email);
+        if (user is null)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Invalid or expired reset link."]
+            });
+        var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Invalid or expired reset link."]
+            });
+        return Results.Ok();
+    }
+}
