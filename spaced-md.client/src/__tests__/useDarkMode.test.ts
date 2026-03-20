@@ -7,7 +7,7 @@ describe('useDarkMode', () => {
   })
 
   it('adds dark class when system prefers dark', () => {
-    const { isDark } = useDarkMode()
+    const { isDark: _isDark } = useDarkMode()
     expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
 })
