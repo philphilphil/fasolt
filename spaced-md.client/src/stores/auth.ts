@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiFetch, type ApiError } from '@/api/client'
+import { apiFetch } from '@/api/client'
 
 interface User {
   email: string

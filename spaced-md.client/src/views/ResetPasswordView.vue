@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/api/client'
 
-const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
