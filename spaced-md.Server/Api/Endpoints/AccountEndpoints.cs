@@ -11,12 +11,19 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/api/account");
 
+        group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
         group.MapPut("/profile", UpdateProfile).RequireAuthorization();
         group.MapPut("/email", ChangeEmail).RequireAuthorization();
         group.MapPut("/password", ChangePassword).RequireAuthorization();
         group.MapPost("/forgot-password", ForgotPassword);
         group.MapPost("/reset-password", ResetPassword);
+    }
+
+    private static async Task<IResult> Logout(SignInManager<AppUser> signInManager)
+    {
+        await signInManager.SignOutAsync();
+        return Results.Ok();
     }
 
     private static async Task<IResult> GetMe(

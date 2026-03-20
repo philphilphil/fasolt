@@ -44,9 +44,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await apiFetch('/identity/logout', {
+      await apiFetch('/account/logout', {
         method: 'POST',
-        body: JSON.stringify({}),
       })
     } finally {
       user.value = null
