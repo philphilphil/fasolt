@@ -45,7 +45,7 @@ Add custom `AccountEndpoints` at `/api/account`:
 |--------|------|------|---------|
 | GET | `/api/account/me` | Yes | Return current user email + display name |
 | PUT | `/api/account/profile` | Yes | Update display name |
-| PUT | `/api/account/email` | Yes | Change email (requires current password) |
+| PUT | `/api/account/email` | Yes | Change email (requires current password, validates uniqueness — returns structured error if taken) |
 | PUT | `/api/account/password` | Yes | Change password (requires current password) |
 | POST | `/api/account/forgot-password` | No | Send password reset email |
 | POST | `/api/account/reset-password` | No | Reset password with token |
@@ -134,7 +134,7 @@ Auth pages use a minimal centered layout (no sidebar/nav). The existing `AppLayo
 Replace the placeholder avatar circle with a dropdown menu:
 - Shows user display name or email
 - Dropdown contains: "Settings" link, "Log out" button
-- Logout calls `auth.logout()` which clears session and redirects to `/login`
+- Logout calls `auth.logout()` which clears session and redirects to `/login` (serves as landing page for unauthenticated users)
 
 ### Settings View Update
 
