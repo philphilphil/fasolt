@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SpacedMd.Server.Api.Endpoints;
 using SpacedMd.Server.Domain.Entities;
 using SpacedMd.Server.Infrastructure.Data;
+using SpacedMd.Server.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,8 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromHours(1);
 });
+
+builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
 
 builder.Services.AddAuthorization();
 
