@@ -19,5 +19,68 @@ Users upload `.md` files and create flashcards from them — either from the ent
 
 ## Tech Stack
 
-- **Backend**: .NET 10
-- **Frontend**: Vue
+- **Backend**: .NET 10, ASP.NET Core Minimal API, EF Core + Npgsql
+- **Database**: Postgres 17 (via docker-compose)
+- **Frontend**: Vue 3 + TypeScript + Vite
+- **UI**: shadcn-vue + Tailwind CSS 3
+- **State**: Pinia
+- **Routing**: Vue Router
+- **Auth**: ASP.NET Core Identity (cookie-based)
+- **API Docs**: OpenAPI (built-in .NET 10)
+
+## Architecture
+
+Folder-based Clean Architecture (single .NET project):
+
+```
+spaced-md.Server/
+  Domain/           — entities, value objects, interfaces
+  Application/      — services, DTOs, use case logic
+  Infrastructure/   — EF Core DbContext, repositories, migrations
+  Api/              — endpoints, middleware, Program.cs
+```
+
+Endpoints use the static extension method pattern (e.g., `MapHealthEndpoints()`).
+
+## Repository Structure
+
+```
+docker-compose.yml          — Postgres container
+dev.sh                      — runs everything (docker + backend + frontend)
+spaced-md.sln               — .NET solution
+global.json                 — .NET SDK version pin
+spaced-md.Server/           — backend
+spaced-md.client/           — frontend (Vue 3 SPA)
+```
+
+## Build & Run
+
+```bash
+# Full stack (requires Docker)
+./dev.sh
+
+# Backend only
+dotnet run --project spaced-md.Server
+
+# Frontend only
+cd spaced-md.client && npm run dev
+
+# Database
+docker compose up -d        # start Postgres
+docker compose down          # stop Postgres
+```
+
+## Ports
+
+- **Backend**: http://localhost:5000
+- **Frontend**: http://localhost:5173 (proxies /api to backend)
+- **Postgres**: localhost:5432
+
+## Connection String
+
+`Host=localhost;Port=5432;Database=spacedmd;Username=spaced;Password=spaced_dev`
+
+## Key API Routes
+
+- `GET /api/health` — health check
+- `/api/identity/*` — ASP.NET Core Identity endpoints (register, login, etc.)
