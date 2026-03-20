@@ -8,6 +8,7 @@ import ReviewCard from '@/components/ReviewCard.vue'
 import RatingButtons from '@/components/RatingButtons.vue'
 import SessionComplete from '@/components/SessionComplete.vue'
 import KbdHint from '@/components/KbdHint.vue'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,11 +21,25 @@ const mockCards: Card[] = [
   { id: 'c3', deckId: 'deck-1', question: 'What is the difference between synchronous and asynchronous replication?', answer: 'Synchronous: write is confirmed only after all replicas acknowledge. Asynchronous: write is confirmed immediately, replicas update eventually.', sourceFile: 'distributed-systems.md', sourceSection: '## Replication', dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
 ]
 
+const { register, cleanup } = useKeyboardShortcuts()
+
 onMounted(() => {
   if (!review.isActive) {
     const deckId = route.params.deckId as string || 'deck-1'
     review.startSession(deckId, 'Distributed Systems', mockCards)
   }
+  register({
+    ' ': () => { if (!review.isFlipped && !review.isComplete) review.flip() },
+    '1': () => { if (review.isFlipped) review.rate('again') },
+    '2': () => { if (review.isFlipped) review.rate('hard') },
+    '3': () => { if (review.isFlipped) review.rate('good') },
+    '4': () => { if (review.isFlipped) review.rate('easy') },
+    'Escape': () => { review.endSession(); router.push('/') },
+  })
+})
+
+onUnmounted(() => {
+  cleanup()
 })
 
 function onRate(rating: ReviewRating) {
