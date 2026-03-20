@@ -39,7 +39,7 @@ const tabs = [
         </TabsList>
       </Tabs>
     </nav>
-    <main class="flex-1 px-4 py-5 sm:px-5">
+    <main class="flex-1 px-4 pb-16 pt-5 sm:px-5 sm:pb-5">
       <div class="mx-auto max-w-[1200px]">
         <slot />
       </div>

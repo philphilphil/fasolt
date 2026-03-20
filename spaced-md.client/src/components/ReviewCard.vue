@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Card } from '@/types'
 
-const props = defineProps<{ card: Card; isFlipped: boolean }>()
+defineProps<{ card: Card; isFlipped: boolean }>()
 defineEmits<{ flip: [] }>()
 </script>
 

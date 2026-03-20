@@ -6,7 +6,7 @@ defineProps<{ stat: Stat }>()
 </script>
 
 <template>
-  <Card class="border-border">
+  <Card class="border-border" :aria-label="`${stat.value} ${stat.label}`">
     <CardContent class="p-3">
       <div class="font-mono text-[22px] font-bold tracking-tight text-foreground">
         {{ stat.value }}
