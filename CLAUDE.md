@@ -80,6 +80,10 @@ docker compose down          # stop Postgres
 
 `Host=localhost;Port=5432;Database=spacedmd;Username=spaced;Password=spaced_dev`
 
+## Testing
+
+- **UI Tests**: Use Playwright (via MCP) for end-to-end UI testing
+
 ## Key API Routes
 
 - `GET /api/health` — health check
