@@ -4,6 +4,11 @@
 **Status:** Approved
 **Direction chosen:** Command Center — dark, dense, keyboard-friendly, information-rich
 
+## Terminology
+
+- **Deck**: A collection of flashcards created from a single markdown file. One file = one deck. The deck name is the file name (without `.md`).
+- **Group**: A user-created collection that can contain cards from multiple decks/files, for cross-topic study sessions.
+
 ## Design Principles
 
 1. **Everything visible** — no hidden state. Due counts, progress, stats are always on screen.
@@ -144,7 +149,6 @@ Rows are clickable — navigates to deck detail or starts review if cards are du
 | Context    | Key       | Action              |
 |------------|-----------|---------------------|
 | Global     | `⌘K`     | Focus search        |
-| Global     | `1-4`     | Navigate tabs       |
 | Review     | `Space`   | Flip card           |
 | Review     | `1`       | Rate: Again         |
 | Review     | `2`       | Rate: Hard          |
