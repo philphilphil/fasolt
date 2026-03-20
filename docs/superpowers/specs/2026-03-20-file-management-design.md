@@ -58,7 +58,9 @@ Upload a single `.md` file.
 Upload multiple `.md` files.
 
 - Input: `multipart/form-data` with `IFormFileCollection`
+- Max 20 files per request
 - Same per-file validation as single upload
+- Partial success: each file succeeds or fails independently (e.g., a duplicate filename fails that file only, others still upload)
 - Response: 200 with array of per-file results (success with metadata, or failure with reason)
 
 ### GET /api/files
@@ -71,8 +73,8 @@ List all files for the authenticated user.
 
 Get file detail with content.
 
-- Response: file metadata + `content` field (full content, frontmatter stripped server-side... actually no — frontmatter stripped client-side to keep API response lossless)
-- Returns full content; client strips frontmatter before rendering
+- Response: file metadata + `content` field (full original content including frontmatter)
+- Client strips frontmatter before rendering
 - 404 if file doesn't exist or belongs to another user
 
 ### DELETE /api/files/{id}
