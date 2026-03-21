@@ -20,7 +20,6 @@ public static class DeckEndpoints
         group.MapDelete("/{id:guid}", Delete);
         group.MapPost("/{id:guid}/cards", AddCards);
         group.MapDelete("/{id:guid}/cards/{cardId:guid}", RemoveCard);
-        group.MapPost("/{id:guid}/add-file", AddFileCards);
     }
 
     private static async Task<IResult> Create(
@@ -98,7 +97,7 @@ public static class DeckEndpoints
         var cards = await db.DeckCards
             .Where(dc => dc.DeckId == id && dc.Card.DeletedAt == null)
             .OrderBy(dc => dc.Card.DueAt)
-            .Select(dc => new DeckCardDto(dc.CardId, dc.Card.Front, dc.Card.CardType, dc.Card.State, dc.Card.DueAt))
+            .Select(dc => new DeckCardDto(dc.CardId, dc.Card.Front, dc.Card.Back, dc.Card.SourceFile, dc.Card.SourceHeading, dc.Card.State, dc.Card.DueAt))
             .ToListAsync();
 
         var dueCount = cards.Count(c => c.DueAt == null || c.DueAt <= now);
@@ -222,43 +221,4 @@ public static class DeckEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> AddFileCards(
-        Guid id,
-        AddFileToDeckRequest request,
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager,
-        AppDbContext db)
-    {
-        var user = await userManager.GetUserAsync(principal);
-        if (user is null) return Results.Unauthorized();
-
-        var deck = await db.Decks
-            .FirstOrDefaultAsync(d => d.Id == id && d.UserId == user.Id);
-
-        if (deck is null) return Results.NotFound();
-
-        var fileExists = await db.MarkdownFiles
-            .AnyAsync(f => f.Id == request.FileId && f.UserId == user.Id);
-
-        if (!fileExists) return Results.NotFound();
-
-        var cardIds = await db.Cards
-            .Where(c => c.FileId == request.FileId && c.UserId == user.Id)
-            .Select(c => c.Id)
-            .ToListAsync();
-
-        var existingCardIds = await db.DeckCards
-            .Where(dc => dc.DeckId == id && cardIds.Contains(dc.CardId))
-            .Select(dc => dc.CardId)
-            .ToHashSetAsync();
-
-        foreach (var cardId in cardIds)
-        {
-            if (!existingCardIds.Contains(cardId))
-                db.DeckCards.Add(new DeckCard { DeckId = id, CardId = cardId });
-        }
-
-        await db.SaveChangesAsync();
-        return Results.NoContent();
-    }
 }
