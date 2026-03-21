@@ -20,3 +20,12 @@ public record FileDetailDto(
     List<FileHeadingDto> Headings);
 
 public record BulkUploadResultDto(string FileName, bool Success, Guid? Id, string? Error);
+
+public record FileUpsertResponseDto(
+    Guid Id,
+    string FileName,
+    long SizeBytes,
+    DateTimeOffset UploadedAt,
+    bool IsUpdate,
+    List<FileHeadingDto> Headings,
+    List<OrphanedCardPreviewDto> OrphanedCards);

@@ -35,6 +35,70 @@ public static class FileEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
+        // Basic validation (same as SaveFile)
+        var fileName = Path.GetFileName(file.FileName);
+        if (!fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["file"] = ["Only .md files are accepted."]
+            });
+
+        if (file.Length > MaxFileSize)
+            return Results.UnprocessableEntity(new { error = "file_too_large", message = "File exceeds 1MB limit." });
+
+        using var reader = new StreamReader(file.OpenReadStream());
+        var content = await reader.ReadToEndAsync();
+
+        // Check for existing file (upsert)
+        var existing = await db.MarkdownFiles
+            .Include(f => f.Headings)
+            .FirstOrDefaultAsync(f => f.UserId == user.Id && f.FileName == fileName);
+
+        if (existing is not null)
+        {
+            // Upsert: update existing file
+            var existingCards = await db.Cards
+                .Where(c => c.FileId == existing.Id && c.UserId == user.Id)
+                .ToListAsync();
+
+            var comparison = FileComparer.Compare(content, existingCards);
+            var orphanedCards = comparison.OrphanedCards
+                .Select(c => new OrphanedCardPreviewDto(c.CardId, c.Front, c.SourceHeading))
+                .ToList();
+
+            existing.Content = content;
+            existing.SizeBytes = file.Length;
+            existing.UploadedAt = DateTimeOffset.UtcNow;
+
+            // Re-extract headings
+            db.FileHeadings.RemoveRange(existing.Headings);
+            var newHeadings = HeadingExtractor.Extract(content);
+            foreach (var (level, text, sortOrder) in newHeadings)
+            {
+                db.FileHeadings.Add(new FileHeading
+                {
+                    Id = Guid.NewGuid(),
+                    FileId = existing.Id,
+                    Level = level,
+                    Text = text,
+                    SortOrder = sortOrder
+                });
+            }
+
+            await db.SaveChangesAsync();
+
+            var headings = await db.FileHeadings
+                .Where(h => h.FileId == existing.Id)
+                .OrderBy(h => h.SortOrder)
+                .Select(h => new FileHeadingDto(h.Level, h.Text))
+                .ToListAsync();
+
+            return Results.Ok(new FileUpsertResponseDto(
+                existing.Id, existing.FileName, existing.SizeBytes,
+                existing.UploadedAt, true, headings, orphanedCards));
+        }
+
+        // New file: delegate to SaveFile (used by both Upload and BulkUpload)
         var (result, error) = await SaveFile(file, user.Id, db);
         if (error is not null)
             return Results.ValidationProblem(new Dictionary<string, string[]>
@@ -43,7 +107,13 @@ public static class FileEndpoints
             });
 
         await db.SaveChangesAsync();
-        return Results.Created($"/api/files/{result!.Id}", ToListItem(result));
+
+        var responseHeadings = result!.Headings.OrderBy(h => h.SortOrder)
+            .Select(h => new FileHeadingDto(h.Level, h.Text)).ToList();
+
+        return Results.Created($"/api/files/{result.Id}", new FileUpsertResponseDto(
+            result.Id, result.FileName, result.SizeBytes,
+            result.UploadedAt, false, responseHeadings, []));
     }
 
     private static async Task<IResult> BulkUpload(
