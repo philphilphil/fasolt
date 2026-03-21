@@ -92,22 +92,33 @@ docker compose down          # stop Postgres
 
 Feature requirements live in `docs/requirements/`. Each file is a self-contained spec for one feature area. `00-overview.md` contains the full overview and a map of all requirement files. To implement a feature, read the corresponding `XX-feature-name.md` file. After implementing a requirement, move it to `docs/requirements/done/`.
 
-## Generating Flashcards from Markdown Files
+## Generating Flashcard Markers in Markdown Files
 
-When asked to generate flashcards/questions from a `.md` file:
+When asked to generate questions/flashcards for a `.md` file (typically an Obsidian vault note):
 
-1. **Read the file** and detect its language (English, German, etc.). All generated questions and answers must be in that same language.
-2. **Scope**: If the user specifies sections or headings, only generate cards for those areas. If no sections are specified, generate for the entire file.
-3. **Quantity**: Keep it focused — aim for 2-5 cards per section. Prefer fewer high-quality questions over many shallow ones. Prioritize concepts that are worth memorizing (definitions, key distinctions, cause/effect, "why" questions). Skip trivial or obvious facts.
-4. **Format**: Each card needs a `front` (question) and `back` (answer). The back should be concise but complete — not a full paragraph, but enough to recall the concept.
-5. **Do NOT create cards immediately.** First, present the proposed cards to the user in a clear list:
+**What this does:** Add `?:: Question text` marker lines directly into the markdown file. These markers are what spaced-md uses to extract flashcards when the file is uploaded. The content below the marker (until the next heading or marker) becomes the card's answer.
+
+**Process:**
+
+1. **Read the file** and detect its language (English, German, etc.). All generated questions must be written in that same language.
+2. **Scope**: If the user specifies sections or headings, only add markers to those areas. If nothing is specified, cover the entire file.
+3. **Quantity**: 1-3 markers per section. Prefer fewer high-quality questions over many shallow ones. Focus on concepts worth memorizing — definitions, key distinctions, cause/effect, "why" questions. Skip trivial or obvious facts.
+4. **Do NOT edit the file immediately.** First, propose the questions to the user:
    ```
    Section: [heading]
-   1. Q: ... / A: ...
-   2. Q: ... / A: ...
+   1. ?:: What is X?
+   2. ?:: Why does Y happen?
    ```
-   Then ask: "Want me to create these cards? You can also ask me to adjust, remove, or add any."
-6. **Only after user approval**, create the cards via the API (`POST /api/cards`) with `cardType: "section"` (if from a heading) or `cardType: "file"` (if from the whole file), linking them to the source file and heading.
+   Then ask: "Want me to add these markers to the file? You can adjust, remove, or add any."
+5. **Only after user approval**, edit the file to insert the `?::` marker lines. Place each marker on its own line before the paragraph that answers the question. Do not alter any existing content — only add marker lines.
+
+**Marker format example:**
+```markdown
+## CAP Theorem
+
+?:: What is the CAP theorem?
+The CAP theorem states you can only have two of three: Consistency, Availability, Partition tolerance.
+```
 
 ## Key API Routes
 
