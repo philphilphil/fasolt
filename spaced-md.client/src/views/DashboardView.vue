@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useReviewStore } from '@/stores/review'
+import { useDecksStore } from '@/stores/decks'
 import StatGrid from '@/components/StatGrid.vue'
 import DeckTable from '@/components/DeckTable.vue'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ import type { Deck, Stat } from '@/types'
 const router = useRouter()
 const dashboard = useDashboardStore()
 const reviewStore = useReviewStore()
+const decksStore = useDecksStore()
 
 const dueCount = ref(0)
 const totalCards = ref(0)
@@ -33,10 +35,11 @@ onMounted(async () => {
     stats.value[0] = { label: 'Due', value: '—' }
     stats.value[1] = { label: 'Total', value: '—' }
   }
+  decksStore.fetchDecks()
 })
 
-function onSelectDeck(_deck: Deck) {
-  // Deck table is placeholder mock data — no-op until groups/decks are real
+function onSelectDeck(deck: Deck) {
+  router.push(`/decks/${deck.id}`)
 }
 
 function studyNow() {
@@ -53,6 +56,6 @@ function studyNow() {
       </Button>
     </div>
     <StatGrid :stats="stats" />
-    <DeckTable :decks="dashboard.decks" @select-deck="onSelectDeck" />
+    <DeckTable :decks="decksStore.decks" @select-deck="onSelectDeck" />
   </div>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import type { ReviewRating } from '@/types'
 import ProgressMeter from '@/components/ProgressMeter.vue'
@@ -10,6 +10,7 @@ import SessionComplete from '@/components/SessionComplete.vue'
 import KbdHint from '@/components/KbdHint.vue'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
+const route = useRoute()
 const router = useRouter()
 const review = useReviewStore()
 
@@ -24,7 +25,8 @@ const { register, cleanup } = useKeyboardShortcuts()
 
 onMounted(async () => {
   if (!review.isActive) {
-    await review.startSession()
+    const deckId = route.query.deckId as string | undefined
+    await review.startSession(deckId)
   }
   register({
     ' ': () => { if (!review.isFlipped && !review.isComplete) review.flipCard() },

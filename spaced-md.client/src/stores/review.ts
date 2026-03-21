@@ -36,10 +36,11 @@ export const useReviewStore = defineStore('review', () => {
     return Math.round((Date.now() - sessionStats.value.startTime) / 1000)
   })
 
-  async function startSession() {
+  async function startSession(deckId?: string) {
     loading.value = true
     try {
-      const cards = await apiFetch<DueCard[]>('/review/due')
+      const params = deckId ? `?deckId=${deckId}` : ''
+      const cards = await apiFetch<DueCard[]>(`/review/due${params}`)
       queue.value = cards
       currentIndex.value = 0
       isFlipped.value = false
