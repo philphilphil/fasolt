@@ -4,9 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useFilesStore } from '@/stores/files'
 import { useCardsStore } from '@/stores/cards'
 import { useMarkdown } from '@/composables/useMarkdown'
-import type { FileDetail } from '@/types'
+import type { FileDetail, FileUpdatePreview } from '@/types'
 import { Button } from '@/components/ui/button'
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
+import FileUpdatePreviewDialog from '@/components/FileUpdatePreviewDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,6 +26,10 @@ const createHeading = ref<string | undefined>(undefined)
 const createType = ref<'file' | 'section'>('file')
 const extracting = ref(false)
 const extractError = ref('')
+const updatePreview = ref<FileUpdatePreview | null>(null)
+const updateFile = ref<File | null>(null)
+const updateOpen = ref(false)
+const updateInput = ref<HTMLInputElement>()
 
 onMounted(async () => {
   try {
@@ -71,6 +76,40 @@ async function createFromFile() {
   }
 }
 
+async function handleUpdateFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const selected = input.files?.[0]
+  input.value = ''
+  if (!selected || !file.value) return
+
+  extracting.value = true
+  extractError.value = ''
+  try {
+    const preview = await files.previewUpdate(selected)
+    if (preview) {
+      updatePreview.value = preview
+      updateFile.value = selected
+      updateOpen.value = true
+    } else {
+      extractError.value = 'No existing file found to update.'
+    }
+  } catch {
+    extractError.value = 'Failed to preview update.'
+  } finally {
+    extracting.value = false
+  }
+}
+
+async function onUpdateConfirmed() {
+  if (file.value) {
+    try {
+      file.value = await files.getFileContent(file.value.id)
+    } catch {
+      router.replace('/files')
+    }
+  }
+}
+
 async function createFromSection(headingText: string) {
   if (!file.value) return
   extracting.value = true
@@ -105,6 +144,10 @@ async function createFromSection(headingText: string) {
       <div class="flex items-center gap-2">
         <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="extracting" @click="createFromFile">
           Create card
+        </Button>
+        <input ref="updateInput" type="file" accept=".md" hidden @change="handleUpdateFile" />
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="updateInput?.click()">
+          Update file
         </Button>
         <Button variant="outline" size="sm" class="h-7 text-xs" @click="showSource = !showSource">
           {{ showSource ? 'Preview' : 'Source' }}
@@ -157,6 +200,13 @@ async function createFromSection(headingText: string) {
       :initial-fronts="createFronts"
       :initial-back="createBack"
       :card-type="createType"
+    />
+
+    <FileUpdatePreviewDialog
+      v-model:open="updateOpen"
+      :preview="updatePreview"
+      :file="updateFile"
+      @confirmed="onUpdateConfirmed"
     />
   </div>
 </template>
