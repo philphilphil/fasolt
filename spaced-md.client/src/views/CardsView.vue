@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { h, ref, onMounted, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -93,7 +94,11 @@ const columns: ColumnDef<Card>[] = [
     header: 'Front',
     cell: ({ row }) => {
       const val = row.getValue('front') as string
-      return val.length > 60 ? val.slice(0, 60) + '…' : val
+      const display = val.length > 60 ? val.slice(0, 60) + '…' : val
+      return h(RouterLink, {
+        to: `/cards/${row.original.id}`,
+        class: 'hover:underline',
+      }, () => display)
     },
   },
   {

@@ -69,4 +69,10 @@
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   }
+  mark {
+    @apply bg-yellow-200 text-foreground rounded-sm px-0.5;
+  }
+  .dark mark {
+    @apply bg-yellow-500/30 text-yellow-200;
+  }
 }

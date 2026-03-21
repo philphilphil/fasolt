@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import TopBar from '@/components/TopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
@@ -16,13 +17,19 @@ const tabs = [
   { label: 'Decks', value: '/decks' },
   { label: 'Settings', value: '/settings' },
 ]
+
+const activeTab = computed(() => {
+  const path = route.path
+  const match = tabs.find(t => path === t.value || path.startsWith(t.value + '/'))
+  return match?.value ?? path
+})
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col">
     <TopBar />
     <nav class="hidden border-b border-border px-5 sm:block">
-      <Tabs :model-value="route.path">
+      <Tabs :model-value="activeTab">
         <TabsList class="h-auto gap-0 rounded-none bg-transparent p-0">
           <TabsTrigger
             v-for="tab in tabs"

@@ -115,7 +115,7 @@ async function savePassword() {
           </div>
           <div class="flex flex-col gap-1.5">
             <label for="email-password" class="text-sm font-medium">Current password</label>
-            <Input id="email-password" v-model="emailCurrentPassword" type="password" required autocomplete="current-password" />
+            <Input id="email-password" v-model="emailCurrentPassword" type="password" required autocomplete="off" />
           </div>
           <Button type="submit" size="sm" class="self-start">Update email</Button>
         </form>

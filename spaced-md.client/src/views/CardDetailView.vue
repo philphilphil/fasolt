@@ -6,6 +6,9 @@ import { useMarkdown } from '@/composables/useMarkdown'
 import type { Card } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +18,7 @@ const { render } = useMarkdown()
 const card = ref<Card | null>(null)
 const loading = ref(true)
 
+const deleteOpen = ref(false)
 const editing = ref(false)
 const front = ref('')
 const back = ref('')
@@ -59,7 +63,7 @@ async function save() {
   }
 }
 
-async function handleDelete() {
+async function confirmDelete() {
   if (!card.value) return
   await cardsStore.deleteCard(card.value.id)
   router.replace('/cards')
@@ -85,7 +89,7 @@ async function handleDelete() {
           variant="outline"
           size="sm"
           class="h-7 text-xs text-destructive hover:text-destructive"
-          @click="handleDelete"
+          @click="deleteOpen = true"
         >
           Delete
         </Button>
@@ -138,5 +142,21 @@ async function handleDelete() {
         <div class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.back)" />
       </div>
     </div>
+
+    <!-- Delete confirmation -->
+    <Dialog v-model:open="deleteOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete card</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this card? It will be removed from study.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="deleteOpen = false">Cancel</Button>
+          <Button variant="destructive" @click="confirmDelete">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
