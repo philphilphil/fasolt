@@ -82,6 +82,7 @@ app.MapCardEndpoints();
 app.MapReviewEndpoints();
 app.MapDeckEndpoints();
 app.MapSearchEndpoints();
+app.MapApiTokenEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>();
 
 app.Run();
