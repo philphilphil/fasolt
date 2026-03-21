@@ -27,20 +27,24 @@ Remove:
 - `CardType` (string — was "file", "section", "custom"; no longer meaningful)
 
 Add:
-- `SourceFile` (string?, max 255) — original filename, e.g. `"distributed-systems.md"`
+- `SourceFile` (string?, max 255) — original filename, e.g. `"distributed-systems.md"`. Max length enforced via EF column configuration and API validation (400 if exceeded).
 - `SourceHeading` stays but becomes a plain string with no FK relationship
 
 The `SourceHeading` field already exists as a string. The change is that it no longer implies a relationship to a `FileHeading` entity.
 
+### Entities Unchanged
+
+- **ReviewLog** — no file dependency, unchanged
+
 ### Migration Strategy
 
 1. Add `SourceFile` column to `Cards`
-2. Populate `SourceFile` from joined `MarkdownFiles.FileName` where `FileId` is not null
+2. Populate `SourceFile` from `LEFT JOIN MarkdownFiles` on `FileId` — cards with deleted/missing files get null `SourceFile`
 3. Drop `FileId` FK and column from `Cards`
 4. Drop `CardType` column from `Cards`
 5. Drop `FileHeadings` table
 6. Drop `MarkdownFiles` table
-7. Update `SearchVector` on Cards to remove any file-related indexing
+7. `SearchVector` on Cards is computed from `Front` + `Back` only — no file-related indexing to remove (this step is a no-op, listed for verification)
 8. Add index on `(UserId, SourceFile)` for the sources query
 
 ## API Changes
@@ -53,6 +57,8 @@ The `SourceHeading` field already exists as a string. The change is that it no l
 | GET | `/api/files` | No file storage |
 | GET | `/api/files/{id}` | No file storage |
 | DELETE | `/api/files/{id}` | No file storage |
+| GET | `/api/cards/extract` | Depends on stored file content |
+| POST | `/api/decks/{id}/add-file` | Queries MarkdownFiles directly |
 
 ### Endpoints to Modify
 
@@ -81,7 +87,7 @@ New request:
 - `fileId` replaced by `sourceFile` (optional string)
 - Top-level `sourceFile` is a default; per-card `sourceFile` overrides it
 - `sourceHeading` moves into each card item (already there)
-- Duplicate detection keys on `(UserId, Front)` instead of `(UserId, FileId, Front)`
+- Duplicate detection keys on `(UserId, SourceFile, Front)` instead of `(UserId, FileId, Front)`. This preserves the ability to have the same question in different source files. Cards with null `SourceFile` deduplicate on `(UserId, Front)` only.
 
 **GET /api/cards**
 
@@ -93,6 +99,35 @@ New request:
 
 - Drop `fileId` and `cardType` from `CreateCardRequest`
 - Add optional `sourceFile` string
+
+### Updated DTO Shapes
+
+**BulkCardItem** (was: `Front`, `Back`, `SourceHeading?`):
+```
+BulkCardItem(string Front, string Back, string? SourceFile, string? SourceHeading)
+```
+
+**CardDto** (replaces `FileId` and `CardType` with `SourceFile`):
+```
+CardDto(Guid Id, string? SourceFile, string? SourceHeading, string Front, string Back,
+        string State, DateTimeOffset CreatedAt, List<CardDeckInfoDto> Decks)
+```
+
+**DueCardDto** (used by review endpoint — drop `FileId` and `CardType`, add `SourceFile`):
+```
+DueCardDto(Guid Id, string Front, string Back, string? SourceFile, string? SourceHeading,
+           string State, double EaseFactor, int Interval, int Repetitions)
+```
+
+**DeckCardDto** (drop `CardType`):
+```
+DeckCardDto(Guid Id, string Front, string Back, string? SourceFile, string? SourceHeading, string State)
+```
+
+**SearchResponse** (drop `Files` list):
+```
+SearchResponse(List<CardSearchResult> Cards, List<DeckSearchResult> Decks)
+```
 
 **GET /api/search?q=...**
 
@@ -116,7 +151,7 @@ Response:
 }
 ```
 
-Uses a simple `GROUP BY` on `Cards.SourceFile WHERE SourceFile IS NOT NULL`.
+Uses a simple `GROUP BY` on `Cards.SourceFile WHERE SourceFile IS NOT NULL`. Cards with null `SourceFile` (e.g., manually created via web UI) are excluded from this endpoint — they're still accessible via `GET /api/cards` with no `sourceFile` filter.
 
 ### Endpoints Unchanged
 
@@ -205,8 +240,10 @@ CreateCards(
 **Card list/detail views:**
 - Show `sourceFile` and `sourceHeading` as metadata strings instead of file links
 
-**Search:**
-- Remove file results from search display
+**Search (`useSearch.ts` composable + `api/client.ts`):**
+- Remove `FileSearchResult` type and `'file'` variant from `SearchItem` union
+- Remove `case 'file'` from `navigateToResult`
+- Update search API client to match new `SearchResponse` shape
 
 **Router:**
 - Remove `/files` and `/files/:id` routes
