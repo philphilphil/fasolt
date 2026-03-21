@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpacedMd.Server.Api.Endpoints;
+using SpacedMd.Server.Api.Middleware;
 using SpacedMd.Server.Domain.Entities;
 using SpacedMd.Server.Infrastructure.Data;
 using SpacedMd.Server.Infrastructure.Services;
@@ -60,6 +61,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<ErrorResponseMiddleware>();
 
 app.MapHealthEndpoints();
 app.MapAccountEndpoints();
