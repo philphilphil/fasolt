@@ -93,15 +93,9 @@ export interface DeckSearchResult {
   cardCount: number
 }
 
-export interface FileSearchResult {
-  id: string
-  headline: string
-}
-
 export interface SearchResponse {
   cards: CardSearchResult[]
   decks: DeckSearchResult[]
-  files: FileSearchResult[]
 }
 
 export async function searchAll(query: string): Promise<SearchResponse> {
@@ -114,28 +108,3 @@ export interface PaginatedResponse<T> {
   nextCursor: string | null
 }
 
-export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    credentials: 'include',
-    body: formData,
-  })
-
-  if (!response.ok) {
-    let errors: Record<string, string[]> = {}
-    try {
-      const body = await response.json()
-      if (body.errors) {
-        errors = body.errors
-      }
-    } catch {
-      // No JSON body
-    }
-    throw { status: response.status, errors } as ApiError
-  }
-
-  const text = await response.text()
-  if (!text) return undefined as T
-
-  return JSON.parse(text)
-}
