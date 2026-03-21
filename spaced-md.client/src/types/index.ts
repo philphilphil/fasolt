@@ -52,3 +52,12 @@ export interface Group {
 }
 
 export type ReviewRating = 'again' | 'hard' | 'good' | 'easy'
+
+export interface FileUpdatePreview {
+  fileId: string
+  fileName: string
+  updatedCards: { cardId: string; front: string; oldBack: string; newBack: string }[]
+  orphanedCards: { cardId: string; front: string; sourceHeading: string }[]
+  unchangedCount: number
+  newSections: { heading: string; hasMarkers: boolean }[]
+}

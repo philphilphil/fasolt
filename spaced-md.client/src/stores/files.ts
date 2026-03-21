@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { MarkdownFile, FileDetail, BulkUploadResult } from '@/types'
+import type { MarkdownFile, FileDetail, BulkUploadResult, FileUpdatePreview } from '@/types'
 import { apiFetch, apiUpload } from '@/api/client'
 
 export const useFilesStore = defineStore('files', () => {
@@ -43,5 +43,28 @@ export const useFilesStore = defineStore('files', () => {
     return apiFetch<FileDetail>(`/files/${id}`)
   }
 
-  return { files, loading, fetchFiles, uploadFile, uploadFiles, deleteFile, getFileContent }
+  async function previewUpdate(file: File): Promise<FileUpdatePreview | null> {
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      return await apiUpload<FileUpdatePreview>('/files/preview-update', formData)
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err !== null && 'status' in err && (err as { status: number }).status === 404) {
+        return null
+      }
+      throw err
+    }
+  }
+
+  async function confirmUpdate(fileId: string, file: File, deleteCardIds: string[]): Promise<void> {
+    const formData = new FormData()
+    formData.append('file', file)
+    for (const id of deleteCardIds) {
+      formData.append('deleteCardIds', id)
+    }
+    await apiUpload(`/files/${fileId}/update`, formData)
+    await fetchFiles()
+  }
+
+  return { files, loading, fetchFiles, uploadFile, uploadFiles, deleteFile, getFileContent, previewUpdate, confirmUpdate }
 })
