@@ -62,6 +62,7 @@ app.UseAuthorization();
 
 app.MapHealthEndpoints();
 app.MapAccountEndpoints();
+app.MapFileEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>();
 
 app.Run();
