@@ -46,6 +46,9 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.HasQueryFilter(e => e.DeletedAt == null);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.File).WithMany().HasForeignKey(e => e.FileId).OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.EaseFactor).HasDefaultValue(2.5);
+            entity.Property(e => e.State).HasMaxLength(20).HasDefaultValue("new").IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.DueAt });
         });
     }
 }
