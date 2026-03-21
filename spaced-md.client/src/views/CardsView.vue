@@ -106,13 +106,13 @@ const columns: ColumnDef<Card>[] = [
     accessorKey: 'cardType',
     header: 'Type',
     cell: ({ row }) => h(Badge, { variant: 'secondary', class: 'text-[10px]' }, () => row.getValue('cardType')),
-    filterFn: (row, _id, value) => value.includes(row.getValue('cardType')),
+    filterFn: (row, _id, value) => !value || row.getValue('cardType') === value,
   },
   {
     accessorKey: 'state',
     header: 'State',
     cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
-    filterFn: (row, _id, value) => value.includes(row.getValue('state')),
+    filterFn: (row, _id, value) => !value || row.getValue('state') === value,
   },
   {
     id: 'decks',
@@ -170,6 +170,19 @@ const filterValue = computed({
   get: () => (table.getColumn('front')?.getFilterValue() as string) ?? '',
   set: (val) => table.getColumn('front')?.setFilterValue(val),
 })
+
+const typeFilter = ref('')
+const stateFilter = ref('')
+
+function applyTypeFilter(val: string) {
+  typeFilter.value = val
+  table.getColumn('cardType')?.setFilterValue(val || undefined)
+}
+
+function applyStateFilter(val: string) {
+  stateFilter.value = val
+  table.getColumn('state')?.setFilterValue(val || undefined)
+}
 </script>
 
 <template>
@@ -180,8 +193,28 @@ const filterValue = computed({
         <Input
           v-model="filterValue"
           placeholder="Filter cards..."
-          class="h-8 max-w-[250px] text-xs"
+          class="h-8 max-w-[200px] text-xs"
         />
+        <select
+          :value="typeFilter"
+          class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
+          @change="applyTypeFilter(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">All types</option>
+          <option value="file">file</option>
+          <option value="section">section</option>
+          <option value="custom">custom</option>
+        </select>
+        <select
+          :value="stateFilter"
+          class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
+          @change="applyStateFilter(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">All states</option>
+          <option value="new">new</option>
+          <option value="learning">learning</option>
+          <option value="mature">mature</option>
+        </select>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button variant="outline" size="sm" class="h-8 text-xs ml-auto">

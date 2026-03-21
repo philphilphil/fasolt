@@ -11,6 +11,7 @@ public record CardDto(
     string Front,
     string Back,
     string CardType,
+    string State,
     DateTimeOffset CreatedAt,
     List<CardDeckInfoDto> Decks);
 
