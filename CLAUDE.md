@@ -8,12 +8,15 @@ Spaced repetition app for markdown files. Turn your notes into flashcards and re
 
 ### Core Concept
 
-Users upload `.md` files and create flashcards from them — either from the entire file or from a specific heading section. Cards are reviewed using spaced repetition (SM-2 algorithm), which schedules reviews at increasing intervals based on how well you recall each card.
+The app is **MCP-first and API-first**. The user's local vault (e.g., Obsidian) is the source of truth for markdown files — no files are stored on the server. An AI agent reads local `.md` files, extracts flashcards, and pushes them to the server via the MCP server or REST API. Cards retain provenance metadata (source file, heading). The web app is a study frontend: review due cards, browse decks, and track progress.
+
+Cards are reviewed using spaced repetition (SM-2 algorithm), which schedules reviews at increasing intervals based on how well you recall each card.
 
 ### Features
 
-- **Markdown file management** — upload, view, and delete `.md` files
-- **Flashcard creation** — create cards from an entire file or a specific heading/section within a file
+- **MCP/API card ingestion** — cards are created by AI agents reading local markdown files and calling the API; no file upload to the server
+- **Flashcard creation** — create cards with front/back text, linked to a source file and heading via API or MCP tools
+- **Source tracking** — cards retain provenance (source file, heading) as metadata; browse cards by source
 - **Spaced repetition study** — review due cards with quality-based scheduling (SM-2)
 - **Decks** — organize cards into decks for focused study sessions
 - **Dashboard** — overview of stats like cards due, total cards, study streaks
@@ -99,7 +102,7 @@ Feature requirements live in `docs/requirements/`. Each file is a self-contained
 
 When asked to generate questions/flashcards for a `.md` file (typically an Obsidian vault note):
 
-**What this does:** Add `?:: Question text` marker lines directly into the markdown file. These markers are what spaced-md uses to extract flashcards when the file is uploaded. The content below the marker (until the next heading or marker) becomes the card's answer.
+**What this does:** Add `?:: Question text` marker lines directly into the local markdown file. These markers are used by the MCP agent to identify flashcard boundaries when reading local files — the agent then calls `CreateCards` to push the cards to the server. Files are never uploaded to the server; the local vault stays as the source of truth. The content below the marker (until the next heading or marker) becomes the card's answer.
 
 **Process:**
 
@@ -140,10 +143,19 @@ SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_000
   dotnet run --project spaced-md.Mcp
 ```
 
+### Available MCP Tools
+
+- `CreateCards` — create one or more flashcards, optionally linked to a source file and/or deck
+- `SearchCards` — search existing cards by query text (use before creating to detect duplicates)
+- `ListCards` — list cards, optionally filtered by source file or deck; supports pagination
+- `ListSources` — list all source files that cards were created from, with card and due counts
+- `ListDecks` — list all decks with card counts and due counts
+- `CreateDeck` — create a new deck for organizing flashcards
+
 ## Key API Routes
 
 - `GET /api/health` — health check
 - `/api/identity/*` — ASP.NET Core Identity endpoints (register, login, etc.)
 - `/api/tokens` — API token management (create, list, revoke)
 - `POST /api/cards/bulk` — bulk card creation with duplicate detection
-- `POST /api/files` — file upload with upsert support
+- `GET /api/sources` — source file listing with card counts
