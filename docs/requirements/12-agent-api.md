@@ -24,8 +24,11 @@ As a user, I want to create API tokens so the MCP server can authenticate on my 
 
 - Settings page has an "API Tokens" section
 - User can create a named token (e.g., "Obsidian Agent")
-- Token is shown once on creation, then stored as a hash (not retrievable later)
-- User can list active tokens with creation date and last-used date
+- Token format: `sm_` prefix + 32 cryptographically random bytes, base62-encoded (total ~46 chars)
+- Token is shown once on creation, then stored as a SHA-256 hash (not retrievable later)
+- User can optionally set an expiration date on creation (default: no expiry)
+- User can list active tokens with creation date, last-used date, and expiration date (if set)
+- Expired tokens are rejected at auth time (not garbage-collected — still visible in list as "expired")
 - User can revoke any token
 - Tokens authenticate via `Authorization: Bearer <token>` header
 - All existing API endpoints accept token auth in addition to cookie auth
@@ -50,7 +53,9 @@ As an MCP server, I need a bulk endpoint to create multiple cards in one request
 - If `fileId` is provided, cards are linked to that file with `cardType: "section"` (if `sourceHeading` given) or `"file"`
 - If `fileId` is omitted, cards are created as `cardType: "custom"`
 - If `deckId` is provided, cards are automatically added to that deck
-- Returns the created cards with their IDs
+- Maximum 100 cards per request (returns 400 if exceeded)
+- Duplicate detection: if a card with the same `front` text already exists for the same `fileId` (or same user if no `fileId`), it is skipped and returned in a `skipped` array with the reason
+- Returns the created cards with their IDs, plus any skipped cards
 - Validates all cards in the batch — if any fail validation, none are created (atomic)
 
 ## US-12.3 — File Upload Upsert (P2)
@@ -61,7 +66,9 @@ As an MCP server, I need to upload or update a markdown file so cards can be lin
 
 - Existing `POST /api/files` works with token auth (no changes if US-12.1 is done)
 - If a file with the same name already exists for this user, it is updated (upsert)
-- Response includes the file ID and parsed headings so the MCP server can pass them back to the agent for card creation
+- On upsert, existing cards linked to the file are preserved — their `sourceHeading` references are not invalidated
+- Response includes the file ID, parsed headings, and an `orphanedCards` array listing cards whose `sourceHeading` no longer exists in the updated file (so the agent can inform the user)
+- Response includes `isUpdate: true/false` so the caller knows whether a new file was created or an existing one was updated
 
 ## US-12.4 — MCP Server (.NET) (P2)
 
@@ -77,6 +84,7 @@ As a user, I want to install and configure an MCP server so my AI agent can talk
 - Tools are auto-discovered via `[McpServerToolType]` and `[McpServerTool]` attributes
 - `HttpClient` is injected via DI, pre-configured with the API URL and Bearer token
 - Logging goes to stderr (required for stdio transport)
+- HTTP requests use a 30-second timeout; on timeout or connection failure, the tool returns a clear error message (e.g., "spaced-md backend unreachable at {url}") — no retries (let the agent decide whether to retry)
 - `SPACED_MD_URL` defaults to the hosted SaaS URL if not set (e.g., `https://spaced-md.io`)
 - `SPACED_MD_TOKEN` is required (no anonymous access)
 - User adds to their agent config (e.g., Claude Code `settings.json`):
@@ -127,14 +135,32 @@ As a user, I want to install and configure an MCP server so my AI agent can talk
 | Tool | Description | Wraps |
 |------|-------------|-------|
 | `search_cards` | Search existing cards by query (avoid duplicates) | `GET /api/search?q=` |
-| `list_cards` | List all cards, optionally filtered by file or deck | `GET /api/cards` |
+| `list_cards` | List all cards, optionally filtered by file or deck (paginated) | `GET /api/cards` |
 | `create_cards` | Create one or more cards, optionally linked to a file and deck | `POST /api/cards/bulk` |
 | `list_decks` | List all decks with card counts | `GET /api/decks` |
 | `create_deck` | Create a new deck | `POST /api/decks` |
 | `upload_file` | Upload or update a markdown file (upsert) | `POST /api/files` |
 | `list_files` | List all uploaded files | `GET /api/files` |
+| `get_file` | Get a file's content and headings by ID | `GET /api/files/{id}` |
 
 Each tool includes clear descriptions and parameter schemas so the agent can discover and use them without documentation.
+
+**API changes required for MCP tools:**
+
+- `GET /api/cards` must support an optional `deckId` query parameter to filter cards by deck (currently only supports `fileId`)
+- `GET /api/cards` and `GET /api/files` must support cursor-based pagination: `?limit=50&after={id}` (default limit 50, max 200). Response includes `hasMore` and `nextCursor` fields. MCP tools expose these as optional parameters.
+
+**Error response contract:**
+
+All API errors return a consistent JSON shape so the MCP server can translate them into meaningful tool errors:
+```json
+{
+  "error": "validation_error",
+  "message": "Human-readable description",
+  "details": [ { "field": "cards[0].front", "message": "Front is required" } ]
+}
+```
+HTTP status codes: 400 (validation), 401 (no/invalid token), 403 (token expired or wrong scope), 404 (resource not found), 422 (semantic error, e.g., file too large).
 
 ## Typical Workflow
 
@@ -157,3 +183,5 @@ Each tool includes clear descriptions and parameter schemas so the agent can dis
 - Rate limiting (can be added later)
 - Webhook notifications / real-time sync
 - Two-way sync with Obsidian (agent pushes to spaced-md, not the other way)
+- Delete operations via MCP (agents can create and read, not delete — avoids accidental bulk deletion by a misbehaving agent; users delete via the web UI)
+- MCP server retry logic (the agent orchestrates retries, not the bridge)
