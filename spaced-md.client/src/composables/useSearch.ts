@@ -56,8 +56,7 @@ export function useSearch() {
   function navigateToResult(item: SearchItem) {
     switch (item.type) {
       case 'card':
-        // Note: CardsView highlight param handling is deferred — for now just navigate to cards
-        router.push('/cards')
+        router.push(`/cards/${item.data.id}`)
         break
       case 'deck':
         router.push(`/decks/${item.data.id}`)

@@ -42,6 +42,7 @@ const router = createRouter({
     { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
     { path: '/files/:id', name: 'file-detail', component: () => import('@/views/FileDetailView.vue') },
     { path: '/cards', name: 'cards', component: () => import('@/views/CardsView.vue') },
+    { path: '/cards/:id', name: 'card-detail', component: () => import('@/views/CardDetailView.vue') },
     { path: '/decks', name: 'decks', component: () => import('@/views/DecksView.vue') },
     { path: '/decks/:id', name: 'deck-detail', component: () => import('@/views/DeckDetailView.vue') },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },

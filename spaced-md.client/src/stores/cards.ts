@@ -51,5 +51,9 @@ export const useCardsStore = defineStore('cards', () => {
     return apiFetch<ExtractedContent>(`/cards/extract${params}`)
   }
 
-  return { cards, loading, fetchCards, createCard, updateCard, deleteCard, extractContent }
+  async function getCard(id: string): Promise<Card> {
+    return apiFetch<Card>(`/cards/${id}`)
+  }
+
+  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, extractContent }
 })
