@@ -28,7 +28,7 @@ public static class SearchEndpoints
 
         var term = q.Trim();
 
-        var cardsTask = db.Database
+        var cards = await db.Database
             .SqlQueryRaw<CardSearchResult>("""
                 SELECT c."Id",
                        ts_headline('english', c."Front", plainto_tsquery('english', {0}),
@@ -43,7 +43,7 @@ public static class SearchEndpoints
                 """, term, user.Id)
             .ToListAsync();
 
-        var decksTask = db.Database
+        var decks = await db.Database
             .SqlQueryRaw<DeckSearchResult>("""
                 SELECT d."Id",
                        ts_headline('english', d."Name", plainto_tsquery('english', {0}),
@@ -59,10 +59,11 @@ public static class SearchEndpoints
                 """, term, user.Id)
             .ToListAsync();
 
-        var filesTask = db.Database
+        var files = await db.Database
             .SqlQueryRaw<FileSearchResult>("""
                 SELECT f."Id",
-                       ts_headline('simple', f."FileName", plainto_tsquery('simple', {0}),
+                       ts_headline('simple', regexp_replace(f."FileName", '[.\-_]', ' ', 'g'),
+                           plainto_tsquery('simple', {0}),
                            'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline"
                 FROM "MarkdownFiles" f
                 WHERE f."UserId" = {1}
@@ -72,12 +73,7 @@ public static class SearchEndpoints
                 """, term, user.Id)
             .ToListAsync();
 
-        await Task.WhenAll(cardsTask, decksTask, filesTask);
-
-        return Results.Ok(new SearchResponse(
-            cardsTask.Result,
-            decksTask.Result,
-            filesTask.Result));
+        return Results.Ok(new SearchResponse(cards, decks, files));
     }
 }
 

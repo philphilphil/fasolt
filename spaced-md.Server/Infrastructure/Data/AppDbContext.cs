@@ -31,7 +31,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.Property(e => e.SearchVector)
                 .HasColumnType("tsvector")
                 .HasComputedColumnSql(
-                    """to_tsvector('simple', coalesce("FileName",''))""",
+                    """to_tsvector('simple', regexp_replace(coalesce("FileName",''), '[.\-_]', ' ', 'g'))""",
                     stored: true);
             entity.HasIndex(e => e.SearchVector).HasMethod("gin");
         });
