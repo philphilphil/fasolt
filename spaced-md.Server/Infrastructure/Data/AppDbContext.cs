@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
     public DbSet<MarkdownFile> MarkdownFiles => Set<MarkdownFile>();
     public DbSet<FileHeading> FileHeadings => Set<FileHeading>();
+    public DbSet<Card> Cards => Set<Card>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -32,6 +33,19 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.HasKey(e => e.Id);
             entity.HasOne(e => e.File).WithMany(f => f.Headings).HasForeignKey(e => e.FileId).OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.FileId);
+        });
+
+        builder.Entity<Card>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Front).IsRequired();
+            entity.Property(e => e.Back).IsRequired();
+            entity.Property(e => e.CardType).HasMaxLength(20).IsRequired();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.FileId);
+            entity.HasQueryFilter(e => e.DeletedAt == null);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.File).WithMany().HasForeignKey(e => e.FileId).OnDelete(DeleteBehavior.SetNull);
         });
     }
 }
