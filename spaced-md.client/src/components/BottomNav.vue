@@ -6,6 +6,7 @@ const route = useRoute()
 const tabs = [
   { name: 'Dashboard', path: '/', icon: '▦' },
   { name: 'Files', path: '/files', icon: '◫' },
+  { name: 'Cards', path: '/cards', icon: '▤' },
   { name: 'Groups', path: '/groups', icon: '⊞' },
   { name: 'Settings', path: '/settings', icon: '⚙' },
 ]
