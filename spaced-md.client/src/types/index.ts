@@ -6,6 +6,11 @@ export interface Card {
   back: string
   cardType: 'file' | 'section' | 'custom'
   createdAt: string
+  easeFactor: number
+  interval: number
+  repetitions: number
+  dueAt: string | null
+  state: 'new' | 'learning' | 'mature'
 }
 
 export interface ExtractedContent {
@@ -70,4 +75,21 @@ export interface FileUpdatePreview {
   orphanedCards: { cardId: string; front: string; sourceHeading: string }[]
   unchangedCount: number
   newSections: { heading: string; hasMarkers: boolean }[]
+}
+
+export interface DueCard {
+  id: string
+  front: string
+  back: string
+  cardType: string
+  sourceHeading: string | null
+  fileId: string | null
+  state: string
+  dueAt: string | null
+}
+
+export interface ReviewStats {
+  dueCount: number
+  totalCards: number
+  studiedToday: number
 }
