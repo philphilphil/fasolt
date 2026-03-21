@@ -8,7 +8,8 @@ const md = new MarkdownIt({
 
 // Override image rendering to show alt-text placeholder
 md.renderer.rules.image = (tokens, idx) => {
-  const alt = tokens[idx].content || tokens[idx].children?.reduce((s, t) => s + t.content, '') || 'image'
+  const raw = tokens[idx].content || tokens[idx].children?.reduce((s, t) => s + t.content, '') || 'image'
+  const alt = md.utils.escapeHtml(raw)
   return `<span class="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs text-muted-foreground">[${alt}]</span>`
 }
 

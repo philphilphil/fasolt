@@ -5,7 +5,6 @@ import { useFilesStore } from '@/stores/files'
 import { useMarkdown } from '@/composables/useMarkdown'
 import type { FileDetail } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 
 const route = useRoute()
 const router = useRouter()
@@ -67,8 +66,8 @@ function scrollToHeading(text: string) {
         <div class="sticky top-4 space-y-1">
           <div class="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Sections</div>
           <div
-            v-for="heading in file.headings"
-            :key="heading.text"
+            v-for="(heading, idx) in file.headings"
+            :key="idx"
             class="group flex items-center justify-between text-xs"
           >
             <button

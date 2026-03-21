@@ -53,7 +53,15 @@ public static class FileEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var files = request.Form.Files;
+        IFormFileCollection files;
+        try
+        {
+            files = request.Form.Files;
+        }
+        catch
+        {
+            return Results.BadRequest();
+        }
 
         if (files.Count > MaxBulkFiles)
             return Results.ValidationProblem(new Dictionary<string, string[]>
@@ -61,13 +69,21 @@ public static class FileEndpoints
                 ["files"] = [$"Maximum {MaxBulkFiles} files per upload."]
             });
 
+        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var results = new List<BulkUploadResultDto>();
         foreach (var file in files)
         {
+            var name = Path.GetFileName(file.FileName);
+            if (!seenNames.Add(name))
+            {
+                results.Add(new BulkUploadResultDto(name, false, null, "Duplicate file in batch."));
+                continue;
+            }
+
             var (saved, error) = await SaveFile(file, user.Id, db);
             if (error is not null)
             {
-                results.Add(new BulkUploadResultDto(file.FileName, false, null, error));
+                results.Add(new BulkUploadResultDto(name, false, null, error));
             }
             else
             {
@@ -125,8 +141,7 @@ public static class FileEndpoints
             file.UploadedAt,
             0, // cardCount — wired in Epic 3
             file.Content,
-            file.Headings.OrderBy(h => h.SortOrder)
-                .Select(h => new FileHeadingDto(h.Level, h.Text)).ToList()));
+            file.Headings.Select(h => new FileHeadingDto(h.Level, h.Text)).ToList()));
     }
 
     private static async Task<IResult> Delete(
@@ -151,16 +166,18 @@ public static class FileEndpoints
     private static async Task<(MarkdownFile? File, string? Error)> SaveFile(
         IFormFile formFile, string userId, AppDbContext db)
     {
-        if (!formFile.FileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
+        var fileName = Path.GetFileName(formFile.FileName);
+
+        if (!fileName.EndsWith(".md", StringComparison.OrdinalIgnoreCase))
             return (null, "Only .md files are accepted.");
 
         if (formFile.Length > MaxFileSize)
             return (null, "File exceeds 1MB limit.");
 
         var exists = await db.MarkdownFiles
-            .AnyAsync(f => f.UserId == userId && f.FileName == formFile.FileName);
+            .AnyAsync(f => f.UserId == userId && f.FileName == fileName);
         if (exists)
-            return (null, $"A file named '{formFile.FileName}' already exists.");
+            return (null, $"A file named '{fileName}' already exists.");
 
         using var reader = new StreamReader(formFile.OpenReadStream());
         var content = await reader.ReadToEndAsync();
@@ -169,7 +186,7 @@ public static class FileEndpoints
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            FileName = formFile.FileName,
+            FileName = fileName,
             Content = content,
             SizeBytes = formFile.Length,
             UploadedAt = DateTimeOffset.UtcNow,

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useFilesStore } from '@/stores/files'
 import { isApiError } from '@/api/client'
 import type { BulkUploadResult } from '@/types'
@@ -8,13 +7,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 
-const router = useRouter()
 const files = useFilesStore()
+const deleteError = ref('')
 const expandedId = ref<string | null>(null)
 const sortBy = ref<'name' | 'date' | 'cards'>('date')
 const dragging = ref(false)
@@ -116,8 +114,13 @@ function onFileSelect(e: Event) {
 
 async function confirmDelete() {
   if (!deleteTarget.value) return
-  await files.deleteFile(deleteTarget.value.id)
-  deleteTarget.value = null
+  deleteError.value = ''
+  try {
+    await files.deleteFile(deleteTarget.value.id)
+    deleteTarget.value = null
+  } catch {
+    deleteError.value = 'Failed to delete file.'
+  }
 }
 </script>
 
@@ -205,8 +208,8 @@ async function confirmDelete() {
             <TableCell :colspan="5" class="p-0">
               <div class="space-y-1 border-t border-border px-4 py-3">
                 <div
-                  v-for="heading in file.headings"
-                  :key="heading.text"
+                  v-for="(heading, idx) in file.headings"
+                  :key="idx"
                   class="flex items-center justify-between text-xs"
                 >
                   <span class="text-muted-foreground" :style="{ paddingLeft: `${(heading.level - 1) * 12}px` }">
@@ -241,6 +244,7 @@ async function confirmDelete() {
           <input type="checkbox" disabled />
           <span>Also delete associated flashcards (coming soon)</span>
         </div>
+        <div v-if="deleteError" class="text-xs text-destructive">{{ deleteError }}</div>
         <DialogFooter>
           <Button variant="outline" @click="deleteTarget = null">Cancel</Button>
           <Button variant="destructive" @click="confirmDelete">Delete</Button>
