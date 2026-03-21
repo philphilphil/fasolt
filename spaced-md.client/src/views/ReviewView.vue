@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
-import type { Card, ReviewRating } from '@/types'
+import type { ReviewRating } from '@/types'
 import ProgressMeter from '@/components/ProgressMeter.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
 import RatingButtons from '@/components/RatingButtons.vue'
@@ -10,31 +10,29 @@ import SessionComplete from '@/components/SessionComplete.vue'
 import KbdHint from '@/components/KbdHint.vue'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
-const route = useRoute()
 const router = useRouter()
 const review = useReviewStore()
 
-// Mock cards for demo — will be replaced by API call in Epic 4
-const mockCards: Card[] = [
-  { id: 'c1', fileId: null, sourceHeading: 'CAP Theorem', front: 'What is the CAP theorem and its three guarantees?', back: 'Consistency, Availability, Partition tolerance — you can only guarantee two of three in a distributed system.', cardType: 'section', createdAt: new Date().toISOString() },
-  { id: 'c2', fileId: null, sourceHeading: 'Consensus Algorithms', front: 'What is Raft?', back: 'A consensus algorithm designed to be more understandable than Paxos. Uses leader election and log replication.', cardType: 'section', createdAt: new Date().toISOString() },
-  { id: 'c3', fileId: null, sourceHeading: 'Replication', front: 'What is the difference between synchronous and asynchronous replication?', back: 'Synchronous: write is confirmed only after all replicas acknowledge. Asynchronous: write is confirmed immediately, replicas update eventually.', cardType: 'section', createdAt: new Date().toISOString() },
-]
+const ratingToQuality: Record<ReviewRating, number> = {
+  again: 0,
+  hard: 2,
+  good: 4,
+  easy: 5,
+}
 
 const { register, cleanup } = useKeyboardShortcuts()
 
-onMounted(() => {
+onMounted(async () => {
   if (!review.isActive) {
-    const deckId = route.params.deckId as string || 'deck-1'
-    review.startSession(deckId, 'Distributed Systems', mockCards)
+    await review.startSession()
   }
   register({
-    ' ': () => { if (!review.isFlipped && !review.isComplete) review.flip() },
-    '1': () => { if (review.isFlipped) review.rate('again') },
-    '2': () => { if (review.isFlipped) review.rate('hard') },
-    '3': () => { if (review.isFlipped) review.rate('good') },
-    '4': () => { if (review.isFlipped) review.rate('easy') },
-    'Escape': () => { review.endSession(); router.push('/') },
+    ' ': () => { if (!review.isFlipped && !review.isComplete) review.flipCard() },
+    '1': () => { if (review.isFlipped) review.rate(0) },
+    '2': () => { if (review.isFlipped) review.rate(2) },
+    '3': () => { if (review.isFlipped) review.rate(4) },
+    '4': () => { if (review.isFlipped) review.rate(5) },
+    'Escape': () => { review.endSession(); router.push('/dashboard') },
   })
 })
 
@@ -42,13 +40,13 @@ onUnmounted(() => {
   cleanup()
 })
 
-function onRate(rating: ReviewRating) {
-  review.rate(rating)
+async function onRate(rating: ReviewRating) {
+  await review.rate(ratingToQuality[rating])
 }
 
 function onDone() {
   review.endSession()
-  router.push('/')
+  router.push('/dashboard')
 }
 </script>
 
@@ -58,9 +56,9 @@ function onDone() {
       <!-- Context bar -->
       <div class="mb-3 flex items-center justify-between text-[11px] text-muted-foreground">
         <div class="flex items-center gap-2">
-          <span class="text-foreground">{{ review.deckName }}</span>
+          <span class="text-foreground">Review session</span>
           <span>·</span>
-          <span>{{ review.progress }}</span>
+          <span>{{ review.sessionStats.reviewed }} reviewed</span>
         </div>
         <div class="hidden items-center gap-2 sm:flex">
           <KbdHint keys="space" /> flip
@@ -70,14 +68,14 @@ function onDone() {
       </div>
 
       <!-- Progress meter -->
-      <ProgressMeter :total="review.cards.length" :current="review.currentIndex" class="mb-5" />
+      <ProgressMeter :total="100" :current="review.progress" class="mb-5" />
 
       <!-- Card -->
       <ReviewCard
         v-if="review.currentCard"
         :card="review.currentCard"
         :is-flipped="review.isFlipped"
-        @flip="review.flip()"
+        @flip="review.flipCard()"
       />
 
       <!-- Rating buttons (only when flipped) -->
@@ -90,11 +88,16 @@ function onDone() {
       </div>
     </template>
 
+    <!-- Loading state -->
+    <div v-else-if="review.loading" class="flex flex-1 items-center justify-center text-muted-foreground">
+      Loading cards...
+    </div>
+
     <!-- Session complete -->
     <SessionComplete
       v-else-if="review.isComplete"
-      :total-cards="review.cards.length"
-      :rating-counts="review.ratingCounts"
+      :total-cards="review.sessionStats.reviewed"
+      :rating-counts="review.sessionStats"
       @done="onDone"
     />
   </div>

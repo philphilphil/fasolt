@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import type { Card } from '@/types'
+import type { DueCard } from '@/types'
+import { useMarkdown } from '@/composables/useMarkdown'
 
-defineProps<{ card: Card; isFlipped: boolean }>()
+defineProps<{ card: DueCard; isFlipped: boolean }>()
 defineEmits<{ flip: [] }>()
+
+const { render } = useMarkdown()
 </script>
 
 <template>
@@ -14,13 +17,13 @@ defineEmits<{ flip: [] }>()
       {{ isFlipped ? 'Answer' : 'Question' }}
     </div>
     <div
-      class="mt-3 text-center text-[17px] leading-relaxed"
+      class="mt-3 w-full max-w-lg text-center"
       :class="isFlipped ? 'text-muted-foreground' : 'text-foreground'"
     >
-      {{ card.front }}
+      <div class="prose prose-sm dark:prose-invert max-w-none" v-html="render(card.front)" />
     </div>
-    <div v-if="isFlipped" class="mt-4 text-center text-[17px] leading-relaxed text-foreground">
-      {{ card.back }}
+    <div v-if="isFlipped" class="mt-4 w-full max-w-lg text-center">
+      <div class="prose prose-sm dark:prose-invert max-w-none" v-html="render(card.back)" />
     </div>
     <div v-if="card.sourceHeading" class="mt-3 font-mono text-[11px] text-muted-foreground">
       {{ card.sourceHeading }}
