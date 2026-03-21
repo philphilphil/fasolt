@@ -92,6 +92,23 @@ docker compose down          # stop Postgres
 
 Feature requirements live in `docs/requirements/`. Each file is a self-contained spec for one feature area. `00-overview.md` contains the full overview and a map of all requirement files. To implement a feature, read the corresponding `XX-feature-name.md` file. After implementing a requirement, move it to `docs/requirements/done/`.
 
+## Generating Flashcards from Markdown Files
+
+When asked to generate flashcards/questions from a `.md` file:
+
+1. **Read the file** and detect its language (English, German, etc.). All generated questions and answers must be in that same language.
+2. **Scope**: If the user specifies sections or headings, only generate cards for those areas. If no sections are specified, generate for the entire file.
+3. **Quantity**: Keep it focused — aim for 2-5 cards per section. Prefer fewer high-quality questions over many shallow ones. Prioritize concepts that are worth memorizing (definitions, key distinctions, cause/effect, "why" questions). Skip trivial or obvious facts.
+4. **Format**: Each card needs a `front` (question) and `back` (answer). The back should be concise but complete — not a full paragraph, but enough to recall the concept.
+5. **Do NOT create cards immediately.** First, present the proposed cards to the user in a clear list:
+   ```
+   Section: [heading]
+   1. Q: ... / A: ...
+   2. Q: ... / A: ...
+   ```
+   Then ask: "Want me to create these cards? You can also ask me to adjust, remove, or add any."
+6. **Only after user approval**, create the cards via the API (`POST /api/cards`) with `cardType: "section"` (if from a heading) or `cardType: "file"` (if from the whole file), linking them to the source file and heading.
+
 ## Key API Routes
 
 - `GET /api/health` — health check
