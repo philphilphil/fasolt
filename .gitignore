@@ -24,4 +24,6 @@ Thumbs.db
 .env
 .env.local
 .superpowers/
+.worktrees/
 .playwright-mcp/
+notes.md
