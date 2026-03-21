@@ -65,17 +65,23 @@ Preview what would change without saving.
 
 Confirm and apply the update.
 
-- Input: `multipart/form-data` with the `.md` file + form field `deleteCardIds` (comma-separated GUIDs of orphaned cards to soft-delete)
-- Validation: file must exist and belong to user, `.md` extension, 1MB max
+- Input: `multipart/form-data` with the `.md` file + form field `deleteCardIds` (repeated form field, e.g. `deleteCardIds=guid1&deleteCardIds=guid2`)
+- Validation:
+  - File must exist and belong to user, `.md` extension, 1MB max
+  - All `deleteCardIds` must belong to the current user AND be linked to this file. Reject with 400 if any ID fails validation.
 - Actions (single `SaveChangesAsync`):
-  1. Replace `MarkdownFile.Content` and `SizeBytes`
+  1. Replace `MarkdownFile.Content` and `SizeBytes`, update `UploadedAt` to now
   2. Delete all `FileHeading` rows for this file, insert new ones from `HeadingExtractor.Extract`
   3. For each card linked to this file:
-     - `CardType == "file"`: update `Back` with new stripped content, update `Front` with new first H1 or filename
+     - `CardType == "file"`: update `Back` with new stripped content. Only update `Front` if it still matches the old derived value (first H1 or filename) — preserve manually edited fronts.
      - `CardType == "section"`: find section by `SourceHeading`, strip markers, update `Back`. If heading not found, handled by orphan logic below.
   4. For cards in `deleteCardIds`: set `DeletedAt` (soft delete)
   5. For orphaned cards NOT in `deleteCardIds`: set `FileId = null` (unlink, keep snapshot)
 - Response: `{ updatedCount, deletedCount, orphanedCount }`
+
+### Bulk Upload
+
+Bulk upload (`POST /api/files/bulk`) does not support the update flow. Duplicate filenames in bulk uploads continue to be rejected with an error per file. The update flow is single-file only, accessed via the preview-update endpoint or the "Update file" button.
 
 ## Frontend
 
