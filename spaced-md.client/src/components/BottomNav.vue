@@ -7,7 +7,7 @@ const tabs = [
   { name: 'Dashboard', path: '/dashboard', icon: '▦' },
   { name: 'Files', path: '/files', icon: '◫' },
   { name: 'Cards', path: '/cards', icon: '▤' },
-  { name: 'Groups', path: '/groups', icon: '⊞' },
+  { name: 'Decks', path: '/decks', icon: '⊞' },
   { name: 'Settings', path: '/settings', icon: '⚙' },
 ]
 

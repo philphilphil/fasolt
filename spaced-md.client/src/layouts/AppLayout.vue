@@ -13,7 +13,7 @@ const tabs = [
   { label: 'Dashboard', value: '/dashboard' },
   { label: 'Files', value: '/files' },
   { label: 'Cards', value: '/cards' },
-  { label: 'Groups', value: '/groups' },
+  { label: 'Decks', value: '/decks' },
   { label: 'Settings', value: '/settings' },
 ]
 </script>
