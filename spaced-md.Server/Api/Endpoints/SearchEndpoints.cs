@@ -24,7 +24,7 @@ public static class SearchEndpoints
         if (user is null) return Results.Unauthorized();
 
         if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
-            return Results.Ok(new SearchResponse([], [], []));
+            return Results.Ok(new SearchResponse([], []));
 
         var term = q.Trim();
 
@@ -33,7 +33,7 @@ public static class SearchEndpoints
                 SELECT c."Id",
                        ts_headline('english', c."Front", plainto_tsquery('english', {0}),
                            'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline",
-                       c."CardType", c."State"
+                       c."State"
                 FROM "Cards" c
                 WHERE c."UserId" = {1}
                   AND c."DeletedAt" IS NULL
@@ -59,29 +59,13 @@ public static class SearchEndpoints
                 """, term, user.Id)
             .ToListAsync();
 
-        var files = await db.Database
-            .SqlQueryRaw<FileSearchResult>("""
-                SELECT f."Id",
-                       ts_headline('simple', regexp_replace(f."FileName", '[.\-_]', ' ', 'g'),
-                           plainto_tsquery('simple', {0}),
-                           'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline"
-                FROM "MarkdownFiles" f
-                WHERE f."UserId" = {1}
-                  AND f."SearchVector" @@ plainto_tsquery('simple', {0})
-                ORDER BY ts_rank(f."SearchVector", plainto_tsquery('simple', {0})) DESC
-                LIMIT 10
-                """, term, user.Id)
-            .ToListAsync();
-
-        return Results.Ok(new SearchResponse(cards, decks, files));
+        return Results.Ok(new SearchResponse(cards, decks));
     }
 }
 
 public record SearchResponse(
     List<CardSearchResult> Cards,
-    List<DeckSearchResult> Decks,
-    List<FileSearchResult> Files);
+    List<DeckSearchResult> Decks);
 
-public record CardSearchResult(Guid Id, string Headline, string CardType, string State);
+public record CardSearchResult(Guid Id, string Headline, string State);
 public record DeckSearchResult(Guid Id, string Headline, int CardCount);
-public record FileSearchResult(Guid Id, string Headline);
