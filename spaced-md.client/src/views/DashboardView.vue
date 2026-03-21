@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import type { Deck, Stat } from '@/types'
 
 const router = useRouter()
-const dashboard = useDashboardStore()
+useDashboardStore()
 const reviewStore = useReviewStore()
 const decksStore = useDecksStore()
 
