@@ -66,6 +66,7 @@ public static class DeckEndpoints
 
         var decks = await db.Decks
             .Where(d => d.UserId == user.Id)
+            .OrderBy(d => d.Name)
             .Select(d => new DeckDto(
                 d.Id,
                 d.Name,
@@ -73,7 +74,6 @@ public static class DeckEndpoints
                 d.Cards.Count(dc => dc.Card.DeletedAt == null),
                 d.Cards.Count(dc => dc.Card.DeletedAt == null && (dc.Card.DueAt == null || dc.Card.DueAt <= now)),
                 d.CreatedAt))
-            .OrderBy(d => d.Name)
             .ToListAsync();
 
         return Results.Ok(decks);
