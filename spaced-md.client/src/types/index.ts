@@ -1,23 +1,16 @@
 export interface Card {
   id: string
-  deckId: string
-  question: string
-  answer: string
-  sourceFile: string
-  sourceSection: string | null
-  dueAt: Date
-  easeFactor: number
-  interval: number
-  repetitions: number
+  fileId: string | null
+  sourceHeading: string | null
+  front: string
+  back: string
+  cardType: 'file' | 'section' | 'custom'
+  createdAt: string
 }
 
-export interface Deck {
-  id: string
-  name: string
-  fileName: string
-  cardCount: number
-  dueCount: number
-  nextReview: string
+export interface ExtractedContent {
+  front: string
+  back: string
 }
 
 export interface Stat {
