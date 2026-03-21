@@ -38,6 +38,35 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   return JSON.parse(text)
 }
 
+// Search types
+export interface CardSearchResult {
+  id: string
+  headline: string
+  cardType: string
+  state: string
+}
+
+export interface DeckSearchResult {
+  id: string
+  headline: string
+  cardCount: number
+}
+
+export interface FileSearchResult {
+  id: string
+  headline: string
+}
+
+export interface SearchResponse {
+  cards: CardSearchResult[]
+  decks: DeckSearchResult[]
+  files: FileSearchResult[]
+}
+
+export async function searchAll(query: string): Promise<SearchResponse> {
+  return apiFetch<SearchResponse>(`/search?q=${encodeURIComponent(query)}`)
+}
+
 export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
