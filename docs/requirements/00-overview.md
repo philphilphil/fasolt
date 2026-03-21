@@ -41,6 +41,7 @@ Spaced repetition app for markdown files. Organized by epic, prioritized by tier
 | 7 | [10 — Mobile & PWA](10-mobile-pwa.md) | Responsive design is mostly done; this adds installable PWA |
 | 8 | [08 — Sharing & Collaboration](08-sharing.md) | Share decks, browse community cards |
 | 9 | [09 — Export & Portability](09-export-portability.md) | Markdown/Anki export |
+| 10 | [12 — Agent API](12-agent-api.md) | Personal access tokens, bulk card creation, MCP server |
 
 ### Rationale
 
@@ -64,6 +65,7 @@ The order follows one principle: **build the core study loop first, then make it
 9. [Export & Portability](09-export-portability.md) — markdown/Anki export, stats export
 10. [Mobile & PWA](10-mobile-pwa.md) — responsive design, installable PWA
 11. [UX & Accessibility](11-ux-accessibility.md) — keyboard shortcuts, dark mode, card details
+12. [Agent API](12-agent-api.md) — personal access tokens, bulk creation, MCP server
 
 ## Card States
 
