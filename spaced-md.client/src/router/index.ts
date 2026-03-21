@@ -46,6 +46,8 @@ const router = createRouter({
     { path: '/decks/:id', name: 'deck-detail', component: () => import('@/views/DeckDetailView.vue') },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+    // Catch-all 404
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'), meta: { public: true } },
   ],
 })
 
