@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useFilesStore } from '@/stores/files'
 import { useCardsStore } from '@/stores/cards'
 import { isApiError } from '@/api/client'
-import type { BulkUploadResult } from '@/types'
+import type { BulkUploadResult, FileUpdatePreview } from '@/types'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
+import FileUpdatePreviewDialog from '@/components/FileUpdatePreviewDialog.vue'
 
 const files = useFilesStore()
 const cardsStore = useCardsStore()
@@ -30,6 +31,9 @@ const uploadError = ref('')
 const uploadResults = ref<BulkUploadResult[] | null>(null)
 const deleteTarget = ref<{ id: string; name: string } | null>(null)
 const fileInput = ref<HTMLInputElement>()
+const updatePreview = ref<FileUpdatePreview | null>(null)
+const updateFile = ref<File | null>(null)
+const updateOpen = ref(false)
 
 onMounted(() => files.fetchFiles())
 
@@ -81,9 +85,20 @@ async function handleFiles(fileList: File[]) {
   uploading.value = true
   try {
     if (valid.length === 1) {
-      uploadProgress.value = `Uploading ${valid[0].name}...`
-      await files.uploadFile(valid[0])
-      uploadProgress.value = `Uploaded ${valid[0].name}`
+      uploadProgress.value = `Checking ${valid[0].name}...`
+      const preview = await files.previewUpdate(valid[0])
+      if (preview) {
+        // Existing file — show update preview
+        updatePreview.value = preview
+        updateFile.value = valid[0]
+        uploadProgress.value = ''
+        updateOpen.value = true
+      } else {
+        // New file — normal upload
+        uploadProgress.value = `Uploading ${valid[0].name}...`
+        await files.uploadFile(valid[0])
+        uploadProgress.value = `Uploaded ${valid[0].name}`
+      }
     } else {
       uploadProgress.value = `Uploading ${valid.length} files...`
       const results = await files.uploadFiles(valid)
@@ -293,6 +308,13 @@ async function confirmDelete() {
       :initial-back="createBack"
       card-type="file"
       @created="files.fetchFiles()"
+    />
+
+    <FileUpdatePreviewDialog
+      v-model:open="updateOpen"
+      :preview="updatePreview"
+      :file="updateFile"
+      @confirmed="files.fetchFiles()"
     />
   </div>
 </template>
