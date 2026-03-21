@@ -25,15 +25,6 @@ public class ApiClient(HttpClient http)
         return (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
     }
 
-    public async Task<T> PostFileAsync<T>(string path, string fileName, Stream content)
-    {
-        using var form = new MultipartFormDataContent();
-        form.Add(new StreamContent(content), "file", fileName);
-        var response = await http.PostAsync(path, form);
-        await EnsureSuccess(response);
-        return (await response.Content.ReadFromJsonAsync<T>(JsonOptions))!;
-    }
-
     private static async Task EnsureSuccess(HttpResponseMessage response)
     {
         if (response.IsSuccessStatusCode) return;
