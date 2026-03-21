@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import {
   FileText,
   Brain,
-  CalendarClock,
   Upload,
   Layers,
   BarChart3,

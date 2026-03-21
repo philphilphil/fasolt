@@ -53,6 +53,16 @@ export interface Group {
 
 export type ReviewRating = 'again' | 'hard' | 'good' | 'easy'
 
+// Placeholder — will be replaced with real API-backed type in Epic 4/6
+export interface Deck {
+  id: string
+  name: string
+  fileName: string
+  cardCount: number
+  dueCount: number
+  nextReview: string
+}
+
 export interface FileUpdatePreview {
   fileId: string
   fileName: string

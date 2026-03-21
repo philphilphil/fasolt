@@ -62,7 +62,7 @@ public static class CardEndpoints
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            FileId = request.FileId,
+            FileId = request.CardType == "custom" ? null : request.FileId,
             SourceHeading = request.SourceHeading,
             Front = request.Front,
             Back = request.Back,

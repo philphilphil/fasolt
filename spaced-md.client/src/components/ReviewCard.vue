@@ -17,13 +17,13 @@ defineEmits<{ flip: [] }>()
       class="mt-3 text-center text-[17px] leading-relaxed"
       :class="isFlipped ? 'text-muted-foreground' : 'text-foreground'"
     >
-      {{ card.question }}
+      {{ card.front }}
     </div>
     <div v-if="isFlipped" class="mt-4 text-center text-[17px] leading-relaxed text-foreground">
-      {{ card.answer }}
+      {{ card.back }}
     </div>
-    <div v-if="card.sourceSection" class="mt-3 font-mono text-[11px] text-muted-foreground">
-      {{ card.sourceFile }} → {{ card.sourceSection }}
+    <div v-if="card.sourceHeading" class="mt-3 font-mono text-[11px] text-muted-foreground">
+      {{ card.sourceHeading }}
     </div>
   </div>
 </template>

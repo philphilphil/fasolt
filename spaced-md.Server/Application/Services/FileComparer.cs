@@ -27,7 +27,7 @@ public static class FileComparer
         {
             if (card.CardType == "file")
             {
-                var (markers, cleanedNew) = ContentExtractor.ParseMarkers(newStripped);
+                var (_, cleanedNew) = ContentExtractor.ParseMarkers(newStripped);
                 if (card.Back == cleanedNew)
                     unchanged.Add(card.Id);
                 else

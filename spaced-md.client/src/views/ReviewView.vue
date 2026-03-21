@@ -14,11 +14,11 @@ const route = useRoute()
 const router = useRouter()
 const review = useReviewStore()
 
-// Mock cards for demo — will be replaced by API call
+// Mock cards for demo — will be replaced by API call in Epic 4
 const mockCards: Card[] = [
-  { id: 'c1', deckId: 'deck-1', question: 'What is the CAP theorem and its three guarantees?', answer: 'Consistency, Availability, Partition tolerance — you can only guarantee two of three in a distributed system.', sourceFile: 'distributed-systems.md', sourceSection: '## CAP Theorem', dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
-  { id: 'c2', deckId: 'deck-1', question: 'What is Raft?', answer: 'A consensus algorithm designed to be more understandable than Paxos. Uses leader election and log replication.', sourceFile: 'distributed-systems.md', sourceSection: '## Consensus Algorithms', dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
-  { id: 'c3', deckId: 'deck-1', question: 'What is the difference between synchronous and asynchronous replication?', answer: 'Synchronous: write is confirmed only after all replicas acknowledge. Asynchronous: write is confirmed immediately, replicas update eventually.', sourceFile: 'distributed-systems.md', sourceSection: '## Replication', dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
+  { id: 'c1', fileId: null, sourceHeading: 'CAP Theorem', front: 'What is the CAP theorem and its three guarantees?', back: 'Consistency, Availability, Partition tolerance — you can only guarantee two of three in a distributed system.', cardType: 'section', createdAt: new Date().toISOString() },
+  { id: 'c2', fileId: null, sourceHeading: 'Consensus Algorithms', front: 'What is Raft?', back: 'A consensus algorithm designed to be more understandable than Paxos. Uses leader election and log replication.', cardType: 'section', createdAt: new Date().toISOString() },
+  { id: 'c3', fileId: null, sourceHeading: 'Replication', front: 'What is the difference between synchronous and asynchronous replication?', back: 'Synchronous: write is confirmed only after all replicas acknowledge. Asynchronous: write is confirmed immediately, replicas update eventually.', cardType: 'section', createdAt: new Date().toISOString() },
 ]
 
 const { register, cleanup } = useKeyboardShortcuts()

@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpacedMd.Server.Application.Dtos;
 using SpacedMd.Server.Application.Services;
@@ -256,12 +255,11 @@ public static class FileEndpoints
         var newContent = await reader.ReadToEndAsync();
 
         // Validate deleteCardIds ownership
-        var idsToDelete = deleteCardIds;
-        if (idsToDelete.Count > 0)
+        if (deleteCardIds.Count > 0)
         {
             var validCount = await db.Cards
-                .CountAsync(c => idsToDelete.Contains(c.Id) && c.UserId == user.Id && c.FileId == id);
-            if (validCount != idsToDelete.Count)
+                .CountAsync(c => deleteCardIds.Contains(c.Id) && c.UserId == user.Id && c.FileId == id);
+            if (validCount != deleteCardIds.Count)
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {
                     ["deleteCardIds"] = ["One or more card IDs are invalid."]
@@ -335,7 +333,7 @@ public static class FileEndpoints
 
         // 4. Soft-delete requested cards
         var deletedCount = 0;
-        foreach (var card in cards.Where(c => idsToDelete.Contains(c.Id)))
+        foreach (var card in cards.Where(c => deleteCardIds.Contains(c.Id)))
         {
             card.DeletedAt = DateTimeOffset.UtcNow;
             deletedCount++;
@@ -344,7 +342,7 @@ public static class FileEndpoints
         // 5. Unlink remaining orphaned cards
         var orphanedIds = comparison.OrphanedCards.Select(c => c.CardId).ToHashSet();
         var orphanedCount = 0;
-        foreach (var card in cards.Where(c => orphanedIds.Contains(c.Id) && !idsToDelete.Contains(c.Id)))
+        foreach (var card in cards.Where(c => orphanedIds.Contains(c.Id) && !deleteCardIds.Contains(c.Id)))
         {
             card.FileId = null;
             orphanedCount++;
