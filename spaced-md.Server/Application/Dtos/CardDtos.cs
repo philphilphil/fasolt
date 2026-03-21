@@ -11,6 +11,9 @@ public record CardDto(
     string Front,
     string Back,
     string CardType,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    List<CardDeckInfoDto> Decks);
+
+public record CardDeckInfoDto(Guid Id, string Name);
 
 public record ExtractedContentDto(List<string> Fronts, string Back);

@@ -92,7 +92,8 @@ public static class CardEndpoints
 
         var cards = await query
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new CardDto(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.CreatedAt))
+            .Select(c => new CardDto(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.CreatedAt,
+                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList()))
             .ToListAsync();
 
         return Results.Ok(cards);
@@ -108,6 +109,7 @@ public static class CardEndpoints
         if (user is null) return Results.Unauthorized();
 
         var card = await db.Cards
+            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
             .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
 
         if (card is null) return Results.NotFound();
@@ -132,6 +134,7 @@ public static class CardEndpoints
             });
 
         var card = await db.Cards
+            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
             .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
 
         if (card is null) return Results.NotFound();
@@ -207,5 +210,6 @@ public static class CardEndpoints
     }
 
     private static CardDto ToDto(Card c) =>
-        new(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.CreatedAt);
+        new(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.CreatedAt,
+            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList());
 }

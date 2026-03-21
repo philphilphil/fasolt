@@ -11,6 +11,7 @@ export interface Card {
   repetitions: number
   dueAt: string | null
   state: 'new' | 'learning' | 'mature'
+  decks: { id: string; name: string }[]
 }
 
 export interface ExtractedContent {

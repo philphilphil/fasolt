@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useCardsStore } from '@/stores/cards'
 import { useFilesStore } from '@/stores/files'
-import type { Card } from '@/types'
+import { useDecksStore } from '@/stores/decks'
+import type { Card, Deck } from '@/types'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -16,6 +17,7 @@ import CardEditDialog from '@/components/CardEditDialog.vue'
 
 const cards = useCardsStore()
 const files = useFilesStore()
+const decks = useDecksStore()
 
 const filterFileId = ref<string>('')
 const editTarget = ref<Card | null>(null)
@@ -23,10 +25,24 @@ const editOpen = ref(false)
 const deleteTarget = ref<Card | null>(null)
 const deleteError = ref('')
 const createOpen = ref(false)
+const addToDeckCard = ref<Card | null>(null)
+const addToDeckId = ref('')
 
 onMounted(async () => {
-  await Promise.all([cards.fetchCards(), files.fetchFiles()])
+  await Promise.all([cards.fetchCards(), files.fetchFiles(), decks.fetchDecks()])
 })
+
+async function addCardToDeck() {
+  if (!addToDeckCard.value || !addToDeckId.value) return
+  try {
+    await decks.addCards(addToDeckId.value, [addToDeckCard.value.id])
+    await cards.fetchCards(filterFileId.value || undefined)
+    addToDeckCard.value = null
+    addToDeckId.value = ''
+  } catch {
+    // silently fail
+  }
+}
 
 async function applyFilter() {
   await cards.fetchCards(filterFileId.value || undefined)
@@ -85,7 +101,7 @@ async function confirmDelete() {
           <TableHead class="h-8">Front</TableHead>
           <TableHead class="h-8 hidden sm:table-cell">Source</TableHead>
           <TableHead class="h-8 hidden sm:table-cell">Type</TableHead>
-          <TableHead class="h-8 hidden sm:table-cell">Created</TableHead>
+          <TableHead class="h-8 hidden sm:table-cell">Decks</TableHead>
           <TableHead class="h-8 w-20"></TableHead>
         </TableRow>
       </TableHeader>
@@ -96,7 +112,15 @@ async function confirmDelete() {
           <TableCell class="hidden sm:table-cell">
             <Badge variant="secondary" class="text-[10px]">{{ card.cardType }}</Badge>
           </TableCell>
-          <TableCell class="hidden text-muted-foreground sm:table-cell">{{ formatDate(card.createdAt) }}</TableCell>
+          <TableCell class="hidden sm:table-cell">
+            <div class="flex flex-wrap gap-1">
+              <Badge v-for="d in card.decks" :key="d.id" variant="outline" class="text-[10px]">{{ d.name }}</Badge>
+              <button
+                class="text-[10px] text-muted-foreground hover:text-foreground"
+                @click="addToDeckCard = card"
+              >+</button>
+            </div>
+          </TableCell>
           <TableCell class="flex gap-1">
             <Button variant="ghost" size="sm" class="h-6 text-[10px]" @click="openEdit(card)">Edit</Button>
             <Button variant="ghost" size="sm" class="h-6 text-[10px] text-muted-foreground hover:text-destructive" @click="deleteTarget = card">&times;</Button>
@@ -135,6 +159,28 @@ async function confirmDelete() {
         <DialogFooter>
           <Button variant="outline" @click="deleteTarget = null">Cancel</Button>
           <Button variant="destructive" @click="confirmDelete">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    <!-- Add to deck dialog -->
+    <Dialog :open="!!addToDeckCard" @update:open="addToDeckCard = null">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add to deck</DialogTitle>
+          <DialogDescription>
+            Add "{{ addToDeckCard?.front?.slice(0, 40) }}" to a deck.
+          </DialogDescription>
+        </DialogHeader>
+        <select
+          v-model="addToDeckId"
+          class="w-full h-8 rounded-md border border-border bg-transparent px-2 text-xs"
+        >
+          <option value="">Select a deck</option>
+          <option v-for="d in decks.decks" :key="d.id" :value="d.id">{{ d.name }}</option>
+        </select>
+        <DialogFooter>
+          <Button variant="outline" @click="addToDeckCard = null">Cancel</Button>
+          <Button :disabled="!addToDeckId" @click="addCardToDeck">Add</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
