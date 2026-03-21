@@ -55,12 +55,5 @@ export const useDecksStore = defineStore('decks', () => {
     await apiFetch(`/decks/${deckId}/cards/${cardId}`, { method: 'DELETE' })
   }
 
-  async function addFileCards(deckId: string, fileId: string) {
-    await apiFetch(`/decks/${deckId}/add-file`, {
-      method: 'POST',
-      body: JSON.stringify({ fileId }),
-    })
-  }
-
-  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, addFileCards }
+  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard }
 })

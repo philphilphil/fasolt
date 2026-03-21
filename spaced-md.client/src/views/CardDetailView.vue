@@ -80,7 +80,6 @@ async function confirmDelete() {
         <Button variant="ghost" size="sm" class="h-7 text-xs" @click="router.push('/cards')">
           &larr; Cards
         </Button>
-        <Badge variant="outline" class="text-[10px]">{{ card.cardType }}</Badge>
         <Badge variant="outline" class="text-[10px]">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
@@ -98,6 +97,7 @@ async function confirmDelete() {
 
     <!-- Metadata -->
     <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+      <span v-if="card.sourceFile">Source: {{ card.sourceFile }}</span>
       <span v-if="card.sourceHeading">Section: {{ card.sourceHeading }}</span>
       <span v-if="card.decks.length > 0">Decks: {{ card.decks.map(d => d.name).join(', ') }}</span>
       <span>Created: {{ new Date(card.createdAt).toLocaleDateString() }}</span>

@@ -83,7 +83,6 @@ export async function revokeApiToken(id: string): Promise<void> {
 export interface CardSearchResult {
   id: string
   headline: string
-  cardType: string
   state: string
 }
 

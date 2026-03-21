@@ -39,8 +39,7 @@ const router = createRouter({
     },
     // App routes (require auth)
     { path: '/dashboard', name: 'dashboard', component: DashboardView },
-    { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
-    { path: '/files/:id', name: 'file-detail', component: () => import('@/views/FileDetailView.vue') },
+    { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue') },
     { path: '/cards', name: 'cards', component: () => import('@/views/CardsView.vue') },
     { path: '/cards/:id', name: 'card-detail', component: () => import('@/views/CardDetailView.vue') },
     { path: '/decks', name: 'decks', component: () => import('@/views/DecksView.vue') },

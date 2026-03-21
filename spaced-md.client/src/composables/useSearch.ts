@@ -1,16 +1,15 @@
 import { ref, computed, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { searchAll, type SearchResponse, type CardSearchResult, type DeckSearchResult, type FileSearchResult } from '@/api/client'
+import { searchAll, type SearchResponse, type CardSearchResult, type DeckSearchResult } from '@/api/client'
 
 export type SearchItem =
   | { type: 'card'; data: CardSearchResult }
   | { type: 'deck'; data: DeckSearchResult }
-  | { type: 'file'; data: FileSearchResult }
 
 export function useSearch() {
   const router = useRouter()
   const query = ref('')
-  const results = ref<SearchResponse>({ cards: [], decks: [], files: [] })
+  const results = ref<SearchResponse>({ cards: [], decks: [] })
   const isLoading = ref(false)
   const isOpen = ref(false)
   const activeIndex = ref(0)
@@ -21,7 +20,6 @@ export function useSearch() {
     const items: SearchItem[] = []
     for (const card of results.value.cards) items.push({ type: 'card', data: card })
     for (const deck of results.value.decks) items.push({ type: 'deck', data: deck })
-    for (const file of results.value.files) items.push({ type: 'file', data: file })
     return items
   })
 
@@ -29,15 +27,14 @@ export function useSearch() {
 
   const hasResults = computed(() =>
     results.value.cards.length > 0 ||
-    results.value.decks.length > 0 ||
-    results.value.files.length > 0
+    results.value.decks.length > 0
   )
 
   watch(query, (val) => {
     if (debounceTimer) clearTimeout(debounceTimer)
     const trimmed = val.trim()
     if (trimmed.length < 2) {
-      results.value = { cards: [], decks: [], files: [] }
+      results.value = { cards: [], decks: [] }
       isOpen.value = false
       return
     }
@@ -60,9 +57,6 @@ export function useSearch() {
         break
       case 'deck':
         router.push(`/decks/${item.data.id}`)
-        break
-      case 'file':
-        router.push(`/files/${item.data.id}`)
         break
     }
     close()
@@ -96,7 +90,7 @@ export function useSearch() {
   function close() {
     isOpen.value = false
     query.value = ''
-    results.value = { cards: [], decks: [], files: [] }
+    results.value = { cards: [], decks: [] }
     activeIndex.value = 0
   }
 

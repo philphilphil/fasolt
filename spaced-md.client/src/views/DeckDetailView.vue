@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
-import { useFilesStore } from '@/stores/files'
 import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,14 +12,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 
 const route = useRoute()
 const router = useRouter()
 const decks = useDecksStore()
-const filesStore = useFilesStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
@@ -32,7 +27,6 @@ const editDescription = ref('')
 onMounted(async () => {
   try {
     deck.value = await decks.getDeckDetail(route.params.id as string)
-    await filesStore.fetchFiles()
   } catch {
     router.replace('/decks')
   } finally {
@@ -69,12 +63,6 @@ async function removeCard(cardId: string) {
   await decks.removeCard(deck.value.id, cardId)
   await refresh()
 }
-
-async function addFromFile(fileId: string) {
-  if (!deck.value) return
-  await decks.addFileCards(deck.value.id, fileId)
-  await refresh()
-}
 </script>
 
 <template>
@@ -99,24 +87,6 @@ async function addFromFile(fileId: string) {
           Study this deck
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="sm" class="h-7 text-xs">Add from file</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              v-for="file in filesStore.files"
-              :key="file.id"
-              @click="addFromFile(file.id)"
-            >
-              {{ file.fileName }}
-            </DropdownMenuItem>
-            <DropdownMenuItem v-if="filesStore.files.length === 0" disabled>
-              No files uploaded
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <Button variant="outline" size="sm" class="h-7 text-xs" @click="openEdit">Edit</Button>
         <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="handleDelete">Delete</Button>
       </div>
@@ -134,7 +104,7 @@ async function addFromFile(fileId: string) {
       <TableHeader>
         <TableRow class="text-[10px] uppercase tracking-wider text-muted-foreground hover:bg-transparent">
           <TableHead class="h-8">Front</TableHead>
-          <TableHead class="h-8">Type</TableHead>
+          <TableHead class="h-8">Source</TableHead>
           <TableHead class="h-8">State</TableHead>
           <TableHead class="h-8 hidden sm:table-cell">Due</TableHead>
           <TableHead class="h-8 w-16" />
@@ -143,7 +113,10 @@ async function addFromFile(fileId: string) {
       <TableBody>
         <TableRow v-for="card in deck.cards" :key="card.id" class="text-xs">
           <TableCell class="font-medium text-foreground max-w-[300px] truncate">{{ card.front }}</TableCell>
-          <TableCell><Badge variant="outline" class="text-[10px]">{{ card.cardType }}</Badge></TableCell>
+          <TableCell>
+            <Badge v-if="card.sourceFile" variant="outline" class="text-[10px] font-mono">{{ card.sourceFile }}</Badge>
+            <span v-else class="text-muted-foreground">—</span>
+          </TableCell>
           <TableCell class="text-muted-foreground">{{ card.state }}</TableCell>
           <TableCell class="hidden text-muted-foreground sm:table-cell">{{ card.dueAt || '—' }}</TableCell>
           <TableCell>
@@ -161,7 +134,7 @@ async function addFromFile(fileId: string) {
     </Table>
 
     <div v-else class="py-12 text-center text-sm text-muted-foreground">
-      No cards in this deck yet. Add cards from a file.
+      No cards in this deck yet. Add cards from the Cards view.
     </div>
 
     <!-- Edit dialog -->

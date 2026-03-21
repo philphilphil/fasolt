@@ -17,7 +17,6 @@ import {
 } from '@tanstack/vue-table'
 import { valueUpdater } from '@/lib/utils'
 import { useCardsStore } from '@/stores/cards'
-import { useFilesStore } from '@/stores/files'
 import { useDecksStore } from '@/stores/decks'
 import type { Card } from '@/types'
 import {
@@ -39,7 +38,6 @@ import CardCreateDialog from '@/components/CardCreateDialog.vue'
 import CardEditDialog from '@/components/CardEditDialog.vue'
 
 const cardsStore = useCardsStore()
-const files = useFilesStore()
 const decks = useDecksStore()
 
 const editTarget = ref<Card | null>(null)
@@ -51,14 +49,8 @@ const addToDeckCard = ref<Card | null>(null)
 const addToDeckId = ref('')
 
 onMounted(async () => {
-  await Promise.all([cardsStore.fetchCards(), files.fetchFiles(), decks.fetchDecks()])
+  await Promise.all([cardsStore.fetchCards(), decks.fetchDecks()])
 })
-
-function getFileName(fileId: string | null): string {
-  if (!fileId) return '—'
-  const f = files.files.find(f => f.id === fileId)
-  return f?.fileName ?? '(deleted)'
-}
 
 function openEdit(card: Card) {
   editTarget.value = card
@@ -104,15 +96,9 @@ const columns: ColumnDef<Card>[] = [
   {
     id: 'source',
     header: 'Source',
-    accessorFn: (row) => getFileName(row.fileId),
-    cell: ({ row }) => h('span', { class: 'font-mono' }, getFileName(row.original.fileId)),
-    filterFn: (row, _id, value) => !value || row.original.fileId === value,
-  },
-  {
-    accessorKey: 'cardType',
-    header: 'Type',
-    cell: ({ row }) => h(Badge, { variant: 'secondary', class: 'text-[10px]' }, () => row.getValue('cardType')),
-    filterFn: (row, _id, value) => !value || row.getValue('cardType') === value,
+    accessorFn: (row) => row.sourceFile ?? '—',
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.sourceFile ?? '—'),
+    filterFn: (row, _id, value) => !value || row.original.sourceFile === value,
   },
   {
     accessorKey: 'state',
@@ -178,17 +164,11 @@ const filterValue = computed({
 })
 
 const sourceFilter = ref('')
-const typeFilter = ref('')
 const stateFilter = ref('')
 
 function applySourceFilter(val: string) {
   sourceFilter.value = val
   table.getColumn('source')?.setFilterValue(val || undefined)
-}
-
-function applyTypeFilter(val: string) {
-  typeFilter.value = val
-  table.getColumn('cardType')?.setFilterValue(val || undefined)
 }
 
 function applyStateFilter(val: string) {
@@ -207,24 +187,12 @@ function applyStateFilter(val: string) {
           placeholder="Filter cards..."
           class="h-8 max-w-[200px] text-xs"
         />
-        <select
+        <Input
           :value="sourceFilter"
-          class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
-          @change="applySourceFilter(($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">All files</option>
-          <option v-for="f in files.files" :key="f.id" :value="f.id">{{ f.fileName }}</option>
-        </select>
-        <select
-          :value="typeFilter"
-          class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
-          @change="applyTypeFilter(($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">All types</option>
-          <option value="file">file</option>
-          <option value="section">section</option>
-          <option value="custom">custom</option>
-        </select>
+          placeholder="Filter by source..."
+          class="h-8 max-w-[200px] text-xs"
+          @input="applySourceFilter(($event.target as HTMLInputElement).value)"
+        />
         <select
           :value="stateFilter"
           class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
@@ -291,7 +259,7 @@ function applyStateFilter(val: string) {
           <template v-else>
             <TableRow>
               <TableCell :colspan="columns.length" class="h-24 text-center text-sm text-muted-foreground">
-                No cards yet. Create one from a file or start from scratch.
+                No cards yet. Create one or use the MCP agent to generate cards from your notes.
               </TableCell>
             </TableRow>
           </template>
@@ -316,7 +284,6 @@ function applyStateFilter(val: string) {
     <!-- Dialogs -->
     <CardCreateDialog
       v-model:open="createOpen"
-      card-type="custom"
       :initial-fronts="['']"
       initial-back=""
       @created="cardsStore.fetchCards()"

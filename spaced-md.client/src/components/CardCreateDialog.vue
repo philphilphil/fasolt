@@ -9,11 +9,10 @@ import {
 
 const props = defineProps<{
   open: boolean
-  fileId?: string
+  sourceFile?: string
   sourceHeading?: string
   initialFronts?: string[]
   initialBack?: string
-  cardType: 'file' | 'section' | 'custom'
 }>()
 
 const emit = defineEmits<{
@@ -59,11 +58,10 @@ async function save() {
   try {
     for (const front of validFronts) {
       await cards.createCard({
-        fileId: props.fileId,
+        sourceFile: props.sourceFile,
         sourceHeading: props.sourceHeading,
         front,
         back: back.value,
-        cardType: props.cardType,
       })
     }
     emit('update:open', false)

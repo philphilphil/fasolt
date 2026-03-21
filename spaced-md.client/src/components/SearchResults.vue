@@ -53,9 +53,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
           @click="emit('select', { type: 'card', data: card })"
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'card', i))"
         >
-          <span class="shrink-0 text-xs text-muted-foreground">
-            {{ card.cardType === 'file' ? '📄' : card.cardType === 'section' ? '§' : '✏️' }}
-          </span>
+          <span class="shrink-0 text-xs text-muted-foreground">✏️</span>
           <span class="truncate" v-html="card.headline" />
           <span class="ml-auto shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
             {{ card.state }}
@@ -82,25 +80,6 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
           <span class="ml-auto shrink-0 text-xs text-muted-foreground">
             {{ deck.cardCount }} cards
           </span>
-        </button>
-      </div>
-
-      <!-- Files -->
-      <div v-if="results.files.length > 0">
-        <div class="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
-             :class="{ 'border-t border-border': results.cards.length > 0 || results.decks.length > 0 }">
-          Files ({{ results.files.length }})
-        </div>
-        <button
-          v-for="(file, i) in results.files"
-          :key="file.id"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
-          :class="{ 'bg-accent': activeIndex === globalIndex(flatItems, 'file', i) }"
-          @click="emit('select', { type: 'file', data: file })"
-          @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'file', i))"
-        >
-          <span class="shrink-0 text-xs text-muted-foreground">📝</span>
-          <span class="truncate" v-html="file.headline" />
         </button>
       </div>
 

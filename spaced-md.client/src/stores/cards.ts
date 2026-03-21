@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Card, ExtractedContent } from '@/types'
+import type { Card } from '@/types'
 import { apiFetch } from '@/api/client'
 import type { PaginatedResponse } from '@/api/client'
 
@@ -8,10 +8,10 @@ export const useCardsStore = defineStore('cards', () => {
   const cards = ref<Card[]>([])
   const loading = ref(false)
 
-  async function fetchCards(fileId?: string) {
+  async function fetchCards(sourceFile?: string) {
     loading.value = true
     try {
-      const params = fileId ? `?fileId=${fileId}` : ''
+      const params = sourceFile ? `?sourceFile=${encodeURIComponent(sourceFile)}` : ''
       const response = await apiFetch<PaginatedResponse<Card>>(`/cards${params}`)
       cards.value = response.items
     } finally {
@@ -20,11 +20,10 @@ export const useCardsStore = defineStore('cards', () => {
   }
 
   async function createCard(data: {
-    fileId?: string
+    sourceFile?: string
     sourceHeading?: string
     front: string
     back: string
-    cardType: string
   }): Promise<Card> {
     const result = await apiFetch<Card>('/cards', {
       method: 'POST',
@@ -48,14 +47,9 @@ export const useCardsStore = defineStore('cards', () => {
     cards.value = cards.value.filter(c => c.id !== id)
   }
 
-  async function extractContent(fileId: string, heading?: string): Promise<ExtractedContent> {
-    const params = heading ? `?fileId=${fileId}&heading=${encodeURIComponent(heading)}` : `?fileId=${fileId}`
-    return apiFetch<ExtractedContent>(`/cards/extract${params}`)
-  }
-
   async function getCard(id: string): Promise<Card> {
     return apiFetch<Card>(`/cards/${id}`)
   }
 
-  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, extractContent }
+  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard }
 })
