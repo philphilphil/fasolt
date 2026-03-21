@@ -23,7 +23,8 @@ export const useReviewStore = defineStore('review', () => {
     currentIndex.value < queue.value.length ? queue.value[currentIndex.value] : null
   )
 
-  const isComplete = computed(() => isActive.value && currentCard.value === null)
+  const isComplete = computed(() => isActive.value && currentCard.value === null && sessionStats.value.reviewed > 0)
+  const noDueCards = computed(() => isActive.value && queue.value.length === 0 && sessionStats.value.reviewed === 0)
 
   const progress = computed(() => {
     if (queue.value.length === 0) return 0
@@ -90,7 +91,7 @@ export const useReviewStore = defineStore('review', () => {
   }
 
   return {
-    queue, currentCard, isFlipped, isActive, isComplete, loading,
+    queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading,
     progress, sessionStats, sessionTime,
     startSession, flipCard, rate, endSession, fetchStats,
   }

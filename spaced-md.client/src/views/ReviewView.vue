@@ -93,6 +93,13 @@ function onDone() {
       Loading cards...
     </div>
 
+    <!-- No cards due -->
+    <div v-else-if="review.noDueCards" class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+      <div class="text-lg text-foreground">All caught up!</div>
+      <div class="text-sm text-muted-foreground">No cards are due for review right now.</div>
+      <button class="text-sm text-primary hover:underline" @click="onDone">Back to dashboard</button>
+    </div>
+
     <!-- Session complete -->
     <SessionComplete
       v-else-if="review.isComplete"

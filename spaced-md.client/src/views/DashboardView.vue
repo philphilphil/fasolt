@@ -35,10 +35,8 @@ onMounted(async () => {
   }
 })
 
-function onSelectDeck(deck: Deck) {
-  if (deck.dueCount > 0) {
-    router.push({ name: 'review' })
-  }
+function onSelectDeck(_deck: Deck) {
+  // Deck table is placeholder mock data — no-op until groups/decks are real
 }
 
 function studyNow() {
