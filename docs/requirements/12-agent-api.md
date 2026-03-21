@@ -9,12 +9,12 @@ Allow AI agents (Claude Code, Cursor, etc.) to interact with spaced-md through M
 ```
 AI Agent (Claude Code, Cursor, etc.)
     ↕ stdio
-spaced-md MCP server (lightweight, runs locally on user's machine)
+spaced-md MCP server (lightweight .NET tool, runs locally on user's machine)
     ↕ HTTPS
 spaced-md backend (hosted remotely or locally)
 ```
 
-The MCP server is a thin npm package (`spaced-md-mcp`) that translates MCP tool calls into authenticated API requests. It has no state — just a bridge. Users configure it in their agent's MCP settings with a server URL and personal access token.
+The MCP server is a .NET project (`spaced-md.Mcp/`) in the same solution, published as a dotnet tool (`dotnet tool install -g spaced-md-mcp`). It uses the official `ModelContextProtocol` C# SDK with stdio transport. It translates MCP tool calls into authenticated API requests. It has no state — just a bridge. Users configure it in their agent's MCP settings with a server URL and personal access token.
 
 ## US-12.1 — Personal Access Tokens (P2)
 
@@ -63,24 +63,43 @@ As an MCP server, I need to upload or update a markdown file so cards can be lin
 - If a file with the same name already exists for this user, it is updated (upsert)
 - Response includes the file ID and parsed headings so the MCP server can pass them back to the agent for card creation
 
-## US-12.4 — MCP Server Package (P2)
+## US-12.4 — MCP Server (.NET) (P2)
 
 As a user, I want to install and configure an MCP server so my AI agent can talk to spaced-md.
 
 **Acceptance criteria:**
 
-- Published as an npm package: `spaced-md-mcp`
-- Runs locally via stdio (standard MCP transport)
+- Separate .NET project in the solution: `spaced-md.Mcp/`
+- Uses the official `ModelContextProtocol` NuGet package with stdio transport
+- Shares DTOs with the backend project (via shared project or package reference)
+- Published as a dotnet tool: `dotnet tool install -g spaced-md-mcp`
 - Configured with two environment variables: `SPACED_MD_URL` and `SPACED_MD_TOKEN`
+- Tools are auto-discovered via `[McpServerToolType]` and `[McpServerTool]` attributes
+- `HttpClient` is injected via DI, pre-configured with the API URL and Bearer token
+- Logging goes to stderr (required for stdio transport)
 - User adds to their agent config (e.g., Claude Code `settings.json`):
   ```json
   {
     "mcpServers": {
       "spaced-md": {
-        "command": "npx",
-        "args": ["-y", "spaced-md-mcp"],
+        "command": "spaced-md-mcp",
         "env": {
           "SPACED_MD_URL": "https://spaced-md.example.com",
+          "SPACED_MD_TOKEN": "sm_..."
+        }
+      }
+    }
+  }
+  ```
+- Alternative for dev/local use (no global install):
+  ```json
+  {
+    "mcpServers": {
+      "spaced-md": {
+        "command": "dotnet",
+        "args": ["run", "--project", "/path/to/spaced-md.Mcp"],
+        "env": {
+          "SPACED_MD_URL": "http://localhost:5000",
           "SPACED_MD_TOKEN": "sm_..."
         }
       }
