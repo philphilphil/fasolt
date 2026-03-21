@@ -71,6 +71,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+if (app.Environment.IsDevelopment())
+{
+    await DevSeedData.SeedAsync(app.Services);
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ErrorResponseMiddleware>();

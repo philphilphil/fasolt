@@ -52,6 +52,7 @@ dev.sh                      — runs everything (docker + backend + frontend)
 spaced-md.sln               — .NET solution
 global.json                 — .NET SDK version pin
 spaced-md.Server/           — backend
+spaced-md.Mcp/              — MCP server for AI agents
 spaced-md.client/           — frontend (Vue 3 SPA)
 ```
 
@@ -122,7 +123,27 @@ When asked to generate questions/flashcards for a `.md` file (typically an Obsid
 The CAP theorem states you can only have two of three: Consistency, Availability, Partition tolerance.
 ```
 
+## Dev Seed User
+
+In development, a seed user and API token are auto-created on startup:
+
+- **Email:** `dev@spaced-md.local` / **Password:** `Dev1234!`
+- **API Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
+
+## MCP Server
+
+The `spaced-md.Mcp/` project is a stdio MCP server that bridges AI agents to the API. To run locally:
+
+```bash
+SPACED_MD_URL=http://localhost:5000 \
+SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
+  dotnet run --project spaced-md.Mcp
+```
+
 ## Key API Routes
 
 - `GET /api/health` — health check
 - `/api/identity/*` — ASP.NET Core Identity endpoints (register, login, etc.)
+- `/api/tokens` — API token management (create, list, revoke)
+- `POST /api/cards/bulk` — bulk card creation with duplicate detection
+- `POST /api/files` — file upload with upsert support

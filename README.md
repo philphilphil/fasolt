@@ -48,32 +48,18 @@ The MCP server lets AI agents (Claude Code, Cursor, etc.) create flashcards from
 ### Setup
 
 1. Start the full stack: `./dev.sh`
-2. Create an API token: go to **Settings → API Tokens** in the web UI, or run:
-   ```bash
-   ./scripts/setup-mcp-test.sh
-   ```
+2. A dev user is auto-seeded with a pre-generated API token:
+   - **Email:** `dev@spaced-md.local` / **Password:** `Dev1234!`
+   - **Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
 3. Add to Claude Code:
    ```bash
-   claude mcp add spaced-md -- dotnet run --project /path/to/spaced-md.Mcp \
-     --env SPACED_MD_URL=http://localhost:5000 \
-     --env SPACED_MD_TOKEN=sm_your_token_here
+   claude mcp add spaced-md \
+     -e SPACED_MD_URL=http://localhost:5000 \
+     -e SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
+     -- dotnet run --project /absolute/path/to/spaced-md.Mcp
    ```
 
-   Or add manually to `~/.claude/settings.json`:
-   ```json
-   {
-     "mcpServers": {
-       "spaced-md": {
-         "command": "dotnet",
-         "args": ["run", "--project", "/path/to/spaced-md.Mcp"],
-         "env": {
-           "SPACED_MD_URL": "http://localhost:5000",
-           "SPACED_MD_TOKEN": "sm_your_token_here"
-         }
-       }
-     }
-   }
-   ```
+You can also create your own tokens via **Settings → API Tokens** in the web UI.
 
 ### Available Tools
 
