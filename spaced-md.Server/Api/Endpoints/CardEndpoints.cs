@@ -80,23 +80,47 @@ public static class CardEndpoints
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         AppDbContext db,
-        Guid? fileId = null)
+        Guid? fileId = null,
+        Guid? deckId = null,
+        int? limit = null,
+        string? after = null)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var query = db.Cards.Where(c => c.UserId == user.Id);
+        var take = Math.Clamp(limit ?? 50, 1, 200);
+
+        IQueryable<Card> query = db.Cards
+            .Where(c => c.UserId == user.Id)
+            .OrderByDescending(c => c.CreatedAt)
+            .ThenBy(c => c.Id);
 
         if (fileId.HasValue)
             query = query.Where(c => c.FileId == fileId.Value);
 
+        if (deckId.HasValue)
+            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckId.Value));
+
+        if (Guid.TryParse(after, out var afterId))
+        {
+            var cursor = await db.Cards.Where(c => c.Id == afterId && c.UserId == user.Id)
+                .Select(c => new { c.CreatedAt, c.Id }).FirstOrDefaultAsync();
+            if (cursor is not null)
+                query = query.Where(c => c.CreatedAt < cursor.CreatedAt ||
+                    (c.CreatedAt == cursor.CreatedAt && c.Id.CompareTo(cursor.Id) > 0));
+        }
+
         var cards = await query
-            .OrderByDescending(c => c.CreatedAt)
+            .Take(take + 1)
             .Select(c => new CardDto(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.State, c.CreatedAt,
                 c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList()))
             .ToListAsync();
 
-        return Results.Ok(cards);
+        var hasMore = cards.Count > take;
+        if (hasMore) cards = cards[..take];
+        var nextCursor = hasMore ? cards[^1].Id.ToString() : null;
+
+        return Results.Ok(new PaginatedResponse<CardDto>(cards, hasMore, nextCursor));
     }
 
     private static async Task<IResult> GetById(
