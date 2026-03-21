@@ -19,7 +19,7 @@ const showSource = ref(false)
 
 const cardsStore = useCardsStore()
 const createOpen = ref(false)
-const createFront = ref('')
+const createFronts = ref<string[]>([])
 const createBack = ref('')
 const createHeading = ref<string | undefined>(undefined)
 const createType = ref<'file' | 'section'>('file')
@@ -59,7 +59,7 @@ async function createFromFile() {
   extractError.value = ''
   try {
     const content = await cardsStore.extractContent(file.value.id)
-    createFront.value = content.front
+    createFronts.value = content.fronts
     createBack.value = content.back
     createHeading.value = undefined
     createType.value = 'file'
@@ -77,7 +77,7 @@ async function createFromSection(headingText: string) {
   extractError.value = ''
   try {
     const content = await cardsStore.extractContent(file.value.id, headingText)
-    createFront.value = content.front
+    createFronts.value = content.fronts
     createBack.value = content.back
     createHeading.value = headingText
     createType.value = 'section'
@@ -154,7 +154,7 @@ async function createFromSection(headingText: string) {
       v-model:open="createOpen"
       :file-id="file?.id"
       :source-heading="createHeading"
-      :initial-front="createFront"
+      :initial-fronts="createFronts"
       :initial-back="createBack"
       :card-type="createType"
     />

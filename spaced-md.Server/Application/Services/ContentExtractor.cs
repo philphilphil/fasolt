@@ -71,6 +71,29 @@ public static partial class ContentExtractor
         return foundHeading ? result.ToString().TrimEnd() : null;
     }
 
+    public static (List<string> Fronts, string CleanedContent) ParseMarkers(string content)
+    {
+        var fronts = new List<string>();
+        var cleaned = new StringBuilder();
+
+        foreach (var line in content.Split('\n'))
+        {
+            var trimmed = line.TrimEnd('\r').Trim();
+            if (trimmed.StartsWith("?::"))
+            {
+                var marker = trimmed[3..].Trim();
+                if (!string.IsNullOrEmpty(marker))
+                    fronts.Add(marker);
+            }
+            else
+            {
+                cleaned.AppendLine(line);
+            }
+        }
+
+        return (fronts, cleaned.ToString().TrimEnd());
+    }
+
     public static string? GetFirstH1(string markdown)
     {
         var lines = markdown.Split('\n');

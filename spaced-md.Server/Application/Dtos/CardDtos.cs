@@ -13,4 +13,4 @@ public record CardDto(
     string CardType,
     DateTimeOffset CreatedAt);
 
-public record ExtractedContentDto(string Front, string Back);
+public record ExtractedContentDto(List<string> Fronts, string Back);

@@ -16,7 +16,7 @@ import CardCreateDialog from '@/components/CardCreateDialog.vue'
 const files = useFilesStore()
 const cardsStore = useCardsStore()
 const createOpen = ref(false)
-const createFront = ref('')
+const createFronts = ref<string[]>([])
 const createBack = ref('')
 const createFileId = ref<string | undefined>(undefined)
 const extracting = ref(false)
@@ -124,7 +124,7 @@ async function createCardFromFile(fileId: string) {
   extracting.value = true
   try {
     const content = await cardsStore.extractContent(fileId)
-    createFront.value = content.front
+    createFronts.value = content.fronts
     createBack.value = content.back
     createFileId.value = fileId
     createOpen.value = true
@@ -289,7 +289,7 @@ async function confirmDelete() {
     <CardCreateDialog
       v-model:open="createOpen"
       :file-id="createFileId"
-      :initial-front="createFront"
+      :initial-fronts="createFronts"
       :initial-back="createBack"
       card-type="file"
       @created="files.fetchFiles()"

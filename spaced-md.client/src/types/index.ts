@@ -9,7 +9,7 @@ export interface Card {
 }
 
 export interface ExtractedContent {
-  front: string
+  fronts: string[]
   back: string
 }
 

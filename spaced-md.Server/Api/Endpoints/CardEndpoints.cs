@@ -184,23 +184,26 @@ public static class CardEndpoints
 
         if (file is null) return Results.NotFound();
 
-        string front;
-        string back;
+        string rawContent;
+        string defaultFront;
 
         if (string.IsNullOrWhiteSpace(heading))
         {
-            front = ContentExtractor.GetFirstH1(file.Content) ?? file.FileName;
-            back = ContentExtractor.StripFrontmatter(file.Content);
+            defaultFront = ContentExtractor.GetFirstH1(file.Content) ?? file.FileName;
+            rawContent = ContentExtractor.StripFrontmatter(file.Content);
         }
         else
         {
-            front = heading;
+            defaultFront = heading;
             var section = ContentExtractor.ExtractSection(file.Content, heading);
             if (section is null) return Results.NotFound();
-            back = section;
+            rawContent = section;
         }
 
-        return Results.Ok(new ExtractedContentDto(front, back));
+        var (markers, cleanedContent) = ContentExtractor.ParseMarkers(rawContent);
+        var fronts = markers.Count > 0 ? markers : new List<string> { defaultFront };
+
+        return Results.Ok(new ExtractedContentDto(fronts, cleanedContent));
     }
 
     private static CardDto ToDto(Card c) =>

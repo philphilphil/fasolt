@@ -112,7 +112,7 @@ async function confirmDelete() {
     <CardCreateDialog
       v-model:open="createOpen"
       card-type="custom"
-      initial-front=""
+      :initial-fronts="['']"
       initial-back=""
       @created="cards.fetchCards(filterFileId || undefined)"
     />
