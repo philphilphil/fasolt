@@ -48,9 +48,13 @@ The MCP server lets AI agents (Claude Code, Cursor, etc.) create flashcards from
 ### Setup
 
 1. Start the full stack: `./dev.sh`
-2. A dev user is auto-seeded with a pre-generated API token:
-   - **Email:** `dev@spaced-md.local` / **Password:** `Dev1234!`
-   - **Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
+2. A dev user is auto-seeded on first startup with a pre-generated API token:
+
+   | | |
+   |---|---|
+   | **Email** | `dev@spaced-md.local` |
+   | **Password** | `Dev1234!` |
+   | **API Token** | `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000` |
 3. Add to Claude Code:
    ```bash
    claude mcp add spaced-md \
