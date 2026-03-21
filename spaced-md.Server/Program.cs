@@ -82,7 +82,6 @@ app.UseMiddleware<ErrorResponseMiddleware>();
 
 app.MapHealthEndpoints();
 app.MapAccountEndpoints();
-app.MapFileEndpoints();
 app.MapCardEndpoints();
 app.MapReviewEndpoints();
 app.MapDeckEndpoints();
