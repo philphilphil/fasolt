@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpacedMd.Server.Application.Dtos;
-using SpacedMd.Server.Application.Services;
 using SpacedMd.Server.Domain.Entities;
 using SpacedMd.Server.Infrastructure.Data;
 
@@ -10,8 +9,6 @@ namespace SpacedMd.Server.Api.Endpoints;
 
 public static class CardEndpoints
 {
-    private static readonly string[] ValidCardTypes = ["file", "section", "custom"];
-
     public static void MapCardEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/cards").RequireAuthorization();
@@ -19,7 +16,6 @@ public static class CardEndpoints
         group.MapPost("/", Create);
         group.MapPost("/bulk", BulkCreate);
         group.MapGet("/", List);
-        group.MapGet("/extract", Extract);
         group.MapGet("/{id:guid}", GetById);
         group.MapPut("/{id:guid}", Update);
         group.MapDelete("/{id:guid}", Delete);
@@ -40,34 +36,14 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        if (!ValidCardTypes.Contains(request.CardType))
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                ["cardType"] = ["Card type must be 'file', 'section', or 'custom'."]
-            });
-
-        if (request.CardType is "file" or "section")
-        {
-            if (request.FileId is null)
-                return Results.ValidationProblem(new Dictionary<string, string[]>
-                {
-                    ["fileId"] = ["File ID is required for file and section cards."]
-                });
-
-            var fileExists = await db.MarkdownFiles
-                .AnyAsync(f => f.Id == request.FileId && f.UserId == user.Id);
-            if (!fileExists) return Results.NotFound();
-        }
-
         var card = new Card
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            FileId = request.CardType == "custom" ? null : request.FileId,
+            SourceFile = request.SourceFile?.Trim(),
             SourceHeading = request.SourceHeading,
             Front = request.Front,
             Back = request.Back,
-            CardType = request.CardType,
             CreatedAt = DateTimeOffset.UtcNow,
         };
 
@@ -81,7 +57,7 @@ public static class CardEndpoints
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         AppDbContext db,
-        Guid? fileId = null,
+        string? sourceFile = null,
         Guid? deckId = null,
         int? limit = null,
         string? after = null)
@@ -96,8 +72,8 @@ public static class CardEndpoints
             .OrderByDescending(c => c.CreatedAt)
             .ThenBy(c => c.Id);
 
-        if (fileId.HasValue)
-            query = query.Where(c => c.FileId == fileId.Value);
+        if (sourceFile is not null)
+            query = query.Where(c => c.SourceFile == sourceFile);
 
         if (deckId.HasValue)
             query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckId.Value));
@@ -113,7 +89,7 @@ public static class CardEndpoints
 
         var cards = await query
             .Take(take + 1)
-            .Select(c => new CardDto(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.State, c.CreatedAt,
+            .Select(c => new CardDto(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
                 c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList()))
             .ToListAsync();
 
@@ -191,49 +167,6 @@ public static class CardEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> Extract(
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager,
-        AppDbContext db,
-        Guid? fileId = null,
-        string? heading = null)
-    {
-        var user = await userManager.GetUserAsync(principal);
-        if (user is null) return Results.Unauthorized();
-
-        if (fileId is null)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                ["fileId"] = ["File ID is required."]
-            });
-
-        var file = await db.MarkdownFiles
-            .FirstOrDefaultAsync(f => f.Id == fileId && f.UserId == user.Id);
-
-        if (file is null) return Results.NotFound();
-
-        string rawContent;
-        string defaultFront;
-
-        if (string.IsNullOrWhiteSpace(heading))
-        {
-            defaultFront = ContentExtractor.GetFirstH1(file.Content) ?? file.FileName;
-            rawContent = ContentExtractor.StripFrontmatter(file.Content);
-        }
-        else
-        {
-            defaultFront = heading;
-            var section = ContentExtractor.ExtractSection(file.Content, heading);
-            if (section is null) return Results.NotFound();
-            rawContent = section;
-        }
-
-        var (markers, cleanedContent) = ContentExtractor.ParseMarkers(rawContent);
-        var fronts = markers.Count > 0 ? markers : new List<string> { defaultFront };
-
-        return Results.Ok(new ExtractedContentDto(fronts, cleanedContent));
-    }
-
     private static async Task<IResult> BulkCreate(
         BulkCreateCardsRequest request,
         ClaimsPrincipal principal,
@@ -262,15 +195,6 @@ public static class CardEndpoints
         if (validationErrors.Count > 0)
             return Results.BadRequest(new { error = "validation_error", message = "Validation failed", details = validationErrors });
 
-        // Validate fileId if provided
-        if (request.FileId.HasValue)
-        {
-            var fileExists = await db.MarkdownFiles
-                .AnyAsync(f => f.Id == request.FileId.Value && f.UserId == user.Id);
-            if (!fileExists)
-                return Results.BadRequest(new { error = "validation_error", message = "File not found or does not belong to you" });
-        }
-
         // Validate deckId if provided
         if (request.DeckId.HasValue)
         {
@@ -280,19 +204,41 @@ public static class CardEndpoints
                 return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
         }
 
-        // Check for duplicates — cards with same front text for same file (or same user if no file)
+        // Check for duplicates — group by effective sourceFile per card, then check (UserId, SourceFile, Front)
+        // For cards with a sourceFile, check (UserId, SourceFile, Front); for null sourceFile, check (UserId, Front) where SourceFile is null
         var fronts = request.Cards.Select(c => c.Front.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var existingFronts = request.FileId.HasValue
+        var requestSourceFile = request.SourceFile?.Trim();
+
+        // Collect all (sourceFile, front) pairs to check for duplicates
+        var cardsWithSource = request.Cards
+            .Where(c => (c.SourceFile?.Trim() ?? requestSourceFile) is not null)
+            .Select(c => new { SourceFile = (c.SourceFile?.Trim() ?? requestSourceFile)!, Front = c.Front.Trim() })
+            .ToList();
+
+        var cardsWithoutSource = request.Cards
+            .Where(c => (c.SourceFile?.Trim() ?? requestSourceFile) is null)
+            .Select(c => c.Front.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Query existing cards for duplicate detection
+        var existingWithSource = cardsWithSource.Count > 0
             ? await db.Cards
-                .Where(c => c.UserId == user.Id && c.FileId == request.FileId.Value && fronts.Contains(c.Front))
+                .Where(c => c.UserId == user.Id && c.SourceFile != null && fronts.Contains(c.Front))
+                .Select(c => new { c.SourceFile, c.Front })
+                .ToListAsync()
+            : [];
+
+        var existingWithoutSource = cardsWithoutSource.Count > 0
+            ? await db.Cards
+                .Where(c => c.UserId == user.Id && c.SourceFile == null && fronts.Contains(c.Front))
                 .Select(c => c.Front)
                 .ToListAsync()
-            : await db.Cards
-                .Where(c => c.UserId == user.Id && c.FileId == null && fronts.Contains(c.Front))
-                .Select(c => c.Front)
-                .ToListAsync();
+            : [];
 
-        var existingFrontSet = existingFronts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingWithSourceSet = existingWithSource
+            .Select(x => (x.SourceFile!, x.Front))
+            .ToHashSet();
+        var existingWithoutSourceSet = existingWithoutSource.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var created = new List<Card>();
         var skipped = new List<SkippedCardDto>();
@@ -300,32 +246,35 @@ public static class CardEndpoints
         foreach (var item in request.Cards)
         {
             var trimmedFront = item.Front.Trim();
-            if (existingFrontSet.Contains(trimmedFront))
+            var effectiveSourceFile = item.SourceFile?.Trim() ?? requestSourceFile;
+
+            // Check for duplicate in DB
+            bool isDuplicate = effectiveSourceFile is not null
+                ? existingWithSourceSet.Contains((effectiveSourceFile, trimmedFront))
+                : existingWithoutSourceSet.Contains(trimmedFront);
+
+            if (isDuplicate)
             {
                 skipped.Add(new SkippedCardDto(trimmedFront, "Card with same front text already exists"));
                 continue;
             }
 
             // Also skip duplicates within the same batch
-            if (created.Any(c => c.Front.Equals(trimmedFront, StringComparison.OrdinalIgnoreCase)))
+            if (created.Any(c => c.Front.Equals(trimmedFront, StringComparison.OrdinalIgnoreCase) &&
+                (c.SourceFile ?? "") == (effectiveSourceFile ?? "")))
             {
                 skipped.Add(new SkippedCardDto(trimmedFront, "Duplicate within batch"));
                 continue;
             }
 
-            var cardType = request.FileId.HasValue
-                ? (item.SourceHeading is not null ? "section" : "file")
-                : "custom";
-
             var card = new Card
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
-                FileId = request.FileId,
+                SourceFile = effectiveSourceFile,
                 SourceHeading = item.SourceHeading,
                 Front = trimmedFront,
                 Back = item.Back.Trim(),
-                CardType = cardType,
                 CreatedAt = DateTimeOffset.UtcNow,
                 EaseFactor = 2.5,
                 Interval = 0,
@@ -352,8 +301,8 @@ public static class CardEndpoints
         await db.SaveChangesAsync();
 
         var createdDtos = created.Select(c => new CardDto(
-            c.Id, c.FileId, c.SourceHeading, c.Front, c.Back,
-            c.CardType, c.State, c.CreatedAt,
+            c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back,
+            c.State, c.CreatedAt,
             request.DeckId.HasValue
                 ? [new CardDeckInfoDto(request.DeckId.Value, "")]
                 : [])).ToList();
@@ -362,6 +311,6 @@ public static class CardEndpoints
     }
 
     private static CardDto ToDto(Card c) =>
-        new(c.Id, c.FileId, c.SourceHeading, c.Front, c.Back, c.CardType, c.State, c.CreatedAt,
+        new(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList());
 }
