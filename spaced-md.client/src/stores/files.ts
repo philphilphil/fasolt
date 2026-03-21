@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { MarkdownFile, FileDetail, BulkUploadResult, FileUpdatePreview } from '@/types'
 import { apiFetch, apiUpload } from '@/api/client'
+import type { PaginatedResponse } from '@/api/client'
 
 export const useFilesStore = defineStore('files', () => {
   const files = ref<MarkdownFile[]>([])
@@ -10,7 +11,8 @@ export const useFilesStore = defineStore('files', () => {
   async function fetchFiles() {
     loading.value = true
     try {
-      files.value = await apiFetch<MarkdownFile[]>('/files')
+      const response = await apiFetch<PaginatedResponse<MarkdownFile>>('/files')
+      files.value = response.items
     } finally {
       loading.value = false
     }

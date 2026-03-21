@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Card, ExtractedContent } from '@/types'
 import { apiFetch } from '@/api/client'
+import type { PaginatedResponse } from '@/api/client'
 
 export const useCardsStore = defineStore('cards', () => {
   const cards = ref<Card[]>([])
@@ -11,7 +12,8 @@ export const useCardsStore = defineStore('cards', () => {
     loading.value = true
     try {
       const params = fileId ? `?fileId=${fileId}` : ''
-      cards.value = await apiFetch<Card[]>(`/cards${params}`)
+      const response = await apiFetch<PaginatedResponse<Card>>(`/cards${params}`)
+      cards.value = response.items
     } finally {
       loading.value = false
     }

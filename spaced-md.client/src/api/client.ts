@@ -67,6 +67,12 @@ export async function searchAll(query: string): Promise<SearchResponse> {
   return apiFetch<SearchResponse>(`/search?q=${encodeURIComponent(query)}`)
 }
 
+export interface PaginatedResponse<T> {
+  items: T[]
+  hasMore: boolean
+  nextCursor: string | null
+}
+
 export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
