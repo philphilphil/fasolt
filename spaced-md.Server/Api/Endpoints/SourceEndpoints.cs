@@ -18,14 +18,18 @@ public static class SourceEndpoints
         var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var now = DateTimeOffset.UtcNow;
 
-        var sources = await db.Cards
-            .Where(c => c.UserId == userId && c.SourceFile != null)
-            .GroupBy(c => c.SourceFile!)
-            .Select(g => new SourceItemDto(
-                g.Key,
-                g.Count(),
-                g.Count(c => c.DueAt != null && c.DueAt <= now)))
-            .OrderBy(s => s.SourceFile)
+        var sources = await db.Database
+            .SqlQueryRaw<SourceItemDto>("""
+                SELECT "SourceFile",
+                       COUNT(*)::int AS "CardCount",
+                       COUNT(*) FILTER (WHERE "DueAt" IS NOT NULL AND "DueAt" <= {0})::int AS "DueCount"
+                FROM "Cards"
+                WHERE "UserId" = {1}
+                  AND "SourceFile" IS NOT NULL
+                  AND "DeletedAt" IS NULL
+                GROUP BY "SourceFile"
+                ORDER BY "SourceFile"
+                """, now, userId)
             .ToListAsync();
 
         return Results.Ok(new SourceListResponse(sources));
