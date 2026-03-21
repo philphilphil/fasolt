@@ -111,7 +111,7 @@ public static class FileEndpoints
                 f.FileName,
                 f.SizeBytes,
                 f.UploadedAt,
-                0, // cardCount — wired in Epic 3
+                db.Cards.Count(c => c.FileId == f.Id && c.DeletedAt == null),
                 f.Headings.OrderBy(h => h.SortOrder)
                     .Select(h => new FileHeadingDto(h.Level, h.Text)).ToList()))
             .ToListAsync();
@@ -134,12 +134,14 @@ public static class FileEndpoints
 
         if (file is null) return Results.NotFound();
 
+        var cardCount = await db.Cards.CountAsync(c => c.FileId == id && c.UserId == user.Id && c.DeletedAt == null);
+
         return Results.Ok(new FileDetailDto(
             file.Id,
             file.FileName,
             file.SizeBytes,
             file.UploadedAt,
-            0, // cardCount — wired in Epic 3
+            cardCount,
             file.Content,
             file.Headings.Select(h => new FileHeadingDto(h.Level, h.Text)).ToList()));
     }
