@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const tabs = [
-  { name: 'Dashboard', path: '/', icon: '▦' },
+  { name: 'Dashboard', path: '/dashboard', icon: '▦' },
   { name: 'Files', path: '/files', icon: '◫' },
   { name: 'Cards', path: '/cards', icon: '▤' },
   { name: 'Groups', path: '/groups', icon: '⊞' },

@@ -30,8 +30,15 @@ const router = createRouter({
       component: () => import('@/views/ResetPasswordView.vue'),
       meta: { public: true },
     },
+    // Landing page (public)
+    {
+      path: '/',
+      name: 'landing',
+      component: () => import('@/views/LandingView.vue'),
+      meta: { public: true, authRedirect: true, landing: true },
+    },
     // App routes (require auth)
-    { path: '/', name: 'dashboard', component: DashboardView },
+    { path: '/dashboard', name: 'dashboard', component: DashboardView },
     { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
     { path: '/files/:id', name: 'file-detail', component: () => import('@/views/FileDetailView.vue') },
     { path: '/cards', name: 'cards', component: () => import('@/views/CardsView.vue') },
