@@ -101,6 +101,7 @@ const columns: ColumnDef<Card>[] = [
     header: 'Source',
     accessorFn: (row) => getFileName(row.fileId),
     cell: ({ row }) => h('span', { class: 'font-mono' }, getFileName(row.original.fileId)),
+    filterFn: (row, _id, value) => !value || row.original.fileId === value,
   },
   {
     accessorKey: 'cardType',
@@ -171,8 +172,14 @@ const filterValue = computed({
   set: (val) => table.getColumn('front')?.setFilterValue(val),
 })
 
+const sourceFilter = ref('')
 const typeFilter = ref('')
 const stateFilter = ref('')
+
+function applySourceFilter(val: string) {
+  sourceFilter.value = val
+  table.getColumn('source')?.setFilterValue(val || undefined)
+}
 
 function applyTypeFilter(val: string) {
   typeFilter.value = val
@@ -195,6 +202,14 @@ function applyStateFilter(val: string) {
           placeholder="Filter cards..."
           class="h-8 max-w-[200px] text-xs"
         />
+        <select
+          :value="sourceFilter"
+          class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
+          @change="applySourceFilter(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">All files</option>
+          <option v-for="f in files.files" :key="f.id" :value="f.id">{{ f.fileName }}</option>
+        </select>
         <select
           :value="typeFilter"
           class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
