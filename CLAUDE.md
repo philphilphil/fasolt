@@ -75,7 +75,7 @@ docker compose down          # stop Postgres
 
 ## Ports
 
-- **Backend**: http://localhost:5000
+- **Backend**: http://localhost:8080
 - **Frontend**: http://localhost:5173 (proxies /api to backend)
 - **Postgres**: localhost:5432
 
@@ -135,7 +135,7 @@ In development, a seed user and API token are auto-created on startup:
 The `spaced-md.Mcp/` project is a stdio MCP server that bridges AI agents to the API. To run locally:
 
 ```bash
-SPACED_MD_URL=http://localhost:5000 \
+SPACED_MD_URL=http://localhost:8080 \
 SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
   dotnet run --project spaced-md.Mcp
 ```
