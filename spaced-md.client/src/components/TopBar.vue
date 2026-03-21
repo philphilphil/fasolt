@@ -98,7 +98,7 @@ async function handleLogout() {
         ref="searchInputRef"
         v-model="query"
         type="text"
-        placeholder="Search cards, decks, files…"
+        placeholder="Search cards and decks…"
         class="h-8 w-[260px] bg-secondary pl-8 text-xs"
         @keydown="onKeyDown"
       />
