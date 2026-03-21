@@ -49,7 +49,7 @@ const { isDark, toggle } = useDarkMode()
         </div>
         <h1 class="text-4xl sm:text-5xl font-bold tracking-tight leading-tight mb-5">
           Your AI reads your notes.<br />
-          <span style="color: hsl(var(--accent))">You just review.</span>
+          <span style="color: hsl(var(--accent))">You learn and remember.</span>
         </h1>
         <p class="text-base text-muted-foreground leading-relaxed mb-8 max-w-xl">
           Connect spaced-md to Claude or any MCP-compatible agent. Point it at your Obsidian vault.
@@ -139,10 +139,10 @@ const { isDark, toggle } = useDarkMode()
                 style="font-family: var(--font-mono)"
               >Step 3</span>
             </div>
-            <h3 class="text-sm font-semibold">Review in spaced-md</h3>
+            <h3 class="text-sm font-semibold">Learn and remember</h3>
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Open the web app when cards are due. SM-2 schedules reviews at increasing intervals —
-              harder cards come back sooner, mastered cards fade into the background.
+              Open spaced-md when cards are due. SM-2 schedules reviews at increasing intervals —
+              you retain what matters without cramming.
             </p>
           </div>
         </div>
