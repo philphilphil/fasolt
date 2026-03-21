@@ -18,4 +18,5 @@ public class Card
     public int Repetitions { get; set; }
     public DateTimeOffset? DueAt { get; set; }
     public string State { get; set; } = "new";
+    public List<DeckCard> DeckCards { get; set; } = [];
 }
