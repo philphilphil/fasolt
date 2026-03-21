@@ -91,3 +91,6 @@ app.MapApiTokenEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>();
 
 app.Run();
+
+// Expose Program as partial for WebApplicationFactory in integration tests
+public partial class Program { }
