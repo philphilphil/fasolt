@@ -237,6 +237,10 @@ async function confirmDelete() {
             Are you sure you want to delete {{ deleteTarget?.name }}? This cannot be undone.
           </DialogDescription>
         </DialogHeader>
+        <div class="flex items-center gap-2 text-xs text-muted-foreground opacity-50">
+          <input type="checkbox" disabled />
+          <span>Also delete associated flashcards (coming soon)</span>
+        </div>
         <DialogFooter>
           <Button variant="outline" @click="deleteTarget = null">Cancel</Button>
           <Button variant="destructive" @click="confirmDelete">Delete</Button>
