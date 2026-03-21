@@ -170,25 +170,45 @@ public static class FileEndpoints
     private static async Task<IResult> List(
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db)
+        AppDbContext db,
+        int? limit = null,
+        string? after = null)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var files = await db.MarkdownFiles
+        var take = Math.Clamp(limit ?? 50, 1, 200);
+
+        IQueryable<MarkdownFile> query = db.MarkdownFiles
             .Where(f => f.UserId == user.Id)
             .OrderByDescending(f => f.UploadedAt)
+            .ThenBy(f => f.Id);
+
+        if (Guid.TryParse(after, out var afterId))
+        {
+            var cursor = await db.MarkdownFiles
+                .Where(f => f.Id == afterId && f.UserId == user.Id)
+                .Select(f => new { f.UploadedAt, f.Id })
+                .FirstOrDefaultAsync();
+            if (cursor is not null)
+                query = query.Where(f => f.UploadedAt < cursor.UploadedAt ||
+                    (f.UploadedAt == cursor.UploadedAt && f.Id.CompareTo(cursor.Id) > 0));
+        }
+
+        var files = await query
+            .Take(take + 1)
             .Select(f => new FileListItemDto(
-                f.Id,
-                f.FileName,
-                f.SizeBytes,
-                f.UploadedAt,
+                f.Id, f.FileName, f.SizeBytes, f.UploadedAt,
                 db.Cards.Count(c => c.FileId == f.Id && c.DeletedAt == null),
                 f.Headings.OrderBy(h => h.SortOrder)
                     .Select(h => new FileHeadingDto(h.Level, h.Text)).ToList()))
             .ToListAsync();
 
-        return Results.Ok(files);
+        var hasMore = files.Count > take;
+        if (hasMore) files = files[..take];
+        var nextCursor = hasMore ? files[^1].Id.ToString() : null;
+
+        return Results.Ok(new PaginatedResponse<FileListItemDto>(files, hasMore, nextCursor));
     }
 
     private static async Task<IResult> GetById(
