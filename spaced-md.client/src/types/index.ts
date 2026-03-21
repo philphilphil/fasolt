@@ -28,17 +28,27 @@ export interface Stat {
 
 export interface MarkdownFile {
   id: string
-  name: string
-  cardCount: number
-  uploadedAt: Date
+  fileName: string
   sizeBytes: number
+  uploadedAt: string
+  cardCount: number
   headings: FileHeading[]
 }
 
 export interface FileHeading {
   level: number
   text: string
-  cardCount: number
+}
+
+export interface FileDetail extends MarkdownFile {
+  content: string
+}
+
+export interface BulkUploadResult {
+  fileName: string
+  success: boolean
+  id: string | null
+  error: string | null
 }
 
 export interface Group {

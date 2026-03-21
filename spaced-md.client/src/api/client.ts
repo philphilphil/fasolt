@@ -37,3 +37,29 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   return JSON.parse(text)
 }
+
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const response = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    let errors: Record<string, string[]> = {}
+    try {
+      const body = await response.json()
+      if (body.errors) {
+        errors = body.errors
+      }
+    } catch {
+      // No JSON body
+    }
+    throw { status: response.status, errors } as ApiError
+  }
+
+  const text = await response.text()
+  if (!text) return undefined as T
+
+  return JSON.parse(text)
+}
