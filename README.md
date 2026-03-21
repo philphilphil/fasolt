@@ -1,17 +1,25 @@
 # spaced-md
 
-Spaced repetition for markdown files. Upload your `.md` notes, create flashcards from them (whole file or specific sections), and review with SM-2 scheduling.
+MCP-first spaced repetition for markdown notes. Your AI reads your notes — you learn and remember.
+
+Connect spaced-md to Claude or any MCP-compatible agent. Point it at your Obsidian vault. Flashcards appear automatically. Come back to study when they're due.
+
+## How It Works
+
+1. **Take notes in Obsidian** — write in your normal workflow, optionally add `?::` markers for precise card boundaries
+2. **Your AI creates flashcards** — ask Claude (or any MCP agent) to read a file and push cards to spaced-md
+3. **Learn and remember** — open spaced-md when cards are due, SM-2 schedules reviews at increasing intervals
 
 ## Features
 
-- Upload, view, and delete `.md` files
-- Create flashcards from entire files or individual heading sections
+- MCP server for AI agents (Claude Code, Claude Desktop, Cursor, etc.)
+- REST API for programmatic card creation
 - SM-2 spaced repetition with quality-based scheduling
-- Organize cards into groups for focused study
+- Source tracking — cards retain provenance (file, heading) as metadata
+- Organize cards into decks for focused study
 - Dashboard with due counts, totals, and study streaks
-- Per-user accounts with cookie-based auth
-- API tokens for agent/tool integration
-- MCP server for AI agents (Claude Code, Cursor, etc.)
+- Per-user accounts with cookie-based auth + API tokens
+- Self-hostable via Docker
 
 ## Tech Stack
 
@@ -35,55 +43,47 @@ Or run individually:
 
 ```bash
 docker compose up -d                       # Postgres on :5432
-dotnet run --project spaced-md.Server      # API on :5000
+dotnet run --project spaced-md.Server      # API on :8080
 cd spaced-md.client && npm run dev         # UI on :5173
 ```
 
 The frontend proxies `/api` requests to the backend.
 
-## MCP Server (AI Agent Integration)
+## MCP Server Setup
 
-The MCP server lets AI agents (Claude Code, Cursor, etc.) create flashcards from your notes without using the web UI.
-
-### Setup
+The MCP server lets AI agents create flashcards from your local markdown files.
 
 1. Start the full stack: `./dev.sh`
-2. A dev user is auto-seeded on first startup with a pre-generated API token:
-
-   | | |
-   |---|---|
-   | **Email** | `dev@spaced-md.local` |
-   | **Password** | `Dev1234!` |
-   | **API Token** | `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000` |
+2. A dev user is auto-seeded:
+   - **Email:** `dev@spaced-md.local` / **Password:** `Dev1234!`
+   - **Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
 3. Add to Claude Code:
    ```bash
    claude mcp add spaced-md \
-     -e SPACED_MD_URL=http://localhost:5000 \
+     -e SPACED_MD_URL=http://localhost:8080 \
      -e SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
      -- dotnet run --project /absolute/path/to/spaced-md.Mcp
    ```
 
 You can also create your own tokens via **Settings → API Tokens** in the web UI.
 
-### Available Tools
+### MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `SearchCards` | Search cards, decks, and files by query |
-| `ListCards` | List cards with optional file/deck filter and pagination |
-| `CreateCards` | Bulk create cards, optionally linked to a file and deck |
+| `CreateCards` | Create cards with optional source file/heading metadata and deck assignment |
+| `SearchCards` | Search cards and decks by query text |
+| `ListCards` | List cards with optional source file/deck filter and pagination |
+| `ListSources` | List source files with card and due counts |
 | `ListDecks` | List all decks with card counts |
 | `CreateDeck` | Create a new deck |
-| `UploadFile` | Upload or update a markdown file (upsert) |
-| `ListFiles` | List uploaded files with pagination |
-| `GetFile` | Get a file's content and headings |
 
 ### Typical Workflow
 
 ```
 User: "Create flashcards from my kubernetes-notes.md"
-Agent: reads local file → searches for existing cards → generates questions →
-       uploads file → creates cards → done
+Agent: reads local file → searches for duplicates → generates questions →
+       creates cards via API → done
 ```
 
 ## Project Structure

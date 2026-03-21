@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Spaced repetition app for markdown files. Turn your notes into flashcards and retain what you learn.
+MCP-first spaced repetition for markdown notes. Your AI reads your notes — you learn and remember.
 
 **This is a SaaS product** — hosted for users to register and use. Self-hosting is also supported but the primary deployment is a centralized hosted service. Keep this in mind for all decisions: multi-user isolation, security, scalability, and API design.
 
