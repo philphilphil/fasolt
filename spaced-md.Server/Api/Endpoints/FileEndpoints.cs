@@ -217,12 +217,20 @@ public static class FileEndpoints
     private static async Task<IResult> ConfirmUpdate(
         Guid id,
         IFormFile file,
+        HttpRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db,
-        [FromForm] List<Guid>? deleteCardIds = null)
+        AppDbContext db)
     {
         var user = await userManager.GetUserAsync(principal);
+
+        // Parse deleteCardIds from form fields manually (FromForm doesn't bind well with IFormFile in minimal APIs)
+        var deleteCardIds = request.Form["deleteCardIds"]
+            .SelectMany(v => v?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [])
+            .Select(v => Guid.TryParse(v, out var g) ? g : (Guid?)null)
+            .Where(g => g.HasValue)
+            .Select(g => g!.Value)
+            .ToList();
         if (user is null) return Results.Unauthorized();
 
         var fileName = Path.GetFileName(file.FileName);
@@ -240,7 +248,6 @@ public static class FileEndpoints
             });
 
         var existing = await db.MarkdownFiles
-            .Include(f => f.Headings)
             .FirstOrDefaultAsync(f => f.Id == id && f.UserId == user.Id);
 
         if (existing is null) return Results.NotFound();
@@ -249,7 +256,7 @@ public static class FileEndpoints
         var newContent = await reader.ReadToEndAsync();
 
         // Validate deleteCardIds ownership
-        var idsToDelete = deleteCardIds ?? [];
+        var idsToDelete = deleteCardIds;
         if (idsToDelete.Count > 0)
         {
             var validCount = await db.Cards
@@ -261,9 +268,10 @@ public static class FileEndpoints
                 });
         }
 
-        // Get all cards for this file
+        // Load cards bypassing global query filter to avoid concurrency issues when setting DeletedAt
         var cards = await db.Cards
-            .Where(c => c.FileId == existing.Id && c.UserId == user.Id)
+            .IgnoreQueryFilters()
+            .Where(c => c.FileId == existing.Id && c.UserId == user.Id && c.DeletedAt == null)
             .ToListAsync();
 
         var comparison = FileComparer.Compare(newContent, cards);
@@ -277,15 +285,19 @@ public static class FileEndpoints
         existing.UploadedAt = DateTimeOffset.UtcNow;
 
         // 2. Re-extract headings
-        db.FileHeadings.RemoveRange(existing.Headings);
-        var newHeadings = HeadingExtractor.Extract(newContent);
-        existing.Headings = newHeadings.Select(h => new FileHeading
+        var oldHeadings = await db.FileHeadings.Where(h => h.FileId == existing.Id).ToListAsync();
+        db.FileHeadings.RemoveRange(oldHeadings);
+        foreach (var h in HeadingExtractor.Extract(newContent))
         {
-            Id = Guid.NewGuid(),
-            Level = h.Level,
-            Text = h.Text,
-            SortOrder = h.SortOrder,
-        }).ToList();
+            db.FileHeadings.Add(new FileHeading
+            {
+                Id = Guid.NewGuid(),
+                FileId = existing.Id,
+                Level = h.Level,
+                Text = h.Text,
+                SortOrder = h.SortOrder,
+            });
+        }
 
         // 3. Update card backs
         var updatedCount = 0;
