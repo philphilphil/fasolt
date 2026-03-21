@@ -17,6 +17,7 @@ public static class CardEndpoints
         var group = app.MapGroup("/api/cards").RequireAuthorization();
 
         group.MapPost("/", Create);
+        group.MapPost("/bulk", BulkCreate);
         group.MapGet("/", List);
         group.MapGet("/extract", Extract);
         group.MapGet("/{id:guid}", GetById);
@@ -231,6 +232,133 @@ public static class CardEndpoints
         var fronts = markers.Count > 0 ? markers : new List<string> { defaultFront };
 
         return Results.Ok(new ExtractedContentDto(fronts, cleanedContent));
+    }
+
+    private static async Task<IResult> BulkCreate(
+        BulkCreateCardsRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        AppDbContext db)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        if (request.Cards is null || request.Cards.Count == 0)
+            return Results.BadRequest(new { error = "validation_error", message = "Cards array is required and must not be empty" });
+
+        if (request.Cards.Count > 100)
+            return Results.BadRequest(new { error = "validation_error", message = "Maximum 100 cards per request" });
+
+        // Validate all cards first (atomic — if any fail, none are created)
+        var validationErrors = new List<object>();
+        for (var i = 0; i < request.Cards.Count; i++)
+        {
+            var c = request.Cards[i];
+            if (string.IsNullOrWhiteSpace(c.Front))
+                validationErrors.Add(new { field = $"cards[{i}].front", message = "Front is required" });
+            if (string.IsNullOrWhiteSpace(c.Back))
+                validationErrors.Add(new { field = $"cards[{i}].back", message = "Back is required" });
+        }
+        if (validationErrors.Count > 0)
+            return Results.BadRequest(new { error = "validation_error", message = "Validation failed", details = validationErrors });
+
+        // Validate fileId if provided
+        if (request.FileId.HasValue)
+        {
+            var fileExists = await db.MarkdownFiles
+                .AnyAsync(f => f.Id == request.FileId.Value && f.UserId == user.Id);
+            if (!fileExists)
+                return Results.BadRequest(new { error = "validation_error", message = "File not found or does not belong to you" });
+        }
+
+        // Validate deckId if provided
+        if (request.DeckId.HasValue)
+        {
+            var deckExists = await db.Decks
+                .AnyAsync(d => d.Id == request.DeckId.Value && d.UserId == user.Id);
+            if (!deckExists)
+                return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
+        }
+
+        // Check for duplicates — cards with same front text for same file (or same user if no file)
+        var fronts = request.Cards.Select(c => c.Front.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var existingFronts = request.FileId.HasValue
+            ? await db.Cards
+                .Where(c => c.UserId == user.Id && c.FileId == request.FileId.Value && fronts.Contains(c.Front))
+                .Select(c => c.Front)
+                .ToListAsync()
+            : await db.Cards
+                .Where(c => c.UserId == user.Id && c.FileId == null && fronts.Contains(c.Front))
+                .Select(c => c.Front)
+                .ToListAsync();
+
+        var existingFrontSet = existingFronts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var created = new List<Card>();
+        var skipped = new List<SkippedCardDto>();
+
+        foreach (var item in request.Cards)
+        {
+            var trimmedFront = item.Front.Trim();
+            if (existingFrontSet.Contains(trimmedFront))
+            {
+                skipped.Add(new SkippedCardDto(trimmedFront, "Card with same front text already exists"));
+                continue;
+            }
+
+            // Also skip duplicates within the same batch
+            if (created.Any(c => c.Front.Equals(trimmedFront, StringComparison.OrdinalIgnoreCase)))
+            {
+                skipped.Add(new SkippedCardDto(trimmedFront, "Duplicate within batch"));
+                continue;
+            }
+
+            var cardType = request.FileId.HasValue
+                ? (item.SourceHeading is not null ? "section" : "file")
+                : "custom";
+
+            var card = new Card
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                FileId = request.FileId,
+                SourceHeading = item.SourceHeading,
+                Front = trimmedFront,
+                Back = item.Back.Trim(),
+                CardType = cardType,
+                CreatedAt = DateTimeOffset.UtcNow,
+                EaseFactor = 2.5,
+                Interval = 0,
+                Repetitions = 0,
+                State = "new",
+            };
+            db.Cards.Add(card);
+            created.Add(card);
+        }
+
+        // Add to deck if specified
+        if (request.DeckId.HasValue)
+        {
+            foreach (var card in created)
+            {
+                db.DeckCards.Add(new DeckCard
+                {
+                    DeckId = request.DeckId.Value,
+                    CardId = card.Id,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+
+        var createdDtos = created.Select(c => new CardDto(
+            c.Id, c.FileId, c.SourceHeading, c.Front, c.Back,
+            c.CardType, c.State, c.CreatedAt,
+            request.DeckId.HasValue
+                ? [new CardDeckInfoDto(request.DeckId.Value, "")]
+                : [])).ToList();
+
+        return Results.Created("/api/cards/bulk", new BulkCreateCardsResponse(createdDtos, skipped));
     }
 
     private static CardDto ToDto(Card c) =>
