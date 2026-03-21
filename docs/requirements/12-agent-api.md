@@ -77,6 +77,8 @@ As a user, I want to install and configure an MCP server so my AI agent can talk
 - Tools are auto-discovered via `[McpServerToolType]` and `[McpServerTool]` attributes
 - `HttpClient` is injected via DI, pre-configured with the API URL and Bearer token
 - Logging goes to stderr (required for stdio transport)
+- `SPACED_MD_URL` defaults to the hosted SaaS URL if not set (e.g., `https://spaced-md.io`)
+- `SPACED_MD_TOKEN` is required (no anonymous access)
 - User adds to their agent config (e.g., Claude Code `settings.json`):
   ```json
   {
@@ -84,14 +86,27 @@ As a user, I want to install and configure an MCP server so my AI agent can talk
       "spaced-md": {
         "command": "spaced-md-mcp",
         "env": {
-          "SPACED_MD_URL": "https://spaced-md.example.com",
           "SPACED_MD_TOKEN": "sm_..."
         }
       }
     }
   }
   ```
-- Alternative for dev/local use (no global install):
+- Self-hosters override the URL:
+  ```json
+  {
+    "mcpServers": {
+      "spaced-md": {
+        "command": "spaced-md-mcp",
+        "env": {
+          "SPACED_MD_URL": "https://my-instance.example.com",
+          "SPACED_MD_TOKEN": "sm_..."
+        }
+      }
+    }
+  }
+  ```
+- Dev/local use (no global install):
   ```json
   {
     "mcpServers": {

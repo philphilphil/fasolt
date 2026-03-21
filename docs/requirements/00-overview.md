@@ -1,6 +1,8 @@
 # User Stories — Spaced-MD
 
-Spaced repetition app for markdown files. Organized by epic, prioritized by tier:
+Spaced repetition app for markdown files. **Deployed as a SaaS** — hosted centrally for users to register and use, with self-hosting as an option. All features must account for multi-tenancy, per-user data isolation, and security.
+
+Organized by epic, prioritized by tier:
 
 - **P0 (MVP)** — core loop: account, upload md, create cards, study with SM-2
 - **P1 (Essential)** — groups, dashboard, card editing, markdown preview, password reset, responsive design

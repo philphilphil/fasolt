@@ -4,6 +4,8 @@
 
 Spaced repetition app for markdown files. Turn your notes into flashcards and retain what you learn.
 
+**This is a SaaS product** — hosted for users to register and use. Self-hosting is also supported but the primary deployment is a centralized hosted service. Keep this in mind for all decisions: multi-user isolation, security, scalability, and API design.
+
 ### Core Concept
 
 Users upload `.md` files and create flashcards from them — either from the entire file or from a specific heading section. Cards are reviewed using spaced repetition (SM-2 algorithm), which schedules reviews at increasing intervals based on how well you recall each card.
