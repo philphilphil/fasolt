@@ -15,7 +15,7 @@ defineEmits<{ 'select-deck': [deck: Deck] }>()
         <TableHead class="h-8">Deck</TableHead>
         <TableHead class="h-8">Due</TableHead>
         <TableHead class="h-8">Cards</TableHead>
-        <TableHead class="h-8 hidden sm:table-cell">Next review</TableHead>
+        <TableHead class="h-8 hidden sm:table-cell">Description</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -28,7 +28,7 @@ defineEmits<{ 'select-deck': [deck: Deck] }>()
         <TableCell class="font-medium text-foreground">{{ deck.name }}</TableCell>
         <TableCell class="font-mono text-warning">{{ deck.dueCount }}</TableCell>
         <TableCell class="font-mono text-muted-foreground">{{ deck.cardCount }}</TableCell>
-        <TableCell class="hidden text-muted-foreground sm:table-cell">{{ deck.nextReview }}</TableCell>
+        <TableCell class="hidden text-muted-foreground sm:table-cell">{{ deck.description || '—' }}</TableCell>
       </TableRow>
     </TableBody>
   </Table>

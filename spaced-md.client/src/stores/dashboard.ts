@@ -11,10 +11,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
   ])
 
   const decks = ref<Deck[]>([
-    { id: 'deck-1', name: 'Distributed Systems', fileName: 'distributed-systems.md', cardCount: 24, dueCount: 5, nextReview: 'now' },
-    { id: 'deck-2', name: 'Rust Ownership', fileName: 'rust-ownership.md', cardCount: 18, dueCount: 4, nextReview: 'now' },
-    { id: 'deck-3', name: 'System Design Patterns', fileName: 'system-design.md', cardCount: 31, dueCount: 3, nextReview: '2h' },
-    { id: 'deck-4', name: 'PostgreSQL Internals', fileName: 'postgresql-internals.md', cardCount: 11, dueCount: 0, nextReview: 'tomorrow' },
+    { id: 'deck-1', name: 'Distributed Systems', description: null, cardCount: 24, dueCount: 5, createdAt: '2026-03-01T00:00:00Z' },
+    { id: 'deck-2', name: 'Rust Ownership', description: null, cardCount: 18, dueCount: 4, createdAt: '2026-03-05T00:00:00Z' },
+    { id: 'deck-3', name: 'System Design Patterns', description: null, cardCount: 31, dueCount: 3, createdAt: '2026-03-10T00:00:00Z' },
+    { id: 'deck-4', name: 'PostgreSQL Internals', description: null, cardCount: 11, dueCount: 0, createdAt: '2026-03-15T00:00:00Z' },
   ])
 
   return { stats, decks }

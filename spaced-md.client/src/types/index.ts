@@ -49,23 +49,27 @@ export interface BulkUploadResult {
   error: string | null
 }
 
-export interface Group {
-  id: string
-  name: string
-  cardCount: number
-  dueCount: number
-}
-
 export type ReviewRating = 'again' | 'hard' | 'good' | 'easy'
 
-// Placeholder — will be replaced with real API-backed type in Epic 4/6
 export interface Deck {
   id: string
   name: string
-  fileName: string
+  description: string | null
   cardCount: number
   dueCount: number
-  nextReview: string
+  createdAt: string
+}
+
+export interface DeckDetail extends Deck {
+  cards: DeckCard[]
+}
+
+export interface DeckCard {
+  id: string
+  front: string
+  cardType: string
+  state: string
+  dueAt: string | null
 }
 
 export interface FileUpdatePreview {
