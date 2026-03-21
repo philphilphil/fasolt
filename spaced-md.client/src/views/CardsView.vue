@@ -1,25 +1,46 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { h, ref, onMounted, computed } from 'vue'
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+} from '@tanstack/vue-table'
+import {
+  FlexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useVueTable,
+} from '@tanstack/vue-table'
+import { valueUpdater } from '@/lib/utils'
 import { useCardsStore } from '@/stores/cards'
 import { useFilesStore } from '@/stores/files'
 import { useDecksStore } from '@/stores/decks'
-import type { Card, Deck } from '@/types'
+import type { Card } from '@/types'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
 import CardEditDialog from '@/components/CardEditDialog.vue'
 
-const cards = useCardsStore()
+const cardsStore = useCardsStore()
 const files = useFilesStore()
 const decks = useDecksStore()
 
-const filterFileId = ref<string>('')
 const editTarget = ref<Card | null>(null)
 const editOpen = ref(false)
 const deleteTarget = ref<Card | null>(null)
@@ -29,37 +50,13 @@ const addToDeckCard = ref<Card | null>(null)
 const addToDeckId = ref('')
 
 onMounted(async () => {
-  await Promise.all([cards.fetchCards(), files.fetchFiles(), decks.fetchDecks()])
+  await Promise.all([cardsStore.fetchCards(), files.fetchFiles(), decks.fetchDecks()])
 })
-
-async function addCardToDeck() {
-  if (!addToDeckCard.value || !addToDeckId.value) return
-  try {
-    await decks.addCards(addToDeckId.value, [addToDeckCard.value.id])
-    await cards.fetchCards(filterFileId.value || undefined)
-    addToDeckCard.value = null
-    addToDeckId.value = ''
-  } catch {
-    // silently fail
-  }
-}
-
-async function applyFilter() {
-  await cards.fetchCards(filterFileId.value || undefined)
-}
 
 function getFileName(fileId: string | null): string {
   if (!fileId) return '—'
   const f = files.files.find(f => f.id === fileId)
   return f?.fileName ?? '(deleted)'
-}
-
-function truncate(text: string, max = 60): string {
-  return text.length > max ? text.slice(0, max) + '…' : text
-}
-
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function openEdit(card: Card) {
@@ -71,80 +68,211 @@ async function confirmDelete() {
   if (!deleteTarget.value) return
   deleteError.value = ''
   try {
-    await cards.deleteCard(deleteTarget.value.id)
+    await cardsStore.deleteCard(deleteTarget.value.id)
     deleteTarget.value = null
   } catch {
     deleteError.value = 'Failed to delete card.'
   }
 }
+
+async function addCardToDeck() {
+  if (!addToDeckCard.value || !addToDeckId.value) return
+  try {
+    await decks.addCards(addToDeckId.value, [addToDeckCard.value.id])
+    await cardsStore.fetchCards()
+    addToDeckCard.value = null
+    addToDeckId.value = ''
+  } catch {
+    // silently fail
+  }
+}
+
+const columns: ColumnDef<Card>[] = [
+  {
+    accessorKey: 'front',
+    header: 'Front',
+    cell: ({ row }) => {
+      const val = row.getValue('front') as string
+      return val.length > 60 ? val.slice(0, 60) + '…' : val
+    },
+  },
+  {
+    id: 'source',
+    header: 'Source',
+    accessorFn: (row) => getFileName(row.fileId),
+    cell: ({ row }) => h('span', { class: 'font-mono' }, getFileName(row.original.fileId)),
+  },
+  {
+    accessorKey: 'cardType',
+    header: 'Type',
+    cell: ({ row }) => h(Badge, { variant: 'secondary', class: 'text-[10px]' }, () => row.getValue('cardType')),
+    filterFn: (row, _id, value) => value.includes(row.getValue('cardType')),
+  },
+  {
+    accessorKey: 'state',
+    header: 'State',
+    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
+    filterFn: (row, _id, value) => value.includes(row.getValue('state')),
+  },
+  {
+    id: 'decks',
+    header: 'Decks',
+    accessorFn: (row) => row.decks.map(d => d.name).join(', '),
+    cell: ({ row }) => {
+      const deckList = row.original.decks
+      return h('div', { class: 'flex flex-wrap gap-1' }, [
+        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-[10px]' }, () => d.name)),
+        h('button', {
+          class: 'text-[10px] text-muted-foreground hover:text-foreground',
+          onClick: () => { addToDeckCard.value = row.original },
+        }, '+'),
+      ])
+    },
+  },
+  {
+    id: 'actions',
+    enableHiding: false,
+    cell: ({ row }) => {
+      const card = row.original
+      return h('div', { class: 'flex gap-1' }, [
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => openEdit(card) }, () => 'Edit'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => { deleteTarget.value = card } }, () => '×'),
+      ])
+    },
+  },
+]
+
+const sorting = ref<SortingState>([])
+const columnFilters = ref<ColumnFiltersState>([])
+const columnVisibility = ref<VisibilityState>({})
+
+const table = useVueTable({
+  get data() { return cardsStore.cards },
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  getFilteredRowModel: getFilteredRowModel(),
+  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
+  onColumnFiltersChange: updaterOrValue => valueUpdater(updaterOrValue, columnFilters),
+  onColumnVisibilityChange: updaterOrValue => valueUpdater(updaterOrValue, columnVisibility),
+  state: {
+    get sorting() { return sorting.value },
+    get columnFilters() { return columnFilters.value },
+    get columnVisibility() { return columnVisibility.value },
+  },
+  initialState: {
+    pagination: { pageSize: 20 },
+  },
+})
+
+const filterValue = computed({
+  get: () => (table.getColumn('front')?.getFilterValue() as string) ?? '',
+  set: (val) => table.getColumn('front')?.setFilterValue(val),
+})
 </script>
 
 <template>
   <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <select
-          v-model="filterFileId"
-          class="h-7 rounded-md border border-border bg-transparent px-2 text-xs"
-          @change="applyFilter"
-        >
-          <option value="">All files</option>
-          <option v-for="f in files.files" :key="f.id" :value="f.id">{{ f.fileName }}</option>
-        </select>
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 flex-1">
+        <Input
+          v-model="filterValue"
+          placeholder="Filter cards..."
+          class="h-8 max-w-[250px] text-xs"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline" size="sm" class="h-8 text-xs ml-auto">
+              Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuCheckboxItem
+              v-for="column in table.getAllColumns().filter(c => c.getCanHide())"
+              :key="column.id"
+              class="capitalize text-xs"
+              :model-value="column.getIsVisible()"
+              @update:model-value="(value: boolean) => column.toggleVisibility(!!value)"
+            >
+              {{ column.id }}
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <Button size="sm" class="h-7 text-xs" @click="createOpen = true">New card</Button>
+      <Button size="sm" class="h-8 text-xs" @click="createOpen = true">New card</Button>
     </div>
 
-    <Table v-if="cards.cards.length > 0">
-      <TableHeader>
-        <TableRow class="text-[10px] uppercase tracking-wider text-muted-foreground hover:bg-transparent">
-          <TableHead class="h-8">Front</TableHead>
-          <TableHead class="h-8 hidden sm:table-cell">Source</TableHead>
-          <TableHead class="h-8 hidden sm:table-cell">Type</TableHead>
-          <TableHead class="h-8 hidden sm:table-cell">Decks</TableHead>
-          <TableHead class="h-8 w-20"></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        <TableRow v-for="card in cards.cards" :key="card.id" class="text-xs">
-          <TableCell class="font-medium text-foreground max-w-[200px] truncate">{{ truncate(card.front) }}</TableCell>
-          <TableCell class="hidden text-muted-foreground sm:table-cell font-mono">{{ getFileName(card.fileId) }}</TableCell>
-          <TableCell class="hidden sm:table-cell">
-            <Badge variant="secondary" class="text-[10px]">{{ card.cardType }}</Badge>
-          </TableCell>
-          <TableCell class="hidden sm:table-cell">
-            <div class="flex flex-wrap gap-1">
-              <Badge v-for="d in card.decks" :key="d.id" variant="outline" class="text-[10px]">{{ d.name }}</Badge>
-              <button
-                class="text-[10px] text-muted-foreground hover:text-foreground"
-                @click="addToDeckCard = card"
-              >+</button>
-            </div>
-          </TableCell>
-          <TableCell class="flex gap-1">
-            <Button variant="ghost" size="sm" class="h-6 text-[10px]" @click="openEdit(card)">Edit</Button>
-            <Button variant="ghost" size="sm" class="h-6 text-[10px] text-muted-foreground hover:text-destructive" @click="deleteTarget = card">&times;</Button>
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
-
-    <div v-if="!cards.loading && cards.cards.length === 0" class="py-12 text-center text-sm text-muted-foreground">
-      No cards yet. Create one from a file or start from scratch.
+    <!-- Table -->
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+            <TableHead
+              v-for="header in headerGroup.headers"
+              :key="header.id"
+              class="h-9 text-[10px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none"
+              @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
+            >
+              <div class="flex items-center gap-1">
+                <FlexRender
+                  v-if="!header.isPlaceholder"
+                  :render="header.column.columnDef.header"
+                  :props="header.getContext()"
+                />
+                <span v-if="header.column.getIsSorted() === 'asc'" class="text-[10px]">↑</span>
+                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-[10px]">↓</span>
+              </div>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <template v-if="table.getRowModel().rows?.length">
+            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs">
+              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+              </TableCell>
+            </TableRow>
+          </template>
+          <template v-else>
+            <TableRow>
+              <TableCell :colspan="columns.length" class="h-24 text-center text-sm text-muted-foreground">
+                No cards yet. Create one from a file or start from scratch.
+              </TableCell>
+            </TableRow>
+          </template>
+        </TableBody>
+      </Table>
     </div>
 
+    <!-- Pagination -->
+    <div v-if="table.getPageCount() > 1" class="flex items-center justify-between text-xs text-muted-foreground">
+      <span>{{ table.getFilteredRowModel().rows.length }} card(s)</span>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+          Previous
+        </Button>
+        <span>Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}</span>
+        <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+          Next
+        </Button>
+      </div>
+    </div>
+
+    <!-- Dialogs -->
     <CardCreateDialog
       v-model:open="createOpen"
       card-type="custom"
       :initial-fronts="['']"
       initial-back=""
-      @created="cards.fetchCards(filterFileId || undefined)"
+      @created="cardsStore.fetchCards()"
     />
 
     <CardEditDialog
       v-model:open="editOpen"
       :card="editTarget"
-      @updated="cards.fetchCards(filterFileId || undefined)"
+      @updated="cardsStore.fetchCards()"
     />
 
     <Dialog :open="!!deleteTarget" @update:open="deleteTarget = null">
@@ -162,7 +290,7 @@ async function confirmDelete() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-    <!-- Add to deck dialog -->
+
     <Dialog :open="!!addToDeckCard" @update:open="addToDeckCard = null">
       <DialogContent>
         <DialogHeader>
