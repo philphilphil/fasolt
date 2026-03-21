@@ -1,0 +1,2 @@
+Notes change. We need the ability to upload a new version of a md file.
+it then should display which cards content would update due to this, which cards would be removed or which will be newly added. ideas welcome.
