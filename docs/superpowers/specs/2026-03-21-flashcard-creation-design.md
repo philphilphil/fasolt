@@ -77,15 +77,17 @@ Soft delete a card.
 - Sets `DeletedAt` to `DateTimeOffset.UtcNow`
 - 204 No Content on success
 - 404 if not found, not owned, or already deleted
+- Group removal (US-3.4 "removed from all groups"): deferred to Epic 5 when groups are implemented. Soft delete filtering ensures deleted cards won't appear in group queries.
+- Delete during review (US-3.4 "delete during review"): wired in Epic 4 when review is implemented.
 
 ### GET /api/cards/extract
 
 Extract content from a file for card creation preview.
 
 - Query params: `fileId` (required), `heading` (optional)
-- If no heading: returns full file content with frontmatter stripped
-- If heading provided: returns markdown slice from that heading to the next same-or-higher-level heading
-- Response: `{ front, back }` — front is the heading text (or filename), back is the extracted markdown
+- If no heading: returns full file content with frontmatter stripped. `front` is derived from the first H1 heading in the file, falling back to the filename if no H1 exists.
+- If heading provided: returns markdown slice from that heading to the next same-or-higher-level heading. `front` is the heading text.
+- Response: `{ front, back }` — front is the auto-generated question text, back is the extracted markdown
 - 404 if file not found or not owned
 
 ### Update to GET /api/files
