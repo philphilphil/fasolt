@@ -13,7 +13,7 @@ Users upload `.md` files and create flashcards from them — either from the ent
 - **Markdown file management** — upload, view, and delete `.md` files
 - **Flashcard creation** — create cards from an entire file or a specific heading/section within a file
 - **Spaced repetition study** — review due cards with quality-based scheduling (SM-2)
-- **Groups** — organize cards into groups for focused study sessions
+- **Decks** — organize cards into decks for focused study sessions
 - **Dashboard** — overview of stats like cards due, total cards, study streaks
 - **User accounts** — registration, login, per-user data isolation
 
@@ -83,6 +83,10 @@ docker compose down          # stop Postgres
 ## Testing
 
 - **UI Tests**: Use Playwright (via MCP) for end-to-end UI testing
+- **IMPORTANT**: Always run Playwright browser tests after implementing a feature. API-level curl tests are not sufficient — the UI must be tested in the browser to catch rendering issues, dialog flows, and navigation problems.
+- Test the full user flow: navigate to the feature, interact with it (create, edit, delete), verify the UI updates correctly.
+- Start the full stack before testing (`./dev.sh` or manually start backend + frontend).
+- If the backend was rebuilt, restart it before testing — stale processes will return 404s on new endpoints.
 
 ## Requirements
 
