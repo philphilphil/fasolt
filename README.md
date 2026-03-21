@@ -2,7 +2,7 @@
 
 MCP-first spaced repetition for markdown notes. Your AI reads your notes — you learn and remember.
 
-Connect spaced-md to Claude or any MCP-compatible agent. Point it at your Obsidian vault. Flashcards appear automatically. Come back to study when they're due.
+Connect spaced-md to Claude or any MCP-compatible agent. Tell it which notes to create cards from. Study when they're due.
 
 ## How It Works
 

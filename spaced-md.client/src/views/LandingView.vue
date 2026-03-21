@@ -52,8 +52,8 @@ const { isDark, toggle } = useDarkMode()
           <span style="color: hsl(var(--accent))">You learn and remember.</span>
         </h1>
         <p class="text-base text-muted-foreground leading-relaxed mb-8 max-w-xl">
-          Connect spaced-md to Claude or any MCP-compatible agent. Point it at your Obsidian vault.
-          Flashcards appear automatically. Come back to review when they're due.
+          Connect spaced-md to Claude or any MCP-compatible agent. Tell it which notes to create
+          cards from. Study when they're due.
         </p>
         <div class="flex flex-wrap gap-3">
           <RouterLink to="/register">
