@@ -128,6 +128,8 @@ async function createCardFromFile(fileId: string) {
     createBack.value = content.back
     createFileId.value = fileId
     createOpen.value = true
+  } catch {
+    uploadError.value = 'Failed to extract file content.'
   } finally {
     extracting.value = false
   }

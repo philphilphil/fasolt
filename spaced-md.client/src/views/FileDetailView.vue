@@ -24,6 +24,7 @@ const createBack = ref('')
 const createHeading = ref<string | undefined>(undefined)
 const createType = ref<'file' | 'section'>('file')
 const extracting = ref(false)
+const extractError = ref('')
 
 onMounted(async () => {
   try {
@@ -55,6 +56,7 @@ function scrollToHeading(text: string) {
 async function createFromFile() {
   if (!file.value) return
   extracting.value = true
+  extractError.value = ''
   try {
     const content = await cardsStore.extractContent(file.value.id)
     createFront.value = content.front
@@ -62,6 +64,8 @@ async function createFromFile() {
     createHeading.value = undefined
     createType.value = 'file'
     createOpen.value = true
+  } catch {
+    extractError.value = 'Failed to extract content.'
   } finally {
     extracting.value = false
   }
@@ -70,6 +74,7 @@ async function createFromFile() {
 async function createFromSection(headingText: string) {
   if (!file.value) return
   extracting.value = true
+  extractError.value = ''
   try {
     const content = await cardsStore.extractContent(file.value.id, headingText)
     createFront.value = content.front
@@ -77,6 +82,8 @@ async function createFromSection(headingText: string) {
     createHeading.value = headingText
     createType.value = 'section'
     createOpen.value = true
+  } catch {
+    extractError.value = 'Failed to extract section content.'
   } finally {
     extracting.value = false
   }
@@ -104,6 +111,8 @@ async function createFromSection(headingText: string) {
         </Button>
       </div>
     </div>
+
+    <div v-if="extractError" class="text-xs text-destructive">{{ extractError }}</div>
 
     <div class="flex gap-4">
       <!-- Heading tree sidebar -->

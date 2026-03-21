@@ -28,7 +28,6 @@ export const useCardsStore = defineStore('cards', () => {
       method: 'POST',
       body: JSON.stringify(data),
     })
-    await fetchCards()
     return result
   }
 
