@@ -1,3 +1,5 @@
+using NpgsqlTypes;
+
 namespace SpacedMd.Server.Domain.Entities;
 
 public class Card
@@ -19,4 +21,5 @@ public class Card
     public DateTimeOffset? DueAt { get; set; }
     public string State { get; set; } = "new";
     public List<DeckCard> DeckCards { get; set; } = [];
+    public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

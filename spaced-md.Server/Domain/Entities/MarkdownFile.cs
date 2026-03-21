@@ -1,3 +1,5 @@
+using NpgsqlTypes;
+
 namespace SpacedMd.Server.Domain.Entities;
 
 public class MarkdownFile
@@ -10,4 +12,5 @@ public class MarkdownFile
     public long SizeBytes { get; set; }
     public DateTimeOffset UploadedAt { get; set; }
     public List<FileHeading> Headings { get; set; } = [];
+    public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

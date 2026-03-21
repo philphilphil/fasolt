@@ -1,3 +1,5 @@
+using NpgsqlTypes;
+
 namespace SpacedMd.Server.Domain.Entities;
 
 public class Deck
@@ -9,4 +11,5 @@ public class Deck
     public string? Description { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public List<DeckCard> Cards { get; set; } = [];
+    public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

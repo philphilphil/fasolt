@@ -28,6 +28,12 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.HasIndex(e => new { e.UserId, e.FileName }).IsUnique();
             entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.SearchVector)
+                .HasColumnType("tsvector")
+                .HasComputedColumnSql(
+                    """to_tsvector('simple', coalesce("FileName",''))""",
+                    stored: true);
+            entity.HasIndex(e => e.SearchVector).HasMethod("gin");
         });
 
         builder.Entity<FileHeading>(entity =>
@@ -51,6 +57,12 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.Property(e => e.EaseFactor).HasDefaultValue(2.5);
             entity.Property(e => e.State).HasMaxLength(20).HasDefaultValue("new").IsRequired();
             entity.HasIndex(e => new { e.UserId, e.DueAt });
+            entity.Property(e => e.SearchVector)
+                .HasColumnType("tsvector")
+                .HasComputedColumnSql(
+                    """to_tsvector('english', coalesce("Front",'') || ' ' || coalesce("Back",''))""",
+                    stored: true);
+            entity.HasIndex(e => e.SearchVector).HasMethod("gin");
         });
 
         builder.Entity<Deck>(entity =>
@@ -59,6 +71,12 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.SearchVector)
+                .HasColumnType("tsvector")
+                .HasComputedColumnSql(
+                    """to_tsvector('english', coalesce("Name",'') || ' ' || coalesce("Description",''))""",
+                    stored: true);
+            entity.HasIndex(e => e.SearchVector).HasMethod("gin");
         });
 
         builder.Entity<DeckCard>(entity =>
