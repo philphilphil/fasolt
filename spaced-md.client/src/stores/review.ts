@@ -1,64 +1,97 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Card, ReviewRating } from '@/types'
+import type { DueCard, ReviewStats } from '@/types'
+import { apiFetch } from '@/api/client'
 
 export const useReviewStore = defineStore('review', () => {
-  const deckId = ref<string | null>(null)
-  const deckName = ref('')
-  const cards = ref<Card[]>([])
+  const queue = ref<DueCard[]>([])
   const currentIndex = ref(0)
   const isFlipped = ref(false)
-  const ratings = ref(new Map<string, ReviewRating>())
+  const isActive = ref(false)
+  const loading = ref(false)
 
-  const isActive = computed(() => deckId.value !== null)
-  const isComplete = computed(() => currentIndex.value >= cards.value.length)
-  const currentCard = computed(() => cards.value[currentIndex.value] ?? null)
-  const progress = computed(() => `${currentIndex.value + 1} of ${cards.value.length}`)
-  const progressFraction = computed(() =>
-    cards.value.length === 0 ? 0 : currentIndex.value / cards.value.length
-  )
-
-  const ratingCounts = computed(() => {
-    const counts = { again: 0, hard: 0, good: 0, easy: 0 }
-    for (const r of ratings.value.values()) {
-      counts[r]++
-    }
-    return counts
+  const sessionStats = ref({
+    reviewed: 0,
+    again: 0,
+    hard: 0,
+    good: 0,
+    easy: 0,
+    startTime: 0,
   })
 
-  function startSession(id: string, name: string, sessionCards: Card[]) {
-    deckId.value = id
-    deckName.value = name
-    cards.value = sessionCards
-    currentIndex.value = 0
-    isFlipped.value = false
-    ratings.value = new Map()
+  const currentCard = computed(() =>
+    currentIndex.value < queue.value.length ? queue.value[currentIndex.value] : null
+  )
+
+  const isComplete = computed(() => isActive.value && currentCard.value === null)
+
+  const progress = computed(() => {
+    if (queue.value.length === 0) return 0
+    return Math.round((currentIndex.value / queue.value.length) * 100)
+  })
+
+  const sessionTime = computed(() => {
+    if (!sessionStats.value.startTime) return 0
+    return Math.round((Date.now() - sessionStats.value.startTime) / 1000)
+  })
+
+  async function startSession() {
+    loading.value = true
+    try {
+      const cards = await apiFetch<DueCard[]>('/review/due')
+      queue.value = cards
+      currentIndex.value = 0
+      isFlipped.value = false
+      isActive.value = true
+      sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, startTime: Date.now() }
+    } finally {
+      loading.value = false
+    }
   }
 
-  function flip() {
+  function flipCard() {
     isFlipped.value = true
   }
 
-  function rate(rating: ReviewRating) {
+  async function rate(quality: number) {
     const card = currentCard.value
     if (!card) return
-    ratings.value.set(card.id, rating)
+
+    await apiFetch('/review/rate', {
+      method: 'POST',
+      body: JSON.stringify({ cardId: card.id, quality }),
+    })
+
+    sessionStats.value.reviewed++
+    if (quality === 0) {
+      sessionStats.value.again++
+      queue.value.push({ ...card })
+    } else if (quality === 2) {
+      sessionStats.value.hard++
+    } else if (quality === 4) {
+      sessionStats.value.good++
+    } else if (quality === 5) {
+      sessionStats.value.easy++
+    }
+
     currentIndex.value++
     isFlipped.value = false
   }
 
   function endSession() {
-    deckId.value = null
-    deckName.value = ''
-    cards.value = []
+    isActive.value = false
+    queue.value = []
     currentIndex.value = 0
     isFlipped.value = false
-    ratings.value = new Map()
+  }
+
+  async function fetchStats(): Promise<ReviewStats> {
+    return apiFetch<ReviewStats>('/review/stats')
   }
 
   return {
-    deckId, deckName, cards, currentIndex, isFlipped, ratings,
-    isActive, isComplete, currentCard, progress, progressFraction, ratingCounts,
-    startSession, flip, rate, endSession,
+    queue, currentCard, isFlipped, isActive, isComplete, loading,
+    progress, sessionStats, sessionTime,
+    startSession, flipCard, rate, endSession, fetchStats,
   }
 })
