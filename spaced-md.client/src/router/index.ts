@@ -33,6 +33,7 @@ const router = createRouter({
     // App routes (require auth)
     { path: '/', name: 'dashboard', component: DashboardView },
     { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
+    { path: '/files/:id', name: 'file-detail', component: () => import('@/views/FileDetailView.vue') },
     { path: '/groups', name: 'groups', component: () => import('@/views/GroupsView.vue') },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
