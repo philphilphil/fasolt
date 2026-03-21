@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useFilesStore } from '@/stores/files'
+import { useCardsStore } from '@/stores/cards'
 import { isApiError } from '@/api/client'
 import type { BulkUploadResult } from '@/types'
 import {
@@ -10,8 +11,15 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import CardCreateDialog from '@/components/CardCreateDialog.vue'
 
 const files = useFilesStore()
+const cardsStore = useCardsStore()
+const createOpen = ref(false)
+const createFront = ref('')
+const createBack = ref('')
+const createFileId = ref<string | undefined>(undefined)
+const extracting = ref(false)
 const deleteError = ref('')
 const expandedId = ref<string | null>(null)
 const sortBy = ref<'name' | 'date' | 'cards'>('date')
@@ -110,6 +118,19 @@ function onFileSelect(e: Event) {
   const selected = Array.from(input.files ?? [])
   if (selected.length) handleFiles(selected)
   input.value = ''
+}
+
+async function createCardFromFile(fileId: string) {
+  extracting.value = true
+  try {
+    const content = await cardsStore.extractContent(fileId)
+    createFront.value = content.front
+    createBack.value = content.back
+    createFileId.value = fileId
+    createOpen.value = true
+  } finally {
+    extracting.value = false
+  }
 }
 
 async function confirmDelete() {
@@ -219,6 +240,17 @@ async function confirmDelete() {
                     Create cards
                   </Button>
                 </div>
+                <div class="mt-2 pt-2 border-t border-border/50">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-6 text-[10px]"
+                    :disabled="extracting"
+                    @click.stop="createCardFromFile(file.id)"
+                  >
+                    Create card from entire file
+                  </Button>
+                </div>
               </div>
             </TableCell>
           </TableRow>
@@ -251,5 +283,14 @@ async function confirmDelete() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <CardCreateDialog
+      v-model:open="createOpen"
+      :file-id="createFileId"
+      :initial-front="createFront"
+      :initial-back="createBack"
+      card-type="file"
+      @created="files.fetchFiles()"
+    />
   </div>
 </template>
