@@ -21,14 +21,19 @@ public static class ReviewEndpoints
     }
 
     private static async Task<IResult> GetDueCards(
-        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, int limit = 50)
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, int limit = 50, Guid? deckId = null)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
         var now = DateTimeOffset.UtcNow;
-        var cards = await db.Cards
-            .Where(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now))
+        var query = db.Cards
+            .Where(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
+
+        if (deckId.HasValue)
+            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckId.Value));
+
+        var cards = await query
             .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
             .ThenBy(c => c.CreatedAt)
             .Take(limit)
