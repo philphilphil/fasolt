@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SpacedMd.Server.Api.Auth;
 using SpacedMd.Server.Api.Endpoints;
 using SpacedMd.Server.Api.Middleware;
 using SpacedMd.Server.Domain.Entities;
@@ -27,6 +28,10 @@ builder.Services
     })
     .AddEntityFrameworkStores<AppDbContext>();
 
+builder.Services.AddAuthentication()
+    .AddScheme<BearerTokenOptions, BearerTokenHandler>(
+        BearerTokenDefaults.AuthenticationScheme, _ => { });
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -48,7 +53,14 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 
 builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme,
+        BearerTokenDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 builder.Services.AddOpenApi();
 
