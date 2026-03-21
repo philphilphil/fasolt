@@ -2,9 +2,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFilesStore } from '@/stores/files'
+import { useCardsStore } from '@/stores/cards'
 import { useMarkdown } from '@/composables/useMarkdown'
 import type { FileDetail } from '@/types'
 import { Button } from '@/components/ui/button'
+import CardCreateDialog from '@/components/CardCreateDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +16,14 @@ const { render, stripFrontmatter } = useMarkdown()
 const file = ref<FileDetail | null>(null)
 const loading = ref(true)
 const showSource = ref(false)
+
+const cardsStore = useCardsStore()
+const createOpen = ref(false)
+const createFront = ref('')
+const createBack = ref('')
+const createHeading = ref<string | undefined>(undefined)
+const createType = ref<'file' | 'section'>('file')
+const extracting = ref(false)
 
 onMounted(async () => {
   try {
@@ -41,6 +51,36 @@ function scrollToHeading(text: string) {
     }
   }
 }
+
+async function createFromFile() {
+  if (!file.value) return
+  extracting.value = true
+  try {
+    const content = await cardsStore.extractContent(file.value.id)
+    createFront.value = content.front
+    createBack.value = content.back
+    createHeading.value = undefined
+    createType.value = 'file'
+    createOpen.value = true
+  } finally {
+    extracting.value = false
+  }
+}
+
+async function createFromSection(headingText: string) {
+  if (!file.value) return
+  extracting.value = true
+  try {
+    const content = await cardsStore.extractContent(file.value.id, headingText)
+    createFront.value = content.front
+    createBack.value = content.back
+    createHeading.value = headingText
+    createType.value = 'section'
+    createOpen.value = true
+  } finally {
+    extracting.value = false
+  }
+}
 </script>
 
 <template>
@@ -55,9 +95,14 @@ function scrollToHeading(text: string) {
         </Button>
         <span class="font-mono text-sm font-medium">{{ file.fileName }}</span>
       </div>
-      <Button variant="outline" size="sm" class="h-7 text-xs" @click="showSource = !showSource">
-        {{ showSource ? 'Preview' : 'Source' }}
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="extracting" @click="createFromFile">
+          Create card
+        </Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="showSource = !showSource">
+          {{ showSource ? 'Preview' : 'Source' }}
+        </Button>
+      </div>
     </div>
 
     <div class="flex gap-4">
@@ -80,8 +125,8 @@ function scrollToHeading(text: string) {
             <Button
               variant="ghost"
               size="sm"
-              class="h-5 text-[10px] opacity-0 group-hover:opacity-50 cursor-not-allowed shrink-0"
-              disabled
+              class="h-5 text-[10px] opacity-0 group-hover:opacity-100 shrink-0"
+              @click.stop="createFromSection(heading.text)"
             >
               Create cards
             </Button>
@@ -95,5 +140,14 @@ function scrollToHeading(text: string) {
         <div v-else class="markdown-body prose prose-sm dark:prose-invert max-w-none" v-html="renderedHtml" />
       </div>
     </div>
+
+    <CardCreateDialog
+      v-model:open="createOpen"
+      :file-id="file?.id"
+      :source-heading="createHeading"
+      :initial-front="createFront"
+      :initial-back="createBack"
+      :card-type="createType"
+    />
   </div>
 </template>
