@@ -15,9 +15,8 @@
 Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at your markdown files. Study the flashcards it creates.
 
 <p align="center">
-  <img src="docs/screenshots/screenshot.png" alt="Study question" width="270" />
-  <img src="docs/screenshots/screenshot2.png" alt="Study answer" width="270" />
-  <img src="docs/screenshots/screenshot3.png" alt="Study complete" width="270" />
+  <img src="docs/screenshots/screenshot.png" alt="Study question" width="400" />
+  <img src="docs/screenshots/screenshot2.png" alt="Study answer" width="400" />
 </p>
 
 ## How It Works
