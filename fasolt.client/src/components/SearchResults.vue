@@ -47,7 +47,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
     <div v-else>
       <!-- Cards -->
       <div v-if="results.cards.length > 0">
-        <div class="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        <div class="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Cards ({{ results.cards.length }})
         </div>
         <button
@@ -60,7 +60,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
         >
           <span class="shrink-0 text-xs text-muted-foreground">✏️</span>
           <span class="truncate" v-html="sanitizeHeadline(card.headline)" />
-          <span class="ml-auto shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <span class="ml-auto shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
             {{ card.state }}
           </span>
         </button>
@@ -68,7 +68,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
 
       <!-- Decks -->
       <div v-if="results.decks.length > 0">
-        <div class="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+        <div class="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground"
              :class="{ 'border-t border-border': results.cards.length > 0 }">
           Decks ({{ results.decks.length }})
         </div>
@@ -89,7 +89,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
       </div>
 
       <!-- Footer -->
-      <div class="flex gap-3 border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
+      <div class="flex gap-3 border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
         <span>↑↓ navigate</span>
         <span>↵ open</span>
         <span>esc close</span>

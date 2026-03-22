@@ -93,7 +93,7 @@ async function handleLogout() {
     <span class="flex items-center gap-2 font-mono text-[13px] font-bold text-foreground tracking-tight">
       <img src="/logo.png" alt="fasolt" class="h-7 object-contain dark:invert" style="image-rendering: pixelated" />
       fasolt
-      <span class="rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">beta</span>
+      <span class="rounded-full border border-border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">beta</span>
     </span>
     <div ref="searchContainerRef" class="relative hidden sm:block">
       <Input
@@ -101,14 +101,14 @@ async function handleLogout() {
         v-model="query"
         type="text"
         placeholder="Search cards and decks…"
-        class="h-8 w-[260px] bg-secondary pl-8 text-xs"
+        class="h-8 w-[260px] bg-secondary pl-8 text-sm"
         @keydown="onKeyDown"
       />
       <div class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </div>
       <div v-if="!isOpen" class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
-        <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">⌘K</kbd>
+        <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">⌘K</kbd>
       </div>
       <SearchResults
         v-if="isOpen"
