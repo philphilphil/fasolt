@@ -55,8 +55,8 @@ builder.Services.AddOpenIddict()
 
         if (encryptionCertPath is not null && signingCertPath is not null)
         {
-            options.AddEncryptionCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificateFromFile(encryptionCertPath))
-                   .AddSigningCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificateFromFile(signingCertPath));
+            options.AddEncryptionCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12FromFile(encryptionCertPath, null))
+                   .AddSigningCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12FromFile(signingCertPath, null));
         }
         else
         {
