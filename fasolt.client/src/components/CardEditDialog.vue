@@ -71,7 +71,7 @@ async function save() {
             class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             rows="2"
           />
-          <div v-else class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(front)" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(front)" />
         </div>
 
         <div class="space-y-1">
@@ -82,7 +82,7 @@ async function save() {
             class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             rows="8"
           />
-          <div v-else class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(back)" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(back)" />
         </div>
 
         <div v-if="error" class="text-xs text-destructive">{{ error }}</div>

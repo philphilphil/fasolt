@@ -117,7 +117,7 @@ async function save() {
             class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             rows="2"
           />
-          <div v-else class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(fronts[0])" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(fronts[0])" />
         </div>
 
         <!-- Multiple fronts -->
@@ -130,7 +130,7 @@ async function save() {
               class="flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               rows="1"
             />
-            <div v-else class="flex-1 prose prose-sm dark:prose-invert rounded-md border border-border p-2 text-sm" v-html="render(front)" />
+            <div v-else class="flex-1 prose dark:prose-invert rounded-md border border-border p-2 text-sm" v-html="render(front)" />
             <Button
               variant="ghost"
               size="sm"
@@ -151,7 +151,7 @@ async function save() {
             class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             rows="8"
           />
-          <div v-else class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="renderedBack" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="renderedBack" />
         </div>
 
         <div v-if="isLong" class="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-600 dark:text-yellow-400">
