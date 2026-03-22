@@ -53,10 +53,10 @@ function onDone() {
 </script>
 
 <template>
-  <div class="flex min-h-[calc(100vh-8rem)] flex-col pb-16 sm:pb-0">
+  <div class="flex min-h-0 flex-1 flex-col pb-16 sm:pb-0">
     <template v-if="review.isActive && !review.isComplete">
       <!-- Context bar -->
-      <div class="mb-3 flex items-center justify-between text-[11px] text-muted-foreground">
+      <div class="mb-3 flex items-center justify-between text-xs text-muted-foreground">
         <div class="flex items-center gap-2">
           <span class="text-foreground">Review session</span>
           <span>·</span>
@@ -72,20 +72,23 @@ function onDone() {
       <!-- Progress meter -->
       <ProgressMeter :total="100" :current="review.progress" class="mb-5" />
 
-      <!-- Card -->
-      <ReviewCard
-        v-if="review.currentCard"
-        :card="review.currentCard"
-        :is-flipped="review.isFlipped"
-        @flip="review.flipCard()"
-      />
+      <!-- Card wrapper — fills remaining space, centers card -->
+      <div class="flex flex-1 flex-col items-center justify-center">
+        <ReviewCard
+          v-if="review.currentCard"
+          :card="review.currentCard"
+          :is-flipped="review.isFlipped"
+          class="w-full"
+          @flip="review.flipCard()"
+        />
+      </div>
 
       <!-- Rating buttons (only when flipped) -->
       <div v-if="review.isFlipped" class="mt-4">
         <RatingButtons @rate="onRate" />
       </div>
 
-      <div v-else class="mt-4 text-center text-[11px] text-muted-foreground">
+      <div v-else class="mt-4 text-center text-xs text-muted-foreground">
         Click the card or press <KbdHint keys="space" /> to reveal the answer
       </div>
     </template>
