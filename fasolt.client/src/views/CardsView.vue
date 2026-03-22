@@ -235,7 +235,7 @@ function applyStateFilter(val: string) {
 
     <!-- Table -->
     <div class="rounded-md border">
-      <Table class="table-fixed">
+      <Table>
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead

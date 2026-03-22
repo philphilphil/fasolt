@@ -109,7 +109,7 @@ async function removeCard(cardId: string) {
     </div>
 
     <!-- Card list -->
-    <Table v-if="deck.cards.length > 0" class="table-fixed">
+    <Table v-if="deck.cards.length > 0">
       <TableHeader>
         <TableRow class="text-xs uppercase tracking-wider text-muted-foreground hover:bg-transparent">
           <TableHead class="h-8">Front</TableHead>
