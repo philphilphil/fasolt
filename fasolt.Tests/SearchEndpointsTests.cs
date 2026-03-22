@@ -18,7 +18,7 @@ public class SearchEndpointsTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await _factory.SeedTestUserAsync();
-        _client = _factory.CreateAuthenticatedClient();
+        _client = await _factory.CreateAuthenticatedClientAsync();
     }
 
     public Task DisposeAsync()

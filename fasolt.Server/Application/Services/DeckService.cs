@@ -81,16 +81,30 @@ public class DeckService(AppDbContext db)
     }
 
     /// <returns>true if deleted, false if not found</returns>
-    public async Task<bool> DeleteDeck(string userId, Guid deckId)
+    public async Task<DeleteDeckResult> DeleteDeck(string userId, Guid deckId, bool deleteCards = false)
     {
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.Id == deckId && d.UserId == userId);
 
-        if (deck is null) return false;
+        if (deck is null) return new DeleteDeckResult(false, 0);
+
+        var deletedCardCount = 0;
+        if (deleteCards)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var cardIds = await db.DeckCards
+                .Where(dc => dc.DeckId == deckId)
+                .Select(dc => dc.CardId)
+                .ToListAsync();
+
+            deletedCardCount = await db.Cards
+                .Where(c => cardIds.Contains(c.Id) && c.UserId == userId && c.DeletedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(c => c.DeletedAt, now));
+        }
 
         db.Decks.Remove(deck);
         await db.SaveChangesAsync();
-        return true;
+        return new DeleteDeckResult(true, deletedCardCount);
     }
 
     /// <returns>null if deck not found, false if card validation failed, true if success</returns>
@@ -144,5 +158,6 @@ public class DeckService(AppDbContext db)
     }
 }
 
+public record DeleteDeckResult(bool Deleted, int DeletedCardCount);
 public enum AddCardsResult { Success, DeckNotFound, CardsNotFound }
 public enum RemoveCardResult { Success, DeckNotFound, CardNotFound }

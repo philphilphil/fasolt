@@ -54,8 +54,7 @@ docker-compose.yml          — Postgres container
 dev.sh                      — runs everything (docker + backend + frontend)
 fasolt.sln               — .NET solution
 global.json                 — .NET SDK version pin
-fasolt.Server/           — backend
-fasolt.Mcp/              — MCP server for AI agents
+fasolt.Server/           — backend (includes remote MCP server)
 fasolt.client/           — frontend (Vue 3 SPA)
 ```
 
@@ -128,20 +127,13 @@ The CAP theorem states you can only have two of three: Consistency, Availability
 
 ## Dev Seed User
 
-In development, a seed user and API token are auto-created on startup:
+In development, a seed user is auto-created on startup:
 
 - **Email:** `dev@fasolt.local` / **Password:** `Dev1234!`
-- **API Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
 
 ## MCP Server
 
-The `fasolt.Mcp/` project is a stdio MCP server that bridges AI agents to the API. To run locally:
-
-```bash
-FASOLT_URL=http://localhost:8080 \
-FASOLT_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
-  dotnet run --project fasolt.Mcp
-```
+The server exposes a remote MCP endpoint at `/mcp` (streamable HTTP transport). AI agents connect directly — no separate local MCP process needed.
 
 ### Available MCP Tools
 
@@ -151,11 +143,12 @@ FASOLT_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
 - `ListSources` — list all source files that cards were created from, with card and due counts
 - `ListDecks` — list all decks with card counts and due counts
 - `CreateDeck` — create a new deck for organizing flashcards
+- `DeleteDeck` — delete a deck, optionally deleting all its cards too
+- `DeleteCard` — delete a single card by ID
 
 ## Key API Routes
 
 - `GET /api/health` — health check
 - `/api/identity/*` — ASP.NET Core Identity endpoints (register, login, etc.)
-- `/api/tokens` — API token management (create, list, revoke)
 - `POST /api/cards/bulk` — bulk card creation with duplicate detection
 - `GET /api/sources` — source file listing with card counts

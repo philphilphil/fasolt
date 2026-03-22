@@ -87,6 +87,7 @@ public static class DeckEndpoints
 
     private static async Task<IResult> Delete(
         Guid id,
+        bool? deleteCards,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         DeckService deckService)
@@ -94,8 +95,8 @@ public static class DeckEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var deleted = await deckService.DeleteDeck(user.Id, id);
-        return deleted ? Results.NoContent() : Results.NotFound();
+        var result = await deckService.DeleteDeck(user.Id, id, deleteCards == true);
+        return result.Deleted ? Results.NoContent() : Results.NotFound();
     }
 
     private static async Task<IResult> AddCards(

@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
-import { isApiError, createApiToken, listApiTokens, revokeApiToken } from '@/api/client'
-import type { TokenListItem } from '@/api/client'
+import { isApiError } from '@/api/client'
 
 const auth = useAuthStore()
 
@@ -20,13 +19,6 @@ const emailCurrentPassword = ref('')
 const emailSuccess = ref(false)
 const emailError = ref('')
 
-// API Tokens
-const tokens = ref<TokenListItem[]>([])
-const newTokenName = ref('')
-const createdToken = ref<string | null>(null)
-const tokenError = ref('')
-const tokenLoading = ref(false)
-
 // Password
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -37,50 +29,7 @@ const passwordError = ref('')
 onMounted(() => {
   displayName.value = auth.user?.displayName || ''
   newEmail.value = auth.user?.email || ''
-  loadTokens()
 })
-
-async function loadTokens() {
-  try {
-    tokens.value = await listApiTokens()
-  } catch {
-    // ignore
-  }
-}
-
-async function handleCreateToken() {
-  tokenError.value = ''
-  createdToken.value = null
-  if (!newTokenName.value.trim()) {
-    tokenError.value = 'Token name is required.'
-    return
-  }
-  tokenLoading.value = true
-  try {
-    const result = await createApiToken({ name: newTokenName.value.trim() })
-    createdToken.value = result.token
-    newTokenName.value = ''
-    await loadTokens()
-  } catch {
-    tokenError.value = 'Failed to create token.'
-  } finally {
-    tokenLoading.value = false
-  }
-}
-
-async function handleRevokeToken(id: string) {
-  try {
-    await revokeApiToken(id)
-    await loadTokens()
-  } catch {
-    tokenError.value = 'Failed to revoke token.'
-  }
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString()
-}
 
 async function saveDisplayName() {
   displayNameSuccess.value = false
@@ -199,64 +148,5 @@ async function savePassword() {
       </CardContent>
     </Card>
 
-    <!-- API Tokens -->
-    <Card>
-      <CardHeader>
-        <CardTitle class="text-base">API Tokens</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div class="flex flex-col gap-4">
-          <p class="text-sm text-muted-foreground">Create tokens to authenticate API requests from AI agents and tools.</p>
-
-          <div v-if="tokenError" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ tokenError }}</div>
-
-          <!-- Token creation -->
-          <form class="flex gap-2" @submit.prevent="handleCreateToken">
-            <Input v-model="newTokenName" placeholder="Token name (e.g., Obsidian Agent)" class="flex-1" />
-            <Button type="submit" size="sm" :disabled="tokenLoading">Create token</Button>
-          </form>
-
-          <!-- Show newly created token -->
-          <div v-if="createdToken" class="rounded-md border border-green-500/30 bg-green-500/10 p-3">
-            <p class="text-sm font-medium text-green-600 mb-1">Token created — copy it now, it won't be shown again:</p>
-            <code class="block rounded bg-muted px-2 py-1 text-sm font-mono break-all select-all">{{ createdToken }}</code>
-          </div>
-
-          <!-- Token list -->
-          <div v-if="tokens.length > 0" class="flex flex-col gap-2">
-            <div
-              v-for="token in tokens"
-              :key="token.id"
-              class="flex items-center justify-between rounded-md border px-3 py-2"
-            >
-              <div class="flex flex-col gap-0.5">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium">{{ token.name }}</span>
-                  <code class="text-xs text-muted-foreground">{{ token.tokenPrefix }}...</code>
-                  <span v-if="token.isRevoked" class="text-xs text-destructive">Revoked</span>
-                  <span v-else-if="token.isExpired" class="text-xs text-yellow-600">Expired</span>
-                </div>
-                <div class="text-xs text-muted-foreground">
-                  Created {{ formatDate(token.createdAt) }}
-                  <span v-if="token.lastUsedAt"> · Last used {{ formatDate(token.lastUsedAt) }}</span>
-                  <span v-if="token.expiresAt"> · Expires {{ formatDate(token.expiresAt) }}</span>
-                </div>
-              </div>
-              <Button
-                v-if="!token.isRevoked"
-                variant="ghost"
-                size="sm"
-                class="text-destructive hover:text-destructive"
-                @click="handleRevokeToken(token.id)"
-              >
-                Revoke
-              </Button>
-            </div>
-          </div>
-
-          <p v-else class="text-sm text-muted-foreground">No tokens yet.</p>
-        </div>
-      </CardContent>
-    </Card>
   </div>
 </template>

@@ -35,8 +35,9 @@ export const useDecksStore = defineStore('decks', () => {
     return result
   }
 
-  async function deleteDeck(id: string) {
-    await apiFetch(`/decks/${id}`, { method: 'DELETE' })
+  async function deleteDeck(id: string, deleteCards = false) {
+    const qs = deleteCards ? '?deleteCards=true' : ''
+    await apiFetch(`/decks/${id}${qs}`, { method: 'DELETE' })
     decks.value = decks.value.filter(d => d.id !== id)
   }
 

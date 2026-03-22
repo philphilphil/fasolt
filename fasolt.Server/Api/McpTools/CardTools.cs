@@ -42,4 +42,15 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
             return JsonSerializer.Serialize(new { error = "Deck not found" });
         return JsonSerializer.Serialize(result.Response);
     }
+
+    [McpServerTool, Description("Delete a single card by its ID.")]
+    public async Task<string> DeleteCard(
+        [Description("ID of the card to delete")] Guid cardId)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+        var deleted = await cardService.DeleteCard(userId, cardId);
+        return deleted
+            ? JsonSerializer.Serialize(new { deleted = true })
+            : JsonSerializer.Serialize(new { error = "Card not found" });
+    }
 }

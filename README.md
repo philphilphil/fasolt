@@ -4,6 +4,8 @@ MCP-first spaced repetition for markdown notes. Your AI reads your notes — you
 
 Connect fasolt to Claude or any MCP-compatible agent. Tell it which notes to create cards from. Study when they're due.
 
+`100% Vibecoded to the best of my knowledge and belief.`
+
 ## How It Works
 
 1. **Take notes in Obsidian** — write in your normal workflow, optionally add `?::` markers for precise card boundaries
@@ -29,7 +31,7 @@ Connect fasolt to Claude or any MCP-compatible agent. Tell it which notes to cre
 | Frontend | Vue 3 + TypeScript + Vite, shadcn-vue, Tailwind CSS 3, Pinia |
 | Database | Postgres 17 (docker-compose) |
 | Auth | ASP.NET Core Identity (cookies + Bearer tokens) |
-| MCP Server | .NET 10 console app, ModelContextProtocol SDK, stdio transport |
+| MCP Server | Built into the backend, streamable HTTP transport |
 
 ## Quick Start
 
@@ -51,21 +53,14 @@ The frontend proxies `/api` requests to the backend.
 
 ## MCP Server Setup
 
-The MCP server lets AI agents create flashcards from your local markdown files.
+The MCP server is built into the backend and exposed at `/mcp` via streamable HTTP transport.
 
 1. Start the full stack: `./dev.sh`
-2. A dev user is auto-seeded:
-   - **Email:** `dev@fasolt.local` / **Password:** `Dev1234!`
-   - **Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
-3. Add to Claude Code:
+2. Add to Claude Code:
    ```bash
-   claude mcp add fasolt \
-     -e FASOLT_URL=http://localhost:8080 \
-     -e FASOLT_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
-     -- dotnet run --project /absolute/path/to/fasolt.Mcp
+   claude mcp add fasolt --transport http http://localhost:8080/mcp
    ```
-
-You can also create your own tokens via **Settings → API Tokens** in the web UI.
+   You'll be prompted to log in via OAuth when your agent first connects.
 
 ### MCP Tools
 
@@ -94,7 +89,6 @@ fasolt.Server/
   Application/      — services, DTOs, use case logic
   Infrastructure/   — EF Core DbContext, repos, migrations
   Api/              — endpoints, middleware, Program.cs
-fasolt.Mcp/      — MCP server (stdio, dotnet tool)
 fasolt.client/   — Vue 3 SPA
 ```
 

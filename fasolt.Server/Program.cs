@@ -2,7 +2,6 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Fasolt.Server.Api.Auth;
 using Fasolt.Server.Api.Endpoints;
 using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
@@ -34,10 +33,6 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
     .AddEntityFrameworkStores<AppDbContext>();
-
-builder.Services.AddAuthentication()
-    .AddScheme<BearerTokenOptions, BearerTokenHandler>(
-        BearerTokenDefaults.AuthenticationScheme, _ => { });
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>
@@ -106,7 +101,6 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .AddAuthenticationSchemes(
             IdentityConstants.ApplicationScheme,
-            BearerTokenDefaults.AuthenticationScheme,
             OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
         .Build();
 });
@@ -253,7 +247,6 @@ app.MapReviewEndpoints();
 app.MapDeckEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
-app.MapApiTokenEndpoints();
 app.MapOAuthEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 

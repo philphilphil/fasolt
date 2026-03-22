@@ -5,8 +5,6 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fasolt.Server", "fasolt.Server\fasolt.Server.csproj", "{6A1596E3-14AD-454E-BA88-2ABCAC91D3AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fasolt.Mcp", "fasolt.Mcp\fasolt.Mcp.csproj", "{76D710D9-AA2C-4AAC-AA44-034832CD3645}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fasolt.Tests", "fasolt.Tests\fasolt.Tests.csproj", "{61403DD6-078D-4E34-9EFA-475959A18B51}"
 EndProject
 Global
@@ -31,18 +29,6 @@ Global
 		{6A1596E3-14AD-454E-BA88-2ABCAC91D3AB}.Release|x64.Build.0 = Release|Any CPU
 		{6A1596E3-14AD-454E-BA88-2ABCAC91D3AB}.Release|x86.ActiveCfg = Release|Any CPU
 		{6A1596E3-14AD-454E-BA88-2ABCAC91D3AB}.Release|x86.Build.0 = Release|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Debug|x64.Build.0 = Debug|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Debug|x86.Build.0 = Debug|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Release|Any CPU.Build.0 = Release|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Release|x64.ActiveCfg = Release|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Release|x64.Build.0 = Release|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Release|x86.ActiveCfg = Release|Any CPU
-		{76D710D9-AA2C-4AAC-AA44-034832CD3645}.Release|x86.Build.0 = Release|Any CPU
 		{61403DD6-078D-4E34-9EFA-475959A18B51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{61403DD6-078D-4E34-9EFA-475959A18B51}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61403DD6-078D-4E34-9EFA-475959A18B51}.Debug|x64.ActiveCfg = Debug|Any CPU

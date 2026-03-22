@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Fasolt.Server.Api.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -11,14 +10,13 @@ namespace Fasolt.Tests.Helpers;
 
 /// <summary>
 /// Custom WebApplicationFactory that uses a real Postgres test database
-/// (unique per instance) and seeds a test user with a known API token.
+/// (unique per instance) and seeds a test user.
 /// Requires Docker Postgres running on localhost:5432.
 /// </summary>
 public class FasoltFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = $"fasolt_test_{Guid.NewGuid():N}";
 
-    public const string TestToken = "sm_test_token_integration_tests_only_0000000000000000";
     public const string TestUserEmail = "test@fasolt.test";
     public const string TestUserPassword = "Test1234!";
 
@@ -49,7 +47,7 @@ public class FasoltFactory : WebApplicationFactory<Program>
     }
 
     /// <summary>
-    /// Creates the schema and seeds a test user + API token.
+    /// Creates the schema and seeds a test user.
     /// </summary>
     public async Task SeedTestUserAsync()
     {
@@ -75,29 +73,26 @@ public class FasoltFactory : WebApplicationFactory<Program>
         if (!result.Succeeded)
             throw new InvalidOperationException(
                 $"Failed to create test user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-
-        var hash = BearerTokenHandler.ComputeHash(TestToken);
-        db.ApiTokens.Add(new ApiToken
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            Name = "Test Token",
-            TokenHash = hash,
-            TokenPrefix = TestToken[..8],
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
-
-        await db.SaveChangesAsync();
     }
 
     /// <summary>
-    /// Creates an HttpClient pre-configured with the test Bearer token.
+    /// Creates an HttpClient authenticated via cookie login.
     /// </summary>
-    public HttpClient CreateAuthenticatedClient()
+    public async Task<HttpClient> CreateAuthenticatedClientAsync()
     {
-        var client = CreateClient();
-        client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", TestToken);
+        var client = CreateClient(new WebApplicationFactoryClientOptions
+        {
+            HandleCookies = true,
+            AllowAutoRedirect = false,
+        });
+
+        var loginResponse = await client.PostAsJsonAsync("/api/identity/login", new
+        {
+            email = TestUserEmail,
+            password = TestUserPassword,
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
         return client;
     }
 

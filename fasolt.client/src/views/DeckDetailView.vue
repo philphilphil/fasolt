@@ -10,8 +10,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +24,9 @@ const loading = ref(true)
 const editOpen = ref(false)
 const editName = ref('')
 const editDescription = ref('')
+
+const deleteOpen = ref(false)
+const deleteCards = ref(false)
 
 onMounted(async () => {
   try {
@@ -52,9 +56,14 @@ async function saveEdit() {
   await refresh()
 }
 
+function openDelete() {
+  deleteCards.value = false
+  deleteOpen.value = true
+}
+
 async function handleDelete() {
   if (!deck.value) return
-  await decks.deleteDeck(deck.value.id)
+  await decks.deleteDeck(deck.value.id, deleteCards.value)
   router.replace('/decks')
 }
 
@@ -88,7 +97,7 @@ async function removeCard(cardId: string) {
         </Button>
 
         <Button variant="outline" size="sm" class="h-7 text-xs" @click="openEdit">Edit</Button>
-        <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="handleDelete">Delete</Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
       </div>
     </div>
 
@@ -149,6 +158,28 @@ async function removeCard(cardId: string) {
         </div>
         <DialogFooter>
           <Button @click="saveEdit">Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Delete confirmation dialog -->
+    <Dialog v-model:open="deleteOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete deck</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete "{{ deck.name }}"?
+          </DialogDescription>
+        </DialogHeader>
+        <div class="flex items-center gap-2">
+          <Checkbox id="delete-cards" :checked="deleteCards" @update:checked="deleteCards = $event" />
+          <label for="delete-cards" class="text-sm cursor-pointer select-none">
+            Also delete all {{ deck.cardCount }} cards in this deck
+          </label>
+        </div>
+        <DialogFooter class="gap-2">
+          <Button variant="outline" size="sm" @click="deleteOpen = false">Cancel</Button>
+          <Button variant="destructive" size="sm" @click="handleDelete">Delete</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
