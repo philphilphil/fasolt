@@ -80,7 +80,7 @@ async function confirmDelete() {
         <Button variant="ghost" size="sm" class="h-7 text-xs" @click="router.push('/cards')">
           &larr; Cards
         </Button>
-        <Badge variant="outline" class="text-[10px]">{{ card.state }}</Badge>
+        <Badge variant="outline" class="text-xs">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
         <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-xs" @click="startEdit">Edit</Button>
@@ -135,11 +135,11 @@ async function confirmDelete() {
     <div v-else class="space-y-4">
       <div class="space-y-1">
         <label class="text-xs font-medium text-muted-foreground">Front</label>
-        <div class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.front)" />
+        <div class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.front)" />
       </div>
       <div class="space-y-1">
         <label class="text-xs font-medium text-muted-foreground">Back</label>
-        <div class="prose prose-sm dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.back)" />
+        <div class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.back)" />
       </div>
     </div>
 

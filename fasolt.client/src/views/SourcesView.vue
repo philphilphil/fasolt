@@ -33,10 +33,10 @@ onMounted(() => sourcesStore.fetchSources())
         <CardContent class="flex items-center justify-between p-4">
           <div class="min-w-0">
             <div class="truncate font-mono text-sm font-medium text-foreground">{{ source.sourceFile }}</div>
-            <div class="mt-0.5 text-[11px] text-muted-foreground">{{ source.cardCount }} cards</div>
+            <div class="mt-0.5 text-xs text-muted-foreground">{{ source.cardCount }} cards</div>
           </div>
           <div class="ml-3 flex shrink-0 items-center gap-2">
-            <Badge v-if="source.dueCount > 0" variant="outline" class="font-mono text-[10px] text-warning">
+            <Badge v-if="source.dueCount > 0" variant="outline" class="font-mono text-xs text-warning">
               {{ source.dueCount }} due
             </Badge>
           </div>

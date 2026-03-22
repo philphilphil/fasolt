@@ -62,8 +62,8 @@ async function createDeck() {
         <CardContent class="flex items-center justify-between p-4">
           <div>
             <div class="text-sm font-medium text-foreground">{{ deck.name }}</div>
-            <div v-if="deck.description" class="mt-0.5 text-[11px] text-muted-foreground">{{ deck.description }}</div>
-            <div class="mt-0.5 text-[11px] text-muted-foreground">
+            <div v-if="deck.description" class="mt-0.5 text-xs text-muted-foreground">{{ deck.description }}</div>
+            <div class="mt-0.5 text-xs text-muted-foreground">
               {{ deck.cardCount }} cards
             </div>
           </div>
