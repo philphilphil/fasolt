@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement user accounts for spaced-md: registration, login/logout, password reset, and profile settings. Uses ASP.NET Core Identity on the backend with cookie-based auth, and Vue 3 + Pinia on the frontend.
+Implement user accounts for fasolt: registration, login/logout, password reset, and profile settings. Uses ASP.NET Core Identity on the backend with cookie-based auth, and Vue 3 + Pinia on the frontend.
 
 ## Scope
 

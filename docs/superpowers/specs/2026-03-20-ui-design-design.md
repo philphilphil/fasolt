@@ -52,7 +52,7 @@ Inverted luminance: white/gray backgrounds, dark text. Same accent, warning, suc
 ## Layout & Navigation
 
 ### Top bar
-- Left: logo (`spaced-md`, monospace, 13px, bold)
+- Left: logo (`fasolt`, monospace, 13px, bold)
 - Center: search input with `⌘K` badge — nice-to-have shortcut, not primary navigation
 - Right: user avatar/menu
 

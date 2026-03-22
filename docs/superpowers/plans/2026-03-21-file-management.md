@@ -13,40 +13,40 @@
 ## File Map
 
 ### Backend — New Files
-- `spaced-md.Server/Domain/Entities/MarkdownFile.cs` — MarkdownFile entity with navigation to headings
-- `spaced-md.Server/Domain/Entities/FileHeading.cs` — FileHeading entity
-- `spaced-md.Server/Application/Dtos/FileDtos.cs` — Request/response DTOs for file endpoints
-- `spaced-md.Server/Application/Services/HeadingExtractor.cs` — Extracts headings from markdown content
-- `spaced-md.Server/Api/Endpoints/FileEndpoints.cs` — /api/files endpoints (upload, list, detail, delete, bulk)
+- `fasolt.Server/Domain/Entities/MarkdownFile.cs` — MarkdownFile entity with navigation to headings
+- `fasolt.Server/Domain/Entities/FileHeading.cs` — FileHeading entity
+- `fasolt.Server/Application/Dtos/FileDtos.cs` — Request/response DTOs for file endpoints
+- `fasolt.Server/Application/Services/HeadingExtractor.cs` — Extracts headings from markdown content
+- `fasolt.Server/Api/Endpoints/FileEndpoints.cs` — /api/files endpoints (upload, list, detail, delete, bulk)
 
 ### Backend — Modified Files
-- `spaced-md.Server/Infrastructure/Data/AppDbContext.cs` — Add DbSets and configure entity relationships
-- `spaced-md.Server/Program.cs` — Register `MapFileEndpoints()`
+- `fasolt.Server/Infrastructure/Data/AppDbContext.cs` — Add DbSets and configure entity relationships
+- `fasolt.Server/Program.cs` — Register `MapFileEndpoints()`
 
 ### Frontend — New Files
-- `spaced-md.client/src/composables/useMarkdown.ts` — Shared markdown-it instance with image placeholder override
-- `spaced-md.client/src/views/FileDetailView.vue` — Markdown preview with heading tree and source toggle
+- `fasolt.client/src/composables/useMarkdown.ts` — Shared markdown-it instance with image placeholder override
+- `fasolt.client/src/views/FileDetailView.vue` — Markdown preview with heading tree and source toggle
 
 ### Frontend — Modified Files
-- `spaced-md.client/src/api/client.ts` — Add `apiUpload()` helper for FormData uploads
-- `spaced-md.client/src/types/index.ts` — Update `MarkdownFile` type to match API response, add `FileDetail`
-- `spaced-md.client/src/stores/files.ts` — Replace mock data with API-backed methods
-- `spaced-md.client/src/views/FilesView.vue` — Wire upload zone, sorting, delete dialog, bulk upload UI
-- `spaced-md.client/src/router/index.ts` — Add `/files/:id` route
+- `fasolt.client/src/api/client.ts` — Add `apiUpload()` helper for FormData uploads
+- `fasolt.client/src/types/index.ts` — Update `MarkdownFile` type to match API response, add `FileDetail`
+- `fasolt.client/src/stores/files.ts` — Replace mock data with API-backed methods
+- `fasolt.client/src/views/FilesView.vue` — Wire upload zone, sorting, delete dialog, bulk upload UI
+- `fasolt.client/src/router/index.ts` — Add `/files/:id` route
 
 ---
 
 ## Task 1: Domain Entities
 
 **Files:**
-- Create: `spaced-md.Server/Domain/Entities/MarkdownFile.cs`
-- Create: `spaced-md.Server/Domain/Entities/FileHeading.cs`
+- Create: `fasolt.Server/Domain/Entities/MarkdownFile.cs`
+- Create: `fasolt.Server/Domain/Entities/FileHeading.cs`
 
 - [ ] **Step 1: Create MarkdownFile entity**
 
 ```csharp
-// spaced-md.Server/Domain/Entities/MarkdownFile.cs
-namespace SpacedMd.Server.Domain.Entities;
+// fasolt.Server/Domain/Entities/MarkdownFile.cs
+namespace Fasolt.Server.Domain.Entities;
 
 public class MarkdownFile
 {
@@ -64,8 +64,8 @@ public class MarkdownFile
 - [ ] **Step 2: Create FileHeading entity**
 
 ```csharp
-// spaced-md.Server/Domain/Entities/FileHeading.cs
-namespace SpacedMd.Server.Domain.Entities;
+// fasolt.Server/Domain/Entities/FileHeading.cs
+namespace Fasolt.Server.Domain.Entities;
 
 public class FileHeading
 {
@@ -81,7 +81,7 @@ public class FileHeading
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.Server/Domain/Entities/MarkdownFile.cs spaced-md.Server/Domain/Entities/FileHeading.cs
+git add fasolt.Server/Domain/Entities/MarkdownFile.cs fasolt.Server/Domain/Entities/FileHeading.cs
 git commit -m "feat: add MarkdownFile and FileHeading domain entities"
 ```
 
@@ -90,7 +90,7 @@ git commit -m "feat: add MarkdownFile and FileHeading domain entities"
 ## Task 2: DbContext and Migration
 
 **Files:**
-- Modify: `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`
+- Modify: `fasolt.Server/Infrastructure/Data/AppDbContext.cs`
 
 - [ ] **Step 1: Add DbSets and configure relationships**
 
@@ -99,9 +99,9 @@ Add to `AppDbContext`:
 ```csharp
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Domain.Entities;
+using Fasolt.Server.Domain.Entities;
 
-namespace SpacedMd.Server.Infrastructure.Data;
+namespace Fasolt.Server.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext<AppUser>
 {
@@ -141,7 +141,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
 Run from repo root:
 
 ```bash
-dotnet ef migrations add AddMarkdownFiles --project spaced-md.Server
+dotnet ef migrations add AddMarkdownFiles --project fasolt.Server
 ```
 
 Verify the generated migration creates `MarkdownFiles` and `FileHeadings` tables with the correct constraints.
@@ -152,13 +152,13 @@ Start Postgres if not running, then:
 
 ```bash
 docker compose up -d
-dotnet ef database update --project spaced-md.Server
+dotnet ef database update --project fasolt.Server
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.Server/Infrastructure/Data/AppDbContext.cs spaced-md.Server/Infrastructure/Data/Migrations/
+git add fasolt.Server/Infrastructure/Data/AppDbContext.cs fasolt.Server/Infrastructure/Data/Migrations/
 git commit -m "feat: add MarkdownFiles and FileHeadings schema with migration"
 ```
 
@@ -167,15 +167,15 @@ git commit -m "feat: add MarkdownFiles and FileHeadings schema with migration"
 ## Task 3: HeadingExtractor Service
 
 **Files:**
-- Create: `spaced-md.Server/Application/Services/HeadingExtractor.cs`
+- Create: `fasolt.Server/Application/Services/HeadingExtractor.cs`
 
 - [ ] **Step 1: Create HeadingExtractor**
 
 ```csharp
-// spaced-md.Server/Application/Services/HeadingExtractor.cs
+// fasolt.Server/Application/Services/HeadingExtractor.cs
 using System.Text.RegularExpressions;
 
-namespace SpacedMd.Server.Application.Services;
+namespace Fasolt.Server.Application.Services;
 
 public static partial class HeadingExtractor
 {
@@ -215,7 +215,7 @@ public static partial class HeadingExtractor
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Services/HeadingExtractor.cs
+git add fasolt.Server/Application/Services/HeadingExtractor.cs
 git commit -m "feat: add HeadingExtractor service for markdown heading parsing"
 ```
 
@@ -224,13 +224,13 @@ git commit -m "feat: add HeadingExtractor service for markdown heading parsing"
 ## Task 4: File DTOs
 
 **Files:**
-- Create: `spaced-md.Server/Application/Dtos/FileDtos.cs`
+- Create: `fasolt.Server/Application/Dtos/FileDtos.cs`
 
 - [ ] **Step 1: Create DTOs**
 
 ```csharp
-// spaced-md.Server/Application/Dtos/FileDtos.cs
-namespace SpacedMd.Server.Application.Dtos;
+// fasolt.Server/Application/Dtos/FileDtos.cs
+namespace Fasolt.Server.Application.Dtos;
 
 public record FileHeadingDto(int Level, string Text);
 
@@ -257,7 +257,7 @@ public record BulkUploadResultDto(string FileName, bool Success, Guid? Id, strin
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Dtos/FileDtos.cs
+git add fasolt.Server/Application/Dtos/FileDtos.cs
 git commit -m "feat: add file management DTOs"
 ```
 
@@ -266,22 +266,22 @@ git commit -m "feat: add file management DTOs"
 ## Task 5: File API Endpoints
 
 **Files:**
-- Create: `spaced-md.Server/Api/Endpoints/FileEndpoints.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Create: `fasolt.Server/Api/Endpoints/FileEndpoints.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Create FileEndpoints**
 
 ```csharp
-// spaced-md.Server/Api/Endpoints/FileEndpoints.cs
+// fasolt.Server/Api/Endpoints/FileEndpoints.cs
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Application.Dtos;
-using SpacedMd.Server.Application.Services;
-using SpacedMd.Server.Domain.Entities;
-using SpacedMd.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Application.Services;
+using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
-namespace SpacedMd.Server.Api.Endpoints;
+namespace Fasolt.Server.Api.Endpoints;
 
 public static class FileEndpoints
 {
@@ -482,7 +482,7 @@ app.MapFileEndpoints();
 - [ ] **Step 3: Build and verify**
 
 ```bash
-dotnet build spaced-md.Server
+dotnet build fasolt.Server
 ```
 
 Expected: Build succeeded.
@@ -490,7 +490,7 @@ Expected: Build succeeded.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/FileEndpoints.cs spaced-md.Server/Program.cs
+git add fasolt.Server/Api/Endpoints/FileEndpoints.cs fasolt.Server/Program.cs
 git commit -m "feat: add /api/files endpoints (upload, list, detail, delete, bulk)"
 ```
 
@@ -499,12 +499,12 @@ git commit -m "feat: add /api/files endpoints (upload, list, detail, delete, bul
 ## Task 6: Frontend — API Upload Helper and Types
 
 **Files:**
-- Modify: `spaced-md.client/src/api/client.ts`
-- Modify: `spaced-md.client/src/types/index.ts`
+- Modify: `fasolt.client/src/api/client.ts`
+- Modify: `fasolt.client/src/types/index.ts`
 
 - [ ] **Step 1: Add apiUpload helper**
 
-Add to the bottom of `spaced-md.client/src/api/client.ts`:
+Add to the bottom of `fasolt.client/src/api/client.ts`:
 
 ```typescript
 export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
@@ -536,7 +536,7 @@ export async function apiUpload<T>(path: string, formData: FormData): Promise<T>
 
 - [ ] **Step 2: Update types**
 
-Replace the `MarkdownFile` and `FileHeading` interfaces in `spaced-md.client/src/types/index.ts`:
+Replace the `MarkdownFile` and `FileHeading` interfaces in `fasolt.client/src/types/index.ts`:
 
 ```typescript
 export interface MarkdownFile {
@@ -568,7 +568,7 @@ export interface BulkUploadResult {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/api/client.ts spaced-md.client/src/types/index.ts
+git add fasolt.client/src/api/client.ts fasolt.client/src/types/index.ts
 git commit -m "feat: add apiUpload helper and update file types for API"
 ```
 
@@ -577,12 +577,12 @@ git commit -m "feat: add apiUpload helper and update file types for API"
 ## Task 7: Frontend — Files Store
 
 **Files:**
-- Modify: `spaced-md.client/src/stores/files.ts`
+- Modify: `fasolt.client/src/stores/files.ts`
 
 - [ ] **Step 1: Replace mock store with API-backed store**
 
 ```typescript
-// spaced-md.client/src/stores/files.ts
+// fasolt.client/src/stores/files.ts
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { MarkdownFile, FileDetail, BulkUploadResult } from '@/types'
@@ -635,7 +635,7 @@ export const useFilesStore = defineStore('files', () => {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/stores/files.ts
+git add fasolt.client/src/stores/files.ts
 git commit -m "feat: replace mock files store with API-backed store"
 ```
 
@@ -644,18 +644,18 @@ git commit -m "feat: replace mock files store with API-backed store"
 ## Task 8: Frontend — useMarkdown Composable
 
 **Files:**
-- Create: `spaced-md.client/src/composables/useMarkdown.ts`
+- Create: `fasolt.client/src/composables/useMarkdown.ts`
 
 - [ ] **Step 1: Install markdown-it**
 
 ```bash
-cd spaced-md.client && npm install markdown-it && npm install -D @types/markdown-it
+cd fasolt.client && npm install markdown-it && npm install -D @types/markdown-it
 ```
 
 - [ ] **Step 2: Create composable**
 
 ```typescript
-// spaced-md.client/src/composables/useMarkdown.ts
+// fasolt.client/src/composables/useMarkdown.ts
 import MarkdownIt from 'markdown-it'
 
 const md = new MarkdownIt({
@@ -692,7 +692,7 @@ export function useMarkdown() {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/composables/useMarkdown.ts spaced-md.client/package.json spaced-md.client/package-lock.json
+git add fasolt.client/src/composables/useMarkdown.ts fasolt.client/package.json fasolt.client/package-lock.json
 git commit -m "feat: add useMarkdown composable with markdown-it"
 ```
 
@@ -701,7 +701,7 @@ git commit -m "feat: add useMarkdown composable with markdown-it"
 ## Task 9: Frontend — FilesView.vue (Upload, Sort, Delete)
 
 **Files:**
-- Modify: `spaced-md.client/src/views/FilesView.vue`
+- Modify: `fasolt.client/src/views/FilesView.vue`
 
 - [ ] **Step 1: Rewrite FilesView with upload zone, sorting, and delete**
 
@@ -958,7 +958,7 @@ async function confirmDelete() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FilesView.vue
+git add fasolt.client/src/views/FilesView.vue
 git commit -m "feat: wire FilesView with upload, sort, delete, and bulk upload"
 ```
 
@@ -967,8 +967,8 @@ git commit -m "feat: wire FilesView with upload, sort, delete, and bulk upload"
 ## Task 10: Frontend — FileDetailView and Route
 
 **Files:**
-- Create: `spaced-md.client/src/views/FileDetailView.vue`
-- Modify: `spaced-md.client/src/router/index.ts`
+- Create: `fasolt.client/src/views/FileDetailView.vue`
+- Modify: `fasolt.client/src/router/index.ts`
 
 - [ ] **Step 1: Create FileDetailView**
 
@@ -1078,7 +1078,7 @@ function scrollToHeading(text: string) {
 
 - [ ] **Step 2: Add route**
 
-In `spaced-md.client/src/router/index.ts`, add after the `/files` route:
+In `fasolt.client/src/router/index.ts`, add after the `/files` route:
 
 ```typescript
 { path: '/files/:id', name: 'file-detail', component: () => import('@/views/FileDetailView.vue') },
@@ -1087,7 +1087,7 @@ In `spaced-md.client/src/router/index.ts`, add after the `/files` route:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FileDetailView.vue spaced-md.client/src/router/index.ts
+git add fasolt.client/src/views/FileDetailView.vue fasolt.client/src/router/index.ts
 git commit -m "feat: add FileDetailView with markdown preview and heading navigation"
 ```
 

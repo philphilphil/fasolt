@@ -15,7 +15,7 @@
 ### Task 1: Simplify TerminalDemo to static
 
 **Files:**
-- Modify: `spaced-md.client/src/components/TerminalDemo.vue`
+- Modify: `fasolt.client/src/components/TerminalDemo.vue`
 
 - [ ] **Step 1: Replace the script section with static data**
 
@@ -100,13 +100,13 @@ Remove all `lineStates`/`displayed` refs, replay button, and cursor animation. R
 
 - [ ] **Step 3: Verify the component renders**
 
-Run: `cd spaced-md.client && npx vue-tsc --noEmit`
+Run: `cd fasolt.client && npx vue-tsc --noEmit`
 Expected: No type errors.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.client/src/components/TerminalDemo.vue
+git add fasolt.client/src/components/TerminalDemo.vue
 git commit -m "refactor: simplify TerminalDemo to static rendering"
 ```
 
@@ -115,7 +115,7 @@ git commit -m "refactor: simplify TerminalDemo to static rendering"
 ### Task 2: Rewrite LandingView
 
 **Files:**
-- Modify: `spaced-md.client/src/views/LandingView.vue`
+- Modify: `fasolt.client/src/views/LandingView.vue`
 
 - [ ] **Step 1: Rewrite the full component**
 
@@ -138,7 +138,7 @@ const { isDark, toggle } = useDarkMode()
     <nav class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <span class="text-lg font-semibold tracking-tight" style="font-family: var(--font-mono)">
-          spaced-md
+          fasolt
         </span>
         <div class="flex items-center gap-2">
           <button
@@ -196,7 +196,7 @@ const { isDark, toggle } = useDarkMode()
           <div>
             <h3 class="text-sm font-semibold mb-1">Your AI agent creates flashcards</h3>
             <p class="text-sm text-muted-foreground">
-              It reads your notes and pushes cards to spaced-md via MCP.
+              It reads your notes and pushes cards to fasolt via MCP.
             </p>
           </div>
           <div>
@@ -220,7 +220,7 @@ const { isDark, toggle } = useDarkMode()
     <!-- Footer -->
     <footer class="border-t border-border">
       <div class="mx-auto max-w-5xl px-6 py-6 flex items-center justify-between">
-        <span class="text-sm text-muted-foreground font-mono">spaced-md</span>
+        <span class="text-sm text-muted-foreground font-mono">fasolt</span>
         <a
           href="https://github.com"
           class="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -235,13 +235,13 @@ const { isDark, toggle } = useDarkMode()
 
 - [ ] **Step 2: Verify type checking passes**
 
-Run: `cd spaced-md.client && npx vue-tsc --noEmit`
+Run: `cd fasolt.client && npx vue-tsc --noEmit`
 Expected: No type errors.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/views/LandingView.vue
+git add fasolt.client/src/views/LandingView.vue
 git commit -m "feat: redesign landing page — compact, MCP-first, no marketing fluff"
 ```
 

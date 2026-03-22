@@ -12,14 +12,14 @@
 
 ## File Structure
 
-### Backend — `spaced-md.Server/`
+### Backend — `fasolt.Server/`
 
 ```
-spaced-md.Server/
+fasolt.Server/
   Program.cs                              — app startup, DI, middleware, endpoint mapping
   appsettings.json                        — config (connection string, etc.)
   appsettings.Development.json            — dev overrides
-  spaced-md.Server.csproj                 — project file with packages
+  fasolt.Server.csproj                 — project file with packages
   Domain/
     (empty for now — entities go here later)
   Application/
@@ -32,10 +32,10 @@ spaced-md.Server/
       HealthEndpoints.cs                 — GET /api/health
 ```
 
-### Frontend — `spaced-md.client/`
+### Frontend — `fasolt.client/`
 
 ```
-spaced-md.client/
+fasolt.client/
   index.html
   package.json
   tsconfig.json
@@ -70,7 +70,7 @@ spaced-md.client/
 ### Root
 
 ```
-spaced-md.sln                            — .NET solution
+fasolt.sln                            — .NET solution
 global.json                              — .NET SDK version pin
 docker-compose.yml                       — Postgres container
 dev.sh                                   — runs backend + frontend
@@ -94,7 +94,7 @@ services:
     environment:
       POSTGRES_USER: spaced
       POSTGRES_PASSWORD: spaced_dev
-      POSTGRES_DB: spacedmd
+      POSTGRES_DB: fasolt
     ports:
       - "5432:5432"
     volumes:
@@ -122,11 +122,11 @@ git commit -m "feat: add docker-compose for Postgres"
 
 **Files:**
 - Create: `global.json`
-- Create: `spaced-md.sln`
-- Create: `spaced-md.Server/spaced-md.Server.csproj`
-- Create: `spaced-md.Server/Program.cs`
-- Create: `spaced-md.Server/appsettings.json`
-- Create: `spaced-md.Server/appsettings.Development.json`
+- Create: `fasolt.sln`
+- Create: `fasolt.Server/fasolt.Server.csproj`
+- Create: `fasolt.Server/Program.cs`
+- Create: `fasolt.Server/appsettings.json`
+- Create: `fasolt.Server/appsettings.Development.json`
 
 - [ ] **Step 1: Check .NET SDK version**
 
@@ -147,15 +147,15 @@ Expected: 10.x.x
 - [ ] **Step 3: Create solution and project**
 
 ```bash
-dotnet new sln -n spaced-md
-dotnet new web -n spaced-md.Server -o spaced-md.Server
-dotnet sln add spaced-md.Server/spaced-md.Server.csproj
+dotnet new sln -n fasolt
+dotnet new web -n fasolt.Server -o fasolt.Server
+dotnet sln add fasolt.Server/fasolt.Server.csproj
 ```
 
 - [ ] **Step 4: Add NuGet packages**
 
 ```bash
-cd spaced-md.Server
+cd fasolt.Server
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore
 dotnet add package Microsoft.EntityFrameworkCore.Design
@@ -165,21 +165,21 @@ cd ..
 - [ ] **Step 5: Create folder structure**
 
 ```bash
-mkdir -p spaced-md.Server/Domain
-mkdir -p spaced-md.Server/Application
-mkdir -p spaced-md.Server/Infrastructure/Data
-mkdir -p spaced-md.Server/Api/Endpoints
+mkdir -p fasolt.Server/Domain
+mkdir -p fasolt.Server/Application
+mkdir -p fasolt.Server/Infrastructure/Data
+mkdir -p fasolt.Server/Api/Endpoints
 ```
 
 - [ ] **Step 6: Create AppDbContext**
 
-Create `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`:
+Create `fasolt.Server/Infrastructure/Data/AppDbContext.cs`:
 
 ```csharp
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace SpacedMd.Server.Infrastructure.Data;
+namespace Fasolt.Server.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext
 {
@@ -191,10 +191,10 @@ public class AppDbContext : IdentityDbContext
 
 - [ ] **Step 7: Create HealthEndpoints**
 
-Create `spaced-md.Server/Api/Endpoints/HealthEndpoints.cs`:
+Create `fasolt.Server/Api/Endpoints/HealthEndpoints.cs`:
 
 ```csharp
-namespace SpacedMd.Server.Api.Endpoints;
+namespace Fasolt.Server.Api.Endpoints;
 
 public static class HealthEndpoints
 {
@@ -207,13 +207,13 @@ public static class HealthEndpoints
 
 - [ ] **Step 8: Write Program.cs**
 
-Replace `spaced-md.Server/Program.cs`:
+Replace `fasolt.Server/Program.cs`:
 
 ```csharp
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Api.Endpoints;
-using SpacedMd.Server.Infrastructure.Data;
+using Fasolt.Server.Api.Endpoints;
+using Fasolt.Server.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -246,12 +246,12 @@ app.Run();
 
 - [ ] **Step 9: Configure appsettings.json**
 
-Replace `spaced-md.Server/appsettings.json`:
+Replace `fasolt.Server/appsettings.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=spacedmd;Username=spaced;Password=spaced_dev"
+    "DefaultConnection": "Host=localhost;Port=5432;Database=fasolt;Username=spaced;Password=spaced_dev"
   },
   "Logging": {
     "LogLevel": {
@@ -263,7 +263,7 @@ Replace `spaced-md.Server/appsettings.json`:
 }
 ```
 
-Replace `spaced-md.Server/appsettings.Development.json`:
+Replace `fasolt.Server/appsettings.Development.json`:
 
 ```json
 {
@@ -284,7 +284,7 @@ Expected: Build succeeded with 0 errors.
 - [ ] **Step 11: Create initial EF migration**
 
 ```bash
-cd spaced-md.Server
+cd fasolt.Server
 dotnet ef migrations add InitialIdentity --output-dir Infrastructure/Data/Migrations
 cd ..
 ```
@@ -292,21 +292,21 @@ cd ..
 - [ ] **Step 12: Verify migration applies (requires Postgres running)**
 
 ```bash
-cd spaced-md.Server
+cd fasolt.Server
 dotnet ef database update
 cd ..
 ```
 
 - [ ] **Step 13: Verify health endpoint**
 
-Run: `cd spaced-md.Server && dotnet run &` then `curl http://localhost:5000/api/health`
+Run: `cd fasolt.Server && dotnet run &` then `curl http://localhost:5000/api/health`
 Expected: `{"status":"healthy"}`
 Stop the server after verifying.
 
 - [ ] **Step 14: Commit**
 
 ```bash
-git add global.json spaced-md.sln spaced-md.Server/
+git add global.json fasolt.sln fasolt.Server/
 git commit -m "feat: scaffold .NET 10 backend with EF Core, Identity, and health endpoint"
 ```
 
@@ -315,18 +315,18 @@ git commit -m "feat: scaffold .NET 10 backend with EF Core, Identity, and health
 ## Task 3: Vue 3 Frontend Scaffold
 
 **Files:**
-- Create: `spaced-md.client/` (entire frontend project)
+- Create: `fasolt.client/` (entire frontend project)
 
 - [ ] **Step 1: Create Vue project with Vite**
 
 ```bash
-npm create vite@latest spaced-md.client -- --template vue-ts
+npm create vite@latest fasolt.client -- --template vue-ts
 ```
 
 - [ ] **Step 2: Install dependencies**
 
 ```bash
-cd spaced-md.client
+cd fasolt.client
 npm install
 npm install vue-router@4 pinia
 npm install -D tailwindcss@3 autoprefixer
@@ -336,14 +336,14 @@ cd ..
 - [ ] **Step 3: Initialize Tailwind**
 
 ```bash
-cd spaced-md.client
+cd fasolt.client
 npx tailwindcss init
 cd ..
 ```
 
 - [ ] **Step 4: Create postcss.config.js**
 
-Create `spaced-md.client/postcss.config.js`:
+Create `fasolt.client/postcss.config.js`:
 
 ```js
 export default {
@@ -356,7 +356,7 @@ export default {
 
 - [ ] **Step 5: Configure tailwind.config.js**
 
-Replace `spaced-md.client/tailwind.config.js`:
+Replace `fasolt.client/tailwind.config.js`:
 
 ```js
 /** @type {import('tailwindcss').Config} */
@@ -371,7 +371,7 @@ export default {
 
 - [ ] **Step 6: Update vite.config.ts**
 
-Replace `spaced-md.client/vite.config.ts`:
+Replace `fasolt.client/vite.config.ts`:
 
 ```typescript
 import path from 'node:path'
@@ -402,7 +402,7 @@ export default defineConfig({
 
 - [ ] **Step 7: Update tsconfig.app.json for path aliases**
 
-Add to `compilerOptions` in `spaced-md.client/tsconfig.app.json`:
+Add to `compilerOptions` in `fasolt.client/tsconfig.app.json`:
 
 ```json
 {
@@ -417,7 +417,7 @@ Add to `compilerOptions` in `spaced-md.client/tsconfig.app.json`:
 
 - [ ] **Step 8: Replace src/style.css with Tailwind imports**
 
-Replace `spaced-md.client/src/style.css`:
+Replace `fasolt.client/src/style.css`:
 
 ```css
 @tailwind base;
@@ -428,7 +428,7 @@ Replace `spaced-md.client/src/style.css`:
 - [ ] **Step 9: Initialize shadcn-vue**
 
 ```bash
-cd spaced-md.client
+cd fasolt.client
 npx shadcn-vue@latest init
 ```
 
@@ -442,14 +442,14 @@ This will install required deps (class-variance-authority, clsx, tailwind-merge,
 - [ ] **Step 10: Add a Button component to verify shadcn-vue works**
 
 ```bash
-cd spaced-md.client
+cd fasolt.client
 npx shadcn-vue@latest add button
 cd ..
 ```
 
 - [ ] **Step 11: Create router**
 
-Create `spaced-md.client/src/router/index.ts`:
+Create `fasolt.client/src/router/index.ts`:
 
 ```typescript
 import { createRouter, createWebHistory } from 'vue-router'
@@ -471,7 +471,7 @@ export default router
 
 - [ ] **Step 12: Create HomeView**
 
-Create `spaced-md.client/src/views/HomeView.vue`:
+Create `fasolt.client/src/views/HomeView.vue`:
 
 ```vue
 <script setup lang="ts">
@@ -481,7 +481,7 @@ import { Button } from '@/components/ui/button'
 <template>
   <div class="flex min-h-screen items-center justify-center">
     <div class="text-center space-y-4">
-      <h1 class="text-4xl font-bold">spaced-md</h1>
+      <h1 class="text-4xl font-bold">fasolt</h1>
       <p class="text-muted-foreground">Spaced repetition for your markdown notes.</p>
       <Button>Get Started</Button>
     </div>
@@ -491,7 +491,7 @@ import { Button } from '@/components/ui/button'
 
 - [ ] **Step 13: Create API client base**
 
-Create `spaced-md.client/src/api/client.ts`:
+Create `fasolt.client/src/api/client.ts`:
 
 ```typescript
 const BASE_URL = '/api'
@@ -515,7 +515,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
 - [ ] **Step 14: Update main.ts**
 
-Replace `spaced-md.client/src/main.ts`:
+Replace `fasolt.client/src/main.ts`:
 
 ```typescript
 import { createApp } from 'vue'
@@ -532,7 +532,7 @@ app.mount('#app')
 
 - [ ] **Step 15: Update App.vue**
 
-Replace `spaced-md.client/src/App.vue`:
+Replace `fasolt.client/src/App.vue`:
 
 ```vue
 <template>
@@ -547,17 +547,17 @@ Remove `src/components/HelloWorld.vue` and any other default Vite template files
 - [ ] **Step 17: Verify frontend builds and runs**
 
 ```bash
-cd spaced-md.client
+cd fasolt.client
 npm run build
 npm run dev
 ```
 
-Expected: Dev server starts, page shows "spaced-md" heading with a styled button.
+Expected: Dev server starts, page shows "fasolt" heading with a styled button.
 
 - [ ] **Step 18: Commit**
 
 ```bash
-git add spaced-md.client/
+git add fasolt.client/
 git commit -m "feat: scaffold Vue 3 frontend with shadcn-vue, Tailwind, Pinia, and Vue Router"
 ```
 
@@ -579,10 +579,10 @@ set -e
 docker compose up -d
 
 # Run backend and frontend concurrently
-dotnet run --project spaced-md.Server &
+dotnet run --project fasolt.Server &
 BACKEND_PID=$!
 
-cd spaced-md.client && npm run dev &
+cd fasolt.client && npm run dev &
 FRONTEND_PID=$!
 
 trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" INT TERM

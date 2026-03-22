@@ -13,42 +13,42 @@
 ## File Map
 
 ### Backend — New Files
-- `spaced-md.Server/Domain/Entities/Card.cs` — Card entity with soft delete
-- `spaced-md.Server/Application/Dtos/CardDtos.cs` — Request/response DTOs for card endpoints
-- `spaced-md.Server/Application/Services/ContentExtractor.cs` — Frontmatter stripping and heading section extraction
-- `spaced-md.Server/Api/Endpoints/CardEndpoints.cs` — /api/cards endpoints (create, list, get, update, delete, extract)
+- `fasolt.Server/Domain/Entities/Card.cs` — Card entity with soft delete
+- `fasolt.Server/Application/Dtos/CardDtos.cs` — Request/response DTOs for card endpoints
+- `fasolt.Server/Application/Services/ContentExtractor.cs` — Frontmatter stripping and heading section extraction
+- `fasolt.Server/Api/Endpoints/CardEndpoints.cs` — /api/cards endpoints (create, list, get, update, delete, extract)
 
 ### Backend — Modified Files
-- `spaced-md.Server/Infrastructure/Data/AppDbContext.cs` — Add Card DbSet and model configuration
-- `spaced-md.Server/Program.cs` — Register `MapCardEndpoints()`
-- `spaced-md.Server/Api/Endpoints/FileEndpoints.cs` — Update List and GetById to return real cardCount
+- `fasolt.Server/Infrastructure/Data/AppDbContext.cs` — Add Card DbSet and model configuration
+- `fasolt.Server/Program.cs` — Register `MapCardEndpoints()`
+- `fasolt.Server/Api/Endpoints/FileEndpoints.cs` — Update List and GetById to return real cardCount
 
 ### Frontend — New Files
-- `spaced-md.client/src/stores/cards.ts` — Pinia cards store
-- `spaced-md.client/src/components/CardCreateDialog.vue` — Dialog for creating cards with preview
-- `spaced-md.client/src/components/CardEditDialog.vue` — Dialog for editing cards with preview
-- `spaced-md.client/src/views/CardsView.vue` — Card list view with edit/delete/filter
+- `fasolt.client/src/stores/cards.ts` — Pinia cards store
+- `fasolt.client/src/components/CardCreateDialog.vue` — Dialog for creating cards with preview
+- `fasolt.client/src/components/CardEditDialog.vue` — Dialog for editing cards with preview
+- `fasolt.client/src/views/CardsView.vue` — Card list view with edit/delete/filter
 
 ### Frontend — Modified Files
-- `spaced-md.client/src/types/index.ts` — Replace old Card/Deck interfaces, add ExtractedContent
-- `spaced-md.client/src/views/FileDetailView.vue` — Wire "Create cards" buttons and add "Create card from file"
-- `spaced-md.client/src/views/FilesView.vue` — Add "Create card" action per file
-- `spaced-md.client/src/router/index.ts` — Add `/cards` route
-- `spaced-md.client/src/layouts/AppLayout.vue` — Add "Cards" tab to navigation
-- `spaced-md.client/src/components/BottomNav.vue` — Add "Cards" tab to mobile nav
+- `fasolt.client/src/types/index.ts` — Replace old Card/Deck interfaces, add ExtractedContent
+- `fasolt.client/src/views/FileDetailView.vue` — Wire "Create cards" buttons and add "Create card from file"
+- `fasolt.client/src/views/FilesView.vue` — Add "Create card" action per file
+- `fasolt.client/src/router/index.ts` — Add `/cards` route
+- `fasolt.client/src/layouts/AppLayout.vue` — Add "Cards" tab to navigation
+- `fasolt.client/src/components/BottomNav.vue` — Add "Cards" tab to mobile nav
 
 ---
 
 ## Task 1: Card Entity
 
 **Files:**
-- Create: `spaced-md.Server/Domain/Entities/Card.cs`
+- Create: `fasolt.Server/Domain/Entities/Card.cs`
 
 - [ ] **Step 1: Create Card entity**
 
 ```csharp
-// spaced-md.Server/Domain/Entities/Card.cs
-namespace SpacedMd.Server.Domain.Entities;
+// fasolt.Server/Domain/Entities/Card.cs
+namespace Fasolt.Server.Domain.Entities;
 
 public class Card
 {
@@ -69,7 +69,7 @@ public class Card
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Domain/Entities/Card.cs
+git add fasolt.Server/Domain/Entities/Card.cs
 git commit -m "feat: add Card domain entity with soft delete"
 ```
 
@@ -78,7 +78,7 @@ git commit -m "feat: add Card domain entity with soft delete"
 ## Task 2: DbContext and Migration
 
 **Files:**
-- Modify: `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`
+- Modify: `fasolt.Server/Infrastructure/Data/AppDbContext.cs`
 
 - [ ] **Step 1: Add Card DbSet and configuration**
 
@@ -111,15 +111,15 @@ Note: `HasQueryFilter(e => e.DeletedAt == null)` automatically filters soft-dele
 - [ ] **Step 2: Create and apply migration**
 
 ```bash
-dotnet ef migrations add AddCards --project spaced-md.Server
+dotnet ef migrations add AddCards --project fasolt.Server
 docker compose up -d
-dotnet ef database update --project spaced-md.Server
+dotnet ef database update --project fasolt.Server
 ```
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.Server/Infrastructure/Data/AppDbContext.cs spaced-md.Server/Infrastructure/Data/Migrations/
+git add fasolt.Server/Infrastructure/Data/AppDbContext.cs fasolt.Server/Infrastructure/Data/Migrations/
 git commit -m "feat: add Cards schema with soft delete and migration"
 ```
 
@@ -128,16 +128,16 @@ git commit -m "feat: add Cards schema with soft delete and migration"
 ## Task 3: ContentExtractor Service
 
 **Files:**
-- Create: `spaced-md.Server/Application/Services/ContentExtractor.cs`
+- Create: `fasolt.Server/Application/Services/ContentExtractor.cs`
 
 - [ ] **Step 1: Create ContentExtractor**
 
 ```csharp
-// spaced-md.Server/Application/Services/ContentExtractor.cs
+// fasolt.Server/Application/Services/ContentExtractor.cs
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace SpacedMd.Server.Application.Services;
+namespace Fasolt.Server.Application.Services;
 
 public static partial class ContentExtractor
 {
@@ -237,7 +237,7 @@ public static partial class ContentExtractor
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Services/ContentExtractor.cs
+git add fasolt.Server/Application/Services/ContentExtractor.cs
 git commit -m "feat: add ContentExtractor service for section extraction and frontmatter stripping"
 ```
 
@@ -246,13 +246,13 @@ git commit -m "feat: add ContentExtractor service for section extraction and fro
 ## Task 4: Card DTOs
 
 **Files:**
-- Create: `spaced-md.Server/Application/Dtos/CardDtos.cs`
+- Create: `fasolt.Server/Application/Dtos/CardDtos.cs`
 
 - [ ] **Step 1: Create DTOs**
 
 ```csharp
-// spaced-md.Server/Application/Dtos/CardDtos.cs
-namespace SpacedMd.Server.Application.Dtos;
+// fasolt.Server/Application/Dtos/CardDtos.cs
+namespace Fasolt.Server.Application.Dtos;
 
 public record CreateCardRequest(Guid? FileId, string? SourceHeading, string Front, string Back, string CardType);
 
@@ -273,7 +273,7 @@ public record ExtractedContentDto(string Front, string Back);
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Dtos/CardDtos.cs
+git add fasolt.Server/Application/Dtos/CardDtos.cs
 git commit -m "feat: add card DTOs"
 ```
 
@@ -282,22 +282,22 @@ git commit -m "feat: add card DTOs"
 ## Task 5: Card API Endpoints
 
 **Files:**
-- Create: `spaced-md.Server/Api/Endpoints/CardEndpoints.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Create: `fasolt.Server/Api/Endpoints/CardEndpoints.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Create CardEndpoints**
 
 ```csharp
-// spaced-md.Server/Api/Endpoints/CardEndpoints.cs
+// fasolt.Server/Api/Endpoints/CardEndpoints.cs
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Application.Dtos;
-using SpacedMd.Server.Application.Services;
-using SpacedMd.Server.Domain.Entities;
-using SpacedMd.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Application.Services;
+using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
-namespace SpacedMd.Server.Api.Endpoints;
+namespace Fasolt.Server.Api.Endpoints;
 
 public static class CardEndpoints
 {
@@ -512,13 +512,13 @@ app.MapCardEndpoints();
 - [ ] **Step 3: Build and verify**
 
 ```bash
-dotnet build spaced-md.Server
+dotnet build fasolt.Server
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/CardEndpoints.cs spaced-md.Server/Program.cs
+git add fasolt.Server/Api/Endpoints/CardEndpoints.cs fasolt.Server/Program.cs
 git commit -m "feat: add /api/cards endpoints (create, list, get, update, delete, extract)"
 ```
 
@@ -527,7 +527,7 @@ git commit -m "feat: add /api/cards endpoints (create, list, get, update, delete
 ## Task 6: Update File Endpoints for Real Card Count
 
 **Files:**
-- Modify: `spaced-md.Server/Api/Endpoints/FileEndpoints.cs`
+- Modify: `fasolt.Server/Api/Endpoints/FileEndpoints.cs`
 
 - [ ] **Step 1: Update List query**
 
@@ -563,13 +563,13 @@ In the `ToListItem` method, the hardcoded `0` stays for now — this method is o
 - [ ] **Step 4: Build and verify**
 
 ```bash
-dotnet build spaced-md.Server
+dotnet build fasolt.Server
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/FileEndpoints.cs
+git add fasolt.Server/Api/Endpoints/FileEndpoints.cs
 git commit -m "feat: return real card counts from file endpoints"
 ```
 
@@ -578,8 +578,8 @@ git commit -m "feat: return real card counts from file endpoints"
 ## Task 7: Frontend Types and Cards Store
 
 **Files:**
-- Modify: `spaced-md.client/src/types/index.ts`
-- Create: `spaced-md.client/src/stores/cards.ts`
+- Modify: `fasolt.client/src/types/index.ts`
+- Create: `fasolt.client/src/stores/cards.ts`
 
 - [ ] **Step 1: Update types**
 
@@ -607,7 +607,7 @@ Keep all other interfaces (`Stat`, `MarkdownFile`, `FileHeading`, `FileDetail`, 
 - [ ] **Step 2: Create cards store**
 
 ```typescript
-// spaced-md.client/src/stores/cards.ts
+// fasolt.client/src/stores/cards.ts
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Card, ExtractedContent } from '@/types'
@@ -669,7 +669,7 @@ export const useCardsStore = defineStore('cards', () => {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/types/index.ts spaced-md.client/src/stores/cards.ts
+git add fasolt.client/src/types/index.ts fasolt.client/src/stores/cards.ts
 git commit -m "feat: update Card type and add cards store"
 ```
 
@@ -678,7 +678,7 @@ git commit -m "feat: update Card type and add cards store"
 ## Task 8: CardCreateDialog Component
 
 **Files:**
-- Create: `spaced-md.client/src/components/CardCreateDialog.vue`
+- Create: `fasolt.client/src/components/CardCreateDialog.vue`
 
 - [ ] **Step 1: Create CardCreateDialog**
 
@@ -810,7 +810,7 @@ async function save() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/components/CardCreateDialog.vue
+git add fasolt.client/src/components/CardCreateDialog.vue
 git commit -m "feat: add CardCreateDialog with live preview and long content warning"
 ```
 
@@ -819,7 +819,7 @@ git commit -m "feat: add CardCreateDialog with live preview and long content war
 ## Task 9: CardEditDialog Component
 
 **Files:**
-- Create: `spaced-md.client/src/components/CardEditDialog.vue`
+- Create: `fasolt.client/src/components/CardEditDialog.vue`
 
 - [ ] **Step 1: Create CardEditDialog**
 
@@ -931,7 +931,7 @@ async function save() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/components/CardEditDialog.vue
+git add fasolt.client/src/components/CardEditDialog.vue
 git commit -m "feat: add CardEditDialog with live preview"
 ```
 
@@ -940,10 +940,10 @@ git commit -m "feat: add CardEditDialog with live preview"
 ## Task 10: CardsView, Route, and Navigation
 
 **Files:**
-- Create: `spaced-md.client/src/views/CardsView.vue`
-- Modify: `spaced-md.client/src/router/index.ts`
-- Modify: `spaced-md.client/src/layouts/AppLayout.vue`
-- Modify: `spaced-md.client/src/components/BottomNav.vue`
+- Create: `fasolt.client/src/views/CardsView.vue`
+- Modify: `fasolt.client/src/router/index.ts`
+- Modify: `fasolt.client/src/layouts/AppLayout.vue`
+- Modify: `fasolt.client/src/components/BottomNav.vue`
 
 - [ ] **Step 1: Create CardsView**
 
@@ -1100,7 +1100,7 @@ async function confirmDelete() {
 
 - [ ] **Step 2: Add route**
 
-In `spaced-md.client/src/router/index.ts`, add after the `/files/:id` route:
+In `fasolt.client/src/router/index.ts`, add after the `/files/:id` route:
 
 ```typescript
 { path: '/cards', name: 'cards', component: () => import('@/views/CardsView.vue') },
@@ -1108,7 +1108,7 @@ In `spaced-md.client/src/router/index.ts`, add after the `/files/:id` route:
 
 - [ ] **Step 3: Add "Cards" tab to desktop navigation**
 
-In `spaced-md.client/src/layouts/AppLayout.vue`, update the `tabs` array (around line 12-17) to add Cards between Files and Groups:
+In `fasolt.client/src/layouts/AppLayout.vue`, update the `tabs` array (around line 12-17) to add Cards between Files and Groups:
 
 ```typescript
 const tabs = [
@@ -1122,7 +1122,7 @@ const tabs = [
 
 - [ ] **Step 4: Add "Cards" tab to mobile navigation**
 
-In `spaced-md.client/src/components/BottomNav.vue`, update the `tabs` array (around line 6-11) to add Cards between Files and Groups:
+In `fasolt.client/src/components/BottomNav.vue`, update the `tabs` array (around line 6-11) to add Cards between Files and Groups:
 
 ```typescript
 const tabs = [
@@ -1137,7 +1137,7 @@ const tabs = [
 - [ ] **Step 5: Commit**
 
 ```bash
-git add spaced-md.client/src/views/CardsView.vue spaced-md.client/src/router/index.ts spaced-md.client/src/layouts/AppLayout.vue spaced-md.client/src/components/BottomNav.vue
+git add fasolt.client/src/views/CardsView.vue fasolt.client/src/router/index.ts fasolt.client/src/layouts/AppLayout.vue fasolt.client/src/components/BottomNav.vue
 git commit -m "feat: add CardsView with edit/delete and Cards tab in navigation"
 ```
 
@@ -1146,7 +1146,7 @@ git commit -m "feat: add CardsView with edit/delete and Cards tab in navigation"
 ## Task 11: Wire Create Cards Buttons in FileDetailView
 
 **Files:**
-- Modify: `spaced-md.client/src/views/FileDetailView.vue`
+- Modify: `fasolt.client/src/views/FileDetailView.vue`
 
 - [ ] **Step 1: Update FileDetailView**
 
@@ -1239,7 +1239,7 @@ Add the CardCreateDialog at the end of the template (before the closing `</div>`
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FileDetailView.vue
+git add fasolt.client/src/views/FileDetailView.vue
 git commit -m "feat: wire Create cards buttons in FileDetailView"
 ```
 
@@ -1248,7 +1248,7 @@ git commit -m "feat: wire Create cards buttons in FileDetailView"
 ## Task 12: Wire Create Card in FilesView
 
 **Files:**
-- Modify: `spaced-md.client/src/views/FilesView.vue`
+- Modify: `fasolt.client/src/views/FilesView.vue`
 
 - [ ] **Step 1: Add card creation to FilesView**
 
@@ -1319,7 +1319,7 @@ Add the dialog at the end of the template (before closing `</div>`):
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FilesView.vue
+git add fasolt.client/src/views/FilesView.vue
 git commit -m "feat: add Create card from file action in FilesView"
 ```
 

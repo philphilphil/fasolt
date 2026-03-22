@@ -38,7 +38,7 @@ Cards are reviewed using spaced repetition (SM-2 algorithm), which schedules rev
 Folder-based Clean Architecture (single .NET project):
 
 ```
-spaced-md.Server/
+fasolt.Server/
   Domain/           — entities, value objects, interfaces
   Application/      — services, DTOs, use case logic
   Infrastructure/   — EF Core DbContext, repositories, migrations
@@ -52,11 +52,11 @@ Endpoints use the static extension method pattern (e.g., `MapHealthEndpoints()`)
 ```
 docker-compose.yml          — Postgres container
 dev.sh                      — runs everything (docker + backend + frontend)
-spaced-md.sln               — .NET solution
+fasolt.sln               — .NET solution
 global.json                 — .NET SDK version pin
-spaced-md.Server/           — backend
-spaced-md.Mcp/              — MCP server for AI agents
-spaced-md.client/           — frontend (Vue 3 SPA)
+fasolt.Server/           — backend
+fasolt.Mcp/              — MCP server for AI agents
+fasolt.client/           — frontend (Vue 3 SPA)
 ```
 
 ## Build & Run
@@ -66,10 +66,10 @@ spaced-md.client/           — frontend (Vue 3 SPA)
 ./dev.sh
 
 # Backend only
-dotnet run --project spaced-md.Server
+dotnet run --project fasolt.Server
 
 # Frontend only
-cd spaced-md.client && npm run dev
+cd fasolt.client && npm run dev
 
 # Database
 docker compose up -d        # start Postgres
@@ -84,7 +84,7 @@ docker compose down          # stop Postgres
 
 ## Connection String
 
-`Host=localhost;Port=5432;Database=spacedmd;Username=spaced;Password=spaced_dev`
+`Host=localhost;Port=5432;Database=fasolt;Username=spaced;Password=spaced_dev`
 
 ## Testing
 
@@ -130,17 +130,17 @@ The CAP theorem states you can only have two of three: Consistency, Availability
 
 In development, a seed user and API token are auto-created on startup:
 
-- **Email:** `dev@spaced-md.local` / **Password:** `Dev1234!`
+- **Email:** `dev@fasolt.local` / **Password:** `Dev1234!`
 - **API Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
 
 ## MCP Server
 
-The `spaced-md.Mcp/` project is a stdio MCP server that bridges AI agents to the API. To run locally:
+The `fasolt.Mcp/` project is a stdio MCP server that bridges AI agents to the API. To run locally:
 
 ```bash
-SPACED_MD_URL=http://localhost:8080 \
-SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
-  dotnet run --project spaced-md.Mcp
+FASOLT_URL=http://localhost:8080 \
+FASOLT_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
+  dotnet run --project fasolt.Mcp
 ```
 
 ### Available MCP Tools

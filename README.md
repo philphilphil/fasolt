@@ -1,14 +1,14 @@
-# spaced-md
+# fasolt
 
 MCP-first spaced repetition for markdown notes. Your AI reads your notes — you learn and remember.
 
-Connect spaced-md to Claude or any MCP-compatible agent. Tell it which notes to create cards from. Study when they're due.
+Connect fasolt to Claude or any MCP-compatible agent. Tell it which notes to create cards from. Study when they're due.
 
 ## How It Works
 
 1. **Take notes in Obsidian** — write in your normal workflow, optionally add `?::` markers for precise card boundaries
-2. **Your AI creates flashcards** — ask Claude (or any MCP agent) to read a file and push cards to spaced-md
-3. **Learn and remember** — open spaced-md when cards are due, SM-2 schedules reviews at increasing intervals
+2. **Your AI creates flashcards** — ask Claude (or any MCP agent) to read a file and push cards to fasolt
+3. **Learn and remember** — open fasolt when cards are due, SM-2 schedules reviews at increasing intervals
 
 ## Features
 
@@ -43,8 +43,8 @@ Or run individually:
 
 ```bash
 docker compose up -d                       # Postgres on :5432
-dotnet run --project spaced-md.Server      # API on :8080
-cd spaced-md.client && npm run dev         # UI on :5173
+dotnet run --project fasolt.Server      # API on :8080
+cd fasolt.client && npm run dev         # UI on :5173
 ```
 
 The frontend proxies `/api` requests to the backend.
@@ -55,14 +55,14 @@ The MCP server lets AI agents create flashcards from your local markdown files.
 
 1. Start the full stack: `./dev.sh`
 2. A dev user is auto-seeded:
-   - **Email:** `dev@spaced-md.local` / **Password:** `Dev1234!`
+   - **Email:** `dev@fasolt.local` / **Password:** `Dev1234!`
    - **Token:** `sm_dev_token_for_local_testing_only_do_not_use_in_production_0000`
 3. Add to Claude Code:
    ```bash
-   claude mcp add spaced-md \
-     -e SPACED_MD_URL=http://localhost:8080 \
-     -e SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
-     -- dotnet run --project /absolute/path/to/spaced-md.Mcp
+   claude mcp add fasolt \
+     -e FASOLT_URL=http://localhost:8080 \
+     -e FASOLT_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
+     -- dotnet run --project /absolute/path/to/fasolt.Mcp
    ```
 
 You can also create your own tokens via **Settings → API Tokens** in the web UI.
@@ -89,13 +89,13 @@ Agent: reads local file → searches for duplicates → generates questions →
 ## Project Structure
 
 ```
-spaced-md.Server/
+fasolt.Server/
   Domain/           — entities, value objects, interfaces
   Application/      — services, DTOs, use case logic
   Infrastructure/   — EF Core DbContext, repos, migrations
   Api/              — endpoints, middleware, Program.cs
-spaced-md.Mcp/      — MCP server (stdio, dotnet tool)
-spaced-md.client/   — Vue 3 SPA
+fasolt.Mcp/      — MCP server (stdio, dotnet tool)
+fasolt.client/   — Vue 3 SPA
 ```
 
 ## License

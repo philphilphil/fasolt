@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pivot spaced-md from a full-stack SRS app (with web-based file upload and card creation) to an **API-first SRS backend + study frontend**. All content input happens via the API, with the MCP server as the flagship client. The web app becomes a dedicated study and review interface.
+Pivot fasolt from a full-stack SRS app (with web-based file upload and card creation) to an **API-first SRS backend + study frontend**. All content input happens via the API, with the MCP server as the flagship client. The web app becomes a dedicated study and review interface.
 
 ### Target User
 

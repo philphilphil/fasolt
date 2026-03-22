@@ -13,35 +13,35 @@
 ## File Map
 
 ### Backend — New Files
-- `spaced-md.Server/Application/Services/FileComparer.cs` — Compares old vs new file content, identifies card impacts
-- `spaced-md.Server/Application/Dtos/FileUpdateDtos.cs` — DTOs for preview and update responses
+- `fasolt.Server/Application/Services/FileComparer.cs` — Compares old vs new file content, identifies card impacts
+- `fasolt.Server/Application/Dtos/FileUpdateDtos.cs` — DTOs for preview and update responses
 
 ### Backend — Modified Files
-- `spaced-md.Server/Api/Endpoints/FileEndpoints.cs` — Add preview-update and confirm-update endpoints
+- `fasolt.Server/Api/Endpoints/FileEndpoints.cs` — Add preview-update and confirm-update endpoints
 
 ### Frontend — New Files
-- `spaced-md.client/src/components/FileUpdatePreviewDialog.vue` — Dialog showing card impact preview
+- `fasolt.client/src/components/FileUpdatePreviewDialog.vue` — Dialog showing card impact preview
 
 ### Frontend — Modified Files
-- `spaced-md.client/src/types/index.ts` — Add `FileUpdatePreview` type
-- `spaced-md.client/src/stores/files.ts` — Add `previewUpdate` and `confirmUpdate` methods
-- `spaced-md.client/src/views/FilesView.vue` — Change upload flow to detect duplicates via preview-update
-- `spaced-md.client/src/views/FileDetailView.vue` — Add "Update file" button
+- `fasolt.client/src/types/index.ts` — Add `FileUpdatePreview` type
+- `fasolt.client/src/stores/files.ts` — Add `previewUpdate` and `confirmUpdate` methods
+- `fasolt.client/src/views/FilesView.vue` — Change upload flow to detect duplicates via preview-update
+- `fasolt.client/src/views/FileDetailView.vue` — Add "Update file" button
 
 ---
 
 ## Task 1: FileComparer Service
 
 **Files:**
-- Create: `spaced-md.Server/Application/Services/FileComparer.cs`
+- Create: `fasolt.Server/Application/Services/FileComparer.cs`
 
 - [ ] **Step 1: Create FileComparer**
 
 ```csharp
-// spaced-md.Server/Application/Services/FileComparer.cs
-using SpacedMd.Server.Domain.Entities;
+// fasolt.Server/Application/Services/FileComparer.cs
+using Fasolt.Server.Domain.Entities;
 
-namespace SpacedMd.Server.Application.Services;
+namespace Fasolt.Server.Application.Services;
 
 public record UpdatedCardInfo(Guid CardId, string Front, string OldBack, string NewBack);
 public record OrphanedCardInfo(Guid CardId, string Front, string? SourceHeading);
@@ -128,7 +128,7 @@ public static class FileComparer
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Services/FileComparer.cs
+git add fasolt.Server/Application/Services/FileComparer.cs
 git commit -m "feat: add FileComparer service for file update diffing"
 ```
 
@@ -137,13 +137,13 @@ git commit -m "feat: add FileComparer service for file update diffing"
 ## Task 2: File Update DTOs
 
 **Files:**
-- Create: `spaced-md.Server/Application/Dtos/FileUpdateDtos.cs`
+- Create: `fasolt.Server/Application/Dtos/FileUpdateDtos.cs`
 
 - [ ] **Step 1: Create DTOs**
 
 ```csharp
-// spaced-md.Server/Application/Dtos/FileUpdateDtos.cs
-namespace SpacedMd.Server.Application.Dtos;
+// fasolt.Server/Application/Dtos/FileUpdateDtos.cs
+namespace Fasolt.Server.Application.Dtos;
 
 public record FileUpdatePreviewDto(
     Guid FileId,
@@ -163,7 +163,7 @@ public record FileUpdateResultDto(int UpdatedCount, int DeletedCount, int Orphan
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Dtos/FileUpdateDtos.cs
+git add fasolt.Server/Application/Dtos/FileUpdateDtos.cs
 git commit -m "feat: add file update DTOs"
 ```
 
@@ -172,7 +172,7 @@ git commit -m "feat: add file update DTOs"
 ## Task 3: Preview-Update and Confirm-Update Endpoints
 
 **Files:**
-- Modify: `spaced-md.Server/Api/Endpoints/FileEndpoints.cs`
+- Modify: `fasolt.Server/Api/Endpoints/FileEndpoints.cs`
 
 - [ ] **Step 1: Add route registrations**
 
@@ -377,13 +377,13 @@ Note: You'll need to add `using Microsoft.AspNetCore.Mvc;` at the top of the fil
 - [ ] **Step 4: Build and verify**
 
 ```bash
-dotnet build spaced-md.Server
+dotnet build fasolt.Server
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/FileEndpoints.cs
+git add fasolt.Server/Api/Endpoints/FileEndpoints.cs
 git commit -m "feat: add preview-update and confirm-update endpoints"
 ```
 
@@ -392,8 +392,8 @@ git commit -m "feat: add preview-update and confirm-update endpoints"
 ## Task 4: Frontend Types and Store
 
 **Files:**
-- Modify: `spaced-md.client/src/types/index.ts`
-- Modify: `spaced-md.client/src/stores/files.ts`
+- Modify: `fasolt.client/src/types/index.ts`
+- Modify: `fasolt.client/src/stores/files.ts`
 
 - [ ] **Step 1: Add FileUpdatePreview type**
 
@@ -444,7 +444,7 @@ Add `previewUpdate` and `confirmUpdate` to the return object.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/types/index.ts spaced-md.client/src/stores/files.ts
+git add fasolt.client/src/types/index.ts fasolt.client/src/stores/files.ts
 git commit -m "feat: add FileUpdatePreview type and store methods"
 ```
 
@@ -453,7 +453,7 @@ git commit -m "feat: add FileUpdatePreview type and store methods"
 ## Task 5: FileUpdatePreviewDialog Component
 
 **Files:**
-- Create: `spaced-md.client/src/components/FileUpdatePreviewDialog.vue`
+- Create: `fasolt.client/src/components/FileUpdatePreviewDialog.vue`
 
 - [ ] **Step 1: Create the dialog**
 
@@ -617,7 +617,7 @@ async function confirm() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/components/FileUpdatePreviewDialog.vue
+git add fasolt.client/src/components/FileUpdatePreviewDialog.vue
 git commit -m "feat: add FileUpdatePreviewDialog component"
 ```
 
@@ -626,7 +626,7 @@ git commit -m "feat: add FileUpdatePreviewDialog component"
 ## Task 6: Update Upload Flow in FilesView
 
 **Files:**
-- Modify: `spaced-md.client/src/views/FilesView.vue`
+- Modify: `fasolt.client/src/views/FilesView.vue`
 
 - [ ] **Step 1: Update FilesView**
 
@@ -684,7 +684,7 @@ if (valid.length === 1) {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FilesView.vue
+git add fasolt.client/src/views/FilesView.vue
 git commit -m "feat: detect duplicate uploads and show update preview in FilesView"
 ```
 
@@ -693,7 +693,7 @@ git commit -m "feat: detect duplicate uploads and show update preview in FilesVi
 ## Task 7: Add "Update file" Button to FileDetailView
 
 **Files:**
-- Modify: `spaced-md.client/src/views/FileDetailView.vue`
+- Modify: `fasolt.client/src/views/FileDetailView.vue`
 
 - [ ] **Step 1: Update FileDetailView**
 
@@ -777,7 +777,7 @@ async function onUpdateConfirmed() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FileDetailView.vue
+git add fasolt.client/src/views/FileDetailView.vue
 git commit -m "feat: add Update file button to FileDetailView"
 ```
 

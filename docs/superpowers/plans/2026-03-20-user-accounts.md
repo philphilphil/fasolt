@@ -13,45 +13,45 @@
 ## File Map
 
 ### Backend — New Files
-- `spaced-md.Server/Domain/Entities/AppUser.cs` — Custom Identity user with DisplayName
-- `spaced-md.Server/Api/Endpoints/AccountEndpoints.cs` — /api/account endpoints (me, profile, email, password, forgot-password, reset-password)
-- `spaced-md.Server/Application/Dtos/AccountDtos.cs` — Request/response DTOs for account endpoints
-- `spaced-md.Server/Infrastructure/Services/DevEmailSender.cs` — Console-logging IEmailSender for development
+- `fasolt.Server/Domain/Entities/AppUser.cs` — Custom Identity user with DisplayName
+- `fasolt.Server/Api/Endpoints/AccountEndpoints.cs` — /api/account endpoints (me, profile, email, password, forgot-password, reset-password)
+- `fasolt.Server/Application/Dtos/AccountDtos.cs` — Request/response DTOs for account endpoints
+- `fasolt.Server/Infrastructure/Services/DevEmailSender.cs` — Console-logging IEmailSender for development
 
 ### Backend — Modified Files
-- `spaced-md.Server/Infrastructure/Data/AppDbContext.cs` — Change to `IdentityDbContext<AppUser>`
-- `spaced-md.Server/Program.cs` — Identity options, cookie config, new endpoint mapping, email sender registration
+- `fasolt.Server/Infrastructure/Data/AppDbContext.cs` — Change to `IdentityDbContext<AppUser>`
+- `fasolt.Server/Program.cs` — Identity options, cookie config, new endpoint mapping, email sender registration
 
 ### Frontend — New Files
-- `spaced-md.client/src/stores/auth.ts` — Pinia auth store
-- `spaced-md.client/src/views/LoginView.vue` — Login page
-- `spaced-md.client/src/views/RegisterView.vue` — Registration page
-- `spaced-md.client/src/views/ForgotPasswordView.vue` — Forgot password page
-- `spaced-md.client/src/views/ResetPasswordView.vue` — Reset password page
-- `spaced-md.client/src/layouts/AuthLayout.vue` — Centered layout for auth pages
+- `fasolt.client/src/stores/auth.ts` — Pinia auth store
+- `fasolt.client/src/views/LoginView.vue` — Login page
+- `fasolt.client/src/views/RegisterView.vue` — Registration page
+- `fasolt.client/src/views/ForgotPasswordView.vue` — Forgot password page
+- `fasolt.client/src/views/ResetPasswordView.vue` — Reset password page
+- `fasolt.client/src/layouts/AuthLayout.vue` — Centered layout for auth pages
 
 ### Frontend — Modified Files
-- `spaced-md.client/src/api/client.ts` — Add credentials, structured error parsing
-- `spaced-md.client/src/router/index.ts` — Auth routes, navigation guards
-- `spaced-md.client/src/components/TopBar.vue` — User dropdown menu
-- `spaced-md.client/src/views/SettingsView.vue` — Profile settings form
-- `spaced-md.client/src/App.vue` — Conditional layout based on auth state
+- `fasolt.client/src/api/client.ts` — Add credentials, structured error parsing
+- `fasolt.client/src/router/index.ts` — Auth routes, navigation guards
+- `fasolt.client/src/components/TopBar.vue` — User dropdown menu
+- `fasolt.client/src/views/SettingsView.vue` — Profile settings form
+- `fasolt.client/src/App.vue` — Conditional layout based on auth state
 
 ---
 
 ## Task 1: AppUser Entity and DbContext Update
 
 **Files:**
-- Create: `spaced-md.Server/Domain/Entities/AppUser.cs`
-- Modify: `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`
+- Create: `fasolt.Server/Domain/Entities/AppUser.cs`
+- Modify: `fasolt.Server/Infrastructure/Data/AppDbContext.cs`
 
 - [ ] **Step 1: Create AppUser entity**
 
 ```csharp
-// spaced-md.Server/Domain/Entities/AppUser.cs
+// fasolt.Server/Domain/Entities/AppUser.cs
 using Microsoft.AspNetCore.Identity;
 
-namespace SpacedMd.Server.Domain.Entities;
+namespace Fasolt.Server.Domain.Entities;
 
 public class AppUser : IdentityUser
 {
@@ -64,12 +64,12 @@ public class AppUser : IdentityUser
 Change `AppDbContext` from `IdentityDbContext` to `IdentityDbContext<AppUser>`:
 
 ```csharp
-// spaced-md.Server/Infrastructure/Data/AppDbContext.cs
+// fasolt.Server/Infrastructure/Data/AppDbContext.cs
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Domain.Entities;
+using Fasolt.Server.Domain.Entities;
 
-namespace SpacedMd.Server.Infrastructure.Data;
+namespace Fasolt.Server.Infrastructure.Data;
 
 public class AppDbContext : IdentityDbContext<AppUser>
 {
@@ -96,32 +96,32 @@ Replace `IdentityUser` with `AppUser` in both `AddIdentityApiEndpoints` and `Map
 
 Add the using:
 ```csharp
-using SpacedMd.Server.Domain.Entities;
+using Fasolt.Server.Domain.Entities;
 ```
 
 - [ ] **Step 4: Create EF migration**
 
 Run:
 ```bash
-cd spaced-md.Server && dotnet ef migrations add AddAppUser
+cd fasolt.Server && dotnet ef migrations add AddAppUser
 ```
 
 - [ ] **Step 5: Apply migration and verify**
 
 Run:
 ```bash
-cd spaced-md.Server && dotnet ef database update
+cd fasolt.Server && dotnet ef database update
 ```
 
 Then verify the app starts:
 ```bash
-cd spaced-md.Server && dotnet build
+cd fasolt.Server && dotnet build
 ```
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.Server/Domain/Entities/AppUser.cs spaced-md.Server/Infrastructure/Data/AppDbContext.cs spaced-md.Server/Program.cs spaced-md.Server/Infrastructure/Data/Migrations/
+git add fasolt.Server/Domain/Entities/AppUser.cs fasolt.Server/Infrastructure/Data/AppDbContext.cs fasolt.Server/Program.cs fasolt.Server/Infrastructure/Data/Migrations/
 git commit -m "feat: add AppUser entity extending IdentityUser with DisplayName"
 ```
 
@@ -130,7 +130,7 @@ git commit -m "feat: add AppUser entity extending IdentityUser with DisplayName"
 ## Task 2: Identity Configuration (Password Policy, Cookies)
 
 **Files:**
-- Modify: `spaced-md.Server/Program.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Configure Identity options and cookie**
 
@@ -189,7 +189,7 @@ using Microsoft.AspNetCore.Identity;
 
 Run:
 ```bash
-cd spaced-md.Server && dotnet build && dotnet run &
+cd fasolt.Server && dotnet build && dotnet run &
 sleep 3 && curl -s http://localhost:5000/api/health && kill %1
 ```
 
@@ -198,7 +198,7 @@ Expected: `{"status":"healthy"}`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.Server/Program.cs
+git add fasolt.Server/Program.cs
 git commit -m "feat: configure Identity password policy, cookie settings, token lifetime"
 ```
 
@@ -207,18 +207,18 @@ git commit -m "feat: configure Identity password policy, cookie settings, token 
 ## Task 3: DevEmailSender and Account DTOs
 
 **Files:**
-- Create: `spaced-md.Server/Infrastructure/Services/DevEmailSender.cs`
-- Create: `spaced-md.Server/Application/Dtos/AccountDtos.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Create: `fasolt.Server/Infrastructure/Services/DevEmailSender.cs`
+- Create: `fasolt.Server/Application/Dtos/AccountDtos.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Create DevEmailSender**
 
 ```csharp
-// spaced-md.Server/Infrastructure/Services/DevEmailSender.cs
+// fasolt.Server/Infrastructure/Services/DevEmailSender.cs
 using Microsoft.AspNetCore.Identity;
-using SpacedMd.Server.Domain.Entities;
+using Fasolt.Server.Domain.Entities;
 
-namespace SpacedMd.Server.Infrastructure.Services;
+namespace Fasolt.Server.Infrastructure.Services;
 
 public class DevEmailSender : IEmailSender<AppUser>
 {
@@ -259,14 +259,14 @@ builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
 
 Add using:
 ```csharp
-using SpacedMd.Server.Infrastructure.Services;
+using Fasolt.Server.Infrastructure.Services;
 ```
 
 - [ ] **Step 3: Create Account DTOs**
 
 ```csharp
-// spaced-md.Server/Application/Dtos/AccountDtos.cs
-namespace SpacedMd.Server.Application.Dtos;
+// fasolt.Server/Application/Dtos/AccountDtos.cs
+namespace Fasolt.Server.Application.Dtos;
 
 public record UserInfoResponse(string Email, string? DisplayName);
 
@@ -285,13 +285,13 @@ public record ResetPasswordRequest(string Email, string Token, string NewPasswor
 
 Run:
 ```bash
-cd spaced-md.Server && dotnet build
+cd fasolt.Server && dotnet build
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add spaced-md.Server/Infrastructure/Services/DevEmailSender.cs spaced-md.Server/Application/Dtos/AccountDtos.cs spaced-md.Server/Program.cs
+git add fasolt.Server/Infrastructure/Services/DevEmailSender.cs fasolt.Server/Application/Dtos/AccountDtos.cs fasolt.Server/Program.cs
 git commit -m "feat: add DevEmailSender and account DTOs"
 ```
 
@@ -300,19 +300,19 @@ git commit -m "feat: add DevEmailSender and account DTOs"
 ## Task 4: Account Endpoints
 
 **Files:**
-- Create: `spaced-md.Server/Api/Endpoints/AccountEndpoints.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Create: `fasolt.Server/Api/Endpoints/AccountEndpoints.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Create AccountEndpoints**
 
 ```csharp
-// spaced-md.Server/Api/Endpoints/AccountEndpoints.cs
+// fasolt.Server/Api/Endpoints/AccountEndpoints.cs
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using SpacedMd.Server.Application.Dtos;
-using SpacedMd.Server.Domain.Entities;
+using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Domain.Entities;
 
-namespace SpacedMd.Server.Api.Endpoints;
+namespace Fasolt.Server.Api.Endpoints;
 
 public static class AccountEndpoints
 {
@@ -457,14 +457,14 @@ app.MapAccountEndpoints();
 
 Run:
 ```bash
-cd spaced-md.Server && dotnet build
+cd fasolt.Server && dotnet build
 ```
 
 - [ ] **Step 4: Smoke test the register and me endpoints**
 
 Start the server and test:
 ```bash
-cd spaced-md.Server && dotnet run &
+cd fasolt.Server && dotnet run &
 sleep 3
 
 # Register
@@ -488,7 +488,7 @@ Expected: register returns 200, login sets cookie, /me returns `{"email":"test@t
 - [ ] **Step 5: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/AccountEndpoints.cs spaced-md.Server/Program.cs
+git add fasolt.Server/Api/Endpoints/AccountEndpoints.cs fasolt.Server/Program.cs
 git commit -m "feat: add account endpoints (me, profile, email, password, forgot/reset)"
 ```
 
@@ -497,7 +497,7 @@ git commit -m "feat: add account endpoints (me, profile, email, password, forgot
 ## Task 5: API Client Updates
 
 **Files:**
-- Modify: `spaced-md.client/src/api/client.ts`
+- Modify: `fasolt.client/src/api/client.ts`
 
 - [ ] **Step 1: Update apiFetch with credentials and error parsing**
 
@@ -549,7 +549,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/api/client.ts
+git add fasolt.client/src/api/client.ts
 git commit -m "feat: add credentials and structured error parsing to API client"
 ```
 
@@ -558,12 +558,12 @@ git commit -m "feat: add credentials and structured error parsing to API client"
 ## Task 6: Auth Pinia Store
 
 **Files:**
-- Create: `spaced-md.client/src/stores/auth.ts`
+- Create: `fasolt.client/src/stores/auth.ts`
 
 - [ ] **Step 1: Create auth store**
 
 ```typescript
-// spaced-md.client/src/stores/auth.ts
+// fasolt.client/src/stores/auth.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiFetch, type ApiError } from '@/api/client'
@@ -678,7 +678,7 @@ export const useAuthStore = defineStore('auth', () => {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/stores/auth.ts
+git add fasolt.client/src/stores/auth.ts
 git commit -m "feat: add Pinia auth store with full account management"
 ```
 
@@ -687,13 +687,13 @@ git commit -m "feat: add Pinia auth store with full account management"
 ## Task 7: Auth Layout and Login View
 
 **Files:**
-- Create: `spaced-md.client/src/layouts/AuthLayout.vue`
-- Create: `spaced-md.client/src/views/LoginView.vue`
+- Create: `fasolt.client/src/layouts/AuthLayout.vue`
+- Create: `fasolt.client/src/views/LoginView.vue`
 
 - [ ] **Step 1: Create AuthLayout**
 
 ```vue
-<!-- spaced-md.client/src/layouts/AuthLayout.vue -->
+<!-- fasolt.client/src/layouts/AuthLayout.vue -->
 <script setup lang="ts">
 import { useDarkMode } from '@/composables/useDarkMode'
 useDarkMode()
@@ -703,7 +703,7 @@ useDarkMode()
   <div class="flex min-h-screen items-center justify-center bg-background px-4">
     <div class="w-full max-w-sm">
       <div class="mb-8 text-center">
-        <span class="font-mono text-lg font-bold text-foreground tracking-tight">spaced-md</span>
+        <span class="font-mono text-lg font-bold text-foreground tracking-tight">fasolt</span>
       </div>
       <slot />
     </div>
@@ -714,7 +714,7 @@ useDarkMode()
 - [ ] **Step 2: Create LoginView**
 
 ```vue
-<!-- spaced-md.client/src/views/LoginView.vue -->
+<!-- fasolt.client/src/views/LoginView.vue -->
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -789,7 +789,7 @@ async function handleSubmit() {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/layouts/AuthLayout.vue spaced-md.client/src/views/LoginView.vue
+git add fasolt.client/src/layouts/AuthLayout.vue fasolt.client/src/views/LoginView.vue
 git commit -m "feat: add AuthLayout and LoginView"
 ```
 
@@ -798,12 +798,12 @@ git commit -m "feat: add AuthLayout and LoginView"
 ## Task 8: Register View
 
 **Files:**
-- Create: `spaced-md.client/src/views/RegisterView.vue`
+- Create: `fasolt.client/src/views/RegisterView.vue`
 
 - [ ] **Step 1: Create RegisterView**
 
 ```vue
-<!-- spaced-md.client/src/views/RegisterView.vue -->
+<!-- fasolt.client/src/views/RegisterView.vue -->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -900,7 +900,7 @@ async function handleSubmit() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/RegisterView.vue
+git add fasolt.client/src/views/RegisterView.vue
 git commit -m "feat: add RegisterView with client-side password validation"
 ```
 
@@ -909,13 +909,13 @@ git commit -m "feat: add RegisterView with client-side password validation"
 ## Task 9: Forgot Password and Reset Password Views
 
 **Files:**
-- Create: `spaced-md.client/src/views/ForgotPasswordView.vue`
-- Create: `spaced-md.client/src/views/ResetPasswordView.vue`
+- Create: `fasolt.client/src/views/ForgotPasswordView.vue`
+- Create: `fasolt.client/src/views/ResetPasswordView.vue`
 
 - [ ] **Step 1: Create ForgotPasswordView**
 
 ```vue
-<!-- spaced-md.client/src/views/ForgotPasswordView.vue -->
+<!-- fasolt.client/src/views/ForgotPasswordView.vue -->
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -975,7 +975,7 @@ async function handleSubmit() {
 - [ ] **Step 2: Create ResetPasswordView**
 
 ```vue
-<!-- spaced-md.client/src/views/ResetPasswordView.vue -->
+<!-- fasolt.client/src/views/ResetPasswordView.vue -->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -1079,7 +1079,7 @@ async function handleSubmit() {
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/views/ForgotPasswordView.vue spaced-md.client/src/views/ResetPasswordView.vue
+git add fasolt.client/src/views/ForgotPasswordView.vue fasolt.client/src/views/ResetPasswordView.vue
 git commit -m "feat: add ForgotPasswordView and ResetPasswordView"
 ```
 
@@ -1088,8 +1088,8 @@ git commit -m "feat: add ForgotPasswordView and ResetPasswordView"
 ## Task 10: Router with Auth Guards
 
 **Files:**
-- Modify: `spaced-md.client/src/router/index.ts`
-- Modify: `spaced-md.client/src/main.ts`
+- Modify: `fasolt.client/src/router/index.ts`
+- Modify: `fasolt.client/src/main.ts`
 
 - [ ] **Step 1: Update router with auth routes and guards**
 
@@ -1162,7 +1162,7 @@ export default router
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/router/index.ts
+git add fasolt.client/src/router/index.ts
 git commit -m "feat: add auth routes and navigation guards"
 ```
 
@@ -1171,12 +1171,12 @@ git commit -m "feat: add auth routes and navigation guards"
 ## Task 11: Conditional Layout in App.vue
 
 **Files:**
-- Modify: `spaced-md.client/src/App.vue`
+- Modify: `fasolt.client/src/App.vue`
 
 - [ ] **Step 1: Update App.vue to switch layouts**
 
 ```vue
-<!-- spaced-md.client/src/App.vue -->
+<!-- fasolt.client/src/App.vue -->
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { computed } from 'vue'
@@ -1197,7 +1197,7 @@ const isAuthPage = computed(() => route.meta.public === true)
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/App.vue
+git add fasolt.client/src/App.vue
 git commit -m "feat: switch between AuthLayout and AppLayout based on route"
 ```
 
@@ -1206,7 +1206,7 @@ git commit -m "feat: switch between AuthLayout and AppLayout based on route"
 ## Task 12: TopBar User Dropdown
 
 **Files:**
-- Modify: `spaced-md.client/src/components/TopBar.vue`
+- Modify: `fasolt.client/src/components/TopBar.vue`
 
 - [ ] **Step 1: Replace avatar placeholder with dropdown menu**
 
@@ -1262,7 +1262,7 @@ async function handleLogout() {
 <template>
   <header class="flex items-center justify-between border-b border-border px-5 py-3">
     <span class="font-mono text-[13px] font-bold text-foreground tracking-tight">
-      spaced-md
+      fasolt
     </span>
     <div class="relative hidden sm:block">
       <Input
@@ -1319,7 +1319,7 @@ async function handleLogout() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/components/TopBar.vue
+git add fasolt.client/src/components/TopBar.vue
 git commit -m "feat: add user dropdown menu to TopBar with logout"
 ```
 
@@ -1328,12 +1328,12 @@ git commit -m "feat: add user dropdown menu to TopBar with logout"
 ## Task 13: Settings View with Profile Management
 
 **Files:**
-- Modify: `spaced-md.client/src/views/SettingsView.vue`
+- Modify: `fasolt.client/src/views/SettingsView.vue`
 
 - [ ] **Step 1: Build out SettingsView with profile sections**
 
 ```vue
-<!-- spaced-md.client/src/views/SettingsView.vue -->
+<!-- fasolt.client/src/views/SettingsView.vue -->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -1490,7 +1490,7 @@ async function savePassword() {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/SettingsView.vue
+git add fasolt.client/src/views/SettingsView.vue
 git commit -m "feat: add profile settings (display name, email, password) to SettingsView"
 ```
 
@@ -1502,7 +1502,7 @@ git commit -m "feat: add profile settings (display name, email, password) to Set
 
 Run:
 ```bash
-cd spaced-md.client && npx vue-tsc --noEmit
+cd fasolt.client && npx vue-tsc --noEmit
 ```
 
 Expected: No errors. If there are type errors, fix them before proceeding.
@@ -1511,7 +1511,7 @@ Expected: No errors. If there are type errors, fix them before proceeding.
 
 Run:
 ```bash
-cd spaced-md.client && npm run build
+cd fasolt.client && npm run build
 ```
 
 Expected: Build succeeds with no errors.

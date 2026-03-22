@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Pivot spaced-md from a full-stack SRS app to an API-first SRS backend + study frontend, removing all file storage and making MCP/API the primary content input path.
+**Goal:** Pivot fasolt from a full-stack SRS app to an API-first SRS backend + study frontend, removing all file storage and making MCP/API the primary content input path.
 
 **Architecture:** Remove MarkdownFile/FileHeading entities entirely. Card gains a `SourceFile` string field for provenance. File processing services (FileComparer, HeadingExtractor, ContentExtractor) are deleted. A new `/api/sources` endpoint provides card grouping by source file. The MCP server drops file tools, gains ListSources.
 
@@ -15,49 +15,49 @@
 ## File Map
 
 ### Files to Delete
-- `spaced-md.Server/Domain/Entities/MarkdownFile.cs`
-- `spaced-md.Server/Domain/Entities/FileHeading.cs`
-- `spaced-md.Server/Application/Services/FileComparer.cs`
-- `spaced-md.Server/Application/Services/HeadingExtractor.cs`
-- `spaced-md.Server/Application/Services/ContentExtractor.cs`
-- `spaced-md.Server/Application/Dtos/FileDtos.cs`
-- `spaced-md.Server/Api/Endpoints/FileEndpoints.cs`
-- `spaced-md.Mcp/Tools/FileTools.cs`
-- `spaced-md.client/src/views/FilesView.vue`
-- `spaced-md.client/src/views/FileDetailView.vue`
-- `spaced-md.client/src/components/FileUpdatePreviewDialog.vue`
-- `spaced-md.client/src/stores/files.ts`
+- `fasolt.Server/Domain/Entities/MarkdownFile.cs`
+- `fasolt.Server/Domain/Entities/FileHeading.cs`
+- `fasolt.Server/Application/Services/FileComparer.cs`
+- `fasolt.Server/Application/Services/HeadingExtractor.cs`
+- `fasolt.Server/Application/Services/ContentExtractor.cs`
+- `fasolt.Server/Application/Dtos/FileDtos.cs`
+- `fasolt.Server/Api/Endpoints/FileEndpoints.cs`
+- `fasolt.Mcp/Tools/FileTools.cs`
+- `fasolt.client/src/views/FilesView.vue`
+- `fasolt.client/src/views/FileDetailView.vue`
+- `fasolt.client/src/components/FileUpdatePreviewDialog.vue`
+- `fasolt.client/src/stores/files.ts`
 
 ### Files to Modify
-- `spaced-md.Server/Domain/Entities/Card.cs`
-- `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`
-- `spaced-md.Server/Application/Dtos/CardDtos.cs`
-- `spaced-md.Server/Application/Dtos/BulkCardDtos.cs`
-- `spaced-md.Server/Application/Dtos/ReviewDtos.cs`
-- `spaced-md.Server/Application/Dtos/DeckDtos.cs`
-- `spaced-md.Server/Api/Endpoints/CardEndpoints.cs`
-- `spaced-md.Server/Api/Endpoints/DeckEndpoints.cs`
-- `spaced-md.Server/Api/Endpoints/SearchEndpoints.cs`
-- `spaced-md.Server/Program.cs`
-- `spaced-md.Mcp/Tools/CardTools.cs`
-- `spaced-md.Mcp/ApiClient.cs`
-- `spaced-md.client/src/types/index.ts`
-- `spaced-md.client/src/router/index.ts`
-- `spaced-md.client/src/stores/cards.ts`
-- `spaced-md.client/src/stores/decks.ts`
-- `spaced-md.client/src/api/client.ts`
-- `spaced-md.client/src/composables/useSearch.ts`
-- `spaced-md.client/src/views/CardsView.vue`
-- `spaced-md.client/src/views/DeckDetailView.vue`
-- `spaced-md.client/src/components/AppLayout.vue` (or equivalent layout with "Files" nav link)
-- `spaced-md.client/src/components/BottomNav.vue` (mobile nav with "Files" link)
+- `fasolt.Server/Domain/Entities/Card.cs`
+- `fasolt.Server/Infrastructure/Data/AppDbContext.cs`
+- `fasolt.Server/Application/Dtos/CardDtos.cs`
+- `fasolt.Server/Application/Dtos/BulkCardDtos.cs`
+- `fasolt.Server/Application/Dtos/ReviewDtos.cs`
+- `fasolt.Server/Application/Dtos/DeckDtos.cs`
+- `fasolt.Server/Api/Endpoints/CardEndpoints.cs`
+- `fasolt.Server/Api/Endpoints/DeckEndpoints.cs`
+- `fasolt.Server/Api/Endpoints/SearchEndpoints.cs`
+- `fasolt.Server/Program.cs`
+- `fasolt.Mcp/Tools/CardTools.cs`
+- `fasolt.Mcp/ApiClient.cs`
+- `fasolt.client/src/types/index.ts`
+- `fasolt.client/src/router/index.ts`
+- `fasolt.client/src/stores/cards.ts`
+- `fasolt.client/src/stores/decks.ts`
+- `fasolt.client/src/api/client.ts`
+- `fasolt.client/src/composables/useSearch.ts`
+- `fasolt.client/src/views/CardsView.vue`
+- `fasolt.client/src/views/DeckDetailView.vue`
+- `fasolt.client/src/components/AppLayout.vue` (or equivalent layout with "Files" nav link)
+- `fasolt.client/src/components/BottomNav.vue` (mobile nav with "Files" link)
 
 ### Files to Create
-- `spaced-md.Server/Api/Endpoints/SourceEndpoints.cs`
-- `spaced-md.Server/Application/Dtos/SourceDtos.cs`
-- `spaced-md.Mcp/Tools/SourceTools.cs`
-- `spaced-md.client/src/views/SourcesView.vue`
-- `spaced-md.client/src/stores/sources.ts`
+- `fasolt.Server/Api/Endpoints/SourceEndpoints.cs`
+- `fasolt.Server/Application/Dtos/SourceDtos.cs`
+- `fasolt.Mcp/Tools/SourceTools.cs`
+- `fasolt.client/src/views/SourcesView.vue`
+- `fasolt.client/src/stores/sources.ts`
 - EF Migration (auto-generated)
 
 ---
@@ -67,11 +67,11 @@
 Remove `FileId`, `File` nav, and `CardType` from Card. Add `SourceFile`. Update all DTOs to match.
 
 **Files:**
-- Modify: `spaced-md.Server/Domain/Entities/Card.cs`
-- Modify: `spaced-md.Server/Application/Dtos/CardDtos.cs`
-- Modify: `spaced-md.Server/Application/Dtos/BulkCardDtos.cs`
-- Modify: `spaced-md.Server/Application/Dtos/ReviewDtos.cs`
-- Modify: `spaced-md.Server/Application/Dtos/DeckDtos.cs`
+- Modify: `fasolt.Server/Domain/Entities/Card.cs`
+- Modify: `fasolt.Server/Application/Dtos/CardDtos.cs`
+- Modify: `fasolt.Server/Application/Dtos/BulkCardDtos.cs`
+- Modify: `fasolt.Server/Application/Dtos/ReviewDtos.cs`
+- Modify: `fasolt.Server/Application/Dtos/DeckDtos.cs`
 
 - [ ] **Step 1: Update Card entity**
 
@@ -93,7 +93,7 @@ Remove the `using` for MarkdownFile if present.
 
 Replace the file with:
 ```csharp
-namespace SpacedMd.Server.Application.Dtos;
+namespace Fasolt.Server.Application.Dtos;
 
 public record CreateCardRequest(string? SourceFile, string? SourceHeading, string Front, string Back);
 
@@ -111,7 +111,7 @@ public record CardDeckInfoDto(Guid Id, string Name);
 
 Replace with:
 ```csharp
-namespace SpacedMd.Server.Application.Dtos;
+namespace Fasolt.Server.Application.Dtos;
 
 public record BulkCreateCardsRequest(string? SourceFile, Guid? DeckId, List<BulkCardItem> Cards);
 
@@ -146,17 +146,17 @@ Delete `AddFileToDeckRequest` record entirely.
 
 - [ ] **Step 6: Verify build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Build errors in endpoint files (Card, Deck, Search, File) — these reference removed fields. That's expected; we fix them in subsequent tasks.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add spaced-md.Server/Domain/Entities/Card.cs \
-  spaced-md.Server/Application/Dtos/CardDtos.cs \
-  spaced-md.Server/Application/Dtos/BulkCardDtos.cs \
-  spaced-md.Server/Application/Dtos/ReviewDtos.cs \
-  spaced-md.Server/Application/Dtos/DeckDtos.cs
+git add fasolt.Server/Domain/Entities/Card.cs \
+  fasolt.Server/Application/Dtos/CardDtos.cs \
+  fasolt.Server/Application/Dtos/BulkCardDtos.cs \
+  fasolt.Server/Application/Dtos/ReviewDtos.cs \
+  fasolt.Server/Application/Dtos/DeckDtos.cs
 git commit -m "refactor: update Card entity and DTOs for MCP-first pivot
 
 Remove FileId, CardType from Card. Add SourceFile string.
@@ -170,35 +170,35 @@ Update all DTOs to match new schema."
 Remove all file-related backend code.
 
 **Files:**
-- Delete: `spaced-md.Server/Domain/Entities/MarkdownFile.cs`
-- Delete: `spaced-md.Server/Domain/Entities/FileHeading.cs`
-- Delete: `spaced-md.Server/Application/Services/FileComparer.cs`
-- Delete: `spaced-md.Server/Application/Services/HeadingExtractor.cs`
-- Delete: `spaced-md.Server/Application/Services/ContentExtractor.cs`
-- Delete: `spaced-md.Server/Application/Dtos/FileDtos.cs`
-- Delete: `spaced-md.Server/Api/Endpoints/FileEndpoints.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Delete: `fasolt.Server/Domain/Entities/MarkdownFile.cs`
+- Delete: `fasolt.Server/Domain/Entities/FileHeading.cs`
+- Delete: `fasolt.Server/Application/Services/FileComparer.cs`
+- Delete: `fasolt.Server/Application/Services/HeadingExtractor.cs`
+- Delete: `fasolt.Server/Application/Services/ContentExtractor.cs`
+- Delete: `fasolt.Server/Application/Dtos/FileDtos.cs`
+- Delete: `fasolt.Server/Api/Endpoints/FileEndpoints.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Delete entity files**
 
 ```bash
-rm spaced-md.Server/Domain/Entities/MarkdownFile.cs
-rm spaced-md.Server/Domain/Entities/FileHeading.cs
+rm fasolt.Server/Domain/Entities/MarkdownFile.cs
+rm fasolt.Server/Domain/Entities/FileHeading.cs
 ```
 
 - [ ] **Step 2: Delete service files**
 
 ```bash
-rm spaced-md.Server/Application/Services/FileComparer.cs
-rm spaced-md.Server/Application/Services/HeadingExtractor.cs
-rm spaced-md.Server/Application/Services/ContentExtractor.cs
+rm fasolt.Server/Application/Services/FileComparer.cs
+rm fasolt.Server/Application/Services/HeadingExtractor.cs
+rm fasolt.Server/Application/Services/ContentExtractor.cs
 ```
 
 - [ ] **Step 3: Delete file DTOs and endpoints**
 
 ```bash
-rm spaced-md.Server/Application/Dtos/FileDtos.cs
-rm spaced-md.Server/Api/Endpoints/FileEndpoints.cs
+rm fasolt.Server/Application/Dtos/FileDtos.cs
+rm fasolt.Server/Api/Endpoints/FileEndpoints.cs
 ```
 
 - [ ] **Step 4: Remove MapFileEndpoints from Program.cs**
@@ -225,7 +225,7 @@ ContentExtractor services, FileDtos, FileEndpoints."
 Remove file/heading DbSets and configuration. Update Card configuration to drop FileId FK/index, add SourceFile column config.
 
 **Files:**
-- Modify: `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`
+- Modify: `fasolt.Server/Infrastructure/Data/AppDbContext.cs`
 
 - [ ] **Step 1: Remove DbSets**
 
@@ -275,13 +275,13 @@ entity.HasIndex(e => new { e.UserId, e.SourceFile });
 
 - [ ] **Step 5: Verify build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Build errors only in CardEndpoints.cs, DeckEndpoints.cs, SearchEndpoints.cs (fixed in next tasks).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.Server/Infrastructure/Data/AppDbContext.cs
+git add fasolt.Server/Infrastructure/Data/AppDbContext.cs
 git commit -m "refactor: update DbContext for MCP-first pivot
 
 Remove MarkdownFile/FileHeading DbSets and config.
@@ -295,7 +295,7 @@ Update Card config: drop FileId FK, add SourceFile column."
 Rewrite card endpoints to use `SourceFile` instead of `FileId`/`CardType`. Remove the Extract endpoint.
 
 **Files:**
-- Modify: `spaced-md.Server/Api/Endpoints/CardEndpoints.cs`
+- Modify: `fasolt.Server/Api/Endpoints/CardEndpoints.cs`
 
 - [ ] **Step 1: Remove Extract endpoint registration**
 
@@ -399,13 +399,13 @@ Remove any `using` referencing MarkdownFile, FileComparer, ContentExtractor, Hea
 
 - [ ] **Step 8: Verify build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Errors only in DeckEndpoints and SearchEndpoints.
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/CardEndpoints.cs
+git add fasolt.Server/Api/Endpoints/CardEndpoints.cs
 git commit -m "refactor: update CardEndpoints for MCP-first pivot
 
 Remove Extract endpoint, FileId/CardType logic.
@@ -419,7 +419,7 @@ Use SourceFile string for card provenance and duplicate detection."
 Remove AddFileCards endpoint. Update projections that reference CardType.
 
 **Files:**
-- Modify: `spaced-md.Server/Api/Endpoints/DeckEndpoints.cs`
+- Modify: `fasolt.Server/Api/Endpoints/DeckEndpoints.cs`
 
 - [ ] **Step 1: Remove AddFileCards route registration**
 
@@ -447,13 +447,13 @@ Remove references to MarkdownFile if present.
 
 - [ ] **Step 5: Verify build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Errors only in SearchEndpoints.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/DeckEndpoints.cs
+git add fasolt.Server/Api/Endpoints/DeckEndpoints.cs
 git commit -m "refactor: update DeckEndpoints for MCP-first pivot
 
 Remove AddFileCards endpoint. Update DeckCardDto projection."
@@ -466,7 +466,7 @@ Remove AddFileCards endpoint. Update DeckCardDto projection."
 Remove file search results and CardType from search.
 
 **Files:**
-- Modify: `spaced-md.Server/Api/Endpoints/SearchEndpoints.cs`
+- Modify: `fasolt.Server/Api/Endpoints/SearchEndpoints.cs`
 
 - [ ] **Step 1: Remove file search query**
 
@@ -510,13 +510,13 @@ Remove references to MarkdownFile.
 
 - [ ] **Step 6: Verify full build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Build errors only in ReviewEndpoints (fixed in Task 7).
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/SearchEndpoints.cs
+git add fasolt.Server/Api/Endpoints/SearchEndpoints.cs
 git commit -m "refactor: update SearchEndpoints for MCP-first pivot
 
 Remove file search results and CardType from search response."
@@ -529,7 +529,7 @@ Remove file search results and CardType from search response."
 Update the DueCardDto projection in the review endpoint.
 
 **Files:**
-- Modify: `spaced-md.Server/Api/Endpoints/ReviewEndpoints.cs`
+- Modify: `fasolt.Server/Api/Endpoints/ReviewEndpoints.cs`
 
 - [ ] **Step 1: Update DueCardDto projection**
 
@@ -543,13 +543,13 @@ Remove `c.CardType` and `c.FileId` from the projection.
 
 - [ ] **Step 2: Verify build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Clean build.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/ReviewEndpoints.cs
+git add fasolt.Server/Api/Endpoints/ReviewEndpoints.cs
 git commit -m "refactor: update ReviewEndpoints DueCardDto projection"
 ```
 
@@ -560,14 +560,14 @@ git commit -m "refactor: update ReviewEndpoints DueCardDto projection"
 New endpoint: `GET /api/sources` returns distinct source files with card counts.
 
 **Files:**
-- Create: `spaced-md.Server/Application/Dtos/SourceDtos.cs`
-- Create: `spaced-md.Server/Api/Endpoints/SourceEndpoints.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Create: `fasolt.Server/Application/Dtos/SourceDtos.cs`
+- Create: `fasolt.Server/Api/Endpoints/SourceEndpoints.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Create SourceDtos.cs**
 
 ```csharp
-namespace SpacedMd.Server.Application.Dtos;
+namespace Fasolt.Server.Application.Dtos;
 
 public record SourceListResponse(List<SourceItemDto> Items);
 public record SourceItemDto(string SourceFile, int CardCount, int DueCount);
@@ -577,11 +577,11 @@ public record SourceItemDto(string SourceFile, int CardCount, int DueCount);
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Application.Dtos;
-using SpacedMd.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Infrastructure.Data;
 using System.Security.Claims;
 
-namespace SpacedMd.Server.Api.Endpoints;
+namespace Fasolt.Server.Api.Endpoints;
 
 public static class SourceEndpoints
 {
@@ -620,15 +620,15 @@ app.MapSourceEndpoints();
 
 - [ ] **Step 4: Verify build**
 
-Run: `dotnet build spaced-md.Server`
+Run: `dotnet build fasolt.Server`
 Expected: Clean build.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Dtos/SourceDtos.cs \
-  spaced-md.Server/Api/Endpoints/SourceEndpoints.cs \
-  spaced-md.Server/Program.cs
+git add fasolt.Server/Application/Dtos/SourceDtos.cs \
+  fasolt.Server/Api/Endpoints/SourceEndpoints.cs \
+  fasolt.Server/Program.cs
 git commit -m "feat: add GET /api/sources endpoint
 
 Returns distinct source files with card and due counts."
@@ -647,7 +647,7 @@ Generate and apply the migration for all schema changes.
 
 Run:
 ```bash
-dotnet ef migrations add McpFirstPivot --project spaced-md.Server
+dotnet ef migrations add McpFirstPivot --project fasolt.Server
 ```
 
 - [ ] **Step 2: Review the migration**
@@ -678,7 +678,7 @@ This preserves source file provenance for existing cards.
 
 Run:
 ```bash
-dotnet ef database update --project spaced-md.Server
+dotnet ef database update --project fasolt.Server
 ```
 
 Expected: Migration applies successfully.
@@ -687,7 +687,7 @@ Expected: Migration applies successfully.
 
 Run:
 ```bash
-dotnet run --project spaced-md.Server
+dotnet run --project fasolt.Server
 ```
 
 Verify the app starts and `GET /api/health` returns 200.
@@ -695,7 +695,7 @@ Verify the app starts and `GET /api/health` returns 200.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.Server/Infrastructure/Data/Migrations/
+git add fasolt.Server/Infrastructure/Data/Migrations/
 git commit -m "feat: add migration for MCP-first pivot
 
 Adds SourceFile to Cards, populates from MarkdownFiles,
@@ -709,15 +709,15 @@ drops FileId/CardType, drops MarkdownFiles/FileHeadings tables."
 Remove FileTools, update CardTools, remove PostFileAsync from ApiClient, add SourceTools.
 
 **Files:**
-- Delete: `spaced-md.Mcp/Tools/FileTools.cs`
-- Modify: `spaced-md.Mcp/Tools/CardTools.cs`
-- Modify: `spaced-md.Mcp/ApiClient.cs`
-- Create: `spaced-md.Mcp/Tools/SourceTools.cs`
+- Delete: `fasolt.Mcp/Tools/FileTools.cs`
+- Modify: `fasolt.Mcp/Tools/CardTools.cs`
+- Modify: `fasolt.Mcp/ApiClient.cs`
+- Create: `fasolt.Mcp/Tools/SourceTools.cs`
 
 - [ ] **Step 1: Delete FileTools.cs**
 
 ```bash
-rm spaced-md.Mcp/Tools/FileTools.cs
+rm fasolt.Mcp/Tools/FileTools.cs
 ```
 
 - [ ] **Step 2: Remove PostFileAsync from ApiClient**
@@ -772,9 +772,9 @@ public record CardInput(string Front, string Back, string? SourceFile = null, st
 using System.ComponentModel;
 using System.Text.Json;
 using ModelContextProtocol.Server;
-using SpacedMd.Mcp;
+using Fasolt.Mcp;
 
-namespace SpacedMd.Mcp.Tools;
+namespace Fasolt.Mcp.Tools;
 
 [McpServerToolType]
 public class SourceTools
@@ -790,13 +790,13 @@ public class SourceTools
 
 - [ ] **Step 5: Verify build**
 
-Run: `dotnet build spaced-md.Mcp`
+Run: `dotnet build fasolt.Mcp`
 Expected: Clean build.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A spaced-md.Mcp/
+git add -A fasolt.Mcp/
 git commit -m "refactor: update MCP server for MCP-first pivot
 
 Remove FileTools, add ListSources, update CardTools to use sourceFile."
@@ -809,8 +809,8 @@ Remove FileTools, add ListSources, update CardTools to use sourceFile."
 Update TypeScript types and API client to match new backend.
 
 **Files:**
-- Modify: `spaced-md.client/src/types/index.ts`
-- Modify: `spaced-md.client/src/api/client.ts`
+- Modify: `fasolt.client/src/types/index.ts`
+- Modify: `fasolt.client/src/api/client.ts`
 
 - [ ] **Step 1: Update types/index.ts**
 
@@ -847,7 +847,7 @@ Remove the `apiUpload` function entirely.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/types/index.ts spaced-md.client/src/api/client.ts
+git add fasolt.client/src/types/index.ts fasolt.client/src/api/client.ts
 git commit -m "refactor: update frontend types and API client for pivot
 
 Remove file types, add SourceItem, update Card/DeckCard/DueCard types."
@@ -860,24 +860,24 @@ Remove file types, add SourceItem, update Card/DeckCard/DueCard types."
 Remove all file-related frontend code.
 
 **Files:**
-- Delete: `spaced-md.client/src/views/FilesView.vue`
-- Delete: `spaced-md.client/src/views/FileDetailView.vue`
-- Delete: `spaced-md.client/src/components/FileUpdatePreviewDialog.vue`
-- Delete: `spaced-md.client/src/stores/files.ts`
+- Delete: `fasolt.client/src/views/FilesView.vue`
+- Delete: `fasolt.client/src/views/FileDetailView.vue`
+- Delete: `fasolt.client/src/components/FileUpdatePreviewDialog.vue`
+- Delete: `fasolt.client/src/stores/files.ts`
 
 - [ ] **Step 1: Delete files**
 
 ```bash
-rm spaced-md.client/src/views/FilesView.vue
-rm spaced-md.client/src/views/FileDetailView.vue
-rm spaced-md.client/src/components/FileUpdatePreviewDialog.vue
-rm spaced-md.client/src/stores/files.ts
+rm fasolt.client/src/views/FilesView.vue
+rm fasolt.client/src/views/FileDetailView.vue
+rm fasolt.client/src/components/FileUpdatePreviewDialog.vue
+rm fasolt.client/src/stores/files.ts
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add -A spaced-md.client/src/
+git add -A fasolt.client/src/
 git commit -m "refactor: delete file views, components, and store"
 ```
 
@@ -888,12 +888,12 @@ git commit -m "refactor: delete file views, components, and store"
 Update cards/decks stores, router, and search composable.
 
 **Files:**
-- Modify: `spaced-md.client/src/stores/cards.ts`
-- Modify: `spaced-md.client/src/stores/decks.ts`
-- Modify: `spaced-md.client/src/router/index.ts`
-- Modify: `spaced-md.client/src/composables/useSearch.ts`
-- Modify: `spaced-md.client/src/views/CardsView.vue`
-- Modify: `spaced-md.client/src/views/DeckDetailView.vue`
+- Modify: `fasolt.client/src/stores/cards.ts`
+- Modify: `fasolt.client/src/stores/decks.ts`
+- Modify: `fasolt.client/src/router/index.ts`
+- Modify: `fasolt.client/src/composables/useSearch.ts`
+- Modify: `fasolt.client/src/views/CardsView.vue`
+- Modify: `fasolt.client/src/views/DeckDetailView.vue`
 
 - [ ] **Step 1: Update stores/cards.ts**
 
@@ -948,7 +948,7 @@ In any review-related components that use `DueCard` type, ensure they no longer 
 
 Run:
 ```bash
-cd spaced-md.client && npm run build
+cd fasolt.client && npm run build
 ```
 
 Expected: May have errors from navigation component referencing "Files" — fixed in next task.
@@ -956,7 +956,7 @@ Expected: May have errors from navigation component referencing "Files" — fixe
 - [ ] **Step 9: Commit**
 
 ```bash
-git add spaced-md.client/src/
+git add fasolt.client/src/
 git commit -m "refactor: update stores, views, router, search for MCP-first pivot
 
 Remove file references from cards/decks stores and views. Update router.
@@ -970,10 +970,10 @@ Remove file results from search."
 Create the Sources view and update navigation to replace "Files" with "Sources".
 
 **Files:**
-- Create: `spaced-md.client/src/views/SourcesView.vue`
-- Create: `spaced-md.client/src/stores/sources.ts`
-- Modify: `spaced-md.client/src/components/AppLayout.vue` (sidebar with "Files" nav link)
-- Modify: `spaced-md.client/src/components/BottomNav.vue` (mobile nav with "Files" link)
+- Create: `fasolt.client/src/views/SourcesView.vue`
+- Create: `fasolt.client/src/stores/sources.ts`
+- Modify: `fasolt.client/src/components/AppLayout.vue` (sidebar with "Files" nav link)
+- Modify: `fasolt.client/src/components/BottomNav.vue` (mobile nav with "Files" link)
 
 - [ ] **Step 1: Create stores/sources.ts**
 
@@ -1013,7 +1013,7 @@ In `AppLayout.vue` and `BottomNav.vue`, replace the "Files" nav item (path `/fil
 
 Run:
 ```bash
-cd spaced-md.client && npm run build
+cd fasolt.client && npm run build
 ```
 
 Expected: Clean build.
@@ -1029,9 +1029,9 @@ Start the full stack. Verify:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.client/src/stores/sources.ts \
-  spaced-md.client/src/views/SourcesView.vue \
-  spaced-md.client/src/
+git add fasolt.client/src/stores/sources.ts \
+  fasolt.client/src/views/SourcesView.vue \
+  fasolt.client/src/
 git commit -m "feat: add Sources view replacing Files
 
 New sources store and view showing card provenance by source file.
@@ -1074,7 +1074,7 @@ Verify the full stack works after all changes.
 
 ```bash
 docker compose down -v && docker compose up -d
-dotnet ef database update --project spaced-md.Server
+dotnet ef database update --project fasolt.Server
 ```
 
 - [ ] **Step 2: Start the stack**
@@ -1109,9 +1109,9 @@ curl -c cookies -b cookies 'http://localhost:8080/api/search?q=Q1'
 - [ ] **Step 4: Test MCP server**
 
 ```bash
-SPACED_MD_URL=http://localhost:8080 \
-SPACED_MD_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
-  dotnet run --project spaced-md.Mcp
+FASOLT_URL=http://localhost:8080 \
+FASOLT_TOKEN=sm_dev_token_for_local_testing_only_do_not_use_in_production_0000 \
+  dotnet run --project fasolt.Mcp
 ```
 
 Verify it starts without errors.

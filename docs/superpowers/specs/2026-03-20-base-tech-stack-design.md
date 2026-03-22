@@ -2,7 +2,7 @@
 
 ## Overview
 
-Scaffold the base tech stack for the spaced-md project — a spaced repetition app for markdown files.
+Scaffold the base tech stack for the fasolt project — a spaced repetition app for markdown files.
 
 ## Tech Stack
 
@@ -16,7 +16,7 @@ Scaffold the base tech stack for the spaced-md project — a spaced repetition a
 Single project, folder-based Clean Architecture:
 
 ```
-spaced-md.Server/
+fasolt.Server/
   Domain/           — entities, value objects, interfaces
   Application/      — services, DTOs, use case logic
   Infrastructure/   — EF Core DbContext, repositories, Postgres config
@@ -31,7 +31,7 @@ spaced-md.Server/
 ## Frontend Structure
 
 ```
-spaced-md.client/
+fasolt.client/
   src/
     components/     — shadcn-vue components (copied in, owned by project)
     views/          — page-level components
@@ -50,7 +50,7 @@ spaced-md.client/
 
 - `docker-compose.yml` — Postgres 17 container with volume
 - `dev.sh` — runs both backend and frontend concurrently
-- `spaced-md.sln` — .NET solution file
+- `fasolt.sln` — .NET solution file
 
 ## Scope (what gets built now)
 

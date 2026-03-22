@@ -55,20 +55,20 @@ src/
 ### Task 1: Set Up Testing Infrastructure
 
 **Files:**
-- Modify: `spaced-md.client/package.json`
-- Modify: `spaced-md.client/tsconfig.app.json`
-- Create: `spaced-md.client/vitest.config.ts`
-- Create: `spaced-md.client/src/__tests__/setup.ts`
+- Modify: `fasolt.client/package.json`
+- Modify: `fasolt.client/tsconfig.app.json`
+- Create: `fasolt.client/vitest.config.ts`
+- Create: `fasolt.client/src/__tests__/setup.ts`
 
 - [ ] **Step 1: Install Vitest and Vue Test Utils**
 
 ```bash
-cd spaced-md.client && npm install -D vitest @vue/test-utils happy-dom
+cd fasolt.client && npm install -D vitest @vue/test-utils happy-dom
 ```
 
 - [ ] **Step 2: Create vitest config**
 
-Create `spaced-md.client/vitest.config.ts`:
+Create `fasolt.client/vitest.config.ts`:
 ```typescript
 import path from 'node:path'
 import vue from '@vitejs/plugin-vue'
@@ -90,7 +90,7 @@ export default defineConfig({
 
 - [ ] **Step 3: Create test setup file**
 
-Create `spaced-md.client/src/__tests__/setup.ts`:
+Create `fasolt.client/src/__tests__/setup.ts`:
 ```typescript
 // Global test setup — add shared mocks here as needed
 ```
@@ -106,7 +106,7 @@ Add to scripts in `package.json`:
 - [ ] **Step 5: Verify test runner works**
 
 ```bash
-cd spaced-md.client && npx vitest run
+cd fasolt.client && npx vitest run
 ```
 
 Expected: "No test files found" (clean exit, no config errors).
@@ -114,7 +114,7 @@ Expected: "No test files found" (clean exit, no config errors).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.client/package.json spaced-md.client/package-lock.json spaced-md.client/vitest.config.ts spaced-md.client/src/__tests__/setup.ts
+git add fasolt.client/package.json fasolt.client/package-lock.json fasolt.client/vitest.config.ts fasolt.client/src/__tests__/setup.ts
 git commit -m "chore: add vitest and vue test utils"
 ```
 
@@ -123,14 +123,14 @@ git commit -m "chore: add vitest and vue test utils"
 ### Task 2: Design System — Tokens, Tailwind Config, Dark Mode
 
 **Files:**
-- Modify: `spaced-md.client/src/style.css`
-- Modify: `spaced-md.client/tailwind.config.js`
-- Create: `spaced-md.client/src/composables/useDarkMode.ts`
-- Create: `spaced-md.client/src/__tests__/useDarkMode.test.ts`
+- Modify: `fasolt.client/src/style.css`
+- Modify: `fasolt.client/tailwind.config.js`
+- Create: `fasolt.client/src/composables/useDarkMode.ts`
+- Create: `fasolt.client/src/__tests__/useDarkMode.test.ts`
 
 - [ ] **Step 1: Write failing test for useDarkMode**
 
-Create `spaced-md.client/src/__tests__/useDarkMode.test.ts`:
+Create `fasolt.client/src/__tests__/useDarkMode.test.ts`:
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useDarkMode } from '@/composables/useDarkMode'
@@ -152,14 +152,14 @@ describe('useDarkMode', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd spaced-md.client && npx vitest run src/__tests__/useDarkMode.test.ts
+cd fasolt.client && npx vitest run src/__tests__/useDarkMode.test.ts
 ```
 
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement useDarkMode composable**
 
-Create `spaced-md.client/src/composables/useDarkMode.ts`:
+Create `fasolt.client/src/composables/useDarkMode.ts`:
 ```typescript
 import { ref, onMounted, onUnmounted } from 'vue'
 
@@ -194,14 +194,14 @@ export function useDarkMode() {
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd spaced-md.client && npx vitest run src/__tests__/useDarkMode.test.ts
+cd fasolt.client && npx vitest run src/__tests__/useDarkMode.test.ts
 ```
 
 Expected: PASS.
 
 - [ ] **Step 5: Replace style.css with Command Center tokens**
 
-Replace contents of `spaced-md.client/src/style.css` with:
+Replace contents of `fasolt.client/src/style.css` with:
 ```css
 @tailwind base;
 @tailwind components;
@@ -304,7 +304,7 @@ fontFamily: {
 - [ ] **Step 7: Commit**
 
 ```bash
-git add spaced-md.client/src/style.css spaced-md.client/tailwind.config.js spaced-md.client/src/composables/useDarkMode.ts spaced-md.client/src/__tests__/useDarkMode.test.ts
+git add fasolt.client/src/style.css fasolt.client/tailwind.config.js fasolt.client/src/composables/useDarkMode.ts fasolt.client/src/__tests__/useDarkMode.test.ts
 git commit -m "feat: command center design tokens and dark mode composable"
 ```
 
@@ -313,16 +313,16 @@ git commit -m "feat: command center design tokens and dark mode composable"
 ### Task 3: Shared Types and Mock Data Stores
 
 **Files:**
-- Create: `spaced-md.client/src/types/index.ts`
-- Create: `spaced-md.client/src/stores/dashboard.ts`
-- Create: `spaced-md.client/src/stores/review.ts`
-- Create: `spaced-md.client/src/stores/files.ts`
-- Create: `spaced-md.client/src/stores/groups.ts`
-- Create: `spaced-md.client/src/__tests__/stores/review.test.ts`
+- Create: `fasolt.client/src/types/index.ts`
+- Create: `fasolt.client/src/stores/dashboard.ts`
+- Create: `fasolt.client/src/stores/review.ts`
+- Create: `fasolt.client/src/stores/files.ts`
+- Create: `fasolt.client/src/stores/groups.ts`
+- Create: `fasolt.client/src/__tests__/stores/review.test.ts`
 
 - [ ] **Step 1: Create shared types**
 
-Create `spaced-md.client/src/types/index.ts`:
+Create `fasolt.client/src/types/index.ts`:
 ```typescript
 export interface Card {
   id: string
@@ -388,7 +388,7 @@ export interface ReviewSession {
 
 - [ ] **Step 2: Write failing test for review store**
 
-Create `spaced-md.client/src/__tests__/stores/review.test.ts`:
+Create `fasolt.client/src/__tests__/stores/review.test.ts`:
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
@@ -460,14 +460,14 @@ describe('review store', () => {
 - [ ] **Step 3: Run test to verify it fails**
 
 ```bash
-cd spaced-md.client && npx vitest run src/__tests__/stores/review.test.ts
+cd fasolt.client && npx vitest run src/__tests__/stores/review.test.ts
 ```
 
 Expected: FAIL — module not found.
 
 - [ ] **Step 4: Implement review store**
 
-Create `spaced-md.client/src/stores/review.ts`:
+Create `fasolt.client/src/stores/review.ts`:
 ```typescript
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -538,14 +538,14 @@ export const useReviewStore = defineStore('review', () => {
 - [ ] **Step 5: Run test to verify it passes**
 
 ```bash
-cd spaced-md.client && npx vitest run src/__tests__/stores/review.test.ts
+cd fasolt.client && npx vitest run src/__tests__/stores/review.test.ts
 ```
 
 Expected: PASS (4 tests).
 
 - [ ] **Step 6: Create dashboard store with mock data**
 
-Create `spaced-md.client/src/stores/dashboard.ts`:
+Create `fasolt.client/src/stores/dashboard.ts`:
 ```typescript
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -572,7 +572,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
 - [ ] **Step 7: Create files store with mock data**
 
-Create `spaced-md.client/src/stores/files.ts`:
+Create `fasolt.client/src/stores/files.ts`:
 ```typescript
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -623,7 +623,7 @@ export const useFilesStore = defineStore('files', () => {
 
 - [ ] **Step 8: Create groups store with mock data**
 
-Create `spaced-md.client/src/stores/groups.ts`:
+Create `fasolt.client/src/stores/groups.ts`:
 ```typescript
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -650,7 +650,7 @@ export const useGroupsStore = defineStore('groups', () => {
 - [ ] **Step 9: Commit**
 
 ```bash
-git add spaced-md.client/src/types/index.ts spaced-md.client/src/stores/ spaced-md.client/src/__tests__/stores/
+git add fasolt.client/src/types/index.ts fasolt.client/src/stores/ fasolt.client/src/__tests__/stores/
 git commit -m "feat: shared types and mock data stores with review store tests"
 ```
 
@@ -659,14 +659,14 @@ git commit -m "feat: shared types and mock data stores with review store tests"
 ### Task 4: Install shadcn-vue Components
 
 **Files:**
-- Creates files in: `spaced-md.client/src/components/ui/`
+- Creates files in: `fasolt.client/src/components/ui/`
 
 - [ ] **Step 1: Install required shadcn-vue components**
 
-Run each from the `spaced-md.client` directory:
+Run each from the `fasolt.client` directory:
 
 ```bash
-cd spaced-md.client
+cd fasolt.client
 npx shadcn-vue@latest add card
 npx shadcn-vue@latest add table
 npx shadcn-vue@latest add input
@@ -685,7 +685,7 @@ Accept defaults for all prompts.
 Check that directories exist under `src/components/ui/` for: card, table, input, dialog, dropdown-menu, tabs, progress, badge, tooltip.
 
 ```bash
-ls spaced-md.client/src/components/ui/
+ls fasolt.client/src/components/ui/
 ```
 
 Expected: `badge button card dialog dropdown-menu input progress table tabs tooltip`
@@ -693,7 +693,7 @@ Expected: `badge button card dialog dropdown-menu input progress table tabs tool
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/components/ui/
+git add fasolt.client/src/components/ui/
 git commit -m "feat: install shadcn-vue components (card, table, input, dialog, dropdown-menu, tabs, progress, badge, tooltip)"
 ```
 
@@ -702,22 +702,22 @@ git commit -m "feat: install shadcn-vue components (card, table, input, dialog, 
 ### Task 5: App Shell — Layout, Top Bar, Router
 
 **Files:**
-- Create: `spaced-md.client/src/layouts/AppLayout.vue`
-- Create: `spaced-md.client/src/components/TopBar.vue`
-- Create: `spaced-md.client/src/components/BottomNav.vue`
-- Create: `spaced-md.client/src/components/KbdHint.vue`
-- Modify: `spaced-md.client/src/App.vue`
-- Modify: `spaced-md.client/src/router/index.ts`
-- Delete: `spaced-md.client/src/views/HomeView.vue`
-- Create: `spaced-md.client/src/views/DashboardView.vue` (placeholder)
-- Create: `spaced-md.client/src/views/FilesView.vue` (placeholder)
-- Create: `spaced-md.client/src/views/GroupsView.vue` (placeholder)
-- Create: `spaced-md.client/src/views/ReviewView.vue` (placeholder)
-- Create: `spaced-md.client/src/views/SettingsView.vue` (placeholder)
+- Create: `fasolt.client/src/layouts/AppLayout.vue`
+- Create: `fasolt.client/src/components/TopBar.vue`
+- Create: `fasolt.client/src/components/BottomNav.vue`
+- Create: `fasolt.client/src/components/KbdHint.vue`
+- Modify: `fasolt.client/src/App.vue`
+- Modify: `fasolt.client/src/router/index.ts`
+- Delete: `fasolt.client/src/views/HomeView.vue`
+- Create: `fasolt.client/src/views/DashboardView.vue` (placeholder)
+- Create: `fasolt.client/src/views/FilesView.vue` (placeholder)
+- Create: `fasolt.client/src/views/GroupsView.vue` (placeholder)
+- Create: `fasolt.client/src/views/ReviewView.vue` (placeholder)
+- Create: `fasolt.client/src/views/SettingsView.vue` (placeholder)
 
 - [ ] **Step 1: Create KbdHint component**
 
-Create `spaced-md.client/src/components/KbdHint.vue`:
+Create `fasolt.client/src/components/KbdHint.vue`:
 ```vue
 <script setup lang="ts">
 defineProps<{ keys: string }>()
@@ -732,7 +732,7 @@ defineProps<{ keys: string }>()
 
 - [ ] **Step 2: Create TopBar component**
 
-Create `spaced-md.client/src/components/TopBar.vue`:
+Create `fasolt.client/src/components/TopBar.vue`:
 ```vue
 <script setup lang="ts">
 import { Input } from '@/components/ui/input'
@@ -742,7 +742,7 @@ import KbdHint from '@/components/KbdHint.vue'
 <template>
   <header class="flex items-center justify-between border-b border-border px-5 py-3">
     <span class="font-mono text-[13px] font-bold text-foreground tracking-tight">
-      spaced-md
+      fasolt
     </span>
     <div class="relative hidden sm:block">
       <Input
@@ -762,7 +762,7 @@ import KbdHint from '@/components/KbdHint.vue'
 
 - [ ] **Step 3: Create BottomNav component**
 
-Create `spaced-md.client/src/components/BottomNav.vue`:
+Create `fasolt.client/src/components/BottomNav.vue`:
 ```vue
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
@@ -799,7 +799,7 @@ function isActive(path: string) {
 
 - [ ] **Step 4: Create AppLayout**
 
-Create `spaced-md.client/src/layouts/AppLayout.vue`:
+Create `fasolt.client/src/layouts/AppLayout.vue`:
 ```vue
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
@@ -854,7 +854,7 @@ const tabs = [
 
 - [ ] **Step 5: Update App.vue to use layout**
 
-Replace `spaced-md.client/src/App.vue`:
+Replace `fasolt.client/src/App.vue`:
 ```vue
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -869,7 +869,7 @@ import AppLayout from '@/layouts/AppLayout.vue'
 
 - [ ] **Step 6: Create placeholder views**
 
-Create `spaced-md.client/src/views/DashboardView.vue`:
+Create `fasolt.client/src/views/DashboardView.vue`:
 ```vue
 <template>
   <div>
@@ -879,7 +879,7 @@ Create `spaced-md.client/src/views/DashboardView.vue`:
 </template>
 ```
 
-Create `spaced-md.client/src/views/FilesView.vue`:
+Create `fasolt.client/src/views/FilesView.vue`:
 ```vue
 <template>
   <div>
@@ -889,7 +889,7 @@ Create `spaced-md.client/src/views/FilesView.vue`:
 </template>
 ```
 
-Create `spaced-md.client/src/views/GroupsView.vue`:
+Create `fasolt.client/src/views/GroupsView.vue`:
 ```vue
 <template>
   <div>
@@ -899,7 +899,7 @@ Create `spaced-md.client/src/views/GroupsView.vue`:
 </template>
 ```
 
-Create `spaced-md.client/src/views/ReviewView.vue`:
+Create `fasolt.client/src/views/ReviewView.vue`:
 ```vue
 <template>
   <div>
@@ -909,7 +909,7 @@ Create `spaced-md.client/src/views/ReviewView.vue`:
 </template>
 ```
 
-Create `spaced-md.client/src/views/SettingsView.vue`:
+Create `fasolt.client/src/views/SettingsView.vue`:
 ```vue
 <template>
   <div>
@@ -921,7 +921,7 @@ Create `spaced-md.client/src/views/SettingsView.vue`:
 
 - [ ] **Step 7: Update router**
 
-Replace `spaced-md.client/src/router/index.ts`:
+Replace `fasolt.client/src/router/index.ts`:
 ```typescript
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
@@ -943,13 +943,13 @@ export default router
 - [ ] **Step 8: Delete HomeView.vue**
 
 ```bash
-rm spaced-md.client/src/views/HomeView.vue
+rm fasolt.client/src/views/HomeView.vue
 ```
 
 - [ ] **Step 9: Verify the app builds**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build with no errors.
@@ -957,7 +957,7 @@ Expected: Clean build with no errors.
 - [ ] **Step 10: Commit**
 
 ```bash
-git add -A spaced-md.client/src/
+git add -A fasolt.client/src/
 git commit -m "feat: app shell with top bar, tab navigation, router, and placeholder views"
 ```
 
@@ -966,14 +966,14 @@ git commit -m "feat: app shell with top bar, tab navigation, router, and placeho
 ### Task 6: Dashboard Page
 
 **Files:**
-- Create: `spaced-md.client/src/components/StatCard.vue`
-- Create: `spaced-md.client/src/components/StatGrid.vue`
-- Create: `spaced-md.client/src/components/DeckTable.vue`
-- Modify: `spaced-md.client/src/views/DashboardView.vue`
+- Create: `fasolt.client/src/components/StatCard.vue`
+- Create: `fasolt.client/src/components/StatGrid.vue`
+- Create: `fasolt.client/src/components/DeckTable.vue`
+- Modify: `fasolt.client/src/views/DashboardView.vue`
 
 - [ ] **Step 1: Create StatCard component**
 
-Create `spaced-md.client/src/components/StatCard.vue`:
+Create `fasolt.client/src/components/StatCard.vue`:
 ```vue
 <script setup lang="ts">
 import type { Stat } from '@/types'
@@ -1001,7 +1001,7 @@ defineProps<{ stat: Stat }>()
 
 - [ ] **Step 2: Create StatGrid component**
 
-Create `spaced-md.client/src/components/StatGrid.vue`:
+Create `fasolt.client/src/components/StatGrid.vue`:
 ```vue
 <script setup lang="ts">
 import type { Stat } from '@/types'
@@ -1019,7 +1019,7 @@ defineProps<{ stats: Stat[] }>()
 
 - [ ] **Step 3: Create DeckTable component**
 
-Create `spaced-md.client/src/components/DeckTable.vue`:
+Create `fasolt.client/src/components/DeckTable.vue`:
 ```vue
 <script setup lang="ts">
 import type { Deck } from '@/types'
@@ -1060,7 +1060,7 @@ defineEmits<{ 'select-deck': [deck: Deck] }>()
 
 - [ ] **Step 4: Wire up DashboardView**
 
-Replace `spaced-md.client/src/views/DashboardView.vue`:
+Replace `fasolt.client/src/views/DashboardView.vue`:
 ```vue
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
@@ -1090,7 +1090,7 @@ function onSelectDeck(deck: Deck) {
 - [ ] **Step 5: Verify the app builds**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build.
@@ -1098,7 +1098,7 @@ Expected: Clean build.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add spaced-md.client/src/components/StatCard.vue spaced-md.client/src/components/StatGrid.vue spaced-md.client/src/components/DeckTable.vue spaced-md.client/src/views/DashboardView.vue
+git add fasolt.client/src/components/StatCard.vue fasolt.client/src/components/StatGrid.vue fasolt.client/src/components/DeckTable.vue fasolt.client/src/views/DashboardView.vue
 git commit -m "feat: dashboard page with stat grid and deck table"
 ```
 
@@ -1107,15 +1107,15 @@ git commit -m "feat: dashboard page with stat grid and deck table"
 ### Task 7: Study/Review Flow
 
 **Files:**
-- Create: `spaced-md.client/src/components/ProgressMeter.vue`
-- Create: `spaced-md.client/src/components/ReviewCard.vue`
-- Create: `spaced-md.client/src/components/RatingButtons.vue`
-- Create: `spaced-md.client/src/components/SessionComplete.vue`
-- Modify: `spaced-md.client/src/views/ReviewView.vue`
+- Create: `fasolt.client/src/components/ProgressMeter.vue`
+- Create: `fasolt.client/src/components/ReviewCard.vue`
+- Create: `fasolt.client/src/components/RatingButtons.vue`
+- Create: `fasolt.client/src/components/SessionComplete.vue`
+- Modify: `fasolt.client/src/views/ReviewView.vue`
 
 - [ ] **Step 1: Create ProgressMeter component**
 
-Create `spaced-md.client/src/components/ProgressMeter.vue`:
+Create `fasolt.client/src/components/ProgressMeter.vue`:
 ```vue
 <script setup lang="ts">
 const props = defineProps<{ total: number; current: number }>()
@@ -1139,7 +1139,7 @@ const props = defineProps<{ total: number; current: number }>()
 
 - [ ] **Step 2: Create ReviewCard component**
 
-Create `spaced-md.client/src/components/ReviewCard.vue`:
+Create `fasolt.client/src/components/ReviewCard.vue`:
 ```vue
 <script setup lang="ts">
 import type { Card } from '@/types'
@@ -1174,7 +1174,7 @@ defineEmits<{ flip: [] }>()
 
 - [ ] **Step 3: Create RatingButtons component**
 
-Create `spaced-md.client/src/components/RatingButtons.vue`:
+Create `fasolt.client/src/components/RatingButtons.vue`:
 ```vue
 <script setup lang="ts">
 import type { ReviewRating } from '@/types'
@@ -1210,7 +1210,7 @@ const ratings: { key: string; label: string; rating: ReviewRating; highlight?: b
 
 - [ ] **Step 4: Create SessionComplete component**
 
-Create `spaced-md.client/src/components/SessionComplete.vue`:
+Create `fasolt.client/src/components/SessionComplete.vue`:
 ```vue
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
@@ -1259,7 +1259,7 @@ defineEmits<{ done: [] }>()
 
 - [ ] **Step 5: Wire up ReviewView**
 
-Replace `spaced-md.client/src/views/ReviewView.vue`:
+Replace `fasolt.client/src/views/ReviewView.vue`:
 ```vue
 <script setup lang="ts">
 import { onMounted } from 'vue'
@@ -1352,7 +1352,7 @@ function onDone() {
 - [ ] **Step 6: Verify the app builds**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build.
@@ -1360,7 +1360,7 @@ Expected: Clean build.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add spaced-md.client/src/components/ProgressMeter.vue spaced-md.client/src/components/ReviewCard.vue spaced-md.client/src/components/RatingButtons.vue spaced-md.client/src/components/SessionComplete.vue spaced-md.client/src/views/ReviewView.vue
+git add fasolt.client/src/components/ProgressMeter.vue fasolt.client/src/components/ReviewCard.vue fasolt.client/src/components/RatingButtons.vue fasolt.client/src/components/SessionComplete.vue fasolt.client/src/views/ReviewView.vue
 git commit -m "feat: study/review flow with card flip, rating, progress meter, and session summary"
 ```
 
@@ -1369,11 +1369,11 @@ git commit -m "feat: study/review flow with card flip, rating, progress meter, a
 ### Task 8: Files Page
 
 **Files:**
-- Modify: `spaced-md.client/src/views/FilesView.vue`
+- Modify: `fasolt.client/src/views/FilesView.vue`
 
 - [ ] **Step 1: Implement FilesView**
 
-Replace `spaced-md.client/src/views/FilesView.vue`:
+Replace `fasolt.client/src/views/FilesView.vue`:
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
@@ -1464,7 +1464,7 @@ function formatDate(date: Date): string {
 - [ ] **Step 2: Verify the app builds**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build.
@@ -1472,7 +1472,7 @@ Expected: Clean build.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/views/FilesView.vue
+git add fasolt.client/src/views/FilesView.vue
 git commit -m "feat: files page with expandable heading tree and upload zone"
 ```
 
@@ -1481,11 +1481,11 @@ git commit -m "feat: files page with expandable heading tree and upload zone"
 ### Task 9: Groups Page
 
 **Files:**
-- Modify: `spaced-md.client/src/views/GroupsView.vue`
+- Modify: `fasolt.client/src/views/GroupsView.vue`
 
 - [ ] **Step 1: Implement GroupsView**
 
-Replace `spaced-md.client/src/views/GroupsView.vue`:
+Replace `fasolt.client/src/views/GroupsView.vue`:
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
@@ -1566,7 +1566,7 @@ function createGroup() {
 - [ ] **Step 2: Verify the app builds**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build.
@@ -1574,7 +1574,7 @@ Expected: Clean build.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/views/GroupsView.vue
+git add fasolt.client/src/views/GroupsView.vue
 git commit -m "feat: groups page with create/delete and due count display"
 ```
 
@@ -1583,13 +1583,13 @@ git commit -m "feat: groups page with create/delete and due count display"
 ### Task 10: Keyboard Shortcuts
 
 **Files:**
-- Create: `spaced-md.client/src/composables/useKeyboardShortcuts.ts`
-- Create: `spaced-md.client/src/__tests__/useKeyboardShortcuts.test.ts`
-- Modify: `spaced-md.client/src/views/ReviewView.vue`
+- Create: `fasolt.client/src/composables/useKeyboardShortcuts.ts`
+- Create: `fasolt.client/src/__tests__/useKeyboardShortcuts.test.ts`
+- Modify: `fasolt.client/src/views/ReviewView.vue`
 
 - [ ] **Step 1: Write failing test for keyboard shortcuts**
 
-Create `spaced-md.client/src/__tests__/useKeyboardShortcuts.test.ts`:
+Create `fasolt.client/src/__tests__/useKeyboardShortcuts.test.ts`:
 ```typescript
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
@@ -1642,14 +1642,14 @@ describe('useKeyboardShortcuts', () => {
 - [ ] **Step 2: Run test to verify it fails**
 
 ```bash
-cd spaced-md.client && npx vitest run src/__tests__/useKeyboardShortcuts.test.ts
+cd fasolt.client && npx vitest run src/__tests__/useKeyboardShortcuts.test.ts
 ```
 
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement useKeyboardShortcuts**
 
-Create `spaced-md.client/src/composables/useKeyboardShortcuts.ts`:
+Create `fasolt.client/src/composables/useKeyboardShortcuts.ts`:
 ```typescript
 type ShortcutMap = Record<string, () => void>
 
@@ -1691,14 +1691,14 @@ export function useKeyboardShortcuts() {
 - [ ] **Step 4: Run test to verify it passes**
 
 ```bash
-cd spaced-md.client && npx vitest run src/__tests__/useKeyboardShortcuts.test.ts
+cd fasolt.client && npx vitest run src/__tests__/useKeyboardShortcuts.test.ts
 ```
 
 Expected: PASS (3 tests).
 
 - [ ] **Step 5: Add keyboard shortcuts to ReviewView**
 
-Add to the `<script setup>` section of `spaced-md.client/src/views/ReviewView.vue`, after the existing imports:
+Add to the `<script setup>` section of `fasolt.client/src/views/ReviewView.vue`, after the existing imports:
 
 ```typescript
 import { onMounted, onUnmounted } from 'vue'
@@ -1731,7 +1731,7 @@ Note: The existing `onMounted` for starting the session should be merged with th
 - [ ] **Step 6: Run all tests**
 
 ```bash
-cd spaced-md.client && npx vitest run
+cd fasolt.client && npx vitest run
 ```
 
 Expected: All tests pass.
@@ -1739,7 +1739,7 @@ Expected: All tests pass.
 - [ ] **Step 7: Verify the app builds**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build.
@@ -1747,7 +1747,7 @@ Expected: Clean build.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add spaced-md.client/src/composables/useKeyboardShortcuts.ts spaced-md.client/src/__tests__/useKeyboardShortcuts.test.ts spaced-md.client/src/views/ReviewView.vue
+git add fasolt.client/src/composables/useKeyboardShortcuts.ts fasolt.client/src/__tests__/useKeyboardShortcuts.test.ts fasolt.client/src/views/ReviewView.vue
 git commit -m "feat: keyboard shortcuts for review flow (space flip, 1-4 rate, esc exit)"
 ```
 
@@ -1761,7 +1761,7 @@ git commit -m "feat: keyboard shortcuts for review flow (space flip, 1-4 rate, e
 - [ ] **Step 1: Run all tests**
 
 ```bash
-cd spaced-md.client && npx vitest run
+cd fasolt.client && npx vitest run
 ```
 
 Expected: All tests pass.
@@ -1769,7 +1769,7 @@ Expected: All tests pass.
 - [ ] **Step 2: Type-check and build**
 
 ```bash
-cd spaced-md.client && npx vue-tsc -b && npx vite build
+cd fasolt.client && npx vue-tsc -b && npx vite build
 ```
 
 Expected: Clean build, no type errors.
@@ -1777,7 +1777,7 @@ Expected: Clean build, no type errors.
 - [ ] **Step 3: Visual smoke test**
 
 ```bash
-cd spaced-md.client && npx vite --open
+cd fasolt.client && npx vite --open
 ```
 
 Manually verify:
@@ -1795,6 +1795,6 @@ Manually verify:
 
 If fixes were needed:
 ```bash
-git add -A spaced-md.client/src/
+git add -A fasolt.client/src/
 git commit -m "fix: smoke test fixes for command center UI"
 ```

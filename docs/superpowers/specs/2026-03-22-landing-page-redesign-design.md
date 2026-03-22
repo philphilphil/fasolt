@@ -16,7 +16,7 @@ Conversational but minimal. Slightly warmer than a README, but no marketing voic
 
 ### 1. Nav Bar
 
-- Logo: "spaced-md"
+- Logo: "fasolt"
 - Dark mode toggle
 - "Log in" link
 - No separate "Sign up" button in nav (hero handles it)
@@ -40,7 +40,7 @@ Conversational but minimal. Slightly warmer than a README, but no marketing voic
 Three columns, one line each:
 
 1. **Write notes** — Use Obsidian, any editor, or plain text files.
-2. **Your AI agent creates flashcards** — It reads your notes and pushes cards to spaced-md via MCP.
+2. **Your AI agent creates flashcards** — It reads your notes and pushes cards to fasolt via MCP.
 3. **Learn and remember** — Study your cards on the web. Spaced repetition schedules reviews automatically.
 
 No icons, no code snippets.

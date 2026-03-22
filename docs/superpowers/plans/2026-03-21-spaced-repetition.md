@@ -13,29 +13,29 @@
 ## File Map
 
 ### Backend — New Files
-- `spaced-md.Server/Application/Services/Sm2Algorithm.cs` — Pure SM-2 calculation logic
-- `spaced-md.Server/Application/Dtos/ReviewDtos.cs` — DTOs for review endpoints
-- `spaced-md.Server/Api/Endpoints/ReviewEndpoints.cs` — /api/review endpoints (due, rate, stats)
+- `fasolt.Server/Application/Services/Sm2Algorithm.cs` — Pure SM-2 calculation logic
+- `fasolt.Server/Application/Dtos/ReviewDtos.cs` — DTOs for review endpoints
+- `fasolt.Server/Api/Endpoints/ReviewEndpoints.cs` — /api/review endpoints (due, rate, stats)
 
 ### Backend — Modified Files
-- `spaced-md.Server/Domain/Entities/Card.cs` — Add SM-2 fields
-- `spaced-md.Server/Infrastructure/Data/AppDbContext.cs` — Configure new columns, add index
-- `spaced-md.Server/Program.cs` — Register `MapReviewEndpoints()`
+- `fasolt.Server/Domain/Entities/Card.cs` — Add SM-2 fields
+- `fasolt.Server/Infrastructure/Data/AppDbContext.cs` — Configure new columns, add index
+- `fasolt.Server/Program.cs` — Register `MapReviewEndpoints()`
 
 ### Frontend — Modified Files
-- `spaced-md.client/src/types/index.ts` — Add SM-2 fields to Card, add ReviewStats type
-- `spaced-md.client/src/stores/review.ts` — Rewrite with API-backed session logic
-- `spaced-md.client/src/views/ReviewView.vue` — Wire to real data, remove mocks
-- `spaced-md.client/src/components/ReviewCard.vue` — Add markdown rendering
-- `spaced-md.client/src/views/DashboardView.vue` — Add "Study now" button with due count
+- `fasolt.client/src/types/index.ts` — Add SM-2 fields to Card, add ReviewStats type
+- `fasolt.client/src/stores/review.ts` — Rewrite with API-backed session logic
+- `fasolt.client/src/views/ReviewView.vue` — Wire to real data, remove mocks
+- `fasolt.client/src/components/ReviewCard.vue` — Add markdown rendering
+- `fasolt.client/src/views/DashboardView.vue` — Add "Study now" button with due count
 
 ---
 
 ## Task 1: Add SM-2 Fields to Card Entity + Migration
 
 **Files:**
-- Modify: `spaced-md.Server/Domain/Entities/Card.cs`
-- Modify: `spaced-md.Server/Infrastructure/Data/AppDbContext.cs`
+- Modify: `fasolt.Server/Domain/Entities/Card.cs`
+- Modify: `fasolt.Server/Infrastructure/Data/AppDbContext.cs`
 
 - [ ] **Step 1: Add fields to Card entity**
 
@@ -62,15 +62,15 @@ entity.HasIndex(e => new { e.UserId, e.DueAt });
 - [ ] **Step 3: Create and apply migration**
 
 ```bash
-dotnet ef migrations add AddSm2Fields --project spaced-md.Server
+dotnet ef migrations add AddSm2Fields --project fasolt.Server
 docker compose up -d
-dotnet ef database update --project spaced-md.Server
+dotnet ef database update --project fasolt.Server
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.Server/Domain/Entities/Card.cs spaced-md.Server/Infrastructure/Data/AppDbContext.cs spaced-md.Server/Infrastructure/Data/Migrations/
+git add fasolt.Server/Domain/Entities/Card.cs fasolt.Server/Infrastructure/Data/AppDbContext.cs fasolt.Server/Infrastructure/Data/Migrations/
 git commit -m "feat: add SM-2 fields to Card entity (EaseFactor, Interval, Repetitions, DueAt, State)"
 ```
 
@@ -79,13 +79,13 @@ git commit -m "feat: add SM-2 fields to Card entity (EaseFactor, Interval, Repet
 ## Task 2: SM-2 Algorithm Service
 
 **Files:**
-- Create: `spaced-md.Server/Application/Services/Sm2Algorithm.cs`
+- Create: `fasolt.Server/Application/Services/Sm2Algorithm.cs`
 
 - [ ] **Step 1: Create Sm2Algorithm**
 
 ```csharp
-// spaced-md.Server/Application/Services/Sm2Algorithm.cs
-namespace SpacedMd.Server.Application.Services;
+// fasolt.Server/Application/Services/Sm2Algorithm.cs
+namespace Fasolt.Server.Application.Services;
 
 public record Sm2Result(double EaseFactor, int Interval, int Repetitions, string State);
 
@@ -133,7 +133,7 @@ public static class Sm2Algorithm
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Services/Sm2Algorithm.cs
+git add fasolt.Server/Application/Services/Sm2Algorithm.cs
 git commit -m "feat: add SM-2 algorithm service"
 ```
 
@@ -142,13 +142,13 @@ git commit -m "feat: add SM-2 algorithm service"
 ## Task 3: Review DTOs
 
 **Files:**
-- Create: `spaced-md.Server/Application/Dtos/ReviewDtos.cs`
+- Create: `fasolt.Server/Application/Dtos/ReviewDtos.cs`
 
 - [ ] **Step 1: Create DTOs**
 
 ```csharp
-// spaced-md.Server/Application/Dtos/ReviewDtos.cs
-namespace SpacedMd.Server.Application.Dtos;
+// fasolt.Server/Application/Dtos/ReviewDtos.cs
+namespace Fasolt.Server.Application.Dtos;
 
 public record RateCardRequest(Guid CardId, int Quality);
 
@@ -176,7 +176,7 @@ public record ReviewStatsDto(int DueCount, int TotalCards, int StudiedToday);
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.Server/Application/Dtos/ReviewDtos.cs
+git add fasolt.Server/Application/Dtos/ReviewDtos.cs
 git commit -m "feat: add review DTOs"
 ```
 
@@ -185,22 +185,22 @@ git commit -m "feat: add review DTOs"
 ## Task 4: Review API Endpoints
 
 **Files:**
-- Create: `spaced-md.Server/Api/Endpoints/ReviewEndpoints.cs`
-- Modify: `spaced-md.Server/Program.cs`
+- Create: `fasolt.Server/Api/Endpoints/ReviewEndpoints.cs`
+- Modify: `fasolt.Server/Program.cs`
 
 - [ ] **Step 1: Create ReviewEndpoints**
 
 ```csharp
-// spaced-md.Server/Api/Endpoints/ReviewEndpoints.cs
+// fasolt.Server/Api/Endpoints/ReviewEndpoints.cs
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SpacedMd.Server.Application.Dtos;
-using SpacedMd.Server.Application.Services;
-using SpacedMd.Server.Domain.Entities;
-using SpacedMd.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Application.Services;
+using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
-namespace SpacedMd.Server.Api.Endpoints;
+namespace Fasolt.Server.Api.Endpoints;
 
 public static class ReviewEndpoints
 {
@@ -320,13 +320,13 @@ app.MapReviewEndpoints();
 - [ ] **Step 3: Build and verify**
 
 ```bash
-dotnet build spaced-md.Server
+dotnet build fasolt.Server
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add spaced-md.Server/Api/Endpoints/ReviewEndpoints.cs spaced-md.Server/Program.cs
+git add fasolt.Server/Api/Endpoints/ReviewEndpoints.cs fasolt.Server/Program.cs
 git commit -m "feat: add /api/review endpoints (due, rate, stats)"
 ```
 
@@ -335,7 +335,7 @@ git commit -m "feat: add /api/review endpoints (due, rate, stats)"
 ## Task 5: Frontend Types Update
 
 **Files:**
-- Modify: `spaced-md.client/src/types/index.ts`
+- Modify: `fasolt.client/src/types/index.ts`
 
 - [ ] **Step 1: Add SM-2 fields to Card interface**
 
@@ -382,7 +382,7 @@ export interface ReviewStats {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/types/index.ts
+git add fasolt.client/src/types/index.ts
 git commit -m "feat: add SM-2 fields to Card type, add DueCard and ReviewStats types"
 ```
 
@@ -391,12 +391,12 @@ git commit -m "feat: add SM-2 fields to Card type, add DueCard and ReviewStats t
 ## Task 6: Rewrite Review Store
 
 **Files:**
-- Modify: `spaced-md.client/src/stores/review.ts`
+- Modify: `fasolt.client/src/stores/review.ts`
 
 - [ ] **Step 1: Rewrite store**
 
 ```typescript
-// spaced-md.client/src/stores/review.ts
+// fasolt.client/src/stores/review.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { DueCard, ReviewStats } from '@/types'
@@ -500,7 +500,7 @@ export const useReviewStore = defineStore('review', () => {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/stores/review.ts
+git add fasolt.client/src/stores/review.ts
 git commit -m "feat: rewrite review store with API-backed SM-2 session"
 ```
 
@@ -509,8 +509,8 @@ git commit -m "feat: rewrite review store with API-backed SM-2 session"
 ## Task 7: Wire ReviewView and ReviewCard
 
 **Files:**
-- Modify: `spaced-md.client/src/views/ReviewView.vue`
-- Modify: `spaced-md.client/src/components/ReviewCard.vue`
+- Modify: `fasolt.client/src/views/ReviewView.vue`
+- Modify: `fasolt.client/src/components/ReviewCard.vue`
 
 - [ ] **Step 1: Update ReviewCard with markdown rendering**
 
@@ -565,7 +565,7 @@ Read the full file first, then update the script to remove mocks and wire to the
 - [ ] **Step 3: Commit**
 
 ```bash
-git add spaced-md.client/src/views/ReviewView.vue spaced-md.client/src/components/ReviewCard.vue
+git add fasolt.client/src/views/ReviewView.vue fasolt.client/src/components/ReviewCard.vue
 git commit -m "feat: wire ReviewView and ReviewCard to real SM-2 data with markdown rendering"
 ```
 
@@ -574,7 +574,7 @@ git commit -m "feat: wire ReviewView and ReviewCard to real SM-2 data with markd
 ## Task 8: Dashboard Study Button
 
 **Files:**
-- Modify: `spaced-md.client/src/views/DashboardView.vue`
+- Modify: `fasolt.client/src/views/DashboardView.vue`
 
 - [ ] **Step 1: Add study button with due count**
 
@@ -583,7 +583,7 @@ Read the file. Add a "Study now" button that links to `/review` and shows the du
 - [ ] **Step 2: Commit**
 
 ```bash
-git add spaced-md.client/src/views/DashboardView.vue
+git add fasolt.client/src/views/DashboardView.vue
 git commit -m "feat: add Study now button and real due/total stats on dashboard"
 ```
 
