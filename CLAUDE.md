@@ -97,34 +97,6 @@ docker compose down          # stop Postgres
 
 Feature requirements live in `docs/requirements/`. Each file is a self-contained spec for one feature area. `00-overview.md` contains the full overview and a map of all requirement files. To implement a feature, read the corresponding `XX-feature-name.md` file. After implementing a requirement, move it to `docs/requirements/done/`.
 
-## Generating Flashcard Markers in Markdown Files
-
-When asked to generate questions/flashcards for a `.md` file (typically an Obsidian vault note):
-
-**What this does:** Add `?:: Question text` marker lines directly into the local markdown file. These markers are used by the MCP agent to identify flashcard boundaries when reading local files — the agent then calls `CreateCards` to push the cards to the server. Files are never uploaded to the server; the local vault stays as the source of truth. The content below the marker (until the next heading or marker) becomes the card's answer.
-
-**Process:**
-
-1. **Read the file** and detect its language (English, German, etc.). All generated questions must be written in that same language.
-2. **Scope**: If the user specifies sections or headings, only add markers to those areas. If nothing is specified, cover the entire file.
-3. **Quantity**: 1-3 markers per section. Prefer fewer high-quality questions over many shallow ones. Focus on concepts worth memorizing — definitions, key distinctions, cause/effect, "why" questions. Skip trivial or obvious facts.
-4. **Do NOT edit the file immediately.** First, propose the questions to the user:
-   ```
-   Section: [heading]
-   1. ?:: What is X?
-   2. ?:: Why does Y happen?
-   ```
-   Then ask: "Want me to add these markers to the file? You can adjust, remove, or add any."
-5. **Only after user approval**, edit the file to insert the `?::` marker lines. Place each marker on its own line before the paragraph that answers the question. Do not alter any existing content — only add marker lines.
-
-**Marker format example:**
-```markdown
-## CAP Theorem
-
-?:: What is the CAP theorem?
-The CAP theorem states you can only have two of three: Consistency, Availability, Partition tolerance.
-```
-
 ## Dev Seed User
 
 In development, a seed user is auto-created on startup:
