@@ -53,7 +53,7 @@ function onDone() {
 </script>
 
 <template>
-  <div class="flex min-h-[calc(100vh-8rem)] flex-col">
+  <div class="flex min-h-[calc(100vh-8rem)] flex-col pb-16 sm:pb-0">
     <template v-if="review.isActive && !review.isComplete">
       <!-- Context bar -->
       <div class="mb-3 flex items-center justify-between text-[11px] text-muted-foreground">

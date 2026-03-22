@@ -38,7 +38,7 @@ const { isDark, toggle } = useDarkMode()
           MCP-first spaced repetition for your markdown notes.
         </h1>
         <p class="text-base text-muted-foreground mb-8">
-          API and browser also fully supported. Free forever.
+          API and browser also fully supported. Free.
         </p>
         <div class="flex flex-wrap gap-3">
           <RouterLink to="/register">
@@ -66,13 +66,13 @@ const { isDark, toggle } = useDarkMode()
           <div>
             <h3 class="text-sm font-semibold mb-1">Write notes</h3>
             <p class="text-sm text-muted-foreground">
-              Use Obsidian, any editor, or plain text files.
+              Use Obsidian, any editor, or plain text files. No special format required.
             </p>
           </div>
           <div>
-            <h3 class="text-sm font-semibold mb-1">Your AI agent creates flashcards</h3>
+            <h3 class="text-sm font-semibold mb-1">Connect your AI agent</h3>
             <p class="text-sm text-muted-foreground">
-              It reads your notes and pushes cards to spaced-md via MCP.
+              Add the spaced-md MCP server to Claude, Cursor, or any MCP-compatible agent. It reads your notes and creates flashcards.
             </p>
           </div>
           <div>
@@ -80,6 +80,36 @@ const { isDark, toggle } = useDarkMode()
             <p class="text-sm text-muted-foreground">
               Study your cards on the web. Spaced repetition schedules reviews automatically.
             </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Study preview -->
+    <section class="mx-auto max-w-5xl px-6 py-14">
+      <div class="flex flex-col items-center gap-6">
+        <p class="text-sm text-muted-foreground">Study on any device</p>
+        <div class="flex items-center gap-4">
+          <div class="rounded-2xl border border-border bg-muted/30 p-2 shadow-lg">
+            <img
+              src="/study-question.png"
+              alt="Flashcard question side"
+              class="rounded-xl w-[180px] sm:w-[200px]"
+            />
+          </div>
+          <div class="rounded-2xl border border-border bg-muted/30 p-2 shadow-lg">
+            <img
+              src="/study-answer.png"
+              alt="Flashcard answer side with rating buttons"
+              class="rounded-xl w-[180px] sm:w-[200px]"
+            />
+          </div>
+          <div class="hidden sm:block rounded-2xl border border-border bg-muted/30 p-2 shadow-lg">
+            <img
+              src="/study-complete.png"
+              alt="Study session complete with statistics"
+              class="rounded-xl w-[200px]"
+            />
           </div>
         </div>
       </div>
