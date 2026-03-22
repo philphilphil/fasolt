@@ -11,10 +11,10 @@ defineProps<{ stat: Stat }>()
       <div class="font-mono text-[22px] font-bold tracking-tight text-foreground">
         {{ stat.value }}
       </div>
-      <div class="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+      <div class="mt-0.5 text-xs uppercase tracking-widest text-muted-foreground">
         {{ stat.label }}
       </div>
-      <div v-if="stat.delta" class="mt-1 text-[10px] text-success">
+      <div v-if="stat.delta" class="mt-1 text-xs text-success">
         {{ stat.delta }}
       </div>
     </CardContent>
