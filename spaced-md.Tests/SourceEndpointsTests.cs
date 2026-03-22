@@ -7,10 +7,7 @@ using SpacedMd.Tests.Helpers;
 namespace SpacedMd.Tests;
 
 /// <summary>
-/// Source endpoint tests.
-/// The /api/sources endpoint uses Postgres-specific raw SQL (FILTER clause, ::int casts).
-/// Tests that exercise that SQL are skipped for the InMemory provider.
-/// Auth behaviour (401 without token) is provider-agnostic and tested without skipping.
+/// Source endpoint integration tests. Requires Docker Postgres running.
 /// </summary>
 public class SourceEndpointsTests : IAsyncLifetime
 {
@@ -41,7 +38,7 @@ public class SourceEndpointsTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
-    [Fact(Skip = "Requires Postgres — raw SQL uses FILTER clause and ::int casts not supported by the InMemory provider")]
+    [Fact]
     public async Task ListSources_ReturnsEmpty_WhenNoCards()
     {
         var response = await _client.GetAsync("/api/sources");
@@ -52,7 +49,7 @@ public class SourceEndpointsTests : IAsyncLifetime
         result!.Items.Should().BeEmpty();
     }
 
-    [Fact(Skip = "Requires Postgres — raw SQL uses FILTER clause and ::int casts not supported by the InMemory provider")]
+    [Fact]
     public async Task ListSources_ReturnsGroupedSources_WhenCardsExist()
     {
         // Create cards for two different source files
@@ -84,7 +81,7 @@ public class SourceEndpointsTests : IAsyncLifetime
         beta!.CardCount.Should().Be(1);
     }
 
-    [Fact(Skip = "Requires Postgres — raw SQL uses FILTER clause and ::int casts not supported by the InMemory provider")]
+    [Fact]
     public async Task ListSources_ExcludesNullSourceFile()
     {
         // Cards without a sourceFile should not appear in the sources list

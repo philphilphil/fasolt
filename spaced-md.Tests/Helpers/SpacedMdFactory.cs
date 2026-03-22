@@ -10,16 +10,20 @@ using SpacedMd.Server.Infrastructure.Data;
 namespace SpacedMd.Tests.Helpers;
 
 /// <summary>
-/// Custom WebApplicationFactory that replaces Postgres with the EF Core InMemory
-/// provider and seeds a test user with a known API token.
+/// Custom WebApplicationFactory that uses a real Postgres test database
+/// (unique per instance) and seeds a test user with a known API token.
+/// Requires Docker Postgres running on localhost:5432.
 /// </summary>
 public class SpacedMdFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
+    private readonly string _dbName = $"spacedmd_test_{Guid.NewGuid():N}";
 
     public const string TestToken = "sm_test_token_integration_tests_only_0000000000000000";
     public const string TestUserEmail = "test@spaced-md.test";
     public const string TestUserPassword = "Test1234!";
+
+    private string ConnectionString =>
+        $"Host=localhost;Port=5432;Database={_dbName};Username=spaced;Password=spaced_dev";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -27,38 +31,25 @@ public class SpacedMdFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Remove ALL DbContext-related registrations so Npgsql internals don't leak through
+            // Remove existing DbContext registrations
             var toRemove = services
                 .Where(d =>
                     d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
                     d.ServiceType == typeof(DbContextOptions) ||
                     d.ServiceType == typeof(AppDbContext) ||
-                    (d.ServiceType.IsGenericType &&
-                     d.ServiceType.GetGenericTypeDefinition().FullName?.Contains("IDbContextOptionsConfiguration") == true))
+                    d.ServiceType.FullName?.Contains("DbContextOptions") == true)
                 .ToList();
 
             foreach (var d in toRemove)
                 services.Remove(d);
 
-            // Build InMemory options manually so we control exactly what goes in
-            var dbOptions = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(_dbName)
-                .ConfigureWarnings(w =>
-                    w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
-                .Options;
-
-            // Register the options singleton
-            services.AddSingleton(dbOptions);
-
-            // Register TestAppDbContext as the concrete type but resolved as AppDbContext
-            services.AddScoped<AppDbContext>(sp =>
-                new TestAppDbContext(sp.GetRequiredService<DbContextOptions<AppDbContext>>()));
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(ConnectionString));
         });
     }
 
     /// <summary>
     /// Creates the schema and seeds a test user + API token.
-    /// Idempotent — safe to call multiple times.
     /// </summary>
     public async Task SeedTestUserAsync()
     {
@@ -108,5 +99,27 @@ public class SpacedMdFactory : WebApplicationFactory<Program>
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", TestToken);
         return client;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            // Drop the test database using a direct connection (host may already be disposed)
+            using var conn = new Npgsql.NpgsqlConnection(
+                "Host=localhost;Port=5432;Database=postgres;Username=spaced;Password=spaced_dev");
+            conn.Open();
+            using (var terminate = conn.CreateCommand())
+            {
+                terminate.CommandText = $"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{_dbName}'";
+                terminate.ExecuteNonQuery();
+            }
+            using (var drop = conn.CreateCommand())
+            {
+                drop.CommandText = $"DROP DATABASE IF EXISTS \"{_dbName}\"";
+                drop.ExecuteNonQuery();
+            }
+        }
+        base.Dispose(disposing);
     }
 }

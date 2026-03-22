@@ -8,10 +8,7 @@ using SpacedMd.Tests.Helpers;
 namespace SpacedMd.Tests;
 
 /// <summary>
-/// Search endpoint tests.
-/// Tests that verify Postgres full-text search behaviour are skipped because the
-/// InMemory provider does not support tsvector or plainto_tsquery raw SQL.
-/// The non-SQL behaviours (min-length guard, response shape) can be tested directly.
+/// Search endpoint integration tests. Requires Docker Postgres running.
 /// </summary>
 public class SearchEndpointsTests : IAsyncLifetime
 {
@@ -66,7 +63,7 @@ public class SearchEndpointsTests : IAsyncLifetime
             "the search response should not contain a 'Files' property");
     }
 
-    [Fact(Skip = "Requires Postgres — full-text search (tsvector/plainto_tsquery) is not supported by the InMemory provider")]
+    [Fact]
     public async Task Search_FindsCards_ByFrontText()
     {
         await _client.PostAsJsonAsync("/api/cards",
@@ -79,7 +76,7 @@ public class SearchEndpointsTests : IAsyncLifetime
         result!.Cards.Should().Contain(c => c.Headline.Contains("Photosynthesis"));
     }
 
-    [Fact(Skip = "Requires Postgres — full-text search (tsvector/plainto_tsquery) is not supported by the InMemory provider")]
+    [Fact]
     public async Task Search_FindsDecks_ByName()
     {
         await _client.PostAsJsonAsync("/api/decks",
