@@ -8,13 +8,13 @@ MCP-first spaced repetition for markdown notes. Your AI reads your notes — you
 
 ### Core Concept
 
-The app is **MCP-first and API-first**. The user's local vault (e.g., Obsidian) is the source of truth for markdown files — no files are stored on the server. An AI agent reads local `.md` files, extracts flashcards, and pushes them to the server via the MCP server or REST API. Cards retain provenance metadata (source file, heading). The web app is a study frontend: review due cards, browse decks, and track progress.
+The app is **MCP-first and API-first**. The user's local vault (e.g., Obsidian) is the source of truth for markdown files — no files are stored on the server. The user asks their AI agent (e.g., Claude Code) to process local `.md` files — the agent extracts flashcards and pushes them to the server via the MCP server or REST API. Cards retain provenance metadata (source file, heading). The web app is a study frontend: review due cards, browse decks, and track progress.
 
 Cards are reviewed using spaced repetition (SM-2 algorithm), which schedules reviews at increasing intervals based on how well you recall each card.
 
 ### Features
 
-- **MCP/API card ingestion** — cards are created by AI agents reading local markdown files and calling the API; no file upload to the server
+- **MCP/API card ingestion** — user triggers their AI agent to read local markdown files and create cards via the API; no file upload to the server
 - **Flashcard creation** — create cards with front/back text, linked to a source file and heading via API or MCP tools
 - **Source tracking** — cards retain provenance (source file, heading) as metadata; browse cards by source
 - **Spaced repetition study** — review due cards with quality-based scheduling (SM-2)

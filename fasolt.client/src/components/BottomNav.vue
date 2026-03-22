@@ -8,6 +8,7 @@ const tabs = [
   { name: 'Sources', path: '/sources', icon: '◫' },
   { name: 'Cards', path: '/cards', icon: '▤' },
   { name: 'Decks', path: '/decks', icon: '⊞' },
+  { name: 'MCP', path: '/mcp', icon: '⏚' },
   { name: 'Settings', path: '/settings', icon: '⚙' },
 ]
 

@@ -15,6 +15,7 @@ const tabs = [
   { label: 'Sources', value: '/sources' },
   { label: 'Cards', value: '/cards' },
   { label: 'Decks', value: '/decks' },
+  { label: 'MCP', value: '/mcp' },
   { label: 'Settings', value: '/settings' },
 ]
 

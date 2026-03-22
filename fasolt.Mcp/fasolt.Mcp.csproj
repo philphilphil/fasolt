@@ -9,6 +9,11 @@
     <ToolCommandName>fasolt-mcp</ToolCommandName>
     <PackageId>fasolt-mcp</PackageId>
     <Version>0.1.0</Version>
+    <Authors>Phil Baum</Authors>
+    <Description>MCP server for fasolt spaced repetition</Description>
+    <PackageProjectUrl>https://github.com/philphilphil/fasolt</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/philphilphil/fasolt</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ModelContextProtocol" Version="1.0.0" />
