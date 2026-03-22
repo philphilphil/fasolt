@@ -190,6 +190,33 @@ app.Use(async (context, next) =>
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors();
+// Inject registration_endpoint into OpenIddict's auto-generated discovery document
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals("/.well-known/openid-configuration"))
+    {
+        var originalBody = context.Response.Body;
+        using var memStream = new MemoryStream();
+        context.Response.Body = memStream;
+
+        await next();
+
+        memStream.Position = 0;
+        var json = await System.Text.Json.JsonDocument.ParseAsync(memStream);
+        var dict = new Dictionary<string, object?>();
+        foreach (var prop in json.RootElement.EnumerateObject())
+            dict[prop.Name] = prop.Value;
+
+        var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
+        dict["registration_endpoint"] = $"{baseUrl}/oauth/register";
+
+        context.Response.Body = originalBody;
+        context.Response.ContentLength = null;
+        await System.Text.Json.JsonSerializer.SerializeAsync(originalBody, dict);
+        return;
+    }
+    await next();
+});
 // RFC 9728: MCP endpoint 401 must include resource_metadata in WWW-Authenticate
 app.Use(async (context, next) =>
 {
