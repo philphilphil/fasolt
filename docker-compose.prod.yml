@@ -6,6 +6,10 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=fasolt;Username=fasolt;Password=${DB_PASSWORD}
       Cors__AllowedOrigins__0: https://fasolt.app
+      OpenIddict__EncryptionCertificatePath: /certs/encryption.pfx
+      OpenIddict__SigningCertificatePath: /certs/signing.pfx
+    volumes:
+      - ./certs:/certs:ro
     depends_on:
       db:
         condition: service_healthy

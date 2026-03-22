@@ -50,9 +50,21 @@ builder.Services.AddOpenIddict()
 
         options.RequireProofKeyForCodeExchange();
 
-        options.AddDevelopmentEncryptionCertificate()
-               .AddDevelopmentSigningCertificate();
+        var encryptionCertPath = builder.Configuration["OpenIddict:EncryptionCertificatePath"];
+        var signingCertPath = builder.Configuration["OpenIddict:SigningCertificatePath"];
 
+        if (encryptionCertPath is not null && signingCertPath is not null)
+        {
+            options.AddEncryptionCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificateFromFile(encryptionCertPath))
+                   .AddSigningCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificateFromFile(signingCertPath));
+        }
+        else
+        {
+            options.AddDevelopmentEncryptionCertificate()
+                   .AddDevelopmentSigningCertificate();
+        }
+
+        // Disable transport security: in dev there's no TLS, in prod Cloudflare/Traefik terminates TLS
         options.UseAspNetCore()
                .EnableAuthorizationEndpointPassthrough()
                .EnableTokenEndpointPassthrough()
