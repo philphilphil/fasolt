@@ -2,7 +2,6 @@ services:
   app:
     build: .
     restart: unless-stopped
-    env_file: .env.prod
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=fasolt;Username=fasolt;Password=${DB_PASSWORD}
@@ -23,7 +22,6 @@ services:
   db:
     image: postgres:17.5
     restart: unless-stopped
-    env_file: .env.prod
     environment:
       POSTGRES_USER: fasolt
       POSTGRES_PASSWORD: ${DB_PASSWORD}

@@ -26,7 +26,6 @@ Thumbs.db
 # Environment
 .env
 .env.local
-.env.prod
 .superpowers/
 .worktrees/
 .playwright-mcp/
