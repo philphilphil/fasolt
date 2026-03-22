@@ -14,6 +14,7 @@ services:
       - gateway
     labels:
       traefik.enable: "true"
+      traefik.docker.network: gateway
       traefik.http.routers.fasolt.rule: Host(`fasolt.app`) || Host(`www.fasolt.app`)
       traefik.http.routers.fasolt.entrypoints: websecure
       traefik.http.routers.fasolt.tls: "true"
