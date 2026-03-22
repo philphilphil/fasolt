@@ -145,6 +145,13 @@ builder.Services.AddScoped<DeckService>();
 builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<SourceService>();
 
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .AddAuthorizationFilters()
+    .WithToolsFromAssembly();
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -197,6 +204,8 @@ app.MapSourceEndpoints();
 app.MapApiTokenEndpoints();
 app.MapOAuthEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
+
+app.MapMcp("/mcp");
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");
