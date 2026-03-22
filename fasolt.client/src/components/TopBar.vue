@@ -90,7 +90,8 @@ async function handleLogout() {
 
 <template>
   <header class="flex items-center justify-between border-b border-border px-5 py-3">
-    <span class="font-mono text-[13px] font-bold text-foreground tracking-tight">
+    <span class="flex items-center gap-2 font-mono text-[13px] font-bold text-foreground tracking-tight">
+      <img src="/logo.png" alt="fasolt" class="h-7 object-contain" style="image-rendering: pixelated" />
       fasolt
     </span>
     <div ref="searchContainerRef" class="relative hidden sm:block">

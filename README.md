@@ -4,7 +4,7 @@ MCP-first spaced repetition for markdown notes. Your AI reads your notes — you
 
 Connect fasolt to Claude or any MCP-compatible agent. Tell it which notes to create cards from. Study when they're due.
 
-`100% Vibecoded to the best of my knowledge and belief.`
+`100% Vibecoded to the best of my knowledge and belief. It was a long journey and the goal of the app shifted a few times on the way.`
 
 ## How It Works
 

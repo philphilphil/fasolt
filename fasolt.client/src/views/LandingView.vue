@@ -13,7 +13,8 @@ const { isDark, toggle } = useDarkMode()
     <!-- Nav -->
     <nav class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <span class="text-lg font-semibold tracking-tight" style="font-family: var(--font-mono)">
+        <span class="flex items-center gap-2 text-lg font-semibold tracking-tight" style="font-family: var(--font-mono)">
+          <img src="/logo.png" alt="fasolt" class="h-8 object-contain" style="image-rendering: pixelated" />
           fasolt
         </span>
         <div class="flex items-center gap-2">
@@ -126,7 +127,10 @@ const { isDark, toggle } = useDarkMode()
     <!-- Footer -->
     <footer class="border-t border-border">
       <div class="mx-auto max-w-5xl px-6 py-6 flex items-center justify-between">
-        <span class="text-sm text-muted-foreground font-mono">fasolt</span>
+        <span class="flex items-center gap-2 text-sm text-muted-foreground font-mono">
+          <img src="/logo.png" alt="" class="h-5 w-5 object-contain" />
+          fasolt
+        </span>
         <a
           href="https://github.com"
           class="text-sm text-muted-foreground hover:text-foreground transition-colors"
