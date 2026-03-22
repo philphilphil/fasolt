@@ -68,6 +68,7 @@ builder.Services.AddOpenIddict()
 
         // Accept any resource parameter from MCP clients (single-tenant, we are the resource server)
         options.DisableResourceValidation();
+        options.IgnoreResourcePermissions();
     })
     .AddValidation(options =>
     {
