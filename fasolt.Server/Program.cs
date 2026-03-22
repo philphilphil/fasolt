@@ -65,6 +65,9 @@ builder.Services.AddOpenIddict()
 
         options.SetAccessTokenLifetime(TimeSpan.FromHours(1))
                .SetRefreshTokenLifetime(TimeSpan.FromDays(14));
+
+        // Accept any resource parameter from MCP clients (single-tenant, we are the resource server)
+        options.DisableResourceValidation();
     })
     .AddValidation(options =>
     {
