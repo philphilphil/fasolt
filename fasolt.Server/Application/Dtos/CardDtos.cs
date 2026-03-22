@@ -7,3 +7,18 @@ public record CardDto(
     string Front, string Back, string State,
     DateTimeOffset CreatedAt, List<CardDeckInfoDto> Decks);
 public record CardDeckInfoDto(Guid Id, string Name);
+
+public record UpdateCardFieldsRequest(
+    string? NewFront = null,
+    string? NewBack = null,
+    string? NewSourceFile = null,
+    string? NewSourceHeading = null);
+
+public enum UpdateCardStatus { Success, NotFound, Collision }
+
+public record UpdateCardResult(UpdateCardStatus Status, CardDto? Card = null)
+{
+    public static UpdateCardResult Success(CardDto card) => new(UpdateCardStatus.Success, card);
+    public static UpdateCardResult NotFound() => new(UpdateCardStatus.NotFound);
+    public static UpdateCardResult Collision() => new(UpdateCardStatus.Collision);
+}

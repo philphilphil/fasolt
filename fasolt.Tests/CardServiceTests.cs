@@ -146,4 +146,86 @@ public class CardServiceTests : IAsyncLifetime
         var fetched = await svc.GetCard(UserId, card.Id);
         fetched.Should().BeNull();
     }
+
+    [Fact]
+    public async Task UpdateCardFields_ById_PreservesSrsState()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var card = await svc.CreateCard(UserId, "Old front", "Old back", "notes.md", "Heading");
+
+        // Simulate some SRS state by updating directly
+        var entity = await db.Cards.FindAsync(card.Id);
+        entity!.EaseFactor = 2.1;
+        entity.Interval = 10;
+        entity.Repetitions = 3;
+        entity.State = "review";
+        await db.SaveChangesAsync();
+
+        var result = await svc.UpdateCardFields(UserId, card.Id,
+            new UpdateCardFieldsRequest(NewFront: "New front", NewBack: "New back"));
+
+        result.Status.Should().Be(UpdateCardStatus.Success);
+        result.Card!.Front.Should().Be("New front");
+        result.Card.Back.Should().Be("New back");
+
+        // Verify SRS state preserved
+        await using var db2 = _db.CreateDbContext();
+        var reloaded = await db2.Cards.FindAsync(card.Id);
+        reloaded!.EaseFactor.Should().Be(2.1);
+        reloaded.Interval.Should().Be(10);
+        reloaded.Repetitions.Should().Be(3);
+        reloaded.State.Should().Be("review");
+    }
+
+    [Fact]
+    public async Task UpdateCardByNaturalKey_CaseInsensitive()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "What is DNA?", "Deoxyribonucleic acid", "biology.md", "Basics");
+
+        // Look up with different casing
+        var result = await svc.UpdateCardByNaturalKey(UserId, "Biology.MD", "what is dna?",
+            new UpdateCardFieldsRequest(NewBack: "Updated answer"));
+
+        result.Status.Should().Be(UpdateCardStatus.Success);
+        result.Card!.Back.Should().Be("Updated answer");
+        result.Card.Front.Should().Be("What is DNA?"); // original casing preserved
+    }
+
+    [Fact]
+    public async Task UpdateCardFields_RejectsCollision()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Existing front", "Back A", "notes.md", null);
+        var cardB = await svc.CreateCard(UserId, "Other front", "Back B", "notes.md", null);
+
+        // Try to rename cardB's front to collide with existing card
+        var result = await svc.UpdateCardFields(UserId, cardB.Id,
+            new UpdateCardFieldsRequest(NewFront: "Existing front"));
+
+        result.Status.Should().Be(UpdateCardStatus.Collision);
+        result.Card.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateCardFields_SourceFileChangeCollision()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Same front", "Back A", "notes.md", null);
+        var cardB = await svc.CreateCard(UserId, "Same front", "Back B", "other.md", null);
+
+        // Move cardB to notes.md — collides with existing card
+        var result = await svc.UpdateCardFields(UserId, cardB.Id,
+            new UpdateCardFieldsRequest(NewSourceFile: "notes.md"));
+
+        result.Status.Should().Be(UpdateCardStatus.Collision);
+    }
 }

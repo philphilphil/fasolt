@@ -200,6 +200,62 @@ public class CardService(AppDbContext db)
         return ToDto(card);
     }
 
+    public async Task<UpdateCardResult> UpdateCardFields(string userId, Guid cardId, UpdateCardFieldsRequest req)
+    {
+        var card = await db.Cards
+            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
+            .FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
+
+        if (card is null) return UpdateCardResult.NotFound();
+
+        return await ApplyCardFieldUpdates(userId, card, req);
+    }
+
+    public async Task<UpdateCardResult> UpdateCardByNaturalKey(string userId, string sourceFile, string front, UpdateCardFieldsRequest req)
+    {
+        var card = await db.Cards
+            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
+            .FirstOrDefaultAsync(c => c.UserId == userId
+                && c.SourceFile != null
+                && c.SourceFile.ToLower() == sourceFile.ToLower()
+                && c.Front.ToLower() == front.ToLower());
+
+        if (card is null) return UpdateCardResult.NotFound();
+
+        return await ApplyCardFieldUpdates(userId, card, req);
+    }
+
+    private async Task<UpdateCardResult> ApplyCardFieldUpdates(string userId, Card card, UpdateCardFieldsRequest req)
+    {
+        var effectiveFront = req.NewFront?.Trim() ?? card.Front;
+        var effectiveSourceFile = req.NewSourceFile?.Trim() ?? card.SourceFile;
+
+        // Check for natural key collision if front or sourceFile is changing
+        if (effectiveFront != card.Front || effectiveSourceFile != card.SourceFile)
+        {
+            if (effectiveSourceFile is not null)
+            {
+                var collision = await db.Cards.AnyAsync(c =>
+                    c.UserId == userId
+                    && c.Id != card.Id
+                    && c.SourceFile != null
+                    && c.SourceFile.ToLower() == effectiveSourceFile.ToLower()
+                    && c.Front.ToLower() == effectiveFront.ToLower());
+
+                if (collision) return UpdateCardResult.Collision();
+            }
+        }
+
+        if (req.NewFront is not null) card.Front = req.NewFront.Trim();
+        if (req.NewBack is not null) card.Back = req.NewBack.Trim();
+        if (req.NewSourceFile is not null) card.SourceFile = req.NewSourceFile.Trim();
+        if (req.NewSourceHeading is not null) card.SourceHeading = req.NewSourceHeading.Trim();
+
+        await db.SaveChangesAsync();
+
+        return UpdateCardResult.Success(ToDto(card));
+    }
+
     /// <returns>true if deleted, false if not found</returns>
     public async Task<bool> DeleteCard(string userId, Guid cardId)
     {
