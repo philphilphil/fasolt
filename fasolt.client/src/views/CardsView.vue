@@ -103,7 +103,7 @@ const columns: ColumnDef<Card>[] = [
   {
     accessorKey: 'state',
     header: 'State',
-    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
+    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-xs' }, () => row.getValue('state')),
     filterFn: (row, _id, value) => !value || row.getValue('state') === value,
   },
   {
@@ -113,9 +113,9 @@ const columns: ColumnDef<Card>[] = [
     cell: ({ row }) => {
       const deckList = row.original.decks
       return h('div', { class: 'flex flex-wrap gap-1' }, [
-        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-[10px]' }, () => d.name)),
+        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-xs' }, () => d.name)),
         h('button', {
-          class: 'text-[10px] text-muted-foreground hover:text-foreground',
+          class: 'text-xs text-muted-foreground hover:text-foreground',
           onClick: () => { addToDeckCard.value = row.original },
         }, '+'),
       ])
@@ -127,8 +127,8 @@ const columns: ColumnDef<Card>[] = [
     cell: ({ row }) => {
       const card = row.original
       return h('div', { class: 'flex gap-1' }, [
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => openEdit(card) }, () => 'Edit'),
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => { deleteTarget.value = card } }, () => '×'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-xs', onClick: () => openEdit(card) }, () => 'Edit'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-xs text-muted-foreground hover:text-destructive', onClick: () => { deleteTarget.value = card } }, () => '×'),
       ])
     },
   },
@@ -233,7 +233,7 @@ function applyStateFilter(val: string) {
             <TableHead
               v-for="header in headerGroup.headers"
               :key="header.id"
-              class="h-9 text-[10px] uppercase tracking-wider text-muted-foreground cursor-pointer select-none"
+              class="h-9 text-xs uppercase tracking-wider text-muted-foreground cursor-pointer select-none"
               @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
             >
               <div class="flex items-center gap-1">
@@ -242,15 +242,15 @@ function applyStateFilter(val: string) {
                   :render="header.column.columnDef.header"
                   :props="header.getContext()"
                 />
-                <span v-if="header.column.getIsSorted() === 'asc'" class="text-[10px]">↑</span>
-                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-[10px]">↓</span>
+                <span v-if="header.column.getIsSorted() === 'asc'" class="text-xs">↑</span>
+                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-xs">↓</span>
               </div>
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
-            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs">
+            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-sm">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>

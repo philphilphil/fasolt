@@ -111,7 +111,7 @@ async function removeCard(cardId: string) {
     <!-- Card list -->
     <Table v-if="deck.cards.length > 0">
       <TableHeader>
-        <TableRow class="text-[10px] uppercase tracking-wider text-muted-foreground hover:bg-transparent">
+        <TableRow class="text-xs uppercase tracking-wider text-muted-foreground hover:bg-transparent">
           <TableHead class="h-8">Front</TableHead>
           <TableHead class="h-8">Source</TableHead>
           <TableHead class="h-8">State</TableHead>
@@ -120,10 +120,10 @@ async function removeCard(cardId: string) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow v-for="card in deck.cards" :key="card.id" class="text-xs">
+        <TableRow v-for="card in deck.cards" :key="card.id" class="text-sm">
           <TableCell class="font-medium text-foreground max-w-[300px] truncate">{{ card.front }}</TableCell>
           <TableCell>
-            <Badge v-if="card.sourceFile" variant="outline" class="text-[10px] font-mono">{{ card.sourceFile }}</Badge>
+            <Badge v-if="card.sourceFile" variant="outline" class="text-xs font-mono">{{ card.sourceFile }}</Badge>
             <span v-else class="text-muted-foreground">—</span>
           </TableCell>
           <TableCell class="text-muted-foreground">{{ card.state }}</TableCell>
@@ -132,7 +132,7 @@ async function removeCard(cardId: string) {
             <Button
               variant="ghost"
               size="sm"
-              class="h-6 text-[10px] text-destructive hover:text-destructive"
+              class="h-6 text-xs text-destructive hover:text-destructive"
               @click="removeCard(card.id)"
             >
               Remove
