@@ -185,12 +185,16 @@ if (app.Environment.IsDevelopment())
     await DevSeedData.SeedAsync(app.Services);
 }
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
         | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
         | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost,
-});
+};
+// Trust all proxies in Docker/Cloudflare environments
+forwardedHeadersOptions.KnownProxies.Clear();
+forwardedHeadersOptions.KnownIPNetworks.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (!app.Environment.IsDevelopment())
 {
