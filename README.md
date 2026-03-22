@@ -1,26 +1,42 @@
-# fasolt
+<p align="center">
+  <img src="fasolt.client/public/logo.png" alt="fasolt" width="80" style="image-rendering: pixelated" />
+</p>
 
-MCP-first spaced repetition for markdown notes. Your AI reads your notes — you learn and remember.
+<h1 align="center">fasolt</h1>
 
-Connect fasolt to Claude or any MCP-compatible agent. Tell it which notes to create cards from. Study when they're due.
+<p align="center">
+  MCP-first spaced repetition for your markdown notes.<br/>
+  Your AI reads your notes — you learn and remember.
+</p>
 
-`100% Vibecoded to the best of my knowledge and belief. It was a long journey and the goal of the app shifted a few times on the way.`
+---
+
+Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at your markdown files. Study the flashcards it creates.
+
+`100% vibecoded.`
+
+<p align="center">
+  <img src="docs/screenshots/study-question.png" alt="Study question" width="200" />
+  <img src="docs/screenshots/study-answer.png" alt="Study answer" width="200" />
+  <img src="docs/screenshots/study-complete.png" alt="Study complete" width="200" />
+</p>
 
 ## How It Works
 
-1. **Take notes in Obsidian** — write in your normal workflow, optionally add `?::` markers for precise card boundaries
-2. **Your AI creates flashcards** — ask Claude (or any MCP agent) to read a file and push cards to fasolt
-3. **Learn and remember** — open fasolt when cards are due, SM-2 schedules reviews at increasing intervals
+1. **Write notes** — Obsidian, any editor, plain text. No special format required.
+2. **Your AI creates flashcards** — ask your agent to read a file and push cards to fasolt via MCP
+3. **Study** — review due cards in the browser, SM-2 schedules reviews at increasing intervals
 
 ## Features
 
-- MCP server for AI agents (Claude Code, Claude Desktop, Cursor, etc.)
+- Remote MCP server for AI agents (Claude Code, Cursor, etc.)
 - REST API for programmatic card creation
 - SM-2 spaced repetition with quality-based scheduling
 - Source tracking — cards retain provenance (file, heading) as metadata
-- Organize cards into decks for focused study
+- Decks for organizing cards into focused study sessions
+- Full-text search across cards and decks
 - Dashboard with due counts, totals, and study streaks
-- Per-user accounts with cookie-based auth + API tokens
+- OAuth 2.0 for MCP clients, cookie auth for the web app
 - Self-hostable via Docker
 
 ## Tech Stack
@@ -29,9 +45,9 @@ Connect fasolt to Claude or any MCP-compatible agent. Tell it which notes to cre
 |-------|------|
 | Backend | .NET 10, ASP.NET Core Minimal API, EF Core + Npgsql |
 | Frontend | Vue 3 + TypeScript + Vite, shadcn-vue, Tailwind CSS 3, Pinia |
-| Database | Postgres 17 (docker-compose) |
-| Auth | ASP.NET Core Identity (cookies + Bearer tokens) |
-| MCP Server | Built into the backend, streamable HTTP transport |
+| Database | Postgres 17 |
+| Auth | ASP.NET Core Identity + OpenIddict (OAuth 2.0 for MCP) |
+| MCP | Built into the backend, streamable HTTP transport at `/mcp` |
 
 ## Quick Start
 
@@ -44,52 +60,62 @@ Prerequisites: Docker, .NET 10 SDK, Node.js
 Or run individually:
 
 ```bash
-docker compose up -d                       # Postgres on :5432
+docker compose up -d                    # Postgres on :5432
 dotnet run --project fasolt.Server      # API on :8080
 cd fasolt.client && npm run dev         # UI on :5173
 ```
 
-The frontend proxies `/api` requests to the backend.
+## MCP Setup
 
-## MCP Server Setup
+The MCP server is built into the backend at `/mcp` (streamable HTTP transport). OAuth login is triggered automatically on first connection.
 
-The MCP server is built into the backend and exposed at `/mcp` via streamable HTTP transport.
+**Claude Code:**
+```bash
+claude mcp add fasolt --transport http http://localhost:8080/mcp
+```
 
-1. Start the full stack: `./dev.sh`
-2. Add to Claude Code:
-   ```bash
-   claude mcp add fasolt --transport http http://localhost:8080/mcp
-   ```
-   You'll be prompted to log in via OAuth when your agent first connects.
+**Copilot CLI** — add to `~/.copilot/mcp-config.json`:
+```json
+{
+  "mcpServers": {
+    "fasolt": {
+      "type": "http",
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
 
 ### MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `CreateCards` | Create cards with optional source file/heading metadata and deck assignment |
-| `SearchCards` | Search cards and decks by query text |
-| `ListCards` | List cards with optional source file/deck filter and pagination |
+| `CreateCards` | Create cards with optional source file/heading and deck assignment |
+| `SearchCards` | Search cards by query text (use before creating to detect duplicates) |
+| `ListCards` | List cards with optional source/deck filter and pagination |
 | `ListSources` | List source files with card and due counts |
-| `ListDecks` | List all decks with card counts |
+| `ListDecks` | List all decks with card and due counts |
 | `CreateDeck` | Create a new deck |
+| `DeleteDeck` | Delete a deck, optionally deleting its cards |
+| `DeleteCard` | Delete a single card |
 
-### Typical Workflow
+### Example
 
 ```
-User: "Create flashcards from my kubernetes-notes.md"
-Agent: reads local file → searches for duplicates → generates questions →
-       creates cards via API → done
+You:   "Create flashcards from my kubernetes-notes.md"
+Agent: reads local file → checks for duplicates → creates cards via MCP → done
 ```
 
 ## Project Structure
 
 ```
 fasolt.Server/
-  Domain/           — entities, value objects, interfaces
+  Domain/           — entities, value objects
   Application/      — services, DTOs, use case logic
-  Infrastructure/   — EF Core DbContext, repos, migrations
-  Api/              — endpoints, middleware, Program.cs
-fasolt.client/   — Vue 3 SPA
+  Infrastructure/   — EF Core DbContext, migrations
+  Api/              — endpoints, MCP tools, middleware
+fasolt.client/      — Vue 3 SPA
+fasolt.Tests/       — service-level tests (xUnit + Postgres)
 ```
 
 ## License
