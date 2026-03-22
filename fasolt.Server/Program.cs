@@ -129,6 +129,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -144,6 +146,9 @@ app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapApiTokenEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
+
+// SPA fallback — serve index.html for client-side routes
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
