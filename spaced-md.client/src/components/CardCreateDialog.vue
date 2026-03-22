@@ -25,6 +25,8 @@ const { render } = useMarkdown()
 
 const fronts = ref<string[]>([])
 const back = ref('')
+const sourceFile = ref('')
+const sourceHeading = ref('')
 const saving = ref(false)
 const error = ref('')
 const showPreview = ref(false)
@@ -33,6 +35,8 @@ watch(() => props.open, (isOpen) => {
   if (isOpen) {
     fronts.value = props.initialFronts?.length ? [...props.initialFronts] : ['']
     back.value = props.initialBack ?? ''
+    sourceFile.value = props.sourceFile ?? ''
+    sourceHeading.value = props.sourceHeading ?? ''
     error.value = ''
     showPreview.value = false
   }
@@ -58,8 +62,8 @@ async function save() {
   try {
     for (const front of validFronts) {
       await cards.createCard({
-        sourceFile: props.sourceFile,
-        sourceHeading: props.sourceHeading,
+        sourceFile: sourceFile.value.trim() || undefined,
+        sourceHeading: sourceHeading.value.trim() || undefined,
         front,
         back: back.value,
       })
@@ -82,6 +86,28 @@ async function save() {
       </DialogHeader>
 
       <div class="space-y-4">
+        <!-- Source metadata -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-xs font-medium text-muted-foreground">Source file</label>
+            <input
+              v-model="sourceFile"
+              type="text"
+              placeholder="e.g. distributed-systems.md"
+              class="w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+          <div class="space-y-1">
+            <label class="text-xs font-medium text-muted-foreground">Source heading</label>
+            <input
+              v-model="sourceHeading"
+              type="text"
+              placeholder="e.g. CAP Theorem"
+              class="w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+
         <!-- Single front -->
         <div v-if="isSingle" class="space-y-1">
           <label class="text-xs font-medium text-muted-foreground">Front (question)</label>
