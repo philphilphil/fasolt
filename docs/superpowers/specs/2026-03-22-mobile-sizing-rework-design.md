@@ -16,9 +16,9 @@ Establish a 12px minimum for all text in the app.
 
 | Current | New | Affected Components |
 |---------|-----|---------------------|
-| `text-[10px]` | `text-xs` (12px) | StatCard (labels, delta), BottomNav (labels), SessionComplete (rating labels), CardsView (Badge text, table headers, sort arrows, action buttons), SourcesView (due badge) |
-| `text-[11px]` | `text-xs` (12px) | ReviewView (context bar), ReviewCard (question/answer label, source heading), RatingButtons (button text — further bumped, see §2), DecksView (description, card count), SourcesView (card count) |
-| `text-xs` → `text-sm` (body content) | `text-sm` (14px) | CardsView table rows (`text-xs` on `<TableRow>`), TopBar search input placeholder |
+| `text-[10px]` | `text-xs` (12px) | StatCard (labels, delta), BottomNav (labels), SessionComplete (rating labels), CardsView (Badge text, table headers, sort arrows, action buttons), SourcesView (due badge), DeckDetailView (table headers, badge, delete button), DeckTable (table headers), CardDetailView (state badge), TopBar (beta badge, ⌘K kbd hint), KbdHint (base size), SearchResults (section headers, type badge, kbd hint bar) |
+| `text-[11px]` | `text-xs` (12px) | ReviewView (context bar, flip hint text), ReviewCard (question/answer label, source heading), RatingButtons (button text — further bumped, see §2), DecksView (description, card count), SourcesView (card count) |
+| `text-xs` → `text-sm` (body content) | `text-sm` (14px) | CardsView table rows (`text-xs` on `<TableRow>`), TopBar search input |
 | `prose-sm` | `prose` (16px base) | ReviewCard markdown content |
 
 **Unchanged at `text-xs`:** Tab nav labels (AppLayout), dropdown menu items, toolbar button labels, column selector items, pagination text. These are UI chrome that reads fine at 12px.
@@ -32,7 +32,7 @@ Establish a 12px minimum for all text in the app.
 - Text: `prose-sm` → `prose` for card content, `text-[11px]` → `text-xs` for labels
 
 **ReviewView.vue:**
-- Outer container: replace `min-h-[calc(100vh-8rem)]` with `min-h-0 flex-1` approach
+- Outer container: replace `min-h-[calc(100vh-8rem)]` with `min-h-0 flex-1` approach (AppLayout's `<main>` is `flex-1` inside a `flex min-h-screen flex-col`, so this works)
 - Wrap the card area in a flex container that centers the card vertically in remaining space without forcing the card itself to stretch
 - The card area (between progress meter and rating buttons) gets `flex-1 flex flex-col items-center justify-center` — the *wrapper* fills space, not the card
 - Add `max-h-[60vh] overflow-y-auto` on the card for very long answers — card scrolls internally, buttons stay visible
@@ -49,7 +49,7 @@ Establish a 12px minimum for all text in the app.
 ### 3. Bottom Nav (BottomNav.vue)
 
 - Icon size: `text-lg` → `text-xl`
-- Label text: `text-[10px]` → `text-[11px]`
+- Label text: `text-[10px]` → `text-xs` (12px, consistent with global floor)
 - Vertical padding: `py-2` → `py-2.5`
 
 ### 4. Desktop Behavior
@@ -59,7 +59,7 @@ All text sizing bumps apply globally (not behind mobile breakpoints). The study 
 ### 5. Files to Modify
 
 1. `fasolt.client/src/components/ReviewCard.vue` — remove flex-1, add min-h, bump prose
-2. `fasolt.client/src/views/ReviewView.vue` — wrapper layout, card max-h
+2. `fasolt.client/src/views/ReviewView.vue` — wrapper layout, card max-h, bump flip hint text
 3. `fasolt.client/src/components/RatingButtons.vue` — bigger buttons, bigger text
 4. `fasolt.client/src/components/SessionComplete.vue` — bump label sizes
 5. `fasolt.client/src/components/StatCard.vue` — bump label/delta sizes
@@ -67,7 +67,12 @@ All text sizing bumps apply globally (not behind mobile breakpoints). The study 
 7. `fasolt.client/src/views/CardsView.vue` — bump table text sizes
 8. `fasolt.client/src/views/DecksView.vue` — bump description/count sizes
 9. `fasolt.client/src/views/SourcesView.vue` — bump count/badge sizes
-10. `fasolt.client/src/components/TopBar.vue` — bump beta badge, search input text
+10. `fasolt.client/src/components/TopBar.vue` — bump beta badge, kbd hint, search input text
+11. `fasolt.client/src/views/DeckDetailView.vue` — bump table headers, badge, button sizes
+12. `fasolt.client/src/components/DeckTable.vue` — bump table header sizes
+13. `fasolt.client/src/views/CardDetailView.vue` — bump state badge size
+14. `fasolt.client/src/components/KbdHint.vue` — bump base text size
+15. `fasolt.client/src/components/SearchResults.vue` — bump section headers, badges, kbd bar
 
 ### 6. What This Does NOT Include
 
