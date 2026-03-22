@@ -189,6 +189,7 @@ app.MapDeckEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapApiTokenEndpoints();
+app.MapOAuthEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
 // SPA fallback — serve index.html for client-side routes
