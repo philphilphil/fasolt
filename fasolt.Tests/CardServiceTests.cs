@@ -148,6 +148,24 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task DeleteCards_BulkDelete()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var a = await svc.CreateCard(UserId, "A", "A", null, null);
+        var b = await svc.CreateCard(UserId, "B", "B", null, null);
+        var c = await svc.CreateCard(UserId, "C", "C", null, null);
+
+        var count = await svc.DeleteCards(UserId, [a.Id, b.Id]);
+
+        count.Should().Be(2);
+        (await svc.GetCard(UserId, a.Id)).Should().BeNull();
+        (await svc.GetCard(UserId, b.Id)).Should().BeNull();
+        (await svc.GetCard(UserId, c.Id)).Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task UpdateCardFields_ById_PreservesSrsState()
     {
         await using var db = _db.CreateDbContext();

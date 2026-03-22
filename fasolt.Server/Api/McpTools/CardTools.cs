@@ -43,15 +43,13 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result.Response);
     }
 
-    [McpServerTool, Description("Delete a single card by its ID.")]
-    public async Task<string> DeleteCard(
-        [Description("ID of the card to delete")] Guid cardId)
+    [McpServerTool, Description("Delete one or more cards by their IDs.")]
+    public async Task<string> DeleteCards(
+        [Description("List of card IDs to delete")] List<Guid> cardIds)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var deleted = await cardService.DeleteCard(userId, cardId);
-        return deleted
-            ? JsonSerializer.Serialize(new { deleted = true })
-            : JsonSerializer.Serialize(new { error = "Card not found" });
+        var count = await cardService.DeleteCards(userId, cardIds);
+        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count });
     }
 
     [McpServerTool, Description("Update an existing card's text or source metadata. Preserves all review/SRS history. Look up by card ID, or by sourceFile + front (case-insensitive).")]

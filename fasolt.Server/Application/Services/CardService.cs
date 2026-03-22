@@ -273,6 +273,13 @@ public class CardService(AppDbContext db)
         return deleted > 0;
     }
 
+    public async Task<int> DeleteCards(string userId, List<Guid> cardIds)
+    {
+        return await db.Cards
+            .Where(c => c.UserId == userId && cardIds.Contains(c.Id))
+            .ExecuteDeleteAsync();
+    }
+
     private static CardDto ToDto(Card c) =>
         new(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList());
