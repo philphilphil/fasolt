@@ -8,11 +8,15 @@ using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 using Fasolt.Server.Infrastructure.Services;
+using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseOpenIddict();
+});
 
 builder.Services
     .AddIdentityApiEndpoints<AppUser>(options =>
@@ -33,6 +37,38 @@ builder.Services
 builder.Services.AddAuthentication()
     .AddScheme<BearerTokenOptions, BearerTokenHandler>(
         BearerTokenDefaults.AuthenticationScheme, _ => { });
+
+builder.Services.AddOpenIddict()
+    .AddCore(options =>
+    {
+        options.UseEntityFrameworkCore()
+               .UseDbContext<AppDbContext>();
+    })
+    .AddServer(options =>
+    {
+        options.SetAuthorizationEndpointUris("/oauth/authorize")
+               .SetTokenEndpointUris("/oauth/token");
+
+        options.AllowAuthorizationCodeFlow()
+               .AllowRefreshTokenFlow();
+
+        options.RequireProofKeyForCodeExchange();
+
+        options.AddDevelopmentEncryptionCertificate()
+               .AddDevelopmentSigningCertificate();
+
+        options.UseAspNetCore()
+               .EnableAuthorizationEndpointPassthrough()
+               .EnableTokenEndpointPassthrough();
+
+        options.SetAccessTokenLifetime(TimeSpan.FromHours(1))
+               .SetRefreshTokenLifetime(TimeSpan.FromDays(14));
+    })
+    .AddValidation(options =>
+    {
+        options.UseLocalServer();
+        options.UseAspNetCore();
+    });
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -60,10 +96,12 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddAuthorization(options =>
 {
-    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
-        Microsoft.AspNetCore.Identity.IdentityConstants.ApplicationScheme,
-        BearerTokenDefaults.AuthenticationScheme)
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
+        .AddAuthenticationSchemes(
+            IdentityConstants.ApplicationScheme,
+            BearerTokenDefaults.AuthenticationScheme,
+            OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
         .Build();
 });
 
