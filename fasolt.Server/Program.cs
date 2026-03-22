@@ -7,6 +7,7 @@ using Fasolt.Server.Api.Endpoints;
 using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Infrastructure.Services;
 using OpenIddict.Validation.AspNetCore;
 
@@ -138,6 +139,11 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueLimit = 0;
     });
 });
+
+builder.Services.AddScoped<CardService>();
+builder.Services.AddScoped<DeckService>();
+builder.Services.AddScoped<SearchService>();
+builder.Services.AddScoped<SourceService>();
 
 builder.Services.AddOpenApi();
 

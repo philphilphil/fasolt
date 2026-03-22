@@ -1,9 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
-using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Api.Endpoints;
 
@@ -25,7 +24,7 @@ public static class CardEndpoints
         CreateCardRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db)
+        CardService cardService)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -36,27 +35,14 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var card = new Card
-        {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            SourceFile = request.SourceFile?.Trim(),
-            SourceHeading = request.SourceHeading,
-            Front = request.Front,
-            Back = request.Back,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-
-        db.Cards.Add(card);
-        await db.SaveChangesAsync();
-
-        return Results.Created($"/api/cards/{card.Id}", ToDto(card));
+        var dto = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.SourceHeading);
+        return Results.Created($"/api/cards/{dto.Id}", dto);
     }
 
     private static async Task<IResult> List(
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db,
+        CardService cardService,
         string? sourceFile = null,
         Guid? deckId = null,
         int? limit = null,
@@ -65,57 +51,21 @@ public static class CardEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var take = Math.Clamp(limit ?? 50, 1, 200);
-
-        IQueryable<Card> query = db.Cards
-            .Where(c => c.UserId == user.Id)
-            .OrderByDescending(c => c.CreatedAt)
-            .ThenBy(c => c.Id);
-
-        if (sourceFile is not null)
-            query = query.Where(c => c.SourceFile == sourceFile);
-
-        if (deckId.HasValue)
-            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckId.Value));
-
-        if (Guid.TryParse(after, out var afterId))
-        {
-            var cursor = await db.Cards.Where(c => c.Id == afterId && c.UserId == user.Id)
-                .Select(c => new { c.CreatedAt, c.Id }).FirstOrDefaultAsync();
-            if (cursor is not null)
-                query = query.Where(c => c.CreatedAt < cursor.CreatedAt ||
-                    (c.CreatedAt == cursor.CreatedAt && c.Id.CompareTo(cursor.Id) > 0));
-        }
-
-        var cards = await query
-            .Take(take + 1)
-            .Select(c => new CardDto(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList()))
-            .ToListAsync();
-
-        var hasMore = cards.Count > take;
-        if (hasMore) cards = cards[..take];
-        var nextCursor = hasMore ? cards[^1].Id.ToString() : null;
-
-        return Results.Ok(new PaginatedResponse<CardDto>(cards, hasMore, nextCursor));
+        var result = await cardService.ListCards(user.Id, sourceFile, deckId, limit, after);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetById(
         Guid id,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db)
+        CardService cardService)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var card = await db.Cards
-            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
-
-        if (card is null) return Results.NotFound();
-
-        return Results.Ok(ToDto(card));
+        var dto = await cardService.GetCard(user.Id, id);
+        return dto is null ? Results.NotFound() : Results.Ok(dto);
     }
 
     private static async Task<IResult> Update(
@@ -123,7 +73,7 @@ public static class CardEndpoints
         UpdateCardRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db)
+        CardService cardService)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -134,44 +84,28 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var card = await db.Cards
-            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
-
-        if (card is null) return Results.NotFound();
-
-        card.Front = request.Front;
-        card.Back = request.Back;
-        await db.SaveChangesAsync();
-
-        return Results.Ok(ToDto(card));
+        var dto = await cardService.UpdateCard(user.Id, id, request.Front, request.Back);
+        return dto is null ? Results.NotFound() : Results.Ok(dto);
     }
 
     private static async Task<IResult> Delete(
         Guid id,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db)
+        CardService cardService)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var card = await db.Cards
-            .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
-
-        if (card is null) return Results.NotFound();
-
-        card.DeletedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync();
-
-        return Results.NoContent();
+        var deleted = await cardService.DeleteCard(user.Id, id);
+        return deleted ? Results.NoContent() : Results.NotFound();
     }
 
     private static async Task<IResult> BulkCreate(
         BulkCreateCardsRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        AppDbContext db)
+        CardService cardService)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -195,135 +129,11 @@ public static class CardEndpoints
         if (validationErrors.Count > 0)
             return Results.BadRequest(new { error = "validation_error", message = "Validation failed", details = validationErrors });
 
-        // Validate deckId if provided
-        if (request.DeckId.HasValue)
-        {
-            var deckExists = await db.Decks
-                .AnyAsync(d => d.Id == request.DeckId.Value && d.UserId == user.Id);
-            if (!deckExists)
-                return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
-        }
+        var result = await cardService.BulkCreateCards(user.Id, request.Cards, request.SourceFile, request.DeckId);
 
-        // Check for duplicates — group by effective sourceFile per card, then check (UserId, SourceFile, Front)
-        // For cards with a sourceFile, check (UserId, SourceFile, Front); for null sourceFile, check (UserId, Front) where SourceFile is null
-        var fronts = request.Cards.Select(c => c.Front.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var requestSourceFile = request.SourceFile?.Trim();
+        if (result.IsDeckNotFound)
+            return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
 
-        // Collect all (sourceFile, front) pairs to check for duplicates
-        var cardsWithSource = request.Cards
-            .Where(c => (c.SourceFile?.Trim() ?? requestSourceFile) is not null)
-            .Select(c => new { SourceFile = (c.SourceFile?.Trim() ?? requestSourceFile)!, Front = c.Front.Trim() })
-            .ToList();
-
-        var cardsWithoutSource = request.Cards
-            .Where(c => (c.SourceFile?.Trim() ?? requestSourceFile) is null)
-            .Select(c => c.Front.Trim())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        // Query existing cards for duplicate detection
-        var existingWithSource = cardsWithSource.Count > 0
-            ? await db.Cards
-                .Where(c => c.UserId == user.Id && c.SourceFile != null && fronts.Contains(c.Front))
-                .Select(c => new { c.SourceFile, c.Front })
-                .ToListAsync()
-            : [];
-
-        var existingWithoutSource = cardsWithoutSource.Count > 0
-            ? await db.Cards
-                .Where(c => c.UserId == user.Id && c.SourceFile == null && fronts.Contains(c.Front))
-                .Select(c => c.Front)
-                .ToListAsync()
-            : [];
-
-        var sourceKeyComparer = new SourceFrontComparer();
-        var existingWithSourceSet = existingWithSource
-            .Select(x => (x.SourceFile!, x.Front))
-            .ToHashSet(sourceKeyComparer);
-        var existingWithoutSourceSet = existingWithoutSource.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var created = new List<Card>();
-        var createdKeys = new HashSet<(string, string)>(sourceKeyComparer);
-        var skipped = new List<SkippedCardDto>();
-
-        foreach (var item in request.Cards)
-        {
-            var trimmedFront = item.Front.Trim();
-            var effectiveSourceFile = item.SourceFile?.Trim() ?? requestSourceFile;
-
-            // Check for duplicate in DB
-            bool isDuplicate = effectiveSourceFile is not null
-                ? existingWithSourceSet.Contains((effectiveSourceFile, trimmedFront))
-                : existingWithoutSourceSet.Contains(trimmedFront);
-
-            if (isDuplicate)
-            {
-                skipped.Add(new SkippedCardDto(trimmedFront, "Card with same front text already exists"));
-                continue;
-            }
-
-            // Also skip duplicates within the same batch
-            if (!createdKeys.Add((effectiveSourceFile ?? "", trimmedFront)))
-            {
-                skipped.Add(new SkippedCardDto(trimmedFront, "Duplicate within batch"));
-                continue;
-            }
-
-            var card = new Card
-            {
-                Id = Guid.NewGuid(),
-                UserId = user.Id,
-                SourceFile = effectiveSourceFile,
-                SourceHeading = item.SourceHeading,
-                Front = trimmedFront,
-                Back = item.Back.Trim(),
-                CreatedAt = DateTimeOffset.UtcNow,
-                EaseFactor = 2.5,
-                Interval = 0,
-                Repetitions = 0,
-                State = "new",
-            };
-            db.Cards.Add(card);
-            created.Add(card);
-        }
-
-        // Add to deck if specified
-        if (request.DeckId.HasValue)
-        {
-            foreach (var card in created)
-            {
-                db.DeckCards.Add(new DeckCard
-                {
-                    DeckId = request.DeckId.Value,
-                    CardId = card.Id,
-                });
-            }
-        }
-
-        await db.SaveChangesAsync();
-
-        var createdDtos = created.Select(c => new CardDto(
-            c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back,
-            c.State, c.CreatedAt,
-            request.DeckId.HasValue
-                ? [new CardDeckInfoDto(request.DeckId.Value, "")]
-                : [])).ToList();
-
-        return Results.Created("/api/cards/bulk", new BulkCreateCardsResponse(createdDtos, skipped));
-    }
-
-    private static CardDto ToDto(Card c) =>
-        new(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList());
-
-    private sealed class SourceFrontComparer : IEqualityComparer<(string, string)>
-    {
-        public bool Equals((string, string) x, (string, string) y) =>
-            string.Equals(x.Item1, y.Item1, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(x.Item2, y.Item2, StringComparison.OrdinalIgnoreCase);
-
-        public int GetHashCode((string, string) obj) =>
-            HashCode.Combine(
-                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Item1),
-                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Item2));
+        return Results.Created("/api/cards/bulk", result.Response);
     }
 }
