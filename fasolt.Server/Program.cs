@@ -143,6 +143,7 @@ builder.Services.AddScoped<CardService>();
 builder.Services.AddScoped<DeckService>();
 builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<SourceService>();
+builder.Services.AddScoped<OverviewService>();
 
 builder.Services.AddHttpContextAccessor();
 
