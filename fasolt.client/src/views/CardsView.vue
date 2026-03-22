@@ -108,12 +108,14 @@ const columns: ColumnDef<Card>[] = [
   {
     accessorKey: 'state',
     header: 'State',
+    meta: { className: 'w-[80px]' },
     cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-xs' }, () => row.getValue('state')),
     filterFn: (row, _id, value) => !value || row.getValue('state') === value,
   },
   {
     id: 'decks',
     header: 'Decks',
+    meta: { className: 'w-[120px]' },
     accessorFn: (row) => row.decks.map(d => d.name).join(', '),
     cell: ({ row }) => {
       const deckList = row.original.decks
@@ -129,6 +131,7 @@ const columns: ColumnDef<Card>[] = [
   {
     id: 'actions',
     enableHiding: false,
+    meta: { className: 'w-[90px]' },
     cell: ({ row }) => {
       const card = row.original
       return h('div', { class: 'flex gap-1' }, [
@@ -232,13 +235,14 @@ function applyStateFilter(val: string) {
 
     <!-- Table -->
     <div class="rounded-md border">
-      <Table>
+      <Table class="table-fixed">
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead
               v-for="header in headerGroup.headers"
               :key="header.id"
               class="h-9 text-xs uppercase tracking-wider text-muted-foreground cursor-pointer select-none"
+              :class="(header.column.columnDef.meta as any)?.className"
               @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
             >
               <div class="flex items-center gap-1">
@@ -256,7 +260,7 @@ function applyStateFilter(val: string) {
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-sm">
-              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
             </TableRow>
