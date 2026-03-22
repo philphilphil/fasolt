@@ -23,6 +23,9 @@ Thumbs.db
 # Data
 /db/
 
+# Certificates
+/certs/
+
 # Environment
 .env
 .env.local

@@ -14,9 +14,9 @@ services:
       - gateway
     labels:
       traefik.enable: "true"
-      traefik.http.routers.fasolt.rule: Host(`fasolt.app`)
+      traefik.http.routers.fasolt.rule: Host(`fasolt.app`) || Host(`www.fasolt.app`)
       traefik.http.routers.fasolt.entrypoints: websecure
-      traefik.http.routers.fasolt.tls.certresolver: myresolver
+      traefik.http.routers.fasolt.tls: "true"
       traefik.http.services.fasolt.loadbalancer.server.port: "8080"
 
   db:
