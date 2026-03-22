@@ -228,4 +228,34 @@ public class CardServiceTests : IAsyncLifetime
 
         result.Status.Should().Be(UpdateCardStatus.Collision);
     }
+
+    [Fact]
+    public async Task DeleteCardsBySource_DeletesMatchingCards()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q1", "A1", "target.md", null);
+        await svc.CreateCard(UserId, "Q2", "A2", "target.md", null);
+        await svc.CreateCard(UserId, "Q3", "A3", "other.md", null);
+
+        var count = await svc.DeleteCardsBySource(UserId, "target.md");
+
+        count.Should().Be(2);
+
+        var remaining = await svc.ListCards(UserId, sourceFile: null, deckId: null, limit: null, after: null);
+        remaining.Items.Should().HaveCount(1);
+        remaining.Items[0].SourceFile.Should().Be("other.md");
+    }
+
+    [Fact]
+    public async Task DeleteCardsBySource_NoMatch_ReturnsZero()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var count = await svc.DeleteCardsBySource(UserId, "nonexistent.md");
+
+        count.Should().Be(0);
+    }
 }

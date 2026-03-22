@@ -256,6 +256,13 @@ public class CardService(AppDbContext db)
         return UpdateCardResult.Success(ToDto(card));
     }
 
+    public async Task<int> DeleteCardsBySource(string userId, string sourceFile)
+    {
+        return await db.Cards
+            .Where(c => c.UserId == userId && c.SourceFile == sourceFile)
+            .ExecuteDeleteAsync();
+    }
+
     /// <returns>true if deleted, false if not found</returns>
     public async Task<bool> DeleteCard(string userId, Guid cardId)
     {
