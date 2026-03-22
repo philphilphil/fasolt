@@ -117,6 +117,9 @@ The server exposes a remote MCP endpoint at `/mcp` (streamable HTTP transport). 
 - `CreateDeck` — create a new deck for organizing flashcards
 - `DeleteDeck` — delete a deck, optionally deleting all its cards too
 - `DeleteCard` — delete a single card by ID
+- `UpdateCard` — update a card's front, back, source file, or source heading (by ID or source+front natural key); preserves SRS history
+- `DeleteCardsBySource` — delete all cards from a specific source file
+- `GetOverview` — get account overview: total cards, due cards, cards by state, deck and source counts
 
 ## Key API Routes
 
