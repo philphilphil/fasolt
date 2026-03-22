@@ -60,7 +60,8 @@ builder.Services.AddOpenIddict()
 
         options.UseAspNetCore()
                .EnableAuthorizationEndpointPassthrough()
-               .EnableTokenEndpointPassthrough();
+               .EnableTokenEndpointPassthrough()
+               .DisableTransportSecurityRequirement();
 
         options.SetAccessTokenLifetime(TimeSpan.FromHours(1))
                .SetRefreshTokenLifetime(TimeSpan.FromDays(14));
