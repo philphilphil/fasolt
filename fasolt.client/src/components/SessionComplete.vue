@@ -22,19 +22,19 @@ defineEmits<{ done: [] }>()
       <CardContent class="grid grid-cols-4 gap-2 p-4 text-center">
         <div>
           <div class="font-mono text-sm font-bold text-destructive">{{ ratingCounts.again }}</div>
-          <div class="text-[10px] text-muted-foreground">Again</div>
+          <div class="text-xs text-muted-foreground">Again</div>
         </div>
         <div>
           <div class="font-mono text-sm font-bold text-warning">{{ ratingCounts.hard }}</div>
-          <div class="text-[10px] text-muted-foreground">Hard</div>
+          <div class="text-xs text-muted-foreground">Hard</div>
         </div>
         <div>
           <div class="font-mono text-sm font-bold text-success">{{ ratingCounts.good }}</div>
-          <div class="text-[10px] text-muted-foreground">Good</div>
+          <div class="text-xs text-muted-foreground">Good</div>
         </div>
         <div>
           <div class="font-mono text-sm font-bold text-accent">{{ ratingCounts.easy }}</div>
-          <div class="text-[10px] text-muted-foreground">Easy</div>
+          <div class="text-xs text-muted-foreground">Easy</div>
         </div>
       </CardContent>
     </Card>

@@ -13,13 +13,12 @@ const ratings: { key: string; label: string; rating: ReviewRating; highlight?: b
 </script>
 
 <template>
-  <div class="flex justify-center gap-1.5">
+  <div class="flex justify-center gap-2">
     <Button
       v-for="r in ratings"
       :key="r.rating"
       variant="outline"
-      size="sm"
-      class="font-mono text-[11px]"
+      class="font-mono text-sm py-3"
       :class="r.highlight ? 'border-success text-success' : ''"
       @click="$emit('rate', r.rating)"
     >
