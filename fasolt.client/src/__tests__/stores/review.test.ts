@@ -1,58 +1,73 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useReviewStore } from '@/stores/review'
+
+vi.mock('@/api/client', () => ({
+  apiFetch: vi.fn(),
+}))
+
+import { apiFetch } from '@/api/client'
+const mockApiFetch = vi.mocked(apiFetch)
 
 describe('review store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.clearAllMocks()
   })
 
-  it('starts a session with cards', () => {
+  it('starts a session by fetching due cards', async () => {
+    const mockCards = [
+      { id: 'c1', front: 'What is CAP?', back: 'Consistency, Availability, Partition tolerance', sourceFile: 'cap.md', sourceHeading: '## Overview', state: 'learning', easeFactor: 2.5, interval: 1, repetitions: 0 },
+    ]
+    mockApiFetch.mockResolvedValueOnce(mockCards)
+
     const store = useReviewStore()
-    store.startSession('deck-1', 'Distributed Systems', [
-      {
-        id: 'c1', deckId: 'deck-1', question: 'What is CAP?',
-        answer: 'Consistency, Availability, Partition tolerance',
-        sourceFile: 'cap.md', sourceSection: '## Overview',
-        dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0,
-      },
-    ])
+    await store.startSession()
+
     expect(store.isActive).toBe(true)
-    expect(store.currentCard?.question).toBe('What is CAP?')
-    expect(store.progress).toBe('1 of 1')
+    expect(store.currentCard?.front).toBe('What is CAP?')
   })
 
-  it('flips the current card', () => {
+  it('flips the current card', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
+    ])
+
     const store = useReviewStore()
-    store.startSession('deck-1', 'Test', [{
-      id: 'c1', deckId: 'deck-1', question: 'Q', answer: 'A',
-      sourceFile: 'f.md', sourceSection: null,
-      dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0,
-    }])
+    await store.startSession()
+
     expect(store.isFlipped).toBe(false)
-    store.flip()
+    store.flipCard()
     expect(store.isFlipped).toBe(true)
   })
 
-  it('rates a card and advances to next', () => {
-    const store = useReviewStore()
-    store.startSession('deck-1', 'Test', [
-      { id: 'c1', deckId: 'deck-1', question: 'Q1', answer: 'A1', sourceFile: 'f.md', sourceSection: null, dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
-      { id: 'c2', deckId: 'deck-1', question: 'Q2', answer: 'A2', sourceFile: 'f.md', sourceSection: null, dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
+  it('rates a card and advances to next', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
+      { id: 'c2', front: 'Q2', back: 'A2', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
     ])
-    store.flip()
-    store.rate('good')
-    expect(store.currentCard?.question).toBe('Q2')
+    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', easeFactor: 2.5, interval: 1, repetitions: 1, dueAt: null, state: 'learning' })
+
+    const store = useReviewStore()
+    await store.startSession()
+    store.flipCard()
+    await store.rate(4)
+
+    expect(store.currentCard?.front).toBe('Q2')
     expect(store.isFlipped).toBe(false)
   })
 
-  it('completes session after rating last card', () => {
-    const store = useReviewStore()
-    store.startSession('deck-1', 'Test', [
-      { id: 'c1', deckId: 'deck-1', question: 'Q1', answer: 'A1', sourceFile: 'f.md', sourceSection: null, dueAt: new Date(), easeFactor: 2.5, interval: 1, repetitions: 0 },
+  it('completes session after rating last card', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
     ])
-    store.flip()
-    store.rate('good')
+    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', easeFactor: 2.5, interval: 1, repetitions: 1, dueAt: null, state: 'learning' })
+
+    const store = useReviewStore()
+    await store.startSession()
+    store.flipCard()
+    await store.rate(4)
+
     expect(store.isComplete).toBe(true)
     expect(store.isActive).toBe(true)
   })

@@ -35,6 +35,7 @@ describe('decks store', () => {
 
   it('addFileCards method does NOT exist on decks store', () => {
     const store = useDecksStore()
-    expect((store as Record<string, unknown>)['addFileCards']).toBeUndefined()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((store as any)['addFileCards']).toBeUndefined()
   })
 })

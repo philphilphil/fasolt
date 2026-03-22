@@ -36,7 +36,7 @@ describe('types', () => {
       state: 'new',
       decks: [],
     }
-    expect((card as Record<string, unknown>)['fileId']).toBeUndefined()
+    expect((card as any)['fileId']).toBeUndefined()
   })
 
   it('Card interface does NOT have cardType', () => {
@@ -54,7 +54,7 @@ describe('types', () => {
       state: 'new',
       decks: [],
     }
-    expect((card as Record<string, unknown>)['cardType']).toBeUndefined()
+    expect((card as any)['cardType']).toBeUndefined()
   })
 
   it('DueCard interface has sourceFile', () => {
@@ -84,7 +84,7 @@ describe('types', () => {
       interval: 1,
       repetitions: 0,
     }
-    expect((dueCard as Record<string, unknown>)['fileId']).toBeUndefined()
+    expect((dueCard as any)['fileId']).toBeUndefined()
   })
 
   it('DueCard interface does NOT have cardType', () => {
@@ -99,7 +99,7 @@ describe('types', () => {
       interval: 1,
       repetitions: 0,
     }
-    expect((dueCard as Record<string, unknown>)['cardType']).toBeUndefined()
+    expect((dueCard as any)['cardType']).toBeUndefined()
   })
 
   it('SourceItem interface has expected shape', () => {
@@ -115,6 +115,6 @@ describe('types', () => {
 
   it('MarkdownFile type does NOT exist as a named export', async () => {
     const types = await import('@/types')
-    expect((types as Record<string, unknown>)['MarkdownFile']).toBeUndefined()
+    expect((types as any)['MarkdownFile']).toBeUndefined()
   })
 })

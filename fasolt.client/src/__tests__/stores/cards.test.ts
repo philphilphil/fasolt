@@ -99,6 +99,7 @@ describe('cards store', () => {
 
   it('extractContent method does NOT exist on cards store', () => {
     const store = useCardsStore()
-    expect((store as Record<string, unknown>)['extractContent']).toBeUndefined()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((store as any)['extractContent']).toBeUndefined()
   })
 })
