@@ -91,7 +91,7 @@ async function handleLogout() {
 <template>
   <header class="flex items-center justify-between border-b border-border px-5 py-3">
     <span class="flex items-center gap-2 font-mono text-[13px] font-bold text-foreground tracking-tight">
-      <img src="/logo.png" alt="fasolt" class="h-7 object-contain" style="image-rendering: pixelated" />
+      <img src="/logo.png" alt="fasolt" class="h-7 object-contain dark:invert" style="image-rendering: pixelated" />
       fasolt
       <span class="rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">beta</span>
     </span>

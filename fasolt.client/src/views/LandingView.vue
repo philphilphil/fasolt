@@ -14,7 +14,7 @@ const { isDark, toggle } = useDarkMode()
     <nav class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <span class="flex items-center gap-2 text-lg font-semibold tracking-tight" style="font-family: var(--font-mono)">
-          <img src="/logo.png" alt="fasolt" class="h-8 object-contain" style="image-rendering: pixelated" />
+          <img src="/logo.png" alt="fasolt" class="h-8 object-contain dark:invert" style="image-rendering: pixelated" />
           fasolt
           <span class="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">beta</span>
         </span>
@@ -129,7 +129,7 @@ const { isDark, toggle } = useDarkMode()
     <footer class="border-t border-border">
       <div class="mx-auto max-w-5xl px-6 py-6 flex items-center justify-between">
         <span class="flex items-center gap-2 text-sm text-muted-foreground font-mono">
-          <img src="/logo.png" alt="" class="h-5 w-5 object-contain" />
+          <img src="/logo.png" alt="" class="h-5 w-5 object-contain dark:invert" />
           fasolt
         </span>
         <a
