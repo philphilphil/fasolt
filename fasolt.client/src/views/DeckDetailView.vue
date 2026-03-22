@@ -113,7 +113,6 @@ async function removeCard(cardId: string) {
       <TableHeader>
         <TableRow class="text-xs uppercase tracking-wider text-muted-foreground hover:bg-transparent">
           <TableHead class="h-8">Front</TableHead>
-          <TableHead class="h-8">Source</TableHead>
           <TableHead class="h-8">State</TableHead>
           <TableHead class="h-8 hidden sm:table-cell">Due</TableHead>
           <TableHead class="h-8 w-16" />
@@ -121,10 +120,11 @@ async function removeCard(cardId: string) {
       </TableHeader>
       <TableBody>
         <TableRow v-for="card in deck.cards" :key="card.id" class="text-sm">
-          <TableCell class="font-medium text-foreground max-w-[300px] truncate">{{ card.front }}</TableCell>
-          <TableCell>
-            <Badge v-if="card.sourceFile" variant="outline" class="text-xs font-mono">{{ card.sourceFile }}</Badge>
-            <span v-else class="text-muted-foreground">—</span>
+          <TableCell class="font-medium text-foreground">
+            <div class="min-w-0">
+              <div>{{ card.front }}</div>
+              <div v-if="card.sourceFile" class="truncate font-mono text-xs text-muted-foreground font-normal mt-0.5">{{ card.sourceFile }}</div>
+            </div>
           </TableCell>
           <TableCell class="text-muted-foreground">{{ card.state }}</TableCell>
           <TableCell class="hidden text-muted-foreground sm:table-cell">{{ card.dueAt || '—' }}</TableCell>

@@ -86,19 +86,24 @@ const columns: ColumnDef<Card>[] = [
     header: 'Front',
     cell: ({ row }) => {
       const val = row.getValue('front') as string
-      const display = val.length > 60 ? val.slice(0, 60) + '…' : val
-      return h(RouterLink, {
-        to: `/cards/${row.original.id}`,
-        class: 'hover:underline',
-      }, () => display)
+      const display = val.length > 80 ? val.slice(0, 80) + '…' : val
+      const source = row.original.sourceFile
+      return h('div', { class: 'min-w-0' }, [
+        h(RouterLink, {
+          to: `/cards/${row.original.id}`,
+          class: 'hover:underline',
+        }, () => display),
+        source
+          ? h('div', { class: 'truncate font-mono text-xs text-muted-foreground mt-0.5' }, source)
+          : null,
+      ])
     },
   },
   {
     id: 'source',
-    header: 'Source',
-    accessorFn: (row) => row.sourceFile ?? '—',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.sourceFile ?? '—'),
+    accessorFn: (row) => row.sourceFile ?? '',
     filterFn: (row, _id, value) => !value || row.original.sourceFile === value,
+    enableHiding: false,
   },
   {
     accessorKey: 'state',
@@ -136,7 +141,7 @@ const columns: ColumnDef<Card>[] = [
 
 const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
+const columnVisibility = ref<VisibilityState>({ source: false })
 
 const table = useVueTable({
   get data() { return cardsStore.cards },
