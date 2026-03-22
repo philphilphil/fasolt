@@ -193,7 +193,8 @@ app.UseCors();
 // Inject registration_endpoint into OpenIddict's auto-generated discovery document
 app.Use(async (context, next) =>
 {
-    if (context.Request.Path.Equals("/.well-known/openid-configuration"))
+    if (context.Request.Path.Equals("/.well-known/openid-configuration")
+        || context.Request.Path.Equals("/.well-known/oauth-authorization-server"))
     {
         var originalBody = context.Response.Body;
         using var memStream = new MemoryStream();
