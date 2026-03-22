@@ -23,29 +23,29 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <Card>
+  <Card class="border-border/60">
     <CardHeader>
-      <CardTitle class="text-center text-lg">Reset password</CardTitle>
+      <CardTitle class="text-center text-base">Reset password</CardTitle>
     </CardHeader>
     <CardContent>
       <template v-if="sent">
-        <p class="text-center text-sm text-muted-foreground">
-          If an account exists for <strong>{{ email }}</strong>, we sent a password reset link.
+        <p class="text-center text-xs text-muted-foreground">
+          If an account exists for <strong class="text-foreground">{{ email }}</strong>, we sent a password reset link.
         </p>
         <div class="mt-4 text-center">
-          <RouterLink to="/login" class="text-sm text-accent hover:underline">Back to login</RouterLink>
+          <RouterLink to="/login" class="text-xs text-accent hover:underline">Back to login</RouterLink>
         </div>
       </template>
       <form v-else class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-        <p class="text-sm text-muted-foreground">Enter your email and we'll send you a reset link.</p>
+        <p class="text-xs text-muted-foreground">Enter your email and we'll send you a reset link.</p>
         <div class="flex flex-col gap-1.5">
-          <label for="email" class="text-sm font-medium">Email</label>
+          <label for="email" class="text-xs font-medium">Email</label>
           <Input id="email" v-model="email" type="email" required autocomplete="email" />
         </div>
         <Button type="submit" class="w-full" :disabled="loading">
           {{ loading ? 'Sending\u2026' : 'Send reset link' }}
         </Button>
-        <p class="text-center text-sm">
+        <p class="text-center text-xs">
           <RouterLink to="/login" class="text-muted-foreground hover:underline">Back to login</RouterLink>
         </p>
       </form>

@@ -82,55 +82,55 @@ async function save() {
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="max-w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>{{ cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}</DialogTitle>
+        <DialogTitle class="text-sm">{{ cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}</DialogTitle>
       </DialogHeader>
 
       <div class="space-y-4">
         <!-- Source metadata -->
         <div class="grid grid-cols-2 gap-3">
           <div class="space-y-1">
-            <label class="text-xs font-medium text-muted-foreground">Source file</label>
+            <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Source file</label>
             <input
               v-model="sourceFile"
               type="text"
               placeholder="e.g. distributed-systems.md"
-              class="w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+              class="w-full rounded border border-border bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div class="space-y-1">
-            <label class="text-xs font-medium text-muted-foreground">Source heading</label>
+            <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Source heading</label>
             <input
               v-model="sourceHeading"
               type="text"
               placeholder="e.g. CAP Theorem"
-              class="w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+              class="w-full rounded border border-border bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
         </div>
 
         <!-- Single front -->
         <div v-if="isSingle" class="space-y-1">
-          <label class="text-xs font-medium text-muted-foreground">Front (question)</label>
+          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front (question)</label>
           <textarea
             v-if="!showPreview"
             v-model="fronts[0]"
-            class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
             rows="2"
           />
-          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(fronts[0])" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded border border-border/60 p-3" v-html="render(fronts[0])" />
         </div>
 
         <!-- Multiple fronts -->
         <div v-else class="space-y-2">
-          <label class="text-xs font-medium text-muted-foreground">Fronts (one card per question)</label>
+          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Fronts (one card per question)</label>
           <div v-for="(front, idx) in fronts" :key="idx" class="flex items-start gap-2">
             <textarea
               v-if="!showPreview"
               v-model="fronts[idx]"
-              class="flex-1 rounded-md border border-border bg-transparent px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+              class="flex-1 rounded border border-border bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
               rows="1"
             />
-            <div v-else class="flex-1 prose dark:prose-invert rounded-md border border-border p-2 text-sm" v-html="render(front)" />
+            <div v-else class="flex-1 prose dark:prose-invert rounded border border-border/60 p-2 text-xs" v-html="render(front)" />
             <Button
               variant="ghost"
               size="sm"
@@ -144,17 +144,17 @@ async function save() {
 
         <!-- Back -->
         <div class="space-y-1">
-          <label class="text-xs font-medium text-muted-foreground">Back (answer) {{ !isSingle ? '— shared by all cards' : '' }}</label>
+          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back (answer) {{ !isSingle ? '— shared by all cards' : '' }}</label>
           <textarea
             v-if="!showPreview"
             v-model="back"
-            class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
             rows="8"
           />
-          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="renderedBack" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded border border-border/60 p-3" v-html="renderedBack" />
         </div>
 
-        <div v-if="isLong" class="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-600 dark:text-yellow-400">
+        <div v-if="isLong" class="rounded border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning">
           This card is quite long ({{ back.length.toLocaleString() }} chars). Consider creating cards from specific sections instead.
         </div>
 
@@ -162,11 +162,11 @@ async function save() {
       </div>
 
       <DialogFooter class="gap-2">
-        <Button variant="outline" size="sm" @click="showPreview = !showPreview">
+        <Button variant="outline" size="sm" class="text-xs" @click="showPreview = !showPreview">
           {{ showPreview ? 'Edit' : 'Preview' }}
         </Button>
-        <Button variant="outline" size="sm" @click="emit('update:open', false)">Cancel</Button>
-        <Button size="sm" :disabled="saving" @click="save">
+        <Button variant="outline" size="sm" class="text-xs" @click="emit('update:open', false)">Cancel</Button>
+        <Button size="sm" class="text-xs" :disabled="saving" @click="save">
           {{ saving ? 'Saving...' : cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}
         </Button>
       </DialogFooter>

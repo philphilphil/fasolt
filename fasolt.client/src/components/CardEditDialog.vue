@@ -59,41 +59,41 @@ async function save() {
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="max-w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>Edit card</DialogTitle>
+        <DialogTitle class="text-sm">Edit card</DialogTitle>
       </DialogHeader>
 
       <div class="space-y-4">
         <div class="space-y-1">
-          <label class="text-xs font-medium text-muted-foreground">Front (question)</label>
+          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front (question)</label>
           <textarea
             v-if="!showPreview"
             v-model="front"
-            class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
             rows="2"
           />
-          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(front)" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded border border-border/60 p-3" v-html="render(front)" />
         </div>
 
         <div class="space-y-1">
-          <label class="text-xs font-medium text-muted-foreground">Back (answer)</label>
+          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back (answer)</label>
           <textarea
             v-if="!showPreview"
             v-model="back"
-            class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
             rows="8"
           />
-          <div v-else class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(back)" />
+          <div v-else class="prose dark:prose-invert max-w-none rounded border border-border/60 p-3" v-html="render(back)" />
         </div>
 
         <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
       </div>
 
       <DialogFooter class="gap-2">
-        <Button variant="outline" size="sm" @click="showPreview = !showPreview">
+        <Button variant="outline" size="sm" class="text-xs" @click="showPreview = !showPreview">
           {{ showPreview ? 'Edit' : 'Preview' }}
         </Button>
-        <Button variant="outline" size="sm" @click="emit('update:open', false)">Cancel</Button>
-        <Button size="sm" :disabled="saving" @click="save">
+        <Button variant="outline" size="sm" class="text-xs" @click="emit('update:open', false)">Cancel</Button>
+        <Button size="sm" class="text-xs" :disabled="saving" @click="save">
           {{ saving ? 'Saving...' : 'Save' }}
         </Button>
       </DialogFooter>

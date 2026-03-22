@@ -12,31 +12,31 @@ onMounted(() => sourcesStore.fetchSources())
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-5">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold tracking-tight">Sources</h1>
+      <h1 class="text-base font-semibold tracking-tight">Sources</h1>
     </div>
 
-    <p class="text-xs text-muted-foreground">
+    <p class="text-xs text-muted-foreground leading-relaxed">
       Source files that cards have been created from. Use the MCP agent to create cards from your markdown notes.
     </p>
 
-    <div v-if="sourcesStore.loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+    <div v-if="sourcesStore.loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
     <div v-else class="grid gap-2.5 sm:grid-cols-2">
       <Card
         v-for="source in sourcesStore.sources"
         :key="source.sourceFile"
-        class="cursor-pointer border-border"
+        class="cursor-pointer border-border/60 hover:border-accent/30 transition-colors"
         @click="router.push(`/cards?sourceFile=${encodeURIComponent(source.sourceFile)}`)"
       >
         <CardContent class="flex items-center justify-between p-4">
           <div class="min-w-0">
-            <div class="truncate font-mono text-sm font-medium text-foreground">{{ source.sourceFile }}</div>
-            <div class="mt-0.5 text-xs text-muted-foreground">{{ source.cardCount }} cards</div>
+            <div class="truncate text-sm font-medium text-foreground">{{ source.sourceFile }}</div>
+            <div class="mt-0.5 text-[11px] text-muted-foreground">{{ source.cardCount }} cards</div>
           </div>
           <div class="ml-3 flex shrink-0 items-center gap-2">
-            <Badge v-if="source.dueCount > 0" variant="outline" class="font-mono text-xs text-warning">
+            <Badge v-if="source.dueCount > 0" variant="outline" class="text-[10px] text-warning border-warning/30">
               {{ source.dueCount }} due
             </Badge>
           </div>
@@ -44,7 +44,7 @@ onMounted(() => sourcesStore.fetchSources())
       </Card>
     </div>
 
-    <div v-if="!sourcesStore.loading && sourcesStore.sources.length === 0" class="py-12 text-center text-sm text-muted-foreground">
+    <div v-if="!sourcesStore.loading && sourcesStore.sources.length === 0" class="py-12 text-center text-xs text-muted-foreground">
       No sources yet. Use the MCP agent to create cards from your markdown notes.
     </div>
   </div>

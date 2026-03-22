@@ -10,22 +10,22 @@ const { render } = useMarkdown()
 
 <template>
   <div
-    class="flex min-h-[180px] max-h-[60vh] overflow-y-auto cursor-pointer flex-col items-center justify-center rounded-lg border border-border bg-card p-5 sm:p-8"
+    class="flex min-h-[200px] max-h-[60vh] overflow-y-auto cursor-pointer flex-col items-center justify-center rounded border border-border/60 bg-card p-6 sm:p-10 hover:border-accent/20 transition-colors"
     @click="$emit('flip')"
   >
-    <div class="text-xs uppercase tracking-widest text-muted-foreground">
+    <div class="text-[10px] uppercase tracking-[0.2em] text-accent/70">
       {{ isFlipped ? 'Answer' : 'Question' }}
     </div>
     <div
-      class="mt-3 w-full max-w-lg text-center"
+      class="mt-4 w-full max-w-lg text-center"
       :class="isFlipped ? 'text-muted-foreground' : 'text-foreground'"
     >
       <div class="prose dark:prose-invert max-w-none" v-html="render(card.front)" />
     </div>
-    <div v-if="isFlipped" class="mt-4 w-full max-w-lg text-center">
+    <div v-if="isFlipped" class="mt-5 w-full max-w-lg text-center">
       <div class="prose dark:prose-invert max-w-none" v-html="render(card.back)" />
     </div>
-    <div v-if="card.sourceHeading" class="mt-3 font-mono text-xs text-muted-foreground">
+    <div v-if="card.sourceHeading" class="mt-4 text-[11px] text-muted-foreground/60">
       {{ card.sourceHeading }}
     </div>
   </div>

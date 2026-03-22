@@ -40,7 +40,7 @@ const activeTab = computed(() => {
           >
             <RouterLink
               :to="tab.value"
-              class="relative rounded-none border-b-2 border-transparent px-3.5 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-accent data-[state=active]:text-foreground"
+              class="relative rounded-none border-b-2 border-transparent px-3.5 py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-accent data-[state=active]:text-accent"
             >
               {{ tab.label }}
             </RouterLink>
@@ -48,7 +48,7 @@ const activeTab = computed(() => {
         </TabsList>
       </Tabs>
     </nav>
-    <main class="flex-1 px-4 pb-20 pt-5 sm:px-5 sm:pb-5">
+    <main class="flex-1 px-4 pb-20 pt-6 sm:px-5 sm:pb-6">
       <div class="mx-auto max-w-[1200px]">
         <slot />
       </div>

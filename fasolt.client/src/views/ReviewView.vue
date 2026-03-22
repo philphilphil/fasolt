@@ -56,23 +56,22 @@ function onDone() {
   <div class="flex min-h-0 flex-1 flex-col pb-16 sm:pb-0">
     <template v-if="review.isActive && !review.isComplete">
       <!-- Context bar -->
-      <div class="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+      <div class="mb-4 flex items-center justify-between text-xs text-muted-foreground">
         <div class="flex items-center gap-2">
-          <span class="text-foreground">Review session</span>
-          <span>·</span>
+          <span class="text-accent text-[10px] uppercase tracking-[0.15em]">Review</span>
+          <span class="text-border">|</span>
           <span>{{ review.sessionStats.reviewed }} reviewed</span>
         </div>
-        <div class="hidden items-center gap-2 sm:flex">
-          <KbdHint keys="space" /> flip
-          <span>·</span>
-          <KbdHint keys="1-4" /> rate
+        <div class="hidden items-center gap-3 sm:flex">
+          <span class="flex items-center gap-1"><KbdHint keys="space" /> flip</span>
+          <span class="flex items-center gap-1"><KbdHint keys="1-4" /> rate</span>
         </div>
       </div>
 
       <!-- Progress meter -->
-      <ProgressMeter :total="100" :current="review.progress" class="mb-5" />
+      <ProgressMeter :total="100" :current="review.progress" class="mb-6" />
 
-      <!-- Card wrapper — fills remaining space, centers card -->
+      <!-- Card wrapper -->
       <div class="flex flex-1 flex-col items-center justify-center">
         <ReviewCard
           v-if="review.currentCard"
@@ -83,26 +82,26 @@ function onDone() {
         />
       </div>
 
-      <!-- Rating buttons (only when flipped) -->
-      <div v-if="review.isFlipped" class="mt-4">
+      <!-- Rating buttons -->
+      <div v-if="review.isFlipped" class="mt-5">
         <RatingButtons @rate="onRate" />
       </div>
 
-      <div v-else class="mt-4 text-center text-xs text-muted-foreground">
+      <div v-else class="mt-5 text-center text-xs text-muted-foreground">
         Click the card or press <KbdHint keys="space" /> to reveal the answer
       </div>
     </template>
 
     <!-- Loading state -->
-    <div v-else-if="review.loading" class="flex flex-1 items-center justify-center text-muted-foreground">
+    <div v-else-if="review.loading" class="flex flex-1 items-center justify-center text-sm text-muted-foreground">
       Loading cards...
     </div>
 
     <!-- No cards due -->
     <div v-else-if="review.noDueCards" class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-      <div class="text-lg text-foreground">All caught up!</div>
-      <div class="text-sm text-muted-foreground">No cards are due for review right now.</div>
-      <button class="text-sm text-primary hover:underline" @click="onDone">Back to dashboard</button>
+      <div class="text-base text-foreground">All caught up!</div>
+      <div class="text-xs text-muted-foreground">No cards are due for review right now.</div>
+      <button class="text-xs text-accent hover:underline" @click="onDone">Back to dashboard</button>
     </div>
 
     <!-- Session complete -->

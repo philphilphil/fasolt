@@ -16,9 +16,9 @@ const dueCount = ref(0)
 const totalCards = ref(0)
 
 const stats = ref<Stat[]>([
-  { label: 'Due', value: '…' },
-  { label: 'Total', value: '…' },
-  { label: 'Studied today', value: '…' },
+  { label: 'Due', value: '...' },
+  { label: 'Total', value: '...' },
+  { label: 'Studied today', value: '...' },
 ])
 
 onMounted(async () => {
@@ -47,10 +47,10 @@ function studyNow() {
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-foreground">Dashboard</h1>
-      <Button v-if="dueCount > 0" @click="studyNow">
+      <h1 class="text-base font-semibold text-foreground">Dashboard</h1>
+      <Button v-if="dueCount > 0" class="glow-accent" @click="studyNow">
         Study now · {{ dueCount }} due
       </Button>
     </div>

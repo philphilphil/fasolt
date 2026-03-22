@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
 import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -75,13 +74,13 @@ async function removeCard(cardId: string) {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
-  <div v-else-if="deck" class="space-y-4">
+  <div v-else-if="deck" class="space-y-5">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <Button variant="ghost" size="sm" class="h-7 text-xs" @click="router.push('/decks')">
+        <Button variant="ghost" size="sm" class="h-7 text-[10px]" @click="router.push('/decks')">
           &larr; Decks
         </Button>
         <span class="text-sm font-medium">{{ deck.name }}</span>
@@ -90,20 +89,20 @@ async function removeCard(cardId: string) {
         <Button
           v-if="deck.dueCount > 0"
           size="sm"
-          class="text-xs"
+          class="text-xs glow-accent"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
         </Button>
 
-        <Button variant="outline" size="sm" class="h-7 text-xs" @click="openEdit">Edit</Button>
-        <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
+        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
+        <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
       </div>
     </div>
 
     <!-- Description & stats -->
     <div v-if="deck.description" class="text-xs text-muted-foreground">{{ deck.description }}</div>
-    <div class="flex gap-4 text-xs text-muted-foreground">
+    <div class="flex gap-4 text-[11px] text-muted-foreground">
       <span>{{ deck.cardCount }} cards</span>
       <span v-if="deck.dueCount > 0" class="text-warning">{{ deck.dueCount }} due</span>
     </div>
@@ -111,7 +110,7 @@ async function removeCard(cardId: string) {
     <!-- Card list -->
     <Table v-if="deck.cards.length > 0">
       <TableHeader>
-        <TableRow class="text-xs uppercase tracking-wider text-muted-foreground hover:bg-transparent">
+        <TableRow class="text-[10px] uppercase tracking-[0.15em] text-muted-foreground hover:bg-transparent">
           <TableHead class="h-8">Front</TableHead>
           <TableHead class="h-8 w-[80px]">State</TableHead>
           <TableHead class="h-8 w-[80px] hidden sm:table-cell">Due</TableHead>
@@ -119,11 +118,11 @@ async function removeCard(cardId: string) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow v-for="card in deck.cards" :key="card.id" class="text-sm">
+        <TableRow v-for="card in deck.cards" :key="card.id" class="text-xs hover:bg-accent/5">
           <TableCell class="font-medium text-foreground">
             <div class="min-w-0">
               <div>{{ card.front }}</div>
-              <div v-if="card.sourceFile" class="truncate font-mono text-xs text-muted-foreground font-normal mt-0.5">{{ card.sourceFile }}</div>
+              <div v-if="card.sourceFile" class="truncate text-[11px] text-muted-foreground font-normal mt-0.5">{{ card.sourceFile }}</div>
             </div>
           </TableCell>
           <TableCell class="text-muted-foreground">{{ card.state }}</TableCell>
@@ -132,7 +131,7 @@ async function removeCard(cardId: string) {
             <Button
               variant="ghost"
               size="sm"
-              class="h-6 text-xs text-destructive hover:text-destructive"
+              class="h-6 text-[10px] text-destructive hover:text-destructive"
               @click="removeCard(card.id)"
             >
               Remove
@@ -142,7 +141,7 @@ async function removeCard(cardId: string) {
       </TableBody>
     </Table>
 
-    <div v-else class="py-12 text-center text-sm text-muted-foreground">
+    <div v-else class="py-12 text-center text-xs text-muted-foreground">
       No cards in this deck yet. Add cards from the Cards view.
     </div>
 
@@ -173,7 +172,7 @@ async function removeCard(cardId: string) {
         </DialogHeader>
         <div class="flex items-center gap-2">
           <Checkbox id="delete-cards" :checked="deleteCards" @update:checked="deleteCards = $event" />
-          <label for="delete-cards" class="text-sm cursor-pointer select-none">
+          <label for="delete-cards" class="text-xs cursor-pointer select-none">
             Also delete all {{ deck.cardCount }} cards in this deck
           </label>
         </div>

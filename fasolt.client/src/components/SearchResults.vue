@@ -34,33 +34,33 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
 
 <template>
   <div
-    class="absolute left-0 right-0 top-full mt-1 z-50 max-h-[400px] overflow-y-auto rounded-md border border-border bg-popover shadow-lg"
+    class="absolute left-0 right-0 top-full mt-1 z-50 max-h-[400px] overflow-y-auto rounded border border-border/60 bg-popover shadow-lg"
   >
-    <div v-if="isLoading" class="px-3 py-6 text-center text-xs text-muted-foreground">
+    <div v-if="isLoading" class="px-3 py-6 text-center text-[11px] text-muted-foreground">
       Searching...
     </div>
 
-    <div v-else-if="!hasResults" class="px-3 py-6 text-center text-xs text-muted-foreground">
+    <div v-else-if="!hasResults" class="px-3 py-6 text-center text-[11px] text-muted-foreground">
       No results found
     </div>
 
     <div v-else>
       <!-- Cards -->
       <div v-if="results.cards.length > 0">
-        <div class="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <div class="px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
           Cards ({{ results.cards.length }})
         </div>
         <button
           v-for="(card, i) in results.cards"
           :key="card.id"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
-          :class="{ 'bg-accent': activeIndex === globalIndex(flatItems, 'card', i) }"
+          class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-accent/10"
+          :class="{ 'bg-accent/10': activeIndex === globalIndex(flatItems, 'card', i) }"
           @click="emit('select', { type: 'card', data: card })"
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'card', i))"
         >
-          <span class="shrink-0 text-xs text-muted-foreground">✏️</span>
+          <span class="shrink-0 text-[10px] text-accent/50">></span>
           <span class="truncate" v-html="sanitizeHeadline(card.headline)" />
-          <span class="ml-auto shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs text-muted-foreground">
+          <span class="ml-auto shrink-0 rounded border border-border bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
             {{ card.state }}
           </span>
         </button>
@@ -68,28 +68,28 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
 
       <!-- Decks -->
       <div v-if="results.decks.length > 0">
-        <div class="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+        <div class="px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground"
              :class="{ 'border-t border-border': results.cards.length > 0 }">
           Decks ({{ results.decks.length }})
         </div>
         <button
           v-for="(deck, i) in results.decks"
           :key="deck.id"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
-          :class="{ 'bg-accent': activeIndex === globalIndex(flatItems, 'deck', i) }"
+          class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-accent/10"
+          :class="{ 'bg-accent/10': activeIndex === globalIndex(flatItems, 'deck', i) }"
           @click="emit('select', { type: 'deck', data: deck })"
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'deck', i))"
         >
-          <span class="shrink-0 text-xs text-muted-foreground">📚</span>
+          <span class="shrink-0 text-[10px] text-accent/50">#</span>
           <span class="truncate" v-html="sanitizeHeadline(deck.headline)" />
-          <span class="ml-auto shrink-0 text-xs text-muted-foreground">
+          <span class="ml-auto shrink-0 text-[10px] text-muted-foreground">
             {{ deck.cardCount }} cards
           </span>
         </button>
       </div>
 
       <!-- Footer -->
-      <div class="flex gap-3 border-t border-border px-3 py-1.5 text-xs text-muted-foreground">
+      <div class="flex gap-3 border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
         <span>↑↓ navigate</span>
         <span>↵ open</span>
         <span>esc close</span>

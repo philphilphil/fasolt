@@ -10,41 +10,47 @@ const { isDark, toggle } = useDarkMode()
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
+    <!-- Grid background -->
+    <div class="pointer-events-none fixed inset-0 bg-grid bg-grid-fade opacity-60" />
+
     <!-- Nav -->
-    <nav class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
+    <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <span class="flex items-center gap-2 text-lg font-semibold tracking-tight" style="font-family: var(--font-mono)">
-          <img src="/logo.png" alt="fasolt" class="h-8 object-contain dark:invert" style="image-rendering: pixelated" />
+        <span class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
+          <img src="/logo.png" alt="fasolt" class="h-7 object-contain dark:invert" style="image-rendering: pixelated" />
           fasolt
-          <span class="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">beta</span>
+          <span class="rounded border border-accent/30 bg-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-accent">beta</span>
         </span>
         <div class="flex items-center gap-2">
           <button
-            class="rounded-md p-2 text-muted-foreground hover:text-foreground transition-colors"
+            class="rounded p-2 text-muted-foreground hover:text-foreground"
             @click="toggle"
           >
-            <Sun v-if="isDark" :size="18" />
-            <Moon v-else :size="18" />
+            <Sun v-if="isDark" :size="16" />
+            <Moon v-else :size="16" />
           </button>
           <RouterLink to="/login">
-            <Button variant="ghost" size="sm">Log in</Button>
+            <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
           </RouterLink>
         </div>
       </div>
     </nav>
 
     <!-- Hero -->
-    <section class="mx-auto max-w-5xl px-6 pt-16 pb-10 sm:pt-24 sm:pb-14">
+    <section class="relative mx-auto max-w-5xl px-6 pt-20 pb-12 sm:pt-32 sm:pb-16">
       <div class="max-w-2xl">
-        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight leading-tight mb-4">
-          MCP-first spaced repetition for your markdown notes.
+        <p class="mb-4 text-xs uppercase tracking-[0.2em] text-accent">spaced repetition</p>
+        <h1 class="text-2xl sm:text-4xl font-bold tracking-tight leading-tight mb-5">
+          <span class="text-accent text-glow">MCP-first</span> spaced repetition<br class="hidden sm:block" />
+          for your markdown notes.
         </h1>
-        <p class="text-base text-muted-foreground mb-8">
-          API and browser also fully supported. Free.
+        <p class="text-sm text-muted-foreground mb-8 max-w-md leading-relaxed">
+          Your AI agent reads your notes and creates flashcards.
+          You review them here. API and browser also fully supported. Free.
         </p>
         <div class="flex flex-wrap gap-3">
           <RouterLink to="/register">
-            <Button>Get started</Button>
+            <Button class="glow-accent">Get started</Button>
           </RouterLink>
           <RouterLink to="/login">
             <Button variant="outline">Log in</Button>
@@ -54,33 +60,36 @@ const { isDark, toggle } = useDarkMode()
     </section>
 
     <!-- Terminal demo -->
-    <section class="mx-auto max-w-5xl px-6 pb-16">
+    <section class="relative mx-auto max-w-5xl px-6 pb-20">
       <div class="max-w-2xl">
         <TerminalDemo />
       </div>
     </section>
 
     <!-- How it works -->
-    <section class="border-y border-border bg-muted/30">
-      <div class="mx-auto max-w-5xl px-6 py-14">
-        <h2 class="text-lg font-semibold mb-8">How it works</h2>
-        <div class="grid gap-8 sm:grid-cols-3">
+    <section class="border-y border-border/60 bg-card/50">
+      <div class="mx-auto max-w-5xl px-6 py-16">
+        <p class="text-xs uppercase tracking-[0.2em] text-accent mb-8">How it works</p>
+        <div class="grid gap-10 sm:grid-cols-3">
           <div>
-            <h3 class="text-sm font-semibold mb-1">Write notes</h3>
-            <p class="text-sm text-muted-foreground">
+            <span class="text-xs text-accent/60 mb-2 block">01</span>
+            <h3 class="text-sm font-semibold mb-2">Write notes</h3>
+            <p class="text-xs text-muted-foreground leading-relaxed">
               Use Obsidian, any editor, or plain text files. No special format required.
             </p>
           </div>
           <div>
-            <h3 class="text-sm font-semibold mb-1">Connect your AI agent</h3>
-            <p class="text-sm text-muted-foreground">
+            <span class="text-xs text-accent/60 mb-2 block">02</span>
+            <h3 class="text-sm font-semibold mb-2">Connect your AI agent</h3>
+            <p class="text-xs text-muted-foreground leading-relaxed">
               Add the fasolt MCP server to Claude, Cursor, or any MCP-compatible agent. It reads your notes and creates flashcards.
             </p>
           </div>
           <div>
-            <h3 class="text-sm font-semibold mb-1">Learn and remember</h3>
-            <p class="text-sm text-muted-foreground">
-              Study your cards on the web. Spaced repetition schedules reviews automatically.
+            <span class="text-xs text-accent/60 mb-2 block">03</span>
+            <h3 class="text-sm font-semibold mb-2">Learn and remember</h3>
+            <p class="text-xs text-muted-foreground leading-relaxed">
+              Study your cards on the web. Spaced repetition schedules reviews at optimal intervals.
             </p>
           </div>
         </div>
@@ -88,29 +97,29 @@ const { isDark, toggle } = useDarkMode()
     </section>
 
     <!-- Study preview -->
-    <section class="mx-auto max-w-5xl px-6 py-14">
+    <section class="mx-auto max-w-5xl px-6 py-16">
       <div class="flex flex-col items-center gap-6">
-        <p class="text-sm text-muted-foreground">Study on any device</p>
+        <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Study on any device</p>
         <div class="flex items-center gap-4">
-          <div class="rounded-2xl border border-border bg-muted/30 p-2 shadow-lg">
+          <div class="rounded border border-border/60 bg-card p-2 shadow-lg">
             <img
               src="/study-question.png"
               alt="Flashcard question side"
-              class="rounded-xl w-[180px] sm:w-[200px]"
+              class="rounded w-[180px] sm:w-[200px]"
             />
           </div>
-          <div class="rounded-2xl border border-border bg-muted/30 p-2 shadow-lg">
+          <div class="rounded border border-border/60 bg-card p-2 shadow-lg">
             <img
               src="/study-answer.png"
               alt="Flashcard answer side with rating buttons"
-              class="rounded-xl w-[180px] sm:w-[200px]"
+              class="rounded w-[180px] sm:w-[200px]"
             />
           </div>
-          <div class="hidden sm:block rounded-2xl border border-border bg-muted/30 p-2 shadow-lg">
+          <div class="hidden sm:block rounded border border-border/60 bg-card p-2 shadow-lg">
             <img
               src="/study-complete.png"
               alt="Study session complete with statistics"
-              class="rounded-xl w-[200px]"
+              class="rounded w-[200px]"
             />
           </div>
         </div>
@@ -118,23 +127,23 @@ const { isDark, toggle } = useDarkMode()
     </section>
 
     <!-- CTA -->
-    <section class="mx-auto max-w-5xl px-6 py-14 text-center">
-      <p class="text-sm text-muted-foreground mb-4">Free and open source.</p>
+    <section class="mx-auto max-w-5xl px-6 py-16 text-center">
+      <p class="text-xs text-muted-foreground mb-4 uppercase tracking-[0.2em]">Free and open source</p>
       <RouterLink to="/register">
-        <Button>Get started</Button>
+        <Button class="glow-accent">Get started</Button>
       </RouterLink>
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-border">
+    <footer class="border-t border-border/60">
       <div class="mx-auto max-w-5xl px-6 py-6 flex items-center justify-between">
-        <span class="flex items-center gap-2 text-sm text-muted-foreground font-mono">
-          <img src="/logo.png" alt="" class="h-5 w-5 object-contain dark:invert" />
+        <span class="flex items-center gap-2 text-xs text-muted-foreground">
+          <img src="/logo.png" alt="" class="h-4 w-4 object-contain dark:invert" />
           fasolt
         </span>
         <a
           href="https://github.com"
-          class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          class="text-xs text-muted-foreground hover:text-accent"
         >
           GitHub
         </a>

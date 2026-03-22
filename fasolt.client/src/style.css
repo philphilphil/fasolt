@@ -4,60 +4,60 @@
 
 @layer base {
   :root {
-    /* Light theme — default */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 6%;
+    /* Light theme */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 6%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 6%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 94%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 98%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 188 86% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 95%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 95%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 188 86% 38%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 9%;
-    --success: 142 71% 45%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 217 91% 60%;
-    --radius: 0.375rem;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 188 86% 38%;
+    --radius: 0.25rem;
 
     --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
   }
 
   .dark {
-    /* Dark theme — Command Center */
-    --background: 0 0% 5%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 5%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 53%;
-    --accent: 217 91% 60%;
-    --accent-foreground: 0 0% 98%;
+    /* Dark theme — Phosphor Terminal */
+    --background: 222 47% 5%;
+    --foreground: 213 31% 91%;
+    --card: 222 39% 8%;
+    --card-foreground: 213 31% 91%;
+    --popover: 222 39% 8%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 188 86% 53%;
+    --primary-foreground: 222 47% 5%;
+    --secondary: 222 30% 12%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 222 30% 12%;
+    --muted-foreground: 215 20% 46%;
+    --accent: 188 86% 53%;
+    --accent-foreground: 222 47% 5%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 9%;
-    --success: 142 71% 45%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 98%;
-    --border: 0 0% 10%;
-    --input: 0 0% 10%;
-    --ring: 217 91% 60%;
+    --border: 222 20% 14%;
+    --input: 222 20% 14%;
+    --ring: 188 86% 53%;
   }
 }
 
@@ -67,12 +67,42 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   mark {
     @apply bg-yellow-200 text-foreground rounded-sm px-0.5;
   }
   .dark mark {
     @apply bg-yellow-500/30 text-yellow-200;
+  }
+
+  /* Smooth transitions on all interactive elements */
+  button, a, input, select, textarea {
+    @apply transition-all duration-150;
+  }
+}
+
+@layer utilities {
+  .glow-accent {
+    box-shadow: 0 0 12px hsl(var(--accent) / 0.3);
+  }
+  .glow-accent-lg {
+    box-shadow: 0 0 24px hsl(var(--accent) / 0.35), 0 0 8px hsl(var(--accent) / 0.15);
+  }
+  .text-glow {
+    text-shadow: 0 0 12px hsl(var(--accent) / 0.5);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .bg-grid-fade {
+    -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
   }
 }

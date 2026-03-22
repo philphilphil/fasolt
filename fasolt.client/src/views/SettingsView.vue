@@ -8,18 +8,15 @@ import { isApiError } from '@/api/client'
 
 const auth = useAuthStore()
 
-// Display name
 const displayName = ref('')
 const displayNameSuccess = ref(false)
 const displayNameError = ref('')
 
-// Email
 const newEmail = ref('')
 const emailCurrentPassword = ref('')
 const emailSuccess = ref(false)
 const emailError = ref('')
 
-// Password
 const currentPassword = ref('')
 const newPassword = ref('')
 const confirmNewPassword = ref('')
@@ -83,70 +80,66 @@ async function savePassword() {
 
 <template>
   <div class="flex flex-col gap-6">
-    <h1 class="text-lg font-semibold tracking-tight">Settings</h1>
+    <h1 class="text-base font-semibold tracking-tight">Settings</h1>
 
-    <!-- Display Name -->
-    <Card>
+    <Card class="border-border/60">
       <CardHeader>
-        <CardTitle class="text-base">Display name</CardTitle>
+        <CardTitle class="text-sm">Display name</CardTitle>
       </CardHeader>
       <CardContent>
         <form class="flex flex-col gap-3" @submit.prevent="saveDisplayName">
-          <div v-if="displayNameSuccess" class="rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600">Saved.</div>
-          <div v-if="displayNameError" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ displayNameError }}</div>
+          <div v-if="displayNameSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Saved.</div>
+          <div v-if="displayNameError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ displayNameError }}</div>
           <Input v-model="displayName" placeholder="Your display name" />
-          <Button type="submit" size="sm" class="self-start">Save</Button>
+          <Button type="submit" size="sm" class="self-start text-xs">Save</Button>
         </form>
       </CardContent>
     </Card>
 
-    <!-- Email -->
-    <Card>
+    <Card class="border-border/60">
       <CardHeader>
-        <CardTitle class="text-base">Email address</CardTitle>
+        <CardTitle class="text-sm">Email address</CardTitle>
       </CardHeader>
       <CardContent>
         <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
-          <div v-if="emailSuccess" class="rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600">Email updated.</div>
-          <div v-if="emailError" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ emailError }}</div>
+          <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Email updated.</div>
+          <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ emailError }}</div>
           <div class="flex flex-col gap-1.5">
-            <label for="new-email" class="text-sm font-medium">New email</label>
+            <label for="new-email" class="text-xs font-medium">New email</label>
             <Input id="new-email" v-model="newEmail" type="email" required />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="email-password" class="text-sm font-medium">Current password</label>
+            <label for="email-password" class="text-xs font-medium">Current password</label>
             <Input id="email-password" v-model="emailCurrentPassword" type="password" required autocomplete="off" />
           </div>
-          <Button type="submit" size="sm" class="self-start">Update email</Button>
+          <Button type="submit" size="sm" class="self-start text-xs">Update email</Button>
         </form>
       </CardContent>
     </Card>
 
-    <!-- Password -->
-    <Card>
+    <Card class="border-border/60">
       <CardHeader>
-        <CardTitle class="text-base">Change password</CardTitle>
+        <CardTitle class="text-sm">Change password</CardTitle>
       </CardHeader>
       <CardContent>
         <form class="flex flex-col gap-3" @submit.prevent="savePassword">
-          <div v-if="passwordSuccess" class="rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-600">Password changed.</div>
-          <div v-if="passwordError" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ passwordError }}</div>
+          <div v-if="passwordSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Password changed.</div>
+          <div v-if="passwordError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ passwordError }}</div>
           <div class="flex flex-col gap-1.5">
-            <label for="current-password" class="text-sm font-medium">Current password</label>
+            <label for="current-password" class="text-xs font-medium">Current password</label>
             <Input id="current-password" v-model="currentPassword" type="password" required autocomplete="current-password" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="new-password" class="text-sm font-medium">New password</label>
+            <label for="new-password" class="text-xs font-medium">New password</label>
             <Input id="new-password" v-model="newPassword" type="password" required autocomplete="new-password" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <label for="confirm-new-password" class="text-sm font-medium">Confirm new password</label>
+            <label for="confirm-new-password" class="text-xs font-medium">Confirm new password</label>
             <Input id="confirm-new-password" v-model="confirmNewPassword" type="password" required autocomplete="new-password" />
           </div>
-          <Button type="submit" size="sm" class="self-start">Change password</Button>
+          <Button type="submit" size="sm" class="self-start text-xs">Change password</Button>
         </form>
       </CardContent>
     </Card>
-
   </div>
 </template>

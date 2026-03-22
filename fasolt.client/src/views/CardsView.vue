@@ -91,10 +91,10 @@ const columns: ColumnDef<Card>[] = [
       return h('div', { class: 'min-w-0' }, [
         h(RouterLink, {
           to: `/cards/${row.original.id}`,
-          class: 'hover:underline',
+          class: 'hover:text-accent transition-colors',
         }, () => display),
         source
-          ? h('div', { class: 'truncate font-mono text-xs text-muted-foreground mt-0.5' }, source)
+          ? h('div', { class: 'truncate text-[11px] text-muted-foreground mt-0.5' }, source)
           : null,
       ])
     },
@@ -109,7 +109,7 @@ const columns: ColumnDef<Card>[] = [
     accessorKey: 'state',
     header: 'State',
     meta: { className: 'w-[80px]' },
-    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-xs' }, () => row.getValue('state')),
+    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
     filterFn: (row, _id, value) => !value || row.getValue('state') === value,
   },
   {
@@ -120,9 +120,9 @@ const columns: ColumnDef<Card>[] = [
     cell: ({ row }) => {
       const deckList = row.original.decks
       return h('div', { class: 'flex flex-wrap gap-1' }, [
-        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-xs whitespace-nowrap' }, () => d.name)),
+        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-[10px] whitespace-nowrap' }, () => d.name)),
         h('button', {
-          class: 'text-xs text-muted-foreground hover:text-foreground',
+          class: 'text-[10px] text-muted-foreground hover:text-accent',
           onClick: () => { addToDeckCard.value = row.original },
         }, '+'),
       ])
@@ -135,8 +135,8 @@ const columns: ColumnDef<Card>[] = [
     cell: ({ row }) => {
       const card = row.original
       return h('div', { class: 'flex gap-1' }, [
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-xs', onClick: () => openEdit(card) }, () => 'Edit'),
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-xs text-muted-foreground hover:text-destructive', onClick: () => { deleteTarget.value = card } }, () => '×'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => openEdit(card) }, () => 'Edit'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => { deleteTarget.value = card } }, () => '×'),
       ])
     },
   },
@@ -203,7 +203,7 @@ function applyStateFilter(val: string) {
         />
         <select
           :value="stateFilter"
-          class="h-8 rounded-md border border-border bg-transparent px-2 text-xs"
+          class="h-8 rounded border border-border bg-transparent px-2 text-xs text-foreground"
           @change="applyStateFilter(($event.target as HTMLSelectElement).value)"
         >
           <option value="">All states</option>
@@ -234,14 +234,14 @@ function applyStateFilter(val: string) {
     </div>
 
     <!-- Table -->
-    <div class="rounded-md border">
+    <div class="rounded border border-border/60">
       <Table>
         <TableHeader>
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
             <TableHead
               v-for="header in headerGroup.headers"
               :key="header.id"
-              class="h-9 text-xs uppercase tracking-wider text-muted-foreground cursor-pointer select-none"
+              class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
               :class="(header.column.columnDef.meta as any)?.className"
               @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
             >
@@ -251,15 +251,15 @@ function applyStateFilter(val: string) {
                   :render="header.column.columnDef.header"
                   :props="header.getContext()"
                 />
-                <span v-if="header.column.getIsSorted() === 'asc'" class="text-xs">↑</span>
-                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-xs">↓</span>
+                <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
+                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
               </div>
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
-            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-sm">
+            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
               <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
                 <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
               </TableCell>
@@ -267,7 +267,7 @@ function applyStateFilter(val: string) {
           </template>
           <template v-else>
             <TableRow>
-              <TableCell :colspan="columns.length" class="h-24 text-center text-sm text-muted-foreground">
+              <TableCell :colspan="columns.length" class="h-24 text-center text-xs text-muted-foreground">
                 No cards yet. Create one or use the MCP agent to generate cards from your notes.
               </TableCell>
             </TableRow>
@@ -277,14 +277,14 @@ function applyStateFilter(val: string) {
     </div>
 
     <!-- Pagination -->
-    <div v-if="table.getPageCount() > 1" class="flex items-center justify-between text-xs text-muted-foreground">
+    <div v-if="table.getPageCount() > 1" class="flex items-center justify-between text-[11px] text-muted-foreground">
       <span>{{ table.getFilteredRowModel().rows.length }} card(s)</span>
       <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+        <Button variant="outline" size="sm" class="h-7 text-[10px]" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
           Previous
         </Button>
         <span>Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}</span>
-        <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+        <Button variant="outline" size="sm" class="h-7 text-[10px]" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
           Next
         </Button>
       </div>
@@ -330,7 +330,7 @@ function applyStateFilter(val: string) {
         </DialogHeader>
         <select
           v-model="addToDeckId"
-          class="w-full h-8 rounded-md border border-border bg-transparent px-2 text-xs"
+          class="w-full h-8 rounded border border-border bg-transparent px-2 text-xs text-foreground"
         >
           <option value="">Select a deck</option>
           <option v-for="d in decks.decks" :key="d.id" :value="d.id">{{ d.name }}</option>

@@ -52,37 +52,37 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <Card>
+  <Card class="border-border/60">
     <CardHeader>
-      <CardTitle class="text-center text-lg">Create account</CardTitle>
+      <CardTitle class="text-center text-base">Create account</CardTitle>
     </CardHeader>
     <CardContent>
       <form class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-        <div v-if="errors.length" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <div v-if="errors.length" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           <p v-for="err in errors" :key="err">{{ err }}</p>
         </div>
         <div class="flex flex-col gap-1.5">
-          <label for="email" class="text-sm font-medium">Email</label>
+          <label for="email" class="text-xs font-medium">Email</label>
           <Input id="email" v-model="email" type="email" required autocomplete="email" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label for="password" class="text-sm font-medium">Password</label>
+          <label for="password" class="text-xs font-medium">Password</label>
           <Input id="password" v-model="password" type="password" required autocomplete="new-password" />
-          <ul v-if="password" class="mt-1 space-y-0.5 text-xs">
-            <li v-for="rule in passwordRules" :key="rule.label" :class="rule.valid ? 'text-green-600' : 'text-muted-foreground'">
+          <ul v-if="password" class="mt-1 space-y-0.5 text-[11px]">
+            <li v-for="rule in passwordRules" :key="rule.label" :class="rule.valid ? 'text-success' : 'text-muted-foreground'">
               {{ rule.valid ? '\u2713' : '\u25CB' }} {{ rule.label }}
             </li>
           </ul>
         </div>
         <div class="flex flex-col gap-1.5">
-          <label for="confirm-password" class="text-sm font-medium">Confirm password</label>
+          <label for="confirm-password" class="text-xs font-medium">Confirm password</label>
           <Input id="confirm-password" v-model="confirmPassword" type="password" required autocomplete="new-password" />
-          <p v-if="confirmPassword && !passwordsMatch" class="text-xs text-destructive">Passwords do not match.</p>
+          <p v-if="confirmPassword && !passwordsMatch" class="text-[11px] text-destructive">Passwords do not match.</p>
         </div>
         <Button type="submit" class="w-full" :disabled="!canSubmit">
           {{ loading ? 'Creating account\u2026' : 'Create account' }}
         </Button>
-        <p class="text-center text-sm">
+        <p class="text-center text-xs">
           Already have an account? <RouterLink to="/login" class="text-accent hover:underline">Log in</RouterLink>
         </p>
       </form>

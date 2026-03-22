@@ -28,9 +28,9 @@ async function createDeck() {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-5">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold tracking-tight">Decks</h1>
+      <h1 class="text-base font-semibold tracking-tight">Decks</h1>
       <Dialog v-model:open="dialogOpen">
         <DialogTrigger as-child>
           <Button size="sm" class="text-xs">New deck</Button>
@@ -50,25 +50,25 @@ async function createDeck() {
       </Dialog>
     </div>
 
-    <div v-if="decks.loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+    <div v-if="decks.loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
     <div v-else class="grid gap-2.5 sm:grid-cols-2">
       <Card
         v-for="deck in decks.decks"
         :key="deck.id"
-        class="cursor-pointer border-border"
+        class="cursor-pointer border-border/60 hover:border-accent/30 transition-colors"
         @click="router.push(`/decks/${deck.id}`)"
       >
         <CardContent class="flex items-center justify-between p-4">
           <div>
             <div class="text-sm font-medium text-foreground">{{ deck.name }}</div>
-            <div v-if="deck.description" class="mt-0.5 text-xs text-muted-foreground">{{ deck.description }}</div>
-            <div class="mt-0.5 text-xs text-muted-foreground">
+            <div v-if="deck.description" class="mt-0.5 text-[11px] text-muted-foreground">{{ deck.description }}</div>
+            <div class="mt-0.5 text-[11px] text-muted-foreground">
               {{ deck.cardCount }} cards
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span v-if="deck.dueCount > 0" class="font-mono text-xs text-warning">
+            <span v-if="deck.dueCount > 0" class="text-xs text-warning">
               {{ deck.dueCount }} due
             </span>
           </div>
@@ -76,7 +76,7 @@ async function createDeck() {
       </Card>
     </div>
 
-    <div v-if="!decks.loading && decks.decks.length === 0" class="py-12 text-center text-sm text-muted-foreground">
+    <div v-if="!decks.loading && decks.decks.length === 0" class="py-12 text-center text-xs text-muted-foreground">
       No decks yet. Create one to organize your cards.
     </div>
   </div>

@@ -71,23 +71,23 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
   <div v-else-if="card" class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <Button variant="ghost" size="sm" class="h-7 text-xs" @click="router.push('/cards')">
+        <Button variant="ghost" size="sm" class="h-7 text-[10px]" @click="router.push('/cards')">
           &larr; Cards
         </Button>
-        <Badge variant="outline" class="text-xs">{{ card.state }}</Badge>
+        <Badge variant="outline" class="text-[10px]">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
-        <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-xs" @click="startEdit">Edit</Button>
+        <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-[10px]" @click="startEdit">Edit</Button>
         <Button
           variant="outline"
           size="sm"
-          class="h-7 text-xs text-destructive hover:text-destructive"
+          class="h-7 text-[10px] text-destructive hover:text-destructive"
           @click="deleteOpen = true"
         >
           Delete
@@ -96,7 +96,7 @@ async function confirmDelete() {
     </div>
 
     <!-- Metadata -->
-    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+    <div class="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-muted-foreground">
       <span v-if="card.sourceFile">Source: {{ card.sourceFile }}</span>
       <span v-if="card.sourceHeading">Section: {{ card.sourceHeading }}</span>
       <span v-if="card.decks.length > 0">Decks: {{ card.decks.map(d => d.name).join(', ') }}</span>
@@ -107,39 +107,39 @@ async function confirmDelete() {
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
       <div class="space-y-1">
-        <label class="text-xs font-medium text-muted-foreground">Front (question)</label>
+        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front (question)</label>
         <textarea
           v-model="front"
-          class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
           rows="3"
         />
       </div>
       <div class="space-y-1">
-        <label class="text-xs font-medium text-muted-foreground">Back (answer)</label>
+        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back (answer)</label>
         <textarea
           v-model="back"
-          class="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
           rows="8"
         />
       </div>
       <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
       <div class="flex gap-2">
-        <Button size="sm" :disabled="saving" @click="save">
+        <Button size="sm" class="text-xs" :disabled="saving" @click="save">
           {{ saving ? 'Saving...' : 'Save' }}
         </Button>
-        <Button variant="outline" size="sm" @click="editing = false">Cancel</Button>
+        <Button variant="outline" size="sm" class="text-xs" @click="editing = false">Cancel</Button>
       </div>
     </div>
 
     <!-- View mode -->
     <div v-else class="space-y-4">
       <div class="space-y-1">
-        <label class="text-xs font-medium text-muted-foreground">Front</label>
-        <div class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.front)" />
+        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front</label>
+        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 p-4" v-html="render(card.front)" />
       </div>
       <div class="space-y-1">
-        <label class="text-xs font-medium text-muted-foreground">Back</label>
-        <div class="prose dark:prose-invert max-w-none rounded-md border border-border p-3" v-html="render(card.back)" />
+        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back</label>
+        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 p-4" v-html="render(card.back)" />
       </div>
     </div>
 
