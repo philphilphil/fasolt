@@ -190,6 +190,25 @@ app.Use(async (context, next) =>
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors();
+// RFC 9728: MCP endpoint 401 must include resource_metadata in WWW-Authenticate
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/mcp"))
+    {
+        context.Response.OnStarting(() =>
+        {
+            if (context.Response.StatusCode == 401)
+            {
+                var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
+                context.Response.Headers.Remove("WWW-Authenticate");
+                context.Response.Headers.Append("WWW-Authenticate",
+                    $"Bearer resource_metadata=\"{baseUrl}/.well-known/oauth-protected-resource\"");
+            }
+            return Task.CompletedTask;
+        });
+    }
+    await next();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
@@ -206,7 +225,7 @@ app.MapApiTokenEndpoints();
 app.MapOAuthEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
-app.MapMcp("/mcp");
+app.MapMcp("/mcp").RequireAuthorization();
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");
