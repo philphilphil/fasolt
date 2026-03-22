@@ -1,26 +1,25 @@
 <script setup lang="ts">
 interface TerminalLine {
   text: string
-  type: 'prompt' | 'output' | 'success' | 'dim' | 'blank'
+  type: 'prompt' | 'output' | 'output-link' | 'success' | 'dim' | 'blank' | 'link'
 }
 
 const lines: TerminalLine[] = [
-  { type: 'prompt', text: 'Read my distributed-systems.md and create flashcards' },
+  { type: 'prompt', text: 'make me flashcards from @llm-basics.md' },
   { type: 'blank', text: '' },
-  { type: 'dim', text: 'Reading distributed-systems.md...' },
-  { type: 'dim', text: 'Found 4 sections: CAP Theorem, Consensus, Replication, Partitioning' },
+  { type: 'dim', text: 'Reading llm-basics.md...' },
+  { type: 'dim', text: 'Found 4 sections, creating cards...' },
   { type: 'blank', text: '' },
-  { type: 'dim', text: 'Creating 8 flashcards...' },
-  { type: 'success', text: '✓ What are the three guarantees of the CAP theorem?' },
-  { type: 'success', text: "✓ Why can't a distributed system provide all three CAP properties?" },
-  { type: 'success', text: '✓ What is the difference between strong and eventual consistency?' },
-  { type: 'success', text: '✓ How does the Raft consensus algorithm handle leader election?' },
-  { type: 'success', text: '✓ What is quorum, and why does it matter for replication?' },
-  { type: 'success', text: '✓ What is the difference between synchronous and async replication?' },
-  { type: 'success', text: '✓ What causes a network partition in a distributed system?' },
-  { type: 'success', text: '✓ How does partition tolerance differ from fault tolerance?' },
+  { type: 'success', text: '✓ What does a tokenizer do and why is it needed?' },
+  { type: 'success', text: '✓ What is the context window of an LLM?' },
+  { type: 'success', text: '✓ How does temperature affect text generation?' },
+  { type: 'success', text: '✓ What is the difference between pre-training and fine-tuning?' },
+  { type: 'success', text: '✓ Why do LLMs hallucinate?' },
+  { type: 'success', text: '✓ What is RLHF and what problem does it solve?' },
+  { type: 'success', text: '✓ Prompt engineering vs fine-tuning — when to use which?' },
   { type: 'blank', text: '' },
-  { type: 'output', text: '8 cards created in "Distributed Systems" deck' },
+  { type: 'output', text: '7 cards created in "LLM Basics" deck' },
+  { type: 'output-link', text: 'Study at https://fasolt.app/decks/a1b2c3' },
 ]
 </script>
 
@@ -49,6 +48,9 @@ const lines: TerminalLine[] = [
         </div>
         <div v-else-if="line.type === 'dim'" class="flex gap-2">
           <span style="color: #8b949e">{{ line.text }}</span>
+        </div>
+        <div v-else-if="line.type === 'output-link'" class="flex gap-1">
+          <span style="color: #e6edf3">{{ line.text.split('https://')[0] }}</span><span style="color: #58a6ff; text-decoration: underline">https://{{ line.text.split('https://')[1] }}</span>
         </div>
         <div v-else-if="line.type === 'output'" class="flex gap-2">
           <span style="color: #e6edf3">{{ line.text }}</span>

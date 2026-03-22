@@ -16,6 +16,7 @@ const { isDark, toggle } = useDarkMode()
         <span class="flex items-center gap-2 text-lg font-semibold tracking-tight" style="font-family: var(--font-mono)">
           <img src="/logo.png" alt="fasolt" class="h-8 object-contain" style="image-rendering: pixelated" />
           fasolt
+          <span class="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">beta</span>
         </span>
         <div class="flex items-center gap-2">
           <button

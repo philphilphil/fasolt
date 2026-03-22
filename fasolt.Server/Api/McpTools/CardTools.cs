@@ -30,7 +30,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result);
     }
 
-    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Returns created cards and any skipped duplicates.")]
+    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
     public async Task<string> CreateCards(
         [Description("Array of cards to create. Each card needs 'front' and 'back' text, plus optional 'sourceFile' and 'sourceHeading'.")] List<BulkCardItem> cards,
         [Description("Default source file name for all cards (individual cards can override)")] string? sourceFile = null,
@@ -40,7 +40,21 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var result = await cardService.BulkCreateCards(userId, cards, sourceFile, deckId);
         if (result.IsDeckNotFound)
             return JsonSerializer.Serialize(new { error = "Deck not found" });
-        return JsonSerializer.Serialize(result.Response);
+
+        var response = result.Response!;
+        if (deckId.HasValue)
+        {
+            var request = httpContextAccessor.HttpContext!.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            return JsonSerializer.Serialize(new
+            {
+                response.Created,
+                response.Skipped,
+                deckUrl = $"{baseUrl}/decks/{deckId.Value}",
+            });
+        }
+
+        return JsonSerializer.Serialize(response);
     }
 
     [McpServerTool, Description("Delete one or more cards by their IDs.")]
