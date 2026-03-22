@@ -115,12 +115,12 @@ const columns: ColumnDef<Card>[] = [
   {
     id: 'decks',
     header: 'Decks',
-    meta: { className: 'w-[120px]' },
+    meta: { className: 'w-[160px]' },
     accessorFn: (row) => row.decks.map(d => d.name).join(', '),
     cell: ({ row }) => {
       const deckList = row.original.decks
       return h('div', { class: 'flex flex-wrap gap-1' }, [
-        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-xs' }, () => d.name)),
+        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-xs whitespace-nowrap' }, () => d.name)),
         h('button', {
           class: 'text-xs text-muted-foreground hover:text-foreground',
           onClick: () => { addToDeckCard.value = row.original },
