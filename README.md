@@ -6,19 +6,18 @@
 
 <p align="center">
   MCP-first spaced repetition for your markdown notes.<br/>
-  Your AI reads your notes — you learn and remember.
 </p>
+
+<i>100 % Vibecoded. I wanted todo this project for years but never had the time. Finally started to vibecode it and it quickly shifted goals to just be a frontend and let agents generate the cards.</i>
 
 ---
 
 Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at your markdown files. Study the flashcards it creates.
 
-`100% vibecoded.`
-
 <p align="center">
-  <img src="docs/screenshots/study-question.png" alt="Study question" width="200" />
-  <img src="docs/screenshots/study-answer.png" alt="Study answer" width="200" />
-  <img src="docs/screenshots/study-complete.png" alt="Study complete" width="200" />
+  <img src="docs/screenshots/screenshot.png" alt="Study question" width="270" />
+  <img src="docs/screenshots/screenshot2.png" alt="Study answer" width="270" />
+  <img src="docs/screenshots/screenshot3.png" alt="Study complete" width="270" />
 </p>
 
 ## How It Works
