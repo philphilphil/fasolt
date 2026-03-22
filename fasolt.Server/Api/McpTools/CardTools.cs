@@ -53,4 +53,53 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
             ? JsonSerializer.Serialize(new { deleted = true })
             : JsonSerializer.Serialize(new { error = "Card not found" });
     }
+
+    [McpServerTool, Description("Update an existing card's text or source metadata. Preserves all review/SRS history. Look up by card ID, or by sourceFile + front (case-insensitive).")]
+    public async Task<string> UpdateCard(
+        [Description("Card ID (provide this or sourceFile + front)")] Guid? cardId = null,
+        [Description("Source file for natural key lookup (with front)")] string? sourceFile = null,
+        [Description("Current front text for natural key lookup (with sourceFile)")] string? front = null,
+        [Description("New front text")] string? newFront = null,
+        [Description("New back text")] string? newBack = null,
+        [Description("New source file")] string? newSourceFile = null,
+        [Description("New source heading")] string? newSourceHeading = null)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+
+        if (newFront is null && newBack is null && newSourceFile is null && newSourceHeading is null)
+            return JsonSerializer.Serialize(new { error = "Provide at least one field to update (newFront, newBack, newSourceFile, newSourceHeading)" });
+
+        var req = new UpdateCardFieldsRequest(newFront, newBack, newSourceFile, newSourceHeading);
+
+        UpdateCardResult result;
+        if (cardId.HasValue)
+        {
+            result = await cardService.UpdateCardFields(userId, cardId.Value, req);
+        }
+        else if (sourceFile is not null && front is not null)
+        {
+            result = await cardService.UpdateCardByNaturalKey(userId, sourceFile, front, req);
+        }
+        else
+        {
+            return JsonSerializer.Serialize(new { error = "Provide cardId or both sourceFile and front" });
+        }
+
+        return result.Status switch
+        {
+            UpdateCardStatus.Success => JsonSerializer.Serialize(result.Card),
+            UpdateCardStatus.NotFound => JsonSerializer.Serialize(new { error = "Card not found" }),
+            UpdateCardStatus.Collision => JsonSerializer.Serialize(new { error = "A card with this front text already exists for this source" }),
+            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }),
+        };
+    }
+
+    [McpServerTool, Description("Delete all cards from a specific source file. Use when a source file has been deleted or needs to be fully re-synced.")]
+    public async Task<string> DeleteCardsBySource(
+        [Description("Exact source file name to match")] string sourceFile)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+        var count = await cardService.DeleteCardsBySource(userId, sourceFile);
+        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count });
+    }
 }
