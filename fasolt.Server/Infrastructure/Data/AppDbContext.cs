@@ -26,7 +26,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.Property(e => e.SourceFile).HasMaxLength(255);
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => new { e.UserId, e.SourceFile });
-            entity.HasQueryFilter(e => e.DeletedAt == null);
+
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.Property(e => e.EaseFactor).HasDefaultValue(2.5);
             entity.Property(e => e.State).HasMaxLength(20).HasDefaultValue("new").IsRequired();

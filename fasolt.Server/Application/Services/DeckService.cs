@@ -35,8 +35,8 @@ public class DeckService(AppDbContext db)
                 d.Id,
                 d.Name,
                 d.Description,
-                d.Cards.Count(dc => dc.Card.DeletedAt == null),
-                d.Cards.Count(dc => dc.Card.DeletedAt == null && (dc.Card.DueAt == null || dc.Card.DueAt <= now)),
+                d.Cards.Count,
+                d.Cards.Count(dc => dc.Card.DueAt == null || dc.Card.DueAt <= now),
                 d.CreatedAt))
             .ToListAsync();
     }
@@ -51,7 +51,7 @@ public class DeckService(AppDbContext db)
         var now = DateTimeOffset.UtcNow;
 
         var cards = await db.DeckCards
-            .Where(dc => dc.DeckId == deckId && dc.Card.DeletedAt == null)
+            .Where(dc => dc.DeckId == deckId)
             .OrderBy(dc => dc.Card.DueAt)
             .Select(dc => new DeckCardDto(dc.CardId, dc.Card.Front, dc.Card.Back, dc.Card.SourceFile, dc.Card.SourceHeading, dc.Card.State, dc.Card.DueAt))
             .ToListAsync();
@@ -73,9 +73,9 @@ public class DeckService(AppDbContext db)
         await db.SaveChangesAsync();
 
         var now = DateTimeOffset.UtcNow;
-        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deckId && dc.Card.DeletedAt == null);
+        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deckId);
         var dueCount = await db.DeckCards.CountAsync(dc =>
-            dc.DeckId == deckId && dc.Card.DeletedAt == null && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
+            dc.DeckId == deckId && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
 
         return new DeckDto(deck.Id, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt);
     }
@@ -88,22 +88,24 @@ public class DeckService(AppDbContext db)
 
         if (deck is null) return new DeleteDeckResult(false, 0);
 
-        var deletedCardCount = 0;
-        if (deleteCards)
-        {
-            var now = DateTimeOffset.UtcNow;
-            var cardIds = await db.DeckCards
+        var cardIds = deleteCards
+            ? await db.DeckCards
                 .Where(dc => dc.DeckId == deckId)
                 .Select(dc => dc.CardId)
-                .ToListAsync();
-
-            deletedCardCount = await db.Cards
-                .Where(c => cardIds.Contains(c.Id) && c.UserId == userId && c.DeletedAt == null)
-                .ExecuteUpdateAsync(s => s.SetProperty(c => c.DeletedAt, now));
-        }
+                .ToListAsync()
+            : [];
 
         db.Decks.Remove(deck);
         await db.SaveChangesAsync();
+
+        var deletedCardCount = 0;
+        if (cardIds.Count > 0)
+        {
+            deletedCardCount = await db.Cards
+                .Where(c => cardIds.Contains(c.Id) && c.UserId == userId)
+                .ExecuteDeleteAsync();
+        }
+
         return new DeleteDeckResult(true, deletedCardCount);
     }
 

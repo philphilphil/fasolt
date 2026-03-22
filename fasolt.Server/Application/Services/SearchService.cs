@@ -21,7 +21,7 @@ public class SearchService(AppDbContext db)
                        c."State"
                 FROM "Cards" c
                 WHERE c."UserId" = {1}
-                  AND c."DeletedAt" IS NULL
+
                   AND c."SearchVector" @@ plainto_tsquery('english', {0})
                 ORDER BY ts_rank(c."SearchVector", plainto_tsquery('english', {0})) DESC
                 LIMIT 10
@@ -35,7 +35,7 @@ public class SearchService(AppDbContext db)
                            'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline",
                        (SELECT COUNT(*) FROM "DeckCards" dc
                         INNER JOIN "Cards" card ON dc."CardId" = card."Id"
-                        WHERE dc."DeckId" = d."Id" AND card."DeletedAt" IS NULL) AS "CardCount"
+                        WHERE dc."DeckId" = d."Id") AS "CardCount"
                 FROM "Decks" d
                 WHERE d."UserId" = {1}
                   AND d."SearchVector" @@ plainto_tsquery('english', {0})

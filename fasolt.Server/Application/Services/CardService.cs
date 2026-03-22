@@ -203,14 +203,11 @@ public class CardService(AppDbContext db)
     /// <returns>true if deleted, false if not found</returns>
     public async Task<bool> DeleteCard(string userId, Guid cardId)
     {
-        var card = await db.Cards
-            .FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
+        var deleted = await db.Cards
+            .Where(c => c.Id == cardId && c.UserId == userId)
+            .ExecuteDeleteAsync();
 
-        if (card is null) return false;
-
-        card.DeletedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync();
-        return true;
+        return deleted > 0;
     }
 
     private static CardDto ToDto(Card c) =>

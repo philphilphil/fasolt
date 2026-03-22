@@ -18,7 +18,6 @@ public class SourceService(AppDbContext db)
                 FROM "Cards"
                 WHERE "UserId" = {1}
                   AND "SourceFile" IS NOT NULL
-                  AND "DeletedAt" IS NULL
                 GROUP BY "SourceFile"
                 ORDER BY "SourceFile"
                 """, now, userId)

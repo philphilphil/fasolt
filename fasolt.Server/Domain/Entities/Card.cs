@@ -12,7 +12,7 @@ public class Card
     public string Front { get; set; } = default!;
     public string Back { get; set; } = default!;
     public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset? DeletedAt { get; set; }
+
     public double EaseFactor { get; set; } = 2.5;
     public int Interval { get; set; }
     public int Repetitions { get; set; }
