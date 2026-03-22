@@ -171,26 +171,43 @@ public static class OAuthEndpoints
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <title>Sign in — fasolt</title>
                 <style>
-                    body { font-family: system-ui, sans-serif; max-width: 380px; margin: 80px auto; padding: 0 16px; }
-                    h1 { font-size: 1.25rem; margin-bottom: 4px; }
-                    p.sub { color: #666; font-size: 0.875rem; margin-top: 0; }
-                    label { display: block; font-size: 0.875rem; margin-top: 12px; }
-                    input { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-                    button { width: 100%; padding: 10px; margin-top: 16px; background: #18181b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; }
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #fafafa; padding: 16px; }
+                    .card { width: 100%; max-width: 380px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+                    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
+                    .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
+                    .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
+                    label { display: block; font-size: 0.8125rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
+                    input { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
+                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.06); }
+                    .field { margin-bottom: 14px; }
+                    button { width: 100%; padding: 10px; margin-top: 6px; background: #18181b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.15s; }
                     button:hover { background: #27272a; }
-                    .error { color: #dc2626; font-size: 0.875rem; margin-top: 8px; }
+                    button:active { background: #09090b; }
+                    .error { color: #dc2626; font-size: 0.8125rem; margin-bottom: 12px; padding: 8px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; }
+                    .footer { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #a1a1aa; }
                 </style>
             </head>
             <body>
-                <h1>fasolt</h1>
-                <p class="sub">Sign in to connect your AI client</p>
-                {{errorHtml}}
-                <form method="post" action="/oauth/login">
-                    <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
-                    <label>Email<input type="email" name="email" required autofocus /></label>
-                    <label>Password<input type="password" name="password" required /></label>
-                    <button type="submit">Sign in</button>
-                </form>
+                <div class="card">
+                    <div class="logo">fasolt</div>
+                    <p class="subtitle">Sign in to connect your AI client</p>
+                    <div class="divider"></div>
+                    {{errorHtml}}
+                    <form method="post" action="/oauth/login">
+                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus />
+                        </div>
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required />
+                        </div>
+                        <button type="submit">Sign in</button>
+                    </form>
+                    <p class="footer">You'll be redirected back to your AI client.</p>
+                </div>
             </body>
             </html>
             """;
