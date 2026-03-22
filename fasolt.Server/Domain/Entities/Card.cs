@@ -18,6 +18,7 @@ public class Card
     public int Repetitions { get; set; }
     public DateTimeOffset? DueAt { get; set; }
     public string State { get; set; } = "new";
+    public DateTimeOffset? LastReviewedAt { get; set; }
     public List<DeckCard> DeckCards { get; set; } = [];
     public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

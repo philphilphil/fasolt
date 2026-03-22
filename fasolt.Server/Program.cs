@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Api.Auth;
 using Fasolt.Server.Api.Endpoints;
@@ -36,7 +38,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Strict;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
     options.ExpireTimeSpan = TimeSpan.FromDays(1);
     options.SlidingExpiration = true;
     options.Events.OnRedirectToLogin = context =>
@@ -51,7 +55,8 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
     options.TokenLifespan = TimeSpan.FromHours(1);
 });
 
-builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -60,6 +65,40 @@ builder.Services.AddAuthorization(options =>
         BearerTokenDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .Build();
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowCredentials()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        // In production, configure via environment variable
+        else
+        {
+            var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+            policy.WithOrigins(origins)
+                  .AllowCredentials()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+    });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.AddFixedWindowLimiter("auth", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
 });
 
 builder.Services.AddOpenApi();
@@ -76,8 +115,24 @@ if (app.Environment.IsDevelopment())
     await DevSeedData.SeedAsync(app.Services);
 }
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
+
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseMiddleware<ErrorResponseMiddleware>();
 
 app.MapHealthEndpoints();
@@ -88,7 +143,7 @@ app.MapDeckEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapApiTokenEndpoints();
-app.MapGroup("/api/identity").MapIdentityApi<AppUser>();
+app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
 app.Run();
 

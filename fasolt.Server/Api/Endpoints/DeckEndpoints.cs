@@ -130,7 +130,12 @@ public static class DeckEndpoints
         deck.Description = request.Description?.Trim();
         await db.SaveChangesAsync();
 
-        return Results.Ok(new DeckDto(deck.Id, deck.Name, deck.Description, 0, 0, deck.CreatedAt));
+        var now = DateTimeOffset.UtcNow;
+        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == id && dc.Card.DeletedAt == null);
+        var dueCount = await db.DeckCards.CountAsync(dc =>
+            dc.DeckId == id && dc.Card.DeletedAt == null && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
+
+        return Results.Ok(new DeckDto(deck.Id, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt));
     }
 
     private static async Task<IResult> Delete(

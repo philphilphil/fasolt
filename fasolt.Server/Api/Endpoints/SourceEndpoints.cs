@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 using System.Security.Claims;
 
@@ -13,9 +15,14 @@ public static class SourceEndpoints
         group.MapGet("", List);
     }
 
-    private static async Task<IResult> List(AppDbContext db, ClaimsPrincipal user)
+    private static async Task<IResult> List(
+        AppDbContext db,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
     {
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
         var now = DateTimeOffset.UtcNow;
 
         var sources = await db.Database
@@ -29,7 +36,7 @@ public static class SourceEndpoints
                   AND "DeletedAt" IS NULL
                 GROUP BY "SourceFile"
                 ORDER BY "SourceFile"
-                """, now, userId)
+                """, now, user.Id)
             .ToListAsync();
 
         return Results.Ok(new SourceListResponse(sources));

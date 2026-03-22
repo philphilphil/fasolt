@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it'
+import DOMPurify from 'dompurify'
 
 const md = new MarkdownIt({
   html: false,
@@ -15,7 +16,7 @@ md.renderer.rules.image = (tokens, idx) => {
 
 export function useMarkdown() {
   function render(content: string): string {
-    return md.render(content)
+    return DOMPurify.sanitize(md.render(content))
   }
 
   function stripFrontmatter(content: string): string {

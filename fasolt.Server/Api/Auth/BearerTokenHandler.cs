@@ -23,6 +23,8 @@ public class BearerTokenHandler(
     IServiceScopeFactory scopeFactory)
     : AuthenticationHandler<BearerTokenOptions>(options, logger, encoder)
 {
+    private static readonly TimeSpan LastUsedThrottle = TimeSpan.FromMinutes(5);
+
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var authHeader = Request.Headers.Authorization.ToString();
@@ -48,9 +50,13 @@ public class BearerTokenHandler(
         if (apiToken.ExpiresAt.HasValue && apiToken.ExpiresAt.Value < DateTimeOffset.UtcNow)
             return AuthenticateResult.Fail("Token expired");
 
-        // Update last-used timestamp
-        apiToken.LastUsedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync();
+        // Throttle last-used timestamp updates to reduce DB writes
+        if (apiToken.LastUsedAt is null ||
+            DateTimeOffset.UtcNow - apiToken.LastUsedAt.Value > LastUsedThrottle)
+        {
+            apiToken.LastUsedAt = DateTimeOffset.UtcNow;
+            await db.SaveChangesAsync();
+        }
 
         var claims = new[]
         {

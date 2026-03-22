@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDashboardStore } from '@/stores/dashboard'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
 import StatGrid from '@/components/StatGrid.vue'
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import type { Deck, Stat } from '@/types'
 
 const router = useRouter()
-useDashboardStore()
 const reviewStore = useReviewStore()
 const decksStore = useDecksStore()
 
@@ -20,8 +18,7 @@ const totalCards = ref(0)
 const stats = ref<Stat[]>([
   { label: 'Due', value: '…' },
   { label: 'Total', value: '…' },
-  { label: 'Retention', value: '91%', delta: '↑ 3% this week' },
-  { label: 'Streak', value: '7d' },
+  { label: 'Studied today', value: '…' },
 ])
 
 onMounted(async () => {
@@ -31,9 +28,11 @@ onMounted(async () => {
     totalCards.value = reviewStats.totalCards
     stats.value[0] = { label: 'Due', value: String(reviewStats.dueCount) }
     stats.value[1] = { label: 'Total', value: String(reviewStats.totalCards) }
+    stats.value[2] = { label: 'Studied today', value: String(reviewStats.studiedToday) }
   } catch {
     stats.value[0] = { label: 'Due', value: '—' }
     stats.value[1] = { label: 'Total', value: '—' }
+    stats.value[2] = { label: 'Studied today', value: '—' }
   }
   decksStore.fetchDecks()
 })

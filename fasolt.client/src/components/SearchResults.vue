@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
 import type { SearchResponse } from '@/api/client'
 import type { SearchItem } from '@/composables/useSearch'
+
+function sanitizeHeadline(html: string): string {
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] })
+}
 
 defineProps<{
   results: SearchResponse
@@ -54,7 +59,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'card', i))"
         >
           <span class="shrink-0 text-xs text-muted-foreground">✏️</span>
-          <span class="truncate" v-html="card.headline" />
+          <span class="truncate" v-html="sanitizeHeadline(card.headline)" />
           <span class="ml-auto shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
             {{ card.state }}
           </span>
@@ -76,7 +81,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'deck', i))"
         >
           <span class="shrink-0 text-xs text-muted-foreground">📚</span>
-          <span class="truncate" v-html="deck.headline" />
+          <span class="truncate" v-html="sanitizeHeadline(deck.headline)" />
           <span class="ml-auto shrink-0 text-xs text-muted-foreground">
             {{ deck.cardCount }} cards
           </span>

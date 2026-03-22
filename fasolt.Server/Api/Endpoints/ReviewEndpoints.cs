@@ -26,6 +26,7 @@ public static class ReviewEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
+        var take = Math.Clamp(limit, 1, 200);
         var now = DateTimeOffset.UtcNow;
         var query = db.Cards
             .Where(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
@@ -36,7 +37,7 @@ public static class ReviewEndpoints
         var cards = await query
             .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
             .ThenBy(c => c.CreatedAt)
-            .Take(limit)
+            .Take(take)
             .Select(c => new DueCardDto(c.Id, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.EaseFactor, c.Interval, c.Repetitions))
             .ToListAsync();
 
@@ -65,6 +66,7 @@ public static class ReviewEndpoints
         card.Repetitions = result.Repetitions;
         card.State = result.State;
         card.DueAt = result.Interval == 0 ? DateTimeOffset.UtcNow : DateTimeOffset.UtcNow.AddDays(result.Interval);
+        card.LastReviewedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync();
         return Results.Ok(new RateCardResponse(card.Id, card.EaseFactor, card.Interval, card.Repetitions, card.DueAt, card.State));
@@ -80,7 +82,8 @@ public static class ReviewEndpoints
         var dueCount = await db.Cards.CountAsync(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
         var totalCards = await db.Cards.CountAsync(c => c.UserId == user.Id);
         var todayStart = new DateTimeOffset(now.Date, TimeSpan.Zero);
-        var studiedToday = await db.Cards.CountAsync(c => c.UserId == user.Id && c.Repetitions > 0 && c.DueAt > todayStart);
+        var studiedToday = await db.Cards.CountAsync(c =>
+            c.UserId == user.Id && c.LastReviewedAt != null && c.LastReviewedAt >= todayStart);
 
         return Results.Ok(new ReviewStatsDto(dueCount, totalCards, studiedToday));
     }

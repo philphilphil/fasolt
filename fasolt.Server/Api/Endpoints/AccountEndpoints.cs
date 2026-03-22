@@ -15,6 +15,7 @@ public static class AccountEndpoints
         group.MapGet("/me", GetMe).RequireAuthorization();
         group.MapPut("/profile", UpdateProfile).RequireAuthorization();
         group.MapPut("/email", ChangeEmail).RequireAuthorization();
+        group.MapPost("/confirm-email-change", ConfirmEmailChange).RequireAuthorization();
         group.MapPut("/password", ChangePassword).RequireAuthorization();
         group.MapPost("/forgot-password", ForgotPassword);
         group.MapPost("/reset-password", ResetPassword);
@@ -52,7 +53,8 @@ public static class AccountEndpoints
     private static async Task<IResult> ChangeEmail(
         ChangeEmailRequest request,
         ClaimsPrincipal principal,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        IEmailSender<AppUser> emailSender)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -61,16 +63,29 @@ public static class AccountEndpoints
             {
                 ["currentPassword"] = ["Current password is incorrect."]
             });
-        var existingUser = await userManager.FindByEmailAsync(request.NewEmail);
-        if (existingUser is not null && existingUser.Id != user.Id)
+
+        var token = await userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
+        var confirmLink = $"/settings?action=confirm-email&token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.NewEmail)}";
+        await emailSender.SendConfirmationLinkAsync(user, request.NewEmail, confirmLink);
+
+        return Results.Ok(new { message = "Verification email sent to the new address." });
+    }
+
+    private static async Task<IResult> ConfirmEmailChange(
+        ConfirmEmailChangeRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var result = await userManager.ChangeEmailAsync(user, request.NewEmail, request.Token);
+        if (!result.Succeeded)
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["newEmail"] = ["This email is already in use."]
+                [""] = ["Invalid or expired confirmation token."]
             });
-        var token = await userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
-        var result = await userManager.ChangeEmailAsync(user, request.NewEmail, token);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+
         user.UserName = request.NewEmail;
         await userManager.UpdateAsync(user);
         return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));

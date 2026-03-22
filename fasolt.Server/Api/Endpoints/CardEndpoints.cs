@@ -235,12 +235,14 @@ public static class CardEndpoints
                 .ToListAsync()
             : [];
 
+        var sourceKeyComparer = new SourceFrontComparer();
         var existingWithSourceSet = existingWithSource
             .Select(x => (x.SourceFile!, x.Front))
-            .ToHashSet();
+            .ToHashSet(sourceKeyComparer);
         var existingWithoutSourceSet = existingWithoutSource.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var created = new List<Card>();
+        var createdKeys = new HashSet<(string, string)>(sourceKeyComparer);
         var skipped = new List<SkippedCardDto>();
 
         foreach (var item in request.Cards)
@@ -260,8 +262,7 @@ public static class CardEndpoints
             }
 
             // Also skip duplicates within the same batch
-            if (created.Any(c => c.Front.Equals(trimmedFront, StringComparison.OrdinalIgnoreCase) &&
-                (c.SourceFile ?? "") == (effectiveSourceFile ?? "")))
+            if (!createdKeys.Add((effectiveSourceFile ?? "", trimmedFront)))
             {
                 skipped.Add(new SkippedCardDto(trimmedFront, "Duplicate within batch"));
                 continue;
@@ -313,4 +314,16 @@ public static class CardEndpoints
     private static CardDto ToDto(Card c) =>
         new(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList());
+
+    private sealed class SourceFrontComparer : IEqualityComparer<(string, string)>
+    {
+        public bool Equals((string, string) x, (string, string) y) =>
+            string.Equals(x.Item1, y.Item1, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Item2, y.Item2, StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode((string, string) obj) =>
+            HashCode.Combine(
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Item1),
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Item2));
+    }
 }
