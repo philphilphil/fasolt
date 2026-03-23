@@ -14,6 +14,12 @@
         "resolved": "8.9.0",
         "contentHash": "Y5RDjxaVlxWX2yy0X/ay1tJjSKMOtjepSb83mmfngFS63hm3LsoZNj6nhmImzm1ifRmpF9ouvmHjx9nNwnkpDg=="
       },
+      "FSRS.Core": {
+        "type": "Direct",
+        "requested": "[1.0.7, )",
+        "resolved": "1.0.7",
+        "contentHash": "G4r0PyhQ04NM4AH7rCjw0cKKqnivGPdoo227KZM253wD6G81OPYg8ynl2S1ROqUZ811cCcA4lFKQ5BKuL68hsw=="
+      },
       "Microsoft.AspNetCore.Mvc.Testing": {
         "type": "Direct",
         "requested": "[10.0.5, )",
@@ -269,6 +275,11 @@
         "dependencies": {
           "Microsoft.Extensions.AI.Abstractions": "10.3.0"
         }
+      },
+      "Nanoid": {
+        "type": "Transitive",
+        "resolved": "3.1.0",
+        "contentHash": "5vhxZ+1iVH213boPsR3KYQXWObZQcaGvLU9ytTroWJFeVzV2EFAtGgrmMpb8BCxd+KWeBASniZLzd3UQ0tkhRQ=="
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -552,9 +563,11 @@
       "fasolt.server": {
         "type": "Project",
         "dependencies": {
+          "FSRS.Core": "[1.0.7, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.5, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.5, )",
           "ModelContextProtocol.AspNetCore": "[1.0.0, )",
+          "Nanoid": "[3.1.0, )",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.1, )",
           "OpenIddict.AspNetCore": "[7.0.0, )",
           "OpenIddict.EntityFrameworkCore": "[7.0.0, )"
