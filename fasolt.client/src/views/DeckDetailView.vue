@@ -158,14 +158,19 @@ const table = useVueTable({
 <template>
   <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
-  <div v-else-if="deck" class="space-y-5">
+  <div v-else-if="deck" class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-[11px] text-muted-foreground">
+      <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
+      <span class="mx-1.5">/</span>
+      <span class="text-foreground">{{ deck.name }}</span>
+    </div>
+
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <Button variant="ghost" size="sm" class="h-7 text-[10px]" @click="router.push('/decks')">
-          &larr; Decks
-        </Button>
-        <span class="text-sm font-medium">{{ deck.name }}</span>
+    <div class="flex items-start justify-between">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">{{ deck.name }}</h1>
+        <p v-if="deck.description" class="text-sm text-muted-foreground mt-1">{{ deck.description }}</p>
       </div>
       <div class="flex items-center gap-2">
         <Button
@@ -176,59 +181,71 @@ const table = useVueTable({
         >
           Study this deck
         </Button>
-
         <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
       </div>
     </div>
 
-    <!-- Description & stats -->
-    <div v-if="deck.description" class="text-xs text-muted-foreground">{{ deck.description }}</div>
-    <div class="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-      <span>{{ deck.cardCount }} cards</span>
-      <span v-if="deck.dueCount > 0" class="text-warning">{{ deck.dueCount }} due</span>
-      <span class="text-border">|</span>
-      <span v-for="state in ['new', 'learning', 'review', 'relearning']" :key="state">
-        {{ stateCounts[state] || 0 }} {{ state }}
-      </span>
+    <!-- Stat bar -->
+    <div class="bg-muted/50 rounded-lg px-4 py-3 flex items-center gap-5">
+      <div>
+        <span class="text-lg font-bold">{{ deck.cardCount }}</span>
+        <span class="text-xs text-muted-foreground ml-1.5">cards</span>
+      </div>
+      <div class="w-px h-5 bg-border" />
+      <div>
+        <span class="text-lg font-bold text-warning">{{ deck.dueCount }}</span>
+        <span class="text-xs text-muted-foreground ml-1.5">due</span>
+      </div>
+      <div class="w-px h-5 bg-border" />
+      <div class="flex items-center gap-3 text-xs text-muted-foreground">
+        <span v-for="state in ['new', 'learning', 'review', 'relearning']" :key="state">
+          {{ stateCounts[state] || 0 }} {{ state }}
+        </span>
+      </div>
     </div>
 
-    <!-- Card table -->
-    <div v-if="deck.cards.length > 0" class="rounded border border-border/60">
-      <Table>
-        <TableHeader>
-          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-            <TableHead
-              v-for="header in headerGroup.headers"
-              :key="header.id"
-              class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
-              :class="(header.column.columnDef.meta as any)?.className"
-              @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
-            >
-              <div class="flex items-center gap-1">
-                <FlexRender
-                  v-if="!header.isPlaceholder"
-                  :render="header.column.columnDef.header"
-                  :props="header.getContext()"
-                />
-                <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
-                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
-            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
-              <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
+    <!-- Cards section -->
+    <div>
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Cards</div>
 
-    <div v-else class="py-12 text-center text-xs text-muted-foreground">
-      No cards in this deck yet. Add cards from the Cards view.
+      <!-- Card table -->
+      <div v-if="deck.cards.length > 0" class="rounded border border-border/60">
+        <Table>
+          <TableHeader>
+            <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+              <TableHead
+                v-for="header in headerGroup.headers"
+                :key="header.id"
+                class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
+                :class="(header.column.columnDef.meta as any)?.className"
+                @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
+              >
+                <div class="flex items-center gap-1">
+                  <FlexRender
+                    v-if="!header.isPlaceholder"
+                    :render="header.column.columnDef.header"
+                    :props="header.getContext()"
+                  />
+                  <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
+                  <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
+                </div>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
+              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
+                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+
+      <div v-else class="py-12 text-center text-xs text-muted-foreground">
+        No cards in this deck yet. Add cards from the Cards view.
+      </div>
     </div>
 
     <!-- Edit dialog -->
