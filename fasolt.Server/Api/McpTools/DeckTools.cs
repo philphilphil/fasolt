@@ -28,8 +28,8 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
 
     [McpServerTool, Description("Add cards to a deck. Cards already in the deck are silently skipped.")]
     public async Task<string> AddCardsToDeck(
-        [Description("ID of the deck")] Guid deckId,
-        [Description("List of card IDs to add")] List<Guid> cardIds)
+        [Description("ID of the deck")] string deckId,
+        [Description("List of card IDs to add")] List<string> cardIds)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await deckService.AddCards(userId, deckId, cardIds);
@@ -44,8 +44,8 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
 
     [McpServerTool, Description("Remove cards from a deck. The cards themselves are not deleted, only unlinked from the deck.")]
     public async Task<string> RemoveCardsFromDeck(
-        [Description("ID of the deck")] Guid deckId,
-        [Description("List of card IDs to remove from the deck")] List<Guid> cardIds)
+        [Description("ID of the deck")] string deckId,
+        [Description("List of card IDs to remove from the deck")] List<string> cardIds)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var removedCount = 0;
@@ -62,9 +62,9 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
 
     [McpServerTool, Description("Move cards from one deck to another. Removes from source deck and adds to target deck.")]
     public async Task<string> MoveCards(
-        [Description("ID of the deck to move cards from")] Guid fromDeckId,
-        [Description("ID of the deck to move cards to")] Guid toDeckId,
-        [Description("List of card IDs to move")] List<Guid> cardIds)
+        [Description("ID of the deck to move cards from")] string fromDeckId,
+        [Description("ID of the deck to move cards to")] string toDeckId,
+        [Description("List of card IDs to move")] List<string> cardIds)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 
@@ -86,7 +86,7 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
 
     [McpServerTool, Description("Delete a deck. Optionally also delete all cards assigned to that deck (useful when recreating a deck from scratch).")]
     public async Task<string> DeleteDeck(
-        [Description("ID of the deck to delete")] Guid deckId,
+        [Description("ID of the deck to delete")] string deckId,
         [Description("If true, also permanently delete all cards in the deck. Default false (cards are kept, only the deck is removed).")] bool deleteCards = false)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);

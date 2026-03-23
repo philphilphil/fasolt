@@ -21,7 +21,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
     [McpServerTool, Description("List all cards, optionally filtered by source file or deck. Supports cursor-based pagination.")]
     public async Task<string> ListCards(
         [Description("Filter by source file name")] string? sourceFile = null,
-        [Description("Filter by deck ID")] Guid? deckId = null,
+        [Description("Filter by deck ID")] string? deckId = null,
         [Description("Max results to return (1-200, default 50)")] int? limit = null,
         [Description("Cursor from previous page's nextCursor field")] string? after = null)
     {
@@ -34,7 +34,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
     public async Task<string> CreateCards(
         [Description("Array of cards to create. Each card needs 'front' and 'back' text, plus optional 'sourceFile' and 'sourceHeading'.")] List<BulkCardItem> cards,
         [Description("Default source file name for all cards (individual cards can override)")] string? sourceFile = null,
-        [Description("Add cards to this deck ID")] Guid? deckId = null)
+        [Description("Add cards to this deck ID")] string? deckId = null)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await cardService.BulkCreateCards(userId, cards, sourceFile, deckId);
@@ -42,7 +42,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
             return JsonSerializer.Serialize(new { error = "Deck not found" });
 
         var response = result.Response!;
-        if (deckId.HasValue)
+        if (deckId is not null)
         {
             var request = httpContextAccessor.HttpContext!.Request;
             var baseUrl = $"{request.Scheme}://{request.Host}";
@@ -50,7 +50,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
             {
                 response.Created,
                 response.Skipped,
-                deckUrl = $"{baseUrl}/decks/{deckId.Value}",
+                deckUrl = $"{baseUrl}/decks/{deckId}",
             });
         }
 
@@ -59,7 +59,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
 
     [McpServerTool, Description("Delete one or more cards by their IDs.")]
     public async Task<string> DeleteCards(
-        [Description("List of card IDs to delete")] List<Guid> cardIds)
+        [Description("List of card IDs to delete")] List<string> cardIds)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var count = await cardService.DeleteCards(userId, cardIds);
@@ -68,7 +68,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
 
     [McpServerTool, Description("Update an existing card's text or source metadata. Preserves all review/SRS history. Look up by card ID, or by sourceFile + front (case-insensitive).")]
     public async Task<string> UpdateCard(
-        [Description("Card ID (provide this or sourceFile + front)")] Guid? cardId = null,
+        [Description("Card ID (provide this or sourceFile + front)")] string? cardId = null,
         [Description("Source file for natural key lookup (with front)")] string? sourceFile = null,
         [Description("Current front text for natural key lookup (with sourceFile)")] string? front = null,
         [Description("New front text")] string? newFront = null,
@@ -84,9 +84,9 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var req = new UpdateCardFieldsRequest(newFront, newBack, newSourceFile, newSourceHeading);
 
         UpdateCardResult result;
-        if (cardId.HasValue)
+        if (cardId is not null)
         {
-            result = await cardService.UpdateCardFields(userId, cardId.Value, req);
+            result = await cardService.UpdateCardFields(userId, cardId, req);
         }
         else if (sourceFile is not null && front is not null)
         {
