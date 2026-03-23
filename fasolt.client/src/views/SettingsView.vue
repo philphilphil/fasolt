@@ -80,7 +80,7 @@ async function savePassword() {
 
 <template>
   <div class="flex flex-col gap-6">
-    <h1 class="text-base font-semibold tracking-tight">Settings</h1>
+    <h1 class="text-xl font-bold tracking-tight">Settings</h1>
 
     <Card class="border-border/60">
       <CardHeader>

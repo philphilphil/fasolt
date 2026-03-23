@@ -13,13 +13,12 @@ onMounted(() => sourcesStore.fetchSources())
 
 <template>
   <div class="space-y-5">
-    <div class="flex items-center justify-between">
-      <h1 class="text-base font-semibold tracking-tight">Sources</h1>
+    <div>
+      <h1 class="text-xl font-bold tracking-tight">Sources</h1>
+      <p class="text-sm text-muted-foreground mt-1">
+        Source files that cards have been created from. Use the MCP agent to create cards from your markdown notes.
+      </p>
     </div>
-
-    <p class="text-xs text-muted-foreground leading-relaxed">
-      Source files that cards have been created from. Use the MCP agent to create cards from your markdown notes.
-    </p>
 
     <div v-if="sourcesStore.loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 

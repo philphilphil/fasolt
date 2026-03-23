@@ -30,7 +30,7 @@ async function createDeck() {
 <template>
   <div class="space-y-5">
     <div class="flex items-center justify-between">
-      <h1 class="text-base font-semibold tracking-tight">Decks</h1>
+      <h1 class="text-xl font-bold tracking-tight">Decks</h1>
       <Dialog v-model:open="dialogOpen">
         <DialogTrigger as-child>
           <Button size="sm" class="text-xs">New deck</Button>
@@ -59,18 +59,18 @@ async function createDeck() {
         class="cursor-pointer border-border/60 hover:border-accent/30 transition-colors"
         @click="router.push(`/decks/${deck.id}`)"
       >
-        <CardContent class="flex items-center justify-between p-4">
-          <div>
-            <div class="text-sm font-medium text-foreground">{{ deck.name }}</div>
-            <div v-if="deck.description" class="mt-0.5 text-[11px] text-muted-foreground">{{ deck.description }}</div>
-            <div class="mt-0.5 text-[11px] text-muted-foreground">
-              {{ deck.cardCount }} cards
+        <CardContent class="p-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="text-sm font-semibold text-foreground">{{ deck.name }}</div>
+              <div v-if="deck.description" class="mt-0.5 text-[11px] text-muted-foreground">{{ deck.description }}</div>
             </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <span v-if="deck.dueCount > 0" class="text-xs text-warning">
+            <span v-if="deck.dueCount > 0" class="text-xs text-warning whitespace-nowrap ml-3">
               {{ deck.dueCount }} due
             </span>
+          </div>
+          <div class="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
+            {{ deck.cardCount }} cards
           </div>
         </CardContent>
       </Card>

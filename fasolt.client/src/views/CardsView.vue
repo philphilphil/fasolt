@@ -187,51 +187,54 @@ function applyStateFilter(val: string) {
 
 <template>
   <div class="space-y-4">
-    <!-- Toolbar -->
-    <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-2 flex-1">
-        <Input
-          v-model="filterValue"
-          placeholder="Filter cards..."
-          class="h-8 max-w-[200px] text-xs"
-        />
-        <Input
-          :value="sourceFilter"
-          placeholder="Filter by source..."
-          class="h-8 max-w-[200px] text-xs"
-          @input="applySourceFilter(($event.target as HTMLInputElement).value)"
-        />
-        <select
-          :value="stateFilter"
-          class="h-8 rounded border border-border bg-transparent px-2 text-xs text-foreground"
-          @change="applyStateFilter(($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">All states</option>
-          <option value="new">new</option>
-          <option value="learning">learning</option>
-          <option value="review">review</option>
-          <option value="relearning">relearning</option>
-        </select>
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="sm" class="h-8 text-xs ml-auto">
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuCheckboxItem
-              v-for="column in table.getAllColumns().filter(c => c.getCanHide())"
-              :key="column.id"
-              class="capitalize text-xs"
-              :model-value="column.getIsVisible()"
-              @update:model-value="(value: boolean) => column.toggleVisibility(!!value)"
-            >
-              {{ column.id }}
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+    <!-- Page header -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-xl font-bold tracking-tight">Cards</h1>
       <Button size="sm" class="h-8 text-xs" @click="createOpen = true">New card</Button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="flex items-center gap-2">
+      <Input
+        v-model="filterValue"
+        placeholder="Filter cards..."
+        class="h-8 max-w-[200px] text-xs"
+      />
+      <Input
+        :value="sourceFilter"
+        placeholder="Filter by source..."
+        class="h-8 max-w-[200px] text-xs"
+        @input="applySourceFilter(($event.target as HTMLInputElement).value)"
+      />
+      <select
+        :value="stateFilter"
+        class="h-8 rounded border border-border bg-transparent px-2 text-xs text-foreground"
+        @change="applyStateFilter(($event.target as HTMLSelectElement).value)"
+      >
+        <option value="">All states</option>
+        <option value="new">new</option>
+        <option value="learning">learning</option>
+        <option value="review">review</option>
+        <option value="relearning">relearning</option>
+      </select>
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button variant="outline" size="sm" class="h-8 text-xs ml-auto">
+            Columns
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuCheckboxItem
+            v-for="column in table.getAllColumns().filter(c => c.getCanHide())"
+            :key="column.id"
+            class="capitalize text-xs"
+            :model-value="column.getIsVisible()"
+            @update:model-value="(value: boolean) => column.toggleVisibility(!!value)"
+          >
+            {{ column.id }}
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
 
     <!-- Table -->
