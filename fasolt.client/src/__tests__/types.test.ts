@@ -11,9 +11,8 @@ describe('types', () => {
       front: 'Q',
       back: 'A',
       createdAt: '2024-01-01T00:00:00Z',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
+      stability: null,
+      difficulty: null,
       dueAt: null,
       state: 'new',
       decks: [],
@@ -29,9 +28,8 @@ describe('types', () => {
       front: 'Q',
       back: 'A',
       createdAt: '2024-01-01T00:00:00Z',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
+      stability: null,
+      difficulty: null,
       dueAt: null,
       state: 'new',
       decks: [],
@@ -47,9 +45,8 @@ describe('types', () => {
       front: 'Q',
       back: 'A',
       createdAt: '2024-01-01T00:00:00Z',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
+      stability: null,
+      difficulty: null,
       dueAt: null,
       state: 'new',
       decks: [],
@@ -65,9 +62,6 @@ describe('types', () => {
       sourceFile: 'notes.md',
       sourceHeading: '## Overview',
       state: 'learning',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
     }
     expect(dueCard.sourceFile).toBe('notes.md')
   })
@@ -80,9 +74,6 @@ describe('types', () => {
       sourceFile: null,
       sourceHeading: null,
       state: 'new',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
     }
     expect((dueCard as any)['fileId']).toBeUndefined()
   })
@@ -95,9 +86,6 @@ describe('types', () => {
       sourceFile: null,
       sourceHeading: null,
       state: 'new',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
     }
     expect((dueCard as any)['cardType']).toBeUndefined()
   })

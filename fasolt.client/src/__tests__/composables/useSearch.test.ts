@@ -47,7 +47,7 @@ describe('useSearch', () => {
     results.value = {
       cards: [
         { id: 'c1', headline: 'Q1', state: 'new' },
-        { id: 'c2', headline: 'Q2', state: 'mature' },
+        { id: 'c2', headline: 'Q2', state: 'review' },
       ],
       decks: [
         { id: 'd1', headline: 'Deck A', cardCount: 3 },

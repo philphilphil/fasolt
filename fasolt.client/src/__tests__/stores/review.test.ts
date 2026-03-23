@@ -17,7 +17,7 @@ describe('review store', () => {
 
   it('starts a session by fetching due cards', async () => {
     const mockCards = [
-      { id: 'c1', front: 'What is CAP?', back: 'Consistency, Availability, Partition tolerance', sourceFile: 'cap.md', sourceHeading: '## Overview', state: 'learning', easeFactor: 2.5, interval: 1, repetitions: 0 },
+      { id: 'c1', front: 'What is CAP?', back: 'Consistency, Availability, Partition tolerance', sourceFile: 'cap.md', sourceHeading: '## Overview', state: 'learning' },
     ]
     mockApiFetch.mockResolvedValueOnce(mockCards)
 
@@ -30,7 +30,7 @@ describe('review store', () => {
 
   it('flips the current card', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new' },
     ])
 
     const store = useReviewStore()
@@ -43,15 +43,15 @@ describe('review store', () => {
 
   it('rates a card and advances to next', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
-      { id: 'c2', front: 'Q2', back: 'A2', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
+      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new' },
+      { id: 'c2', front: 'Q2', back: 'A2', sourceFile: null, sourceHeading: null, state: 'new' },
     ])
-    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', easeFactor: 2.5, interval: 1, repetitions: 1, dueAt: null, state: 'learning' })
+    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', stability: 1.0, difficulty: 5.0, dueAt: null, state: 'learning' })
 
     const store = useReviewStore()
     await store.startSession()
     store.flipCard()
-    await store.rate(4)
+    await store.rate('good')
 
     expect(store.currentCard?.front).toBe('Q2')
     expect(store.isFlipped).toBe(false)
@@ -59,14 +59,14 @@ describe('review store', () => {
 
   it('completes session after rating last card', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new', easeFactor: 2.5, interval: 0, repetitions: 0 },
+      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new' },
     ])
-    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', easeFactor: 2.5, interval: 1, repetitions: 1, dueAt: null, state: 'learning' })
+    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', stability: 1.0, difficulty: 5.0, dueAt: null, state: 'learning' })
 
     const store = useReviewStore()
     await store.startSession()
     store.flipCard()
-    await store.rate(4)
+    await store.rate('good')
 
     expect(store.isComplete).toBe(true)
     expect(store.isActive).toBe(true)

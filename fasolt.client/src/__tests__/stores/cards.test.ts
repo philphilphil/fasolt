@@ -52,9 +52,8 @@ describe('cards store', () => {
       front: 'Q',
       back: 'A',
       createdAt: '2024-01-01T00:00:00Z',
-      easeFactor: 2.5,
-      interval: 1,
-      repetitions: 0,
+      stability: null,
+      difficulty: null,
       dueAt: null,
       state: 'new' as const,
       decks: [],
@@ -85,7 +84,7 @@ describe('cards store', () => {
     const mockCard = {
       id: 'c1', sourceFile: 'notes.md', sourceHeading: null,
       front: 'Q', back: 'A', createdAt: '2024-01-01T00:00:00Z',
-      easeFactor: 2.5, interval: 1, repetitions: 0, dueAt: null,
+      stability: null, difficulty: null, dueAt: null,
       state: 'new' as const, decks: [],
     }
     mockApiFetch.mockResolvedValueOnce(mockCard)
