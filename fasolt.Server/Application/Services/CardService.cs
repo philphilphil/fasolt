@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure;
 using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Application.Services;
@@ -12,6 +13,7 @@ public class CardService(AppDbContext db)
         var card = new Card
         {
             Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
             UserId = userId,
             SourceFile = sourceFile?.Trim(),
             SourceHeading = sourceHeading,
@@ -26,15 +28,15 @@ public class CardService(AppDbContext db)
         return ToDto(card);
     }
 
-    public async Task<BulkCreateResult> BulkCreateCards(string userId, List<BulkCardItem> cards, string? sourceFile, Guid? deckId)
+    public async Task<BulkCreateResult> BulkCreateCards(string userId, List<BulkCardItem> cards, string? sourceFile, string? deckId)
     {
         // Validate deckId if provided
-        if (deckId.HasValue)
+        Guid? deckGuid = null;
+        if (deckId is not null)
         {
-            var deckExists = await db.Decks
-                .AnyAsync(d => d.Id == deckId.Value && d.UserId == userId);
-            if (!deckExists)
-                return BulkCreateResult.DeckNotFound();
+            var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
+            if (deck is null) return BulkCreateResult.DeckNotFound();
+            deckGuid = deck.Id;
         }
 
         // Check for duplicates
@@ -99,6 +101,7 @@ public class CardService(AppDbContext db)
             var card = new Card
             {
                 Id = Guid.NewGuid(),
+                PublicId = NanoIdGenerator.New(),
                 UserId = userId,
                 SourceFile = effectiveSourceFile,
                 SourceHeading = item.SourceHeading,
@@ -115,13 +118,13 @@ public class CardService(AppDbContext db)
         }
 
         // Add to deck if specified
-        if (deckId.HasValue)
+        if (deckGuid.HasValue)
         {
             foreach (var card in created)
             {
                 db.DeckCards.Add(new DeckCard
                 {
-                    DeckId = deckId.Value,
+                    DeckId = deckGuid.Value,
                     CardId = card.Id,
                 });
             }
@@ -130,16 +133,16 @@ public class CardService(AppDbContext db)
         await db.SaveChangesAsync();
 
         var createdDtos = created.Select(c => new CardDto(
-            c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back,
+            c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back,
             c.State, c.CreatedAt,
-            deckId.HasValue
-                ? [new CardDeckInfoDto(deckId.Value, "")]
+            deckId is not null
+                ? [new CardDeckInfoDto(deckId, "")]
                 : [])).ToList();
 
         return BulkCreateResult.Success(new BulkCreateCardsResponse(createdDtos, skipped));
     }
 
-    public async Task<PaginatedResponse<CardDto>> ListCards(string userId, string? sourceFile, Guid? deckId, int? limit, string? after)
+    public async Task<PaginatedResponse<CardDto>> ListCards(string userId, string? sourceFile, string? deckId, int? limit, string? after)
     {
         var take = Math.Clamp(limit ?? 50, 1, 200);
 
@@ -151,12 +154,16 @@ public class CardService(AppDbContext db)
         if (sourceFile is not null)
             query = query.Where(c => c.SourceFile == sourceFile);
 
-        if (deckId.HasValue)
-            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckId.Value));
-
-        if (Guid.TryParse(after, out var afterId))
+        if (deckId is not null)
         {
-            var cursor = await db.Cards.Where(c => c.Id == afterId && c.UserId == userId)
+            var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
+            if (deck is not null)
+                query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deck.Id));
+        }
+
+        if (after is not null)
+        {
+            var cursor = await db.Cards.Where(c => c.PublicId == after && c.UserId == userId)
                 .Select(c => new { c.CreatedAt, c.Id }).FirstOrDefaultAsync();
             if (cursor is not null)
                 query = query.Where(c => c.CreatedAt < cursor.CreatedAt ||
@@ -165,31 +172,31 @@ public class CardService(AppDbContext db)
 
         var cards = await query
             .Take(take + 1)
-            .Select(c => new CardDto(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList()))
+            .Select(c => new CardDto(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
+                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList()))
             .ToListAsync();
 
         var hasMore = cards.Count > take;
         if (hasMore) cards = cards[..take];
-        var nextCursor = hasMore ? cards[^1].Id.ToString() : null;
+        var nextCursor = hasMore ? cards[^1].Id : null;
 
         return new PaginatedResponse<CardDto>(cards, hasMore, nextCursor);
     }
 
-    public async Task<CardDto?> GetCard(string userId, Guid cardId)
+    public async Task<CardDto?> GetCard(string userId, string publicId)
     {
         var card = await db.Cards
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
+            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
 
         return card is null ? null : ToDto(card);
     }
 
-    public async Task<CardDto?> UpdateCard(string userId, Guid cardId, string front, string back)
+    public async Task<CardDto?> UpdateCard(string userId, string publicId, string front, string back)
     {
         var card = await db.Cards
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
+            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
 
         if (card is null) return null;
 
@@ -200,11 +207,11 @@ public class CardService(AppDbContext db)
         return ToDto(card);
     }
 
-    public async Task<UpdateCardResult> UpdateCardFields(string userId, Guid cardId, UpdateCardFieldsRequest req)
+    public async Task<UpdateCardResult> UpdateCardFields(string userId, string publicId, UpdateCardFieldsRequest req)
     {
         var card = await db.Cards
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
+            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
 
         if (card is null) return UpdateCardResult.NotFound();
 
@@ -264,25 +271,25 @@ public class CardService(AppDbContext db)
     }
 
     /// <returns>true if deleted, false if not found</returns>
-    public async Task<bool> DeleteCard(string userId, Guid cardId)
+    public async Task<bool> DeleteCard(string userId, string publicId)
     {
         var deleted = await db.Cards
-            .Where(c => c.Id == cardId && c.UserId == userId)
+            .Where(c => c.PublicId == publicId && c.UserId == userId)
             .ExecuteDeleteAsync();
 
         return deleted > 0;
     }
 
-    public async Task<int> DeleteCards(string userId, List<Guid> cardIds)
+    public async Task<int> DeleteCards(string userId, List<string> publicIds)
     {
         return await db.Cards
-            .Where(c => c.UserId == userId && cardIds.Contains(c.Id))
+            .Where(c => c.UserId == userId && publicIds.Contains(c.PublicId))
             .ExecuteDeleteAsync();
     }
 
     private static CardDto ToDto(Card c) =>
-        new(c.Id, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.DeckId, dc.Deck.Name)).ToList());
+        new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
+            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList());
 
     private sealed class SourceFrontComparer : IEqualityComparer<(string, string)>
     {
