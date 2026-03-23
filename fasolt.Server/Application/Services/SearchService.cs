@@ -15,13 +15,12 @@ public class SearchService(AppDbContext db)
 
         var cards = await db.Database
             .SqlQueryRaw<CardSearchResult>("""
-                SELECT c."Id",
+                SELECT c."PublicId" AS "Id",
                        ts_headline('english', c."Front", plainto_tsquery('english', {0}),
                            'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline",
                        c."State"
                 FROM "Cards" c
                 WHERE c."UserId" = {1}
-
                   AND c."SearchVector" @@ plainto_tsquery('english', {0})
                 ORDER BY ts_rank(c."SearchVector", plainto_tsquery('english', {0})) DESC
                 LIMIT 10
@@ -30,7 +29,7 @@ public class SearchService(AppDbContext db)
 
         var decks = await db.Database
             .SqlQueryRaw<DeckSearchResult>("""
-                SELECT d."Id",
+                SELECT d."PublicId" AS "Id",
                        ts_headline('english', d."Name", plainto_tsquery('english', {0}),
                            'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline",
                        (SELECT COUNT(*) FROM "DeckCards" dc
