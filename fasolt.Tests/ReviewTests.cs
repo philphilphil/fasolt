@@ -26,8 +26,8 @@ public class ReviewTests : IAsyncLifetime
             .Where(c => c.UserId == UserId && (c.DueAt == null || c.DueAt <= DateTimeOffset.UtcNow))
             .ToListAsync();
 
-        dueCards.Should().Contain(c => c.Id == card.Id);
-        var target = dueCards.Single(c => c.Id == card.Id);
+        dueCards.Should().Contain(c => c.PublicId == card.Id);
+        var target = dueCards.Single(c => c.PublicId == card.Id);
         target.SourceFile.Should().Be("review-source.md");
         target.SourceHeading.Should().Be("## Section");
     }
