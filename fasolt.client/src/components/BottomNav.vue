@@ -4,11 +4,10 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const tabs = [
-  { name: 'Dashboard', path: '/dashboard', icon: '▦' },
-  { name: 'Sources', path: '/sources', icon: '◫' },
+  { name: 'Study', path: '/study', icon: '◉' },
   { name: 'Cards', path: '/cards', icon: '▤' },
   { name: 'Decks', path: '/decks', icon: '⊞' },
-  { name: 'MCP', path: '/mcp', icon: '⏚' },
+  { name: 'Sources', path: '/sources', icon: '◫' },
   { name: 'Settings', path: '/settings', icon: '⚙' },
 ]
 
@@ -24,9 +23,9 @@ function isActive(path: string) {
       :key="tab.path"
       :to="tab.path"
       class="flex flex-col items-center gap-0.5 px-2 py-1"
-      :class="isActive(tab.path) ? 'text-accent' : 'text-muted-foreground'"
+      :class="isActive(tab.path) ? 'text-foreground' : 'text-muted-foreground'"
     >
-      <span class="text-lg" :class="isActive(tab.path) ? 'text-glow' : ''">{{ tab.icon }}</span>
+      <span class="text-lg">{{ tab.icon }}</span>
       <span class="text-[10px]">{{ tab.name }}</span>
     </RouterLink>
   </nav>

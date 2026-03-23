@@ -11,11 +11,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import SearchResults from '@/components/SearchResults.vue'
-import { useDarkMode } from '@/composables/useDarkMode'
 import { useAuthStore } from '@/stores/auth'
 import { useSearch } from '@/composables/useSearch'
 
-const { theme, toggle } = useDarkMode()
 const auth = useAuthStore()
 const router = useRouter()
 const searchInputRef = ref<InstanceType<typeof Input> | null>(null)
@@ -34,18 +32,6 @@ const {
   navigateToResult,
   close,
 } = useSearch()
-
-const themeIcon = computed(() => {
-  if (theme.value === 'dark') return '☾'
-  if (theme.value === 'light') return '☀'
-  return '◑'
-})
-
-const themeLabel = computed(() => {
-  if (theme.value === 'dark') return 'Dark'
-  if (theme.value === 'light') return 'Light'
-  return 'System'
-})
 
 const userInitial = computed(() => {
   if (auth.user?.displayName) return auth.user.displayName[0].toUpperCase()
@@ -94,7 +80,6 @@ async function handleLogout() {
     <span class="flex items-center gap-2.5 text-[13px] font-bold text-foreground tracking-tight">
       <img src="/logo.png" alt="fasolt" class="h-6 object-contain dark:invert" style="image-rendering: pixelated" />
       fasolt
-      <span class="rounded border border-accent/30 bg-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-accent">beta</span>
     </span>
     <div ref="searchContainerRef" class="relative hidden sm:block">
       <Input
@@ -102,7 +87,7 @@ async function handleLogout() {
         v-model="query"
         type="text"
         placeholder="Search cards and decks..."
-        class="h-8 w-[260px] bg-secondary pl-8 text-xs focus:border-accent focus:glow-accent"
+        class="h-8 w-[260px] bg-secondary pl-8 text-xs focus:border-accent"
         @keydown="onKeyDown"
       />
       <div class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -125,16 +110,6 @@ async function handleLogout() {
       />
     </div>
     <div class="flex items-center gap-1.5">
-      <Button
-        variant="ghost"
-        size="sm"
-        class="h-8 gap-1.5 text-xs text-muted-foreground hover:text-accent"
-        :aria-label="`Theme: ${themeLabel}. Click to change.`"
-        @click="toggle"
-      >
-        <span class="text-sm">{{ themeIcon }}</span>
-        <span class="hidden sm:inline">{{ themeLabel }}</span>
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button

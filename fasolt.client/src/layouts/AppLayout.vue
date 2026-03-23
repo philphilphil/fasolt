@@ -11,11 +11,10 @@ useDarkMode()
 const route = useRoute()
 
 const tabs = [
-  { label: 'Dashboard', value: '/dashboard' },
-  { label: 'Sources', value: '/sources' },
+  { label: 'Study', value: '/study' },
   { label: 'Cards', value: '/cards' },
   { label: 'Decks', value: '/decks' },
-  { label: 'MCP', value: '/mcp' },
+  { label: 'Sources', value: '/sources' },
   { label: 'Settings', value: '/settings' },
 ]
 
@@ -40,7 +39,7 @@ const activeTab = computed(() => {
           >
             <RouterLink
               :to="tab.value"
-              class="relative rounded-none border-b-2 border-transparent px-3.5 py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-accent data-[state=active]:text-accent"
+              class="relative rounded-none border-b-2 border-transparent px-3.5 py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
             >
               {{ tab.label }}
             </RouterLink>
