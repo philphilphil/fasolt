@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Tests.Helpers;
@@ -174,7 +175,7 @@ public class CardServiceTests : IAsyncLifetime
         var card = await svc.CreateCard(UserId, "Old front", "Old back", "notes.md", "Heading");
 
         // Simulate some SRS state by updating directly
-        var entity = await db.Cards.FindAsync(card.Id);
+        var entity = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
         entity!.Stability = 5.0;
         entity.Difficulty = 4.2;
         entity.Step = 2;
@@ -190,7 +191,7 @@ public class CardServiceTests : IAsyncLifetime
 
         // Verify SRS state preserved
         await using var db2 = _db.CreateDbContext();
-        var reloaded = await db2.Cards.FindAsync(card.Id);
+        var reloaded = await db2.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
         reloaded!.Stability.Should().Be(5.0);
         reloaded.Difficulty.Should().Be(4.2);
         reloaded.Step.Should().Be(2);
