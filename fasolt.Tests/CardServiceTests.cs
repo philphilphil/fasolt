@@ -175,9 +175,9 @@ public class CardServiceTests : IAsyncLifetime
 
         // Simulate some SRS state by updating directly
         var entity = await db.Cards.FindAsync(card.Id);
-        entity!.EaseFactor = 2.1;
-        entity.Interval = 10;
-        entity.Repetitions = 3;
+        entity!.Stability = 5.0;
+        entity.Difficulty = 4.2;
+        entity.Step = 2;
         entity.State = "review";
         await db.SaveChangesAsync();
 
@@ -191,9 +191,9 @@ public class CardServiceTests : IAsyncLifetime
         // Verify SRS state preserved
         await using var db2 = _db.CreateDbContext();
         var reloaded = await db2.Cards.FindAsync(card.Id);
-        reloaded!.EaseFactor.Should().Be(2.1);
-        reloaded.Interval.Should().Be(10);
-        reloaded.Repetitions.Should().Be(3);
+        reloaded!.Stability.Should().Be(5.0);
+        reloaded.Difficulty.Should().Be(4.2);
+        reloaded.Step.Should().Be(2);
         reloaded.State.Should().Be("review");
     }
 

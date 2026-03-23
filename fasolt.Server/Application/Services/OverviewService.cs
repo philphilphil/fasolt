@@ -6,7 +6,7 @@ namespace Fasolt.Server.Application.Services;
 
 public class OverviewService(AppDbContext db)
 {
-    private static readonly string[] AllStates = ["new", "learning", "review"];
+    private static readonly string[] AllStates = ["new", "learning", "review", "relearning"];
 
     public async Task<OverviewDto> GetOverview(string userId)
     {

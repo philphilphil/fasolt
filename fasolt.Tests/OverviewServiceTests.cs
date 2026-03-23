@@ -31,6 +31,7 @@ public class OverviewServiceTests : IAsyncLifetime
         overview.CardsByState["new"].Should().Be(2);
         overview.CardsByState["learning"].Should().Be(0);
         overview.CardsByState["review"].Should().Be(0);
+        overview.CardsByState["relearning"].Should().Be(0);
         overview.TotalDecks.Should().Be(1);
         overview.TotalSources.Should().Be(2);
     }
@@ -48,6 +49,7 @@ public class OverviewServiceTests : IAsyncLifetime
         overview.CardsByState["new"].Should().Be(0);
         overview.CardsByState["learning"].Should().Be(0);
         overview.CardsByState["review"].Should().Be(0);
+        overview.CardsByState["relearning"].Should().Be(0);
         overview.TotalDecks.Should().Be(0);
         overview.TotalSources.Should().Be(0);
     }
