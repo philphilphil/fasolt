@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import DashboardView from '@/views/DashboardView.vue'
+import StudyView from '@/views/DashboardView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -44,15 +44,16 @@ const router = createRouter({
       meta: { public: true },
     },
     // App routes (require auth)
-    { path: '/dashboard', name: 'dashboard', component: DashboardView },
+    { path: '/study', name: 'study', component: StudyView },
     { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue') },
     { path: '/cards', name: 'cards', component: () => import('@/views/CardsView.vue') },
     { path: '/cards/:id', name: 'card-detail', component: () => import('@/views/CardDetailView.vue') },
     { path: '/decks', name: 'decks', component: () => import('@/views/DecksView.vue') },
     { path: '/decks/:id', name: 'deck-detail', component: () => import('@/views/DeckDetailView.vue') },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },
-    { path: '/mcp', name: 'mcp', component: () => import('@/views/McpView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+    { path: '/dashboard', redirect: '/study' },
+    { path: '/mcp', redirect: '/settings' },
     // Catch-all 404
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'), meta: { public: true } },
   ],
@@ -73,7 +74,7 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.authRedirect && auth.isAuthenticated) {
-    return { name: 'dashboard' }
+    return { name: 'study' }
   }
 })
 

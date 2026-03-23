@@ -27,7 +27,7 @@ onMounted(async () => {
     '2': () => { if (review.isFlipped) review.rate('hard') },
     '3': () => { if (review.isFlipped) review.rate('good') },
     '4': () => { if (review.isFlipped) review.rate('easy') },
-    'Escape': () => { review.endSession(); router.push('/dashboard') },
+    'Escape': () => { review.endSession(); router.push('/study') },
   })
 })
 

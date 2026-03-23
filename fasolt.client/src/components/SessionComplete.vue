@@ -13,7 +13,7 @@ defineEmits<{ done: [] }>()
 <template>
   <div class="flex flex-1 flex-col items-center justify-center gap-6">
     <div class="text-center">
-      <div class="text-[40px] font-bold tracking-tight text-accent text-glow">
+      <div class="text-[40px] font-bold tracking-tight text-accent">
         {{ totalCards }}
       </div>
       <div class="text-xs text-muted-foreground uppercase tracking-[0.15em]">cards reviewed</div>
@@ -38,6 +38,6 @@ defineEmits<{ done: [] }>()
         </div>
       </CardContent>
     </Card>
-    <Button class="glow-accent" @click="$emit('done')">Back to dashboard</Button>
+    <Button @click="$emit('done')">Back to study</Button>
   </div>
 </template>
