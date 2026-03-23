@@ -21,7 +21,7 @@ public static class ReviewEndpoints
     }
 
     private static async Task<IResult> GetDueCards(
-        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, int limit = 50, Guid? deckId = null)
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, int limit = 50, string? deckId = null)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -31,14 +31,18 @@ public static class ReviewEndpoints
         var query = db.Cards
             .Where(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
 
-        if (deckId.HasValue)
-            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckId.Value));
+        if (deckId is not null)
+        {
+            var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == user.Id);
+            if (deck is null) return Results.NotFound();
+            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deck.Id));
+        }
 
         var cards = await query
             .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
             .ThenBy(c => c.CreatedAt)
             .Take(take)
-            .Select(c => new DueCardDto(c.Id, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.EaseFactor, c.Interval, c.Repetitions))
+            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.EaseFactor, c.Interval, c.Repetitions))
             .ToListAsync();
 
         return Results.Ok(cards);
@@ -56,7 +60,7 @@ public static class ReviewEndpoints
                 ["quality"] = ["Quality must be 0 (Again), 2 (Hard), 4 (Good), or 5 (Easy)."]
             });
 
-        var card = await db.Cards.FirstOrDefaultAsync(c => c.Id == request.CardId && c.UserId == user.Id);
+        var card = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == request.CardId && c.UserId == user.Id);
         if (card is null) return Results.NotFound();
 
         var result = Sm2Algorithm.Calculate(card.EaseFactor, card.Interval, card.Repetitions, request.Quality);
@@ -69,7 +73,7 @@ public static class ReviewEndpoints
         card.LastReviewedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync();
-        return Results.Ok(new RateCardResponse(card.Id, card.EaseFactor, card.Interval, card.Repetitions, card.DueAt, card.State));
+        return Results.Ok(new RateCardResponse(card.PublicId, card.EaseFactor, card.Interval, card.Repetitions, card.DueAt, card.State));
     }
 
     private static async Task<IResult> GetStats(

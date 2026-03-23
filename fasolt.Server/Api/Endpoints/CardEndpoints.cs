@@ -15,9 +15,9 @@ public static class CardEndpoints
         group.MapPost("/", Create);
         group.MapPost("/bulk", BulkCreate);
         group.MapGet("/", List);
-        group.MapGet("/{id:guid}", GetById);
-        group.MapPut("/{id:guid}", Update);
-        group.MapDelete("/{id:guid}", Delete);
+        group.MapGet("/{id}", GetById);
+        group.MapPut("/{id}", Update);
+        group.MapDelete("/{id}", Delete);
     }
 
     private static async Task<IResult> Create(
@@ -44,7 +44,7 @@ public static class CardEndpoints
         UserManager<AppUser> userManager,
         CardService cardService,
         string? sourceFile = null,
-        Guid? deckId = null,
+        string? deckId = null,
         int? limit = null,
         string? after = null)
     {
@@ -56,7 +56,7 @@ public static class CardEndpoints
     }
 
     private static async Task<IResult> GetById(
-        Guid id,
+        string id,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         CardService cardService)
@@ -69,7 +69,7 @@ public static class CardEndpoints
     }
 
     private static async Task<IResult> Update(
-        Guid id,
+        string id,
         UpdateCardRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
@@ -89,7 +89,7 @@ public static class CardEndpoints
     }
 
     private static async Task<IResult> Delete(
-        Guid id,
+        string id,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         CardService cardService)

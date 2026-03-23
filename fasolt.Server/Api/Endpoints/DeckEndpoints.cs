@@ -14,11 +14,11 @@ public static class DeckEndpoints
 
         group.MapPost("/", Create);
         group.MapGet("/", List);
-        group.MapGet("/{id:guid}", GetById);
-        group.MapPut("/{id:guid}", Update);
-        group.MapDelete("/{id:guid}", Delete);
-        group.MapPost("/{id:guid}/cards", AddCards);
-        group.MapDelete("/{id:guid}/cards/{cardId:guid}", RemoveCard);
+        group.MapGet("/{id}", GetById);
+        group.MapPut("/{id}", Update);
+        group.MapDelete("/{id}", Delete);
+        group.MapPost("/{id}/cards", AddCards);
+        group.MapDelete("/{id}/cards/{cardId}", RemoveCard);
     }
 
     private static async Task<IResult> Create(
@@ -53,7 +53,7 @@ public static class DeckEndpoints
     }
 
     private static async Task<IResult> GetById(
-        Guid id,
+        string id,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         DeckService deckService)
@@ -66,7 +66,7 @@ public static class DeckEndpoints
     }
 
     private static async Task<IResult> Update(
-        Guid id,
+        string id,
         UpdateDeckRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
@@ -86,7 +86,7 @@ public static class DeckEndpoints
     }
 
     private static async Task<IResult> Delete(
-        Guid id,
+        string id,
         bool? deleteCards,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
@@ -100,7 +100,7 @@ public static class DeckEndpoints
     }
 
     private static async Task<IResult> AddCards(
-        Guid id,
+        string id,
         AddCardsToDeckRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
@@ -123,8 +123,8 @@ public static class DeckEndpoints
     }
 
     private static async Task<IResult> RemoveCard(
-        Guid id,
-        Guid cardId,
+        string id,
+        string cardId,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         DeckService deckService)
