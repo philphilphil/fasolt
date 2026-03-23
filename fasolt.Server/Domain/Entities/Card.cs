@@ -14,9 +14,9 @@ public class Card
     public string Back { get; set; } = default!;
     public DateTimeOffset CreatedAt { get; set; }
 
-    public double EaseFactor { get; set; } = 2.5;
-    public int Interval { get; set; }
-    public int Repetitions { get; set; }
+    public double? Stability { get; set; }
+    public double? Difficulty { get; set; }
+    public int? Step { get; set; }
     public DateTimeOffset? DueAt { get; set; }
     public string State { get; set; } = "new";
     public DateTimeOffset? LastReviewedAt { get; set; }

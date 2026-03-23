@@ -42,7 +42,7 @@ public static class ReviewEndpoints
             .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
             .ThenBy(c => c.CreatedAt)
             .Take(take)
-            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.EaseFactor, c.Interval, c.Repetitions))
+            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.Stability, c.Difficulty, c.Step))
             .ToListAsync();
 
         return Results.Ok(cards);
@@ -63,17 +63,13 @@ public static class ReviewEndpoints
         var card = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == request.CardId && c.UserId == user.Id);
         if (card is null) return Results.NotFound();
 
-        var result = Sm2Algorithm.Calculate(card.EaseFactor, card.Interval, card.Repetitions, request.Quality);
-
-        card.EaseFactor = result.EaseFactor;
-        card.Interval = result.Interval;
-        card.Repetitions = result.Repetitions;
-        card.State = result.State;
-        card.DueAt = result.Interval == 0 ? DateTimeOffset.UtcNow : DateTimeOffset.UtcNow.AddDays(result.Interval);
+        // TODO(Task 2): Replace with FSRS scheduling
+        card.State = "learning";
+        card.DueAt = DateTimeOffset.UtcNow.AddDays(1);
         card.LastReviewedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync();
-        return Results.Ok(new RateCardResponse(card.PublicId, card.EaseFactor, card.Interval, card.Repetitions, card.DueAt, card.State));
+        return Results.Ok(new RateCardResponse(card.PublicId, card.Stability, card.Difficulty, card.Step, card.DueAt, card.State));
     }
 
     private static async Task<IResult> GetStats(

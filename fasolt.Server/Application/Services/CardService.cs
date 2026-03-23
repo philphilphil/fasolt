@@ -108,9 +108,6 @@ public class CardService(AppDbContext db)
                 Front = trimmedFront,
                 Back = item.Back.Trim(),
                 CreatedAt = DateTimeOffset.UtcNow,
-                EaseFactor = 2.5,
-                Interval = 0,
-                Repetitions = 0,
                 State = "new",
             };
             db.Cards.Add(card);
