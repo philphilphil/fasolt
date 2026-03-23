@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
-import StatGrid from '@/components/StatGrid.vue'
 import DeckTable from '@/components/DeckTable.vue'
 import { Button } from '@/components/ui/button'
 import type { Deck, Stat } from '@/types'
@@ -49,12 +48,34 @@ function studyNow() {
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-base font-semibold text-foreground">Dashboard</h1>
+      <h1 class="text-xl font-bold tracking-tight">Dashboard</h1>
       <Button v-if="dueCount > 0" class="glow-accent" @click="studyNow">
         Study now · {{ dueCount }} due
       </Button>
     </div>
-    <StatGrid :stats="stats" />
-    <DeckTable :decks="decksStore.decks" @select-deck="onSelectDeck" />
+
+    <!-- Stat bar -->
+    <div class="bg-muted/50 rounded-lg px-4 py-3 flex items-center gap-5">
+      <div>
+        <span class="text-lg font-bold text-warning">{{ stats[0].value }}</span>
+        <span class="text-xs text-muted-foreground ml-1.5">due</span>
+      </div>
+      <div class="w-px h-5 bg-border" />
+      <div>
+        <span class="text-lg font-bold">{{ stats[1].value }}</span>
+        <span class="text-xs text-muted-foreground ml-1.5">total cards</span>
+      </div>
+      <div class="w-px h-5 bg-border" />
+      <div>
+        <span class="text-lg font-bold">{{ stats[2].value }}</span>
+        <span class="text-xs text-muted-foreground ml-1.5">studied today</span>
+      </div>
+    </div>
+
+    <!-- Decks section -->
+    <div>
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Your decks</div>
+      <DeckTable :decks="decksStore.decks" @select-deck="onSelectDeck" />
+    </div>
   </div>
 </template>
