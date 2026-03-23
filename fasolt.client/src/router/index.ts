@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import StudyView from '@/views/DashboardView.vue'
+import StudyView from '@/views/StudyView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
