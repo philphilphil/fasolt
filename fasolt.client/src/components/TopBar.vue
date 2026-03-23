@@ -29,6 +29,7 @@ const {
   activeIndex,
   flatItems,
   hasResults,
+  error,
   onKeyDown,
   navigateToResult,
   close,
@@ -113,10 +114,12 @@ async function handleLogout() {
       <SearchResults
         v-if="isOpen"
         :results="results"
+        :query="query"
         :is-loading="isLoading"
         :active-index="activeIndex"
         :flat-items="flatItems"
         :has-results="hasResults"
+        :error="error"
         @select="navigateToResult"
         @update:active-index="activeIndex = $event"
       />

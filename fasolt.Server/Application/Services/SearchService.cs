@@ -11,36 +11,24 @@ public class SearchService(AppDbContext db)
         if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
             return new SearchResponse([], []);
 
-        var term = query.Trim();
+        var pattern = $"%{query.Trim()}%";
 
-        var cards = await db.Database
-            .SqlQueryRaw<CardSearchResult>("""
-                SELECT c."PublicId" AS "Id",
-                       ts_headline('english', c."Front", plainto_tsquery('english', {0}),
-                           'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline",
-                       c."State"
-                FROM "Cards" c
-                WHERE c."UserId" = {1}
-                  AND c."SearchVector" @@ plainto_tsquery('english', {0})
-                ORDER BY ts_rank(c."SearchVector", plainto_tsquery('english', {0})) DESC
-                LIMIT 10
-                """, term, userId)
+        var cards = await db.Cards
+            .Where(c => c.UserId == userId &&
+                (EF.Functions.ILike(c.Front, pattern) || EF.Functions.ILike(c.Back, pattern)))
+            .OrderByDescending(c => c.CreatedAt)
+            .Take(10)
+            .Select(c => new CardSearchResult(c.PublicId, c.Front, c.State))
             .ToListAsync();
 
-        var decks = await db.Database
-            .SqlQueryRaw<DeckSearchResult>("""
-                SELECT d."PublicId" AS "Id",
-                       ts_headline('english', d."Name", plainto_tsquery('english', {0}),
-                           'StartSel=<mark>,StopSel=</mark>,MaxFragments=1') AS "Headline",
-                       (SELECT COUNT(*) FROM "DeckCards" dc
-                        INNER JOIN "Cards" card ON dc."CardId" = card."Id"
-                        WHERE dc."DeckId" = d."Id") AS "CardCount"
-                FROM "Decks" d
-                WHERE d."UserId" = {1}
-                  AND d."SearchVector" @@ plainto_tsquery('english', {0})
-                ORDER BY ts_rank(d."SearchVector", plainto_tsquery('english', {0})) DESC
-                LIMIT 10
-                """, term, userId)
+        var decks = await db.Decks
+            .Where(d => d.UserId == userId && EF.Functions.ILike(d.Name, pattern))
+            .OrderBy(d => d.Name)
+            .Take(10)
+            .Select(d => new DeckSearchResult(
+                d.PublicId,
+                d.Name,
+                d.Cards.Count))
             .ToListAsync();
 
         return new SearchResponse(cards, decks);

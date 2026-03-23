@@ -1,19 +1,28 @@
 <script setup lang="ts">
-import DOMPurify from 'dompurify'
 import type { SearchResponse } from '@/api/client'
 import type { SearchItem } from '@/composables/useSearch'
 
-function sanitizeHeadline(html: string): string {
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'] })
-}
-
-defineProps<{
+const props = defineProps<{
   results: SearchResponse
+  query: string
   isLoading: boolean
   activeIndex: number
   flatItems: SearchItem[]
   hasResults: boolean
+  error: string | null
 }>()
+
+function highlightParts(text: string): { text: string; match: boolean }[] {
+  const q = props.query.trim()
+  if (!q) return [{ text, match: false }]
+  const idx = text.toLowerCase().indexOf(q.toLowerCase())
+  if (idx === -1) return [{ text, match: false }]
+  return [
+    ...(idx > 0 ? [{ text: text.slice(0, idx), match: false }] : []),
+    { text: text.slice(idx, idx + q.length), match: true },
+    ...(idx + q.length < text.length ? [{ text: text.slice(idx + q.length), match: false }] : []),
+  ]
+}
 
 const emit = defineEmits<{
   select: [item: SearchItem]
@@ -40,6 +49,10 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
       Searching...
     </div>
 
+    <div v-else-if="error" class="px-3 py-6 text-center text-[11px] text-destructive">
+      {{ error }}
+    </div>
+
     <div v-else-if="!hasResults" class="px-3 py-6 text-center text-[11px] text-muted-foreground">
       No results found
     </div>
@@ -59,7 +72,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'card', i))"
         >
           <span class="shrink-0 text-[10px] text-accent/50">></span>
-          <span class="truncate" v-html="sanitizeHeadline(card.headline)" />
+          <span class="truncate"><template v-for="(part, pi) in highlightParts(card.headline)" :key="pi"><mark v-if="part.match">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
           <span class="ml-auto shrink-0 rounded border border-border bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
             {{ card.state }}
           </span>
@@ -81,7 +94,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'deck', i))"
         >
           <span class="shrink-0 text-[10px] text-accent/50">#</span>
-          <span class="truncate" v-html="sanitizeHeadline(deck.headline)" />
+          <span class="truncate"><template v-for="(part, pi) in highlightParts(deck.headline)" :key="pi"><mark v-if="part.match">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
           <span class="ml-auto shrink-0 text-[10px] text-muted-foreground">
             {{ deck.cardCount }} cards
           </span>

@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     "net10.0": {
+      "FSRS.Core": {
+        "type": "Direct",
+        "requested": "[1.0.7, )",
+        "resolved": "1.0.7",
+        "contentHash": "G4r0PyhQ04NM4AH7rCjw0cKKqnivGPdoo227KZM253wD6G81OPYg8ynl2S1ROqUZ811cCcA4lFKQ5BKuL68hsw=="
+      },
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
         "type": "Direct",
         "requested": "[10.0.5, )",
@@ -45,6 +51,12 @@
         "dependencies": {
           "ModelContextProtocol": "1.0.0"
         }
+      },
+      "Nanoid": {
+        "type": "Direct",
+        "requested": "[3.1.0, )",
+        "resolved": "3.1.0",
+        "contentHash": "5vhxZ+1iVH213boPsR3KYQXWObZQcaGvLU9ytTroWJFeVzV2EFAtGgrmMpb8BCxd+KWeBASniZLzd3UQ0tkhRQ=="
       },
       "Npgsql.EntityFrameworkCore.PostgreSQL": {
         "type": "Direct",

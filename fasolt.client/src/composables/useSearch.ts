@@ -13,6 +13,7 @@ export function useSearch() {
   const isLoading = ref(false)
   const isOpen = ref(false)
   const activeIndex = ref(0)
+  const error = ref<string | null>(null)
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -41,9 +42,13 @@ export function useSearch() {
     isOpen.value = true
     debounceTimer = setTimeout(async () => {
       isLoading.value = true
+      error.value = null
       try {
         results.value = await searchAll(trimmed)
         activeIndex.value = 0
+      } catch (e) {
+        results.value = { cards: [], decks: [] }
+        error.value = 'Search failed'
       } finally {
         isLoading.value = false
       }
@@ -92,6 +97,7 @@ export function useSearch() {
     query.value = ''
     results.value = { cards: [], decks: [] }
     activeIndex.value = 0
+    error.value = null
   }
 
   function open(inputRef: Ref<HTMLInputElement | null>) {
@@ -105,6 +111,7 @@ export function useSearch() {
     isLoading,
     isOpen,
     activeIndex,
+    error,
     flatItems,
     totalResults,
     hasResults,
