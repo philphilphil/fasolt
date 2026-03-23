@@ -141,12 +141,20 @@ const { isDark, toggle } = useDarkMode()
           <img src="/logo.png" alt="" class="h-4 w-4 object-contain dark:invert" />
           fasolt
         </span>
-        <a
-          href="https://github.com"
-          class="text-xs text-muted-foreground hover:text-accent"
-        >
-          GitHub
-        </a>
+        <div class="flex items-center gap-4">
+          <RouterLink
+            to="/algorithm"
+            class="text-xs text-muted-foreground hover:text-accent"
+          >
+            How the algorithm works
+          </RouterLink>
+          <a
+            href="https://github.com"
+            class="text-xs text-muted-foreground hover:text-accent"
+          >
+            GitHub
+          </a>
+        </div>
       </div>
     </footer>
   </div>

@@ -37,6 +37,12 @@ const router = createRouter({
       component: () => import('@/views/LandingView.vue'),
       meta: { public: true, authRedirect: true, landing: true },
     },
+    {
+      path: '/algorithm',
+      name: 'algorithm',
+      component: () => import('@/views/AlgorithmView.vue'),
+      meta: { public: true },
+    },
     // App routes (require auth)
     { path: '/dashboard', name: 'dashboard', component: DashboardView },
     { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue') },
