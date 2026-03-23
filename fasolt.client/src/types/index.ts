@@ -7,8 +7,10 @@ export interface Card {
   createdAt: string
   stability: number | null
   difficulty: number | null
+  step: number | null
   dueAt: string | null
   state: 'new' | 'learning' | 'review' | 'relearning'
+  lastReviewedAt: string | null
   decks: { id: string; name: string }[]
 }
 

@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { h, ref, onMounted, computed } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import type { ColumnDef, SortingState } from '@tanstack/vue-table'
+import {
+  FlexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  useVueTable,
+} from '@tanstack/vue-table'
+import { valueUpdater } from '@/lib/utils'
 import { useDecksStore } from '@/stores/decks'
-import type { DeckDetail } from '@/types'
+import type { DeckDetail, DeckCard } from '@/types'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -26,6 +35,12 @@ const editDescription = ref('')
 
 const deleteOpen = ref(false)
 const deleteCards = ref(false)
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
 
 onMounted(async () => {
   try {
@@ -71,6 +86,73 @@ async function removeCard(cardId: string) {
   await decks.removeCard(deck.value.id, cardId)
   await refresh()
 }
+
+const columns: ColumnDef<DeckCard>[] = [
+  {
+    accessorKey: 'front',
+    header: 'Front',
+    cell: ({ row }) => {
+      const val = row.getValue('front') as string
+      const display = val.length > 80 ? val.slice(0, 80) + '…' : val
+      const source = row.original.sourceFile
+      return h('div', { class: 'min-w-0' }, [
+        h(RouterLink, {
+          to: `/cards/${row.original.id}`,
+          class: 'hover:text-accent transition-colors',
+        }, () => display),
+        source
+          ? h('div', { class: 'truncate text-[11px] text-muted-foreground mt-0.5' }, source)
+          : null,
+      ])
+    },
+  },
+  {
+    accessorKey: 'state',
+    header: 'State',
+    meta: { className: 'w-[80px]' },
+    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
+  },
+  {
+    accessorKey: 'dueAt',
+    header: 'Due',
+    meta: { className: 'w-[120px] hidden sm:table-cell' },
+    cell: ({ row }) => h('span', { class: 'text-muted-foreground' }, formatDate(row.getValue('dueAt') as string | null)),
+  },
+  {
+    id: 'actions',
+    enableSorting: false,
+    meta: { className: 'w-[70px]' },
+    cell: ({ row }) => h(Button, {
+      variant: 'ghost',
+      size: 'sm',
+      class: 'h-6 text-[10px] text-destructive hover:text-destructive',
+      onClick: () => removeCard(row.original.id),
+    }, () => 'Remove'),
+  },
+]
+
+const sorting = ref<SortingState>([])
+
+const cardData = computed(() => deck.value?.cards ?? [])
+
+const stateCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const c of cardData.value) {
+    counts[c.state] = (counts[c.state] || 0) + 1
+  }
+  return counts
+})
+
+const table = useVueTable({
+  get data() { return cardData.value },
+  columns,
+  getCoreRowModel: getCoreRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
+  state: {
+    get sorting() { return sorting.value },
+  },
+})
 </script>
 
 <template>
@@ -102,44 +184,48 @@ async function removeCard(cardId: string) {
 
     <!-- Description & stats -->
     <div v-if="deck.description" class="text-xs text-muted-foreground">{{ deck.description }}</div>
-    <div class="flex gap-4 text-[11px] text-muted-foreground">
+    <div class="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
       <span>{{ deck.cardCount }} cards</span>
       <span v-if="deck.dueCount > 0" class="text-warning">{{ deck.dueCount }} due</span>
+      <span class="text-border">|</span>
+      <span v-for="state in ['new', 'learning', 'review', 'relearning']" :key="state">
+        {{ stateCounts[state] || 0 }} {{ state }}
+      </span>
     </div>
 
-    <!-- Card list -->
-    <Table v-if="deck.cards.length > 0">
-      <TableHeader>
-        <TableRow class="text-[10px] uppercase tracking-[0.15em] text-muted-foreground hover:bg-transparent">
-          <TableHead class="h-8">Front</TableHead>
-          <TableHead class="h-8 w-[80px]">State</TableHead>
-          <TableHead class="h-8 w-[80px] hidden sm:table-cell">Due</TableHead>
-          <TableHead class="h-8 w-[80px]" />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        <TableRow v-for="card in deck.cards" :key="card.id" class="text-xs hover:bg-accent/5">
-          <TableCell class="font-medium text-foreground">
-            <div class="min-w-0">
-              <div>{{ card.front }}</div>
-              <div v-if="card.sourceFile" class="truncate text-[11px] text-muted-foreground font-normal mt-0.5">{{ card.sourceFile }}</div>
-            </div>
-          </TableCell>
-          <TableCell class="text-muted-foreground">{{ card.state }}</TableCell>
-          <TableCell class="hidden text-muted-foreground sm:table-cell">{{ card.dueAt || '—' }}</TableCell>
-          <TableCell>
-            <Button
-              variant="ghost"
-              size="sm"
-              class="h-6 text-[10px] text-destructive hover:text-destructive"
-              @click="removeCard(card.id)"
+    <!-- Card table -->
+    <div v-if="deck.cards.length > 0" class="rounded border border-border/60">
+      <Table>
+        <TableHeader>
+          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+            <TableHead
+              v-for="header in headerGroup.headers"
+              :key="header.id"
+              class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
+              :class="(header.column.columnDef.meta as any)?.className"
+              @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
             >
-              Remove
-            </Button>
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
+              <div class="flex items-center gap-1">
+                <FlexRender
+                  v-if="!header.isPlaceholder"
+                  :render="header.column.columnDef.header"
+                  :props="header.getContext()"
+                />
+                <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
+                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
+              </div>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
+            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
+              <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
 
     <div v-else class="py-12 text-center text-xs text-muted-foreground">
       No cards in this deck yet. Add cards from the Cards view.

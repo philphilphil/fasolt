@@ -134,7 +134,8 @@ public class CardService(AppDbContext db)
             c.State, c.CreatedAt,
             deckId is not null
                 ? [new CardDeckInfoDto(deckId, "")]
-                : [])).ToList();
+                : [],
+            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt)).ToList();
 
         return BulkCreateResult.Success(new BulkCreateCardsResponse(createdDtos, skipped));
     }
@@ -170,7 +171,8 @@ public class CardService(AppDbContext db)
         var cards = await query
             .Take(take + 1)
             .Select(c => new CardDto(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList()))
+                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
+                c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt))
             .ToListAsync();
 
         var hasMore = cards.Count > take;
@@ -286,7 +288,8 @@ public class CardService(AppDbContext db)
 
     private static CardDto ToDto(Card c) =>
         new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList());
+            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
+            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt);
 
     private sealed class SourceFrontComparer : IEqualityComparer<(string, string)>
     {

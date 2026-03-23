@@ -15,6 +15,11 @@ const router = useRouter()
 const cardsStore = useCardsStore()
 const { render } = useMarkdown()
 
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
 const card = ref<Card | null>(null)
 const loading = ref(true)
 
@@ -100,8 +105,38 @@ async function confirmDelete() {
       <span v-if="card.sourceFile">Source: {{ card.sourceFile }}</span>
       <span v-if="card.sourceHeading">Section: {{ card.sourceHeading }}</span>
       <span v-if="card.decks.length > 0">Decks: {{ card.decks.map(d => d.name).join(', ') }}</span>
-      <span>Created: {{ new Date(card.createdAt).toLocaleDateString() }}</span>
-      <span v-if="card.dueAt">Due: {{ new Date(card.dueAt).toLocaleDateString() }}</span>
+    </div>
+
+    <!-- SRS Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">State</div>
+        <div class="text-xs font-medium mt-0.5">{{ card.state }}</div>
+      </div>
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Due</div>
+        <div class="text-xs font-medium mt-0.5">{{ card.dueAt ? formatDate(card.dueAt) : '—' }}</div>
+      </div>
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Stability</div>
+        <div class="text-xs font-medium mt-0.5">{{ card.stability != null ? card.stability.toFixed(2) : '—' }}</div>
+      </div>
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Difficulty</div>
+        <div class="text-xs font-medium mt-0.5">{{ card.difficulty != null ? card.difficulty.toFixed(2) : '—' }}</div>
+      </div>
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Step</div>
+        <div class="text-xs font-medium mt-0.5">{{ card.step ?? '—' }}</div>
+      </div>
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Last Review</div>
+        <div class="text-xs font-medium mt-0.5">{{ card.lastReviewedAt ? formatDate(card.lastReviewedAt) : '—' }}</div>
+      </div>
+      <div class="rounded border border-border/60 px-3 py-2">
+        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Created</div>
+        <div class="text-xs font-medium mt-0.5">{{ formatDate(card.createdAt) }}</div>
+      </div>
     </div>
 
     <!-- Edit mode -->
