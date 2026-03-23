@@ -118,7 +118,7 @@ async function confirmDelete() {
     </div>
 
     <!-- SRS Stats -->
-    <div class="bg-muted/50 rounded-lg px-4 py-3 grid grid-cols-4 sm:grid-cols-7 gap-4">
+    <div class="bg-secondary rounded-lg px-4 py-3 grid grid-cols-4 sm:grid-cols-7 gap-4">
       <div>
         <div class="text-[9px] uppercase tracking-widest text-muted-foreground">State</div>
         <div class="text-sm font-semibold mt-0.5">{{ card.state }}</div>

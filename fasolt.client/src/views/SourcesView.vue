@@ -14,9 +14,9 @@ onMounted(() => sourcesStore.fetchSources())
 <template>
   <div class="space-y-5">
     <div>
-      <h1 class="text-xl font-bold tracking-tight">Sources</h1>
+      <h1 class="text-lg font-bold tracking-tight">Sources</h1>
       <p class="text-sm text-muted-foreground mt-1">
-        Source files that cards have been created from. Use the MCP agent to create cards from your markdown notes.
+        Files your cards were created from.
       </p>
     </div>
 

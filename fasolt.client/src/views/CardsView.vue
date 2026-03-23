@@ -189,7 +189,7 @@ function applyStateFilter(val: string) {
   <div class="space-y-4">
     <!-- Page header -->
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-bold tracking-tight">Cards</h1>
+      <h1 class="text-lg font-bold tracking-tight">Cards</h1>
       <Button size="sm" class="h-8 text-xs" @click="createOpen = true">New card</Button>
     </div>
 

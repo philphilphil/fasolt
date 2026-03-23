@@ -176,7 +176,7 @@ const table = useVueTable({
         <Button
           v-if="deck.dueCount > 0"
           size="sm"
-          class="text-xs glow-accent"
+          class="text-xs"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
@@ -187,7 +187,7 @@ const table = useVueTable({
     </div>
 
     <!-- Stat bar -->
-    <div class="bg-muted/50 rounded-lg px-4 py-3 flex items-center gap-5">
+    <div class="bg-secondary rounded-lg px-4 py-3 flex items-center gap-5">
       <div>
         <span class="text-lg font-bold">{{ deck.cardCount }}</span>
         <span class="text-xs text-muted-foreground ml-1.5">cards</span>
@@ -207,7 +207,7 @@ const table = useVueTable({
 
     <!-- Cards section -->
     <div>
-      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Cards</div>
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Cards in this deck</div>
 
       <!-- Card table -->
       <div v-if="deck.cards.length > 0" class="rounded border border-border/60">

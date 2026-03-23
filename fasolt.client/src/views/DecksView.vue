@@ -30,7 +30,7 @@ async function createDeck() {
 <template>
   <div class="space-y-5">
     <div class="flex items-center justify-between">
-      <h1 class="text-xl font-bold tracking-tight">Decks</h1>
+      <h1 class="text-lg font-bold tracking-tight">Decks</h1>
       <Dialog v-model:open="dialogOpen">
         <DialogTrigger as-child>
           <Button size="sm" class="text-xs">New deck</Button>
