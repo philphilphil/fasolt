@@ -8,6 +8,7 @@ using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Infrastructure.Services;
+using FSRS.Core.Extensions;
 using OpenIddict.Validation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -156,6 +157,13 @@ builder.Services.AddScoped<DeckService>();
 builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<SourceService>();
 builder.Services.AddScoped<OverviewService>();
+
+builder.Services.AddFSRS(options =>
+{
+    options.DesiredRetention = 0.9;
+    options.MaximumInterval = 36500;
+    options.EnableFuzzing = true;
+});
 
 builder.Services.AddHttpContextAccessor();
 
