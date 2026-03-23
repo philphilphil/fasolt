@@ -27,6 +27,12 @@ export function useDarkMode() {
     apply()
   }
 
+  function setTheme(t: Theme) {
+    theme.value = t
+    localStorage.setItem(STORAGE_KEY, t)
+    apply()
+  }
+
   onMounted(() => {
     mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
@@ -45,5 +51,5 @@ export function useDarkMode() {
     }
   })
 
-  return { isDark, theme, toggle }
+  return { isDark, theme, toggle, setTheme }
 }
