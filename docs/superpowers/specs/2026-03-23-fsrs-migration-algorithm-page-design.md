@@ -25,11 +25,11 @@ Migrate the spaced repetition engine from SM-2 to FSRS (Free Spaced Repetition S
 |                    | `Reps`             | `int`            | 0       |
 |                    | `Lapses`           | `int`            | 0       |
 
-Keep: `State` (values change to match FSRS: `"New"`, `"Learning"`, `"Review"`, `"Relearning"`), `DueAt`, `LastReviewedAt`.
+Keep: `State` (values change to match FSRS: `"new"`, `"learning"`, `"review"`, `"relearning"` — lowercase to match existing convention), `DueAt`, `LastReviewedAt`.
 
-**DB migration:** Add new columns, drop old SM-2 columns. Existing cards reset to `New` state — the product is pre-launch with only dev data, no real user history to preserve.
+**DB migration:** Add new columns, drop old SM-2 columns. Reset all existing cards to `"new"` state with default FSRS values — the product is pre-launch with only dev data, no real user history to preserve. The migration must explicitly `UPDATE Cards SET State = 'new'` to handle any `"mature"` values.
 
-**Review service:** Replace `Sm2Algorithm.Calculate()` call with FSRS.Core's `IScheduler.ReviewCard(card, rating)`. The library returns the updated card state with new due date, stability, difficulty, etc.
+**Review service:** Replace `Sm2Algorithm.Calculate()` call with FSRS.Core's `IScheduler.ReviewCard(card, rating)`. The library returns a tuple of `(updatedCard, reviewLog)`. Use `updatedCard.Due` directly for `DueAt` — do not manually compute from `ScheduledDays`.
 
 **Rating mapping:** The current API accepts `quality` as an integer (0, 2, 4, 5). Change to accept a string rating matching the UI buttons:
 
@@ -40,7 +40,7 @@ Keep: `State` (values change to match FSRS: `"New"`, `"Learning"`, `"Review"`, `
 | Good      | `quality: 4`   | `rating: "good"`  |
 | Easy      | `quality: 5`   | `rating: "easy"`  |
 
-**DTOs:** Update `DueCardDto` and `RateCardResponse` to expose FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `state`) instead of SM-2 fields.
+**DTOs:** Update `RateCardRequest` to accept `string Rating` instead of `int Quality`. Update `DueCardDto` and `RateCardResponse` to expose FSRS fields (`stability`, `difficulty`, `reps`, `lapses`, `state`) instead of SM-2 fields.
 
 **FSRS configuration:** Register via DI with sensible defaults:
 - `DesiredRetention`: 0.9 (90% target)
@@ -49,13 +49,25 @@ Keep: `State` (values change to match FSRS: `"New"`, `"Learning"`, `"Review"`, `
 
 ### Frontend Changes
 
-**Types:** Update `Card`, `DueCard` interfaces — replace `easeFactor`/`interval`/`repetitions` with `stability`/`difficulty`/`reps`/`lapses`.
+**Types (`types/index.ts`):** Update `Card`, `DueCard` interfaces — replace `easeFactor`/`interval`/`repetitions` with `stability`/`difficulty`/`reps`/`lapses`. Update `Card.state` type union from `'new' | 'learning' | 'mature'` to `'new' | 'learning' | 'review' | 'relearning'`.
 
-**Review store:** Change `ratingToQuality` mapping from integer quality values to string rating values. The store already uses `again`/`hard`/`good`/`easy` internally.
+**Review store (`stores/review.ts`):** Change `rate()` to send `{ cardId, rating: "again" }` string instead of `{ cardId, quality: 0 }` integer.
+
+**Review view (`views/ReviewView.vue`):** Update `ratingToQuality` map and keyboard shortcuts to use string ratings instead of integer quality values.
+
+**Cards view (`views/CardsView.vue`):** Update state filter dropdown — replace `"mature"` with `"review"` and add `"relearning"`.
 
 **Card detail views:** Update any display of SRS fields to show FSRS fields instead.
 
-**State labels:** Map FSRS states to display: `New` → "New", `Learning` → "Learning", `Review` → "Review", `Relearning` → "Relearning".
+### Backend Services
+
+**`CardService.cs`:** Update hardcoded SM-2 defaults in `BulkCreateCards` (`EaseFactor = 2.5`, etc.) to FSRS defaults.
+
+**`OverviewService.cs`:** Update `AllStates` array to `["new", "learning", "review", "relearning"]`.
+
+**`AppDbContext.cs`:** Remove `HasDefaultValue(2.5)` for `EaseFactor`, add default value configs for FSRS columns.
+
+**`ReviewEndpoints.cs`:** Remove `ValidQualities` array, add string rating validation.
 
 ### MCP Tools
 
@@ -63,20 +75,60 @@ The MCP `CreateCards` tool creates cards with default SRS state — no changes n
 
 ### Tests
 
-- **Unit tests for FSRS integration:** Verify that reviewing a new card with each rating produces expected state transitions and scheduling.
-- **Update existing tests:** `CardServiceTests.UpdateCardFields_ById_PreservesSrsState` — update to preserve FSRS fields instead of SM-2 fields.
-- **Playwright E2E:** Run through a full review session to confirm the UI still works end-to-end.
+**Backend:**
+- Unit tests for FSRS integration: verify reviewing a new card with each rating produces expected state transitions and scheduling.
+- Update `CardServiceTests.UpdateCardFields_ById_PreservesSrsState` to preserve FSRS fields.
+- Update `ReviewTests` for new rating format and FSRS card defaults.
+- Update `OverviewServiceTests` to include `"relearning"` state.
+
+**Frontend:**
+- Update `__tests__/stores/review.test.ts` — change integer quality values to string ratings.
+- Update `__tests__/composables/useSearch.test.ts` — change `"mature"` state to `"review"`.
+- Update `__tests__/types.test.ts` if it references SM-2 fields.
+
+**E2E:** Playwright test through a full review session.
 
 ### Delete
 
 - `Sm2Algorithm.cs` — no longer needed, FSRS.Core replaces it entirely.
+
+### Also Update
+
+- `CLAUDE.md` — change SM-2 references to FSRS.
+
+### Files Affected (complete list)
+
+| File | Change |
+|------|--------|
+| `fasolt.Server/Application/Services/Sm2Algorithm.cs` | Delete |
+| `fasolt.Server/Domain/Entities/Card.cs` | Replace SM-2 fields with FSRS fields |
+| `fasolt.Server/Api/Endpoints/ReviewEndpoints.cs` | FSRS rating logic, remove `ValidQualities` |
+| `fasolt.Server/Application/Dtos/ReviewDtos.cs` | Update all DTOs |
+| `fasolt.Server/Application/Services/CardService.cs` | FSRS defaults in `BulkCreateCards` |
+| `fasolt.Server/Application/Services/OverviewService.cs` | `AllStates` array |
+| `fasolt.Server/Infrastructure/Data/AppDbContext.cs` | Column configs |
+| `fasolt.Server/Infrastructure/Data/Migrations/` | New migration |
+| `fasolt.Server/Program.cs` | Register FSRS.Core DI |
+| `fasolt.client/src/types/index.ts` | `Card`, `DueCard` interfaces, state union |
+| `fasolt.client/src/stores/review.ts` | String ratings instead of int quality |
+| `fasolt.client/src/views/ReviewView.vue` | Rating map, keyboard shortcuts |
+| `fasolt.client/src/views/CardsView.vue` | State filter dropdown |
+| `fasolt.client/src/views/CardDetailView.vue` | SRS field display |
+| `fasolt.client/src/views/LandingView.vue` | Algorithm page link |
+| `fasolt.client/src/router/index.ts` | New `/algorithm` route |
+| `fasolt.Tests/CardServiceTests.cs` | FSRS field assertions |
+| `fasolt.Tests/ReviewTests.cs` | Rating format, card defaults |
+| `fasolt.Tests/OverviewServiceTests.cs` | `"relearning"` state |
+| `fasolt.client/src/__tests__/stores/review.test.ts` | String ratings |
+| `fasolt.client/src/__tests__/composables/useSearch.test.ts` | `"mature"` → `"review"` |
+| `CLAUDE.md` | SM-2 → FSRS references |
 
 ## Part 2: Algorithm Explainer Page
 
 ### Route
 
 - Path: `/algorithm` (public, no auth required)
-- Added to the Vue Router alongside other public routes
+- Added to Vue Router alongside other public routes (`/login`, `/register`, `/`)
 
 ### Content Sections
 
@@ -106,5 +158,5 @@ Follow existing page patterns (see `McpView.vue` for a similar informational pag
 
 ### Navigation
 
-- Add "Algorithm" link to footer or landing page
+- Add "Algorithm" link to the landing page (`LandingView.vue`)
 - Accessible without login
