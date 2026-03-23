@@ -102,7 +102,11 @@ Increase `space-y` from `space-y-5`/`space-y-6` to `space-y-6`/`space-y-8` betwe
 
 **New:**
 - Title: `text-xl font-bold` "Settings"
-- Section headings above each settings card (Profile, Email, Password) using the standard section heading style
+- Keep the existing `Card` + `CardHeader` + `CardTitle` structure inside each settings card — these already provide internal structure. Only change the page title sizing.
+
+### CardsView (additional note)
+
+- Pagination controls (Previous/Page N of M/Next) remain as-is.
 
 ## Files to Modify
 
