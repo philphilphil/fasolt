@@ -86,7 +86,7 @@ The home page. Centered layout, max-width ~480px.
 
 - **Due count**: large number (56px, weight 800, tight letter-spacing), with "cards due for review" label below
 - **CTA button**: "Start reviewing" — primary button, prominent, centered. Links to `/review`
-- **Stats row**: three inline stats below the CTA — total cards, studied today, day streak. Numbers in primary color/weight, labels in tertiary.
+- **Stats row**: two inline stats below the CTA — total cards, studied today. Numbers in primary color/weight, labels in tertiary. (No streak — the backend doesn't provide streak data, and adding it is out of scope for this redesign.)
 - **Divider line**
 - **"Study by deck" section**: section label, then a vertical list of deck cards. Each shows deck name, card count, and a "due" badge. Clicking a deck links to `/review?deckId={id}`. Only decks with due cards show the warning badge; others show an outline "0 due" badge.
 - **When 0 cards are due**: show "0" as the big number, replace the CTA with "All caught up" text, keep the deck list below.
@@ -113,7 +113,7 @@ Same data table as current. Changes:
 
 - Breadcrumb: `Decks / {name}`
 - Title: 20px bold, description below as 12px muted
-- Actions: "Study this deck" primary button + "Edit" outline button, right-aligned
+- Actions: "Study this deck" primary button (only shown when dueCount > 0) + "Edit" outline button, right-aligned
 - Stats: inline — card count and due count as large numbers (18px bold), state breakdown after a vertical border separator in 11px muted
 - Section label "Cards in this deck" above the table
 - Table: same columns as current (Front, State, Due, Remove action)
@@ -138,7 +138,7 @@ Same data table as current. Changes:
 - Page title: "Settings" at 18px bold
 - Keep existing Card/CardHeader/CardContent structure for Profile, Email, Password sections
 - Add new section: "MCP Setup" — move the content from the current McpView into a settings card. Show the MCP endpoint URL, setup instructions for Claude Code and Copilot, copy buttons.
-- Add "Appearance" section with theme toggle (Light/System/Dark) — replaces the nav bar theme toggle
+- Add "Appearance" section with three-button segmented control for theme (Light / System / Dark) — replaces the nav bar theme toggle
 
 ## Components to Remove
 
@@ -163,7 +163,7 @@ Same data table as current. Changes:
 
 ## Files to Modify
 
-1. `src/style.css` — new color palette CSS variables for light and dark themes
+1. `src/style.css` — convert hex colors to HSL and update the existing shadcn CSS variables (`:root` and `.dark` blocks). Remove `.glow-accent`, `.glow-accent-lg`, `.text-glow` utilities. Keep `.bg-grid` for LandingView.
 2. `src/views/DashboardView.vue` → rename/replace with `src/views/StudyView.vue`
 3. `src/views/CardsView.vue` — new palette, typography
 4. `src/views/CardDetailView.vue` — new palette, typography
@@ -176,7 +176,7 @@ Same data table as current. Changes:
 11. `src/components/TopBar.vue` — simplify: logo + nav tabs + search + avatar
 12. `src/components/BottomNav.vue` — update to 5 tabs matching new nav
 13. `src/components/DeckTable.vue` — remove (unused after Study page redesign)
-14. `src/router/index.ts` — update routes, add redirects
+14. `src/router/index.ts` — update routes, add redirects, update `beforeEach` guard to redirect authenticated users to `{ name: 'study' }` instead of `{ name: 'dashboard' }`
 15. `src/composables/useDarkMode.ts` — keep, but trigger from Settings instead of nav bar
 
 ## What Does NOT Change
@@ -187,4 +187,7 @@ Same data table as current. Changes:
 - All backend API endpoints and data contracts — unchanged
 - Card/Deck/Source data models and stores — unchanged
 - Dialog components (create, edit, delete) — functionality stays, styling inherits new palette
-- Search functionality — unchanged
+- Search functionality — unchanged (SearchResults.vue uses `accent` CSS variable which will be remapped via style.css)
+- TerminalDemo.vue — unchanged (lives on LandingView which is out of scope)
+- NotFoundView — unchanged
+- Beta badge in nav — remove (clean look, no need for a badge)
