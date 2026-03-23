@@ -5,6 +5,7 @@ namespace Fasolt.Server.Domain.Entities;
 public class Card
 {
     public Guid Id { get; set; }
+    public string PublicId { get; set; } = default!;
     public string UserId { get; set; } = default!;
     public AppUser User { get; set; } = default!;
     public string? SourceFile { get; set; }

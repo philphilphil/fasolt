@@ -21,6 +21,8 @@ public class AppDbContext : IdentityDbContext<AppUser>
         builder.Entity<Card>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.PublicId).HasMaxLength(12).IsRequired();
+            entity.HasIndex(e => e.PublicId).IsUnique();
             entity.Property(e => e.Front).IsRequired();
             entity.Property(e => e.Back).IsRequired();
             entity.Property(e => e.SourceFile).HasMaxLength(255);
@@ -42,6 +44,8 @@ public class AppDbContext : IdentityDbContext<AppUser>
         builder.Entity<Deck>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.PublicId).HasMaxLength(12).IsRequired();
+            entity.HasIndex(e => e.PublicId).IsUnique();
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.HasIndex(e => e.UserId);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
