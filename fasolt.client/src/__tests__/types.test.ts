@@ -13,8 +13,10 @@ describe('types', () => {
       createdAt: '2024-01-01T00:00:00Z',
       stability: null,
       difficulty: null,
+      step: null,
       dueAt: null,
       state: 'new',
+      lastReviewedAt: null,
       decks: [],
     }
     expect(card.sourceFile).toBe('notes.md')
@@ -30,8 +32,10 @@ describe('types', () => {
       createdAt: '2024-01-01T00:00:00Z',
       stability: null,
       difficulty: null,
+      step: null,
       dueAt: null,
       state: 'new',
+      lastReviewedAt: null,
       decks: [],
     }
     expect((card as any)['fileId']).toBeUndefined()
@@ -47,8 +51,10 @@ describe('types', () => {
       createdAt: '2024-01-01T00:00:00Z',
       stability: null,
       difficulty: null,
+      step: null,
       dueAt: null,
       state: 'new',
+      lastReviewedAt: null,
       decks: [],
     }
     expect((card as any)['cardType']).toBeUndefined()

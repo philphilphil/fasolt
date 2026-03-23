@@ -13,6 +13,6 @@ public class OverviewTools(OverviewService overviewService, IHttpContextAccessor
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await overviewService.GetOverview(userId);
-        return JsonSerializer.Serialize(result);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 }

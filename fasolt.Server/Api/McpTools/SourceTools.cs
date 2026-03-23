@@ -13,6 +13,6 @@ public class SourceTools(SourceService sourceService, IHttpContextAccessor httpC
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await sourceService.ListSources(userId);
-        return JsonSerializer.Serialize(result);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 }

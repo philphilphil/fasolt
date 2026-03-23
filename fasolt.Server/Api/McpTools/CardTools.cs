@@ -15,7 +15,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await searchService.Search(userId, query);
-        return JsonSerializer.Serialize(result);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
     [McpServerTool, Description("List all cards, optionally filtered by source file or deck. Supports cursor-based pagination.")]
@@ -27,7 +27,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await cardService.ListCards(userId, sourceFile, deckId, limit, after);
-        return JsonSerializer.Serialize(result);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
     [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
@@ -39,7 +39,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await cardService.BulkCreateCards(userId, cards, sourceFile, deckId);
         if (result.IsDeckNotFound)
-            return JsonSerializer.Serialize(new { error = "Deck not found" });
+            return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
 
         var response = result.Response!;
         if (deckId is not null)
@@ -51,10 +51,10 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
                 response.Created,
                 response.Skipped,
                 deckUrl = $"{baseUrl}/decks/{deckId}",
-            });
+            }, McpJson.Options);
         }
 
-        return JsonSerializer.Serialize(response);
+        return JsonSerializer.Serialize(response, McpJson.Options);
     }
 
     [McpServerTool, Description("Delete one or more cards by their IDs.")]
@@ -63,7 +63,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var count = await cardService.DeleteCards(userId, cardIds);
-        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count });
+        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
     }
 
     [McpServerTool, Description("Update an existing card's text or source metadata. Preserves all review/SRS history. Look up by card ID, or by sourceFile + front (case-insensitive).")]
@@ -79,7 +79,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 
         if (newFront is null && newBack is null && newSourceFile is null && newSourceHeading is null)
-            return JsonSerializer.Serialize(new { error = "Provide at least one field to update (newFront, newBack, newSourceFile, newSourceHeading)" });
+            return JsonSerializer.Serialize(new { error = "Provide at least one field to update (newFront, newBack, newSourceFile, newSourceHeading)" }, McpJson.Options);
 
         var req = new UpdateCardFieldsRequest(newFront, newBack, newSourceFile, newSourceHeading);
 
@@ -94,15 +94,15 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         }
         else
         {
-            return JsonSerializer.Serialize(new { error = "Provide cardId or both sourceFile and front" });
+            return JsonSerializer.Serialize(new { error = "Provide cardId or both sourceFile and front" }, McpJson.Options);
         }
 
         return result.Status switch
         {
-            UpdateCardStatus.Success => JsonSerializer.Serialize(result.Card),
-            UpdateCardStatus.NotFound => JsonSerializer.Serialize(new { error = "Card not found" }),
-            UpdateCardStatus.Collision => JsonSerializer.Serialize(new { error = "A card with this front text already exists for this source" }),
-            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }),
+            UpdateCardStatus.Success => JsonSerializer.Serialize(result.Card, McpJson.Options),
+            UpdateCardStatus.NotFound => JsonSerializer.Serialize(new { error = "Card not found" }, McpJson.Options),
+            UpdateCardStatus.Collision => JsonSerializer.Serialize(new { error = "A card with this front text already exists for this source" }, McpJson.Options),
+            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
         };
     }
 
@@ -112,6 +112,6 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var count = await cardService.DeleteCardsBySource(userId, sourceFile);
-        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count });
+        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
     }
 }

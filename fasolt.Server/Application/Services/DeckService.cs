@@ -82,7 +82,7 @@ public class DeckService(AppDbContext db)
         return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt);
     }
 
-    /// <returns>true if deleted, false if not found</returns>
+    /// <returns>Result with Deleted flag and DeletedCardCount</returns>
     public async Task<DeleteDeckResult> DeleteDeck(string userId, string publicId, bool deleteCards = false)
     {
         var deck = await db.Decks
@@ -111,7 +111,7 @@ public class DeckService(AppDbContext db)
         return new DeleteDeckResult(true, deletedCardCount);
     }
 
-    /// <returns>null if deck not found, false if card validation failed, true if success</returns>
+    /// <returns>AddCardsResult indicating Success, DeckNotFound, or CardsNotFound</returns>
     public async Task<AddCardsResult> AddCards(string userId, string deckPublicId, List<string> cardPublicIds)
     {
         var deck = await db.Decks
@@ -145,7 +145,7 @@ public class DeckService(AppDbContext db)
         return AddCardsResult.Success;
     }
 
-    /// <returns>true if removed, false if deck or card-deck link not found</returns>
+    /// <returns>RemoveCardResult indicating Success, DeckNotFound, or CardNotFound</returns>
     public async Task<RemoveCardResult> RemoveCard(string userId, string deckPublicId, string cardPublicId)
     {
         var deck = await db.Decks

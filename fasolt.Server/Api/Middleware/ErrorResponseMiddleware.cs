@@ -4,11 +4,6 @@ namespace Fasolt.Server.Api.Middleware;
 
 public class ErrorResponseMiddleware(RequestDelegate next)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     public async Task InvokeAsync(HttpContext context)
     {
         await next(context);
@@ -33,6 +28,6 @@ public class ErrorResponseMiddleware(RequestDelegate next)
 
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsync(
-            JsonSerializer.Serialize(new { error, message }, JsonOptions));
+            JsonSerializer.Serialize(new { error, message }));
     }
 }

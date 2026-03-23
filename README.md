@@ -23,13 +23,13 @@ Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at 
 
 1. **Write notes** — Obsidian, any editor, plain text. No special format required.
 2. **Your AI creates flashcards** — ask your agent to read a file and push cards to fasolt via MCP
-3. **Study** — review due cards in the browser, SM-2 schedules reviews at increasing intervals
+3. **Study** — review due cards in the browser, FSRS schedules reviews at increasing intervals
 
 ## Features
 
 - Remote MCP server for AI agents (Claude Code, Cursor, etc.)
 - REST API for programmatic card creation
-- SM-2 spaced repetition with quality-based scheduling
+- FSRS spaced repetition with optimized scheduling
 - Source tracking — cards retain provenance (file, heading) as metadata
 - Decks for organizing cards into focused study sessions
 - Full-text search across cards and decks
@@ -95,7 +95,7 @@ claude mcp add fasolt --transport http http://localhost:8080/mcp
 | `ListDecks` | List all decks with card and due counts |
 | `CreateDeck` | Create a new deck |
 | `DeleteDeck` | Delete a deck, optionally deleting its cards |
-| `DeleteCard` | Delete a single card |
+| `DeleteCards` | Delete one or more cards by their IDs |
 
 ### Example
 

@@ -13,7 +13,7 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await deckService.ListDecks(userId);
-        return JsonSerializer.Serialize(result);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
     [McpServerTool, Description("Create a new deck for organizing flashcards.")]
@@ -23,7 +23,7 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await deckService.CreateDeck(userId, name, description);
-        return JsonSerializer.Serialize(result);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
     [McpServerTool, Description("Add cards to a deck. Cards already in the deck are silently skipped.")]
@@ -35,10 +35,10 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
         var result = await deckService.AddCards(userId, deckId, cardIds);
         return result switch
         {
-            AddCardsResult.Success => JsonSerializer.Serialize(new { success = true }),
-            AddCardsResult.DeckNotFound => JsonSerializer.Serialize(new { error = "Deck not found" }),
-            AddCardsResult.CardsNotFound => JsonSerializer.Serialize(new { error = "One or more cards not found" }),
-            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }),
+            AddCardsResult.Success => JsonSerializer.Serialize(new { success = true }, McpJson.Options),
+            AddCardsResult.DeckNotFound => JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options),
+            AddCardsResult.CardsNotFound => JsonSerializer.Serialize(new { error = "One or more cards not found" }, McpJson.Options),
+            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
         };
     }
 
@@ -53,11 +53,11 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
         {
             var result = await deckService.RemoveCard(userId, deckId, cardId);
             if (result == RemoveCardResult.DeckNotFound)
-                return JsonSerializer.Serialize(new { error = "Deck not found" });
+                return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
             if (result == RemoveCardResult.Success)
                 removedCount++;
         }
-        return JsonSerializer.Serialize(new { success = true, removedCount });
+        return JsonSerializer.Serialize(new { success = true, removedCount }, McpJson.Options);
     }
 
     [McpServerTool, Description("Move cards from one deck to another. Removes from source deck and adds to target deck.")]
@@ -71,9 +71,9 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
         // Add to target first
         var addResult = await deckService.AddCards(userId, toDeckId, cardIds);
         if (addResult == AddCardsResult.DeckNotFound)
-            return JsonSerializer.Serialize(new { error = "Target deck not found" });
+            return JsonSerializer.Serialize(new { error = "Target deck not found" }, McpJson.Options);
         if (addResult == AddCardsResult.CardsNotFound)
-            return JsonSerializer.Serialize(new { error = "One or more cards not found" });
+            return JsonSerializer.Serialize(new { error = "One or more cards not found" }, McpJson.Options);
 
         // Remove from source
         foreach (var cardId in cardIds)
@@ -81,7 +81,7 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
             await deckService.RemoveCard(userId, fromDeckId, cardId);
         }
 
-        return JsonSerializer.Serialize(new { success = true, movedCount = cardIds.Count });
+        return JsonSerializer.Serialize(new { success = true, movedCount = cardIds.Count }, McpJson.Options);
     }
 
     [McpServerTool, Description("Delete a deck. Optionally also delete all cards assigned to that deck (useful when recreating a deck from scratch).")]
@@ -92,7 +92,7 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var result = await deckService.DeleteDeck(userId, deckId, deleteCards);
         if (!result.Deleted)
-            return JsonSerializer.Serialize(new { error = "Deck not found" });
-        return JsonSerializer.Serialize(new { deleted = true, deletedCardCount = result.DeletedCardCount });
+            return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
+        return JsonSerializer.Serialize(new { deleted = true, deletedCardCount = result.DeletedCardCount }, McpJson.Options);
     }
 }

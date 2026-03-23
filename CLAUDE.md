@@ -30,7 +30,7 @@ Cards are reviewed using spaced repetition (FSRS algorithm), which schedules rev
 - **UI**: shadcn-vue + Tailwind CSS 3
 - **State**: Pinia
 - **Routing**: Vue Router
-- **Auth**: ASP.NET Core Identity (cookie-based)
+- **Auth**: ASP.NET Core Identity (cookie-based) + OpenIddict (OAuth 2.0 for MCP clients)
 - **API Docs**: OpenAPI (built-in .NET 10)
 
 ## Architecture
@@ -53,7 +53,6 @@ Endpoints use the static extension method pattern (e.g., `MapHealthEndpoints()`)
 docker-compose.yml          — Postgres container
 dev.sh                      — runs everything (docker + backend + frontend)
 fasolt.sln               — .NET solution
-global.json                 — .NET SDK version pin
 fasolt.Server/           — backend (includes remote MCP server)
 fasolt.client/           — frontend (Vue 3 SPA)
 ```
@@ -95,7 +94,7 @@ docker compose down          # stop Postgres
 
 ## Requirements
 
-Feature requirements live in `docs/requirements/`. Each file is a self-contained spec for one feature area. `00-overview.md` contains the full overview and a map of all requirement files. To implement a feature, read the corresponding `XX-feature-name.md` file. After implementing a requirement, move it to `docs/requirements/done/`.
+Feature requirements live in `docs/requirements/`. Each file is a self-contained spec for one feature area. To implement a feature, read the corresponding `XX-feature-name.md` file. After implementing a requirement, move it to `docs/requirements/done/`.
 
 ## Dev Seed User
 
