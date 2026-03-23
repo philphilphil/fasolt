@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useCardsStore } from '@/stores/cards'
 import { useMarkdown } from '@/composables/useMarkdown'
 import type { Card } from '@/types'
@@ -29,6 +29,11 @@ const front = ref('')
 const back = ref('')
 const saving = ref(false)
 const error = ref('')
+
+const truncatedFront = computed(() => {
+  if (!card.value) return ''
+  return card.value.front.length > 60 ? card.value.front.slice(0, 60) + '…' : card.value.front
+})
 
 onMounted(async () => {
   try {
@@ -79,12 +84,17 @@ async function confirmDelete() {
   <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
   <div v-else-if="card" class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-[11px] text-muted-foreground">
+      <RouterLink to="/cards" class="hover:text-foreground transition-colors">Cards</RouterLink>
+      <span class="mx-1.5">/</span>
+      <span class="text-foreground">{{ truncatedFront }}</span>
+    </div>
+
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <Button variant="ghost" size="sm" class="h-7 text-[10px]" @click="router.push('/cards')">
-          &larr; Cards
-        </Button>
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-2.5">
+        <h1 class="text-base font-bold tracking-tight">{{ truncatedFront }}</h1>
         <Badge variant="outline" class="text-[10px]">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
@@ -101,48 +111,48 @@ async function confirmDelete() {
     </div>
 
     <!-- Metadata -->
-    <div class="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-muted-foreground">
-      <span v-if="card.sourceFile">Source: {{ card.sourceFile }}</span>
-      <span v-if="card.sourceHeading">Section: {{ card.sourceHeading }}</span>
-      <span v-if="card.decks.length > 0">Decks: {{ card.decks.map(d => d.name).join(', ') }}</span>
+    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
+      <span v-if="card.sourceFile">Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
+      <span v-if="card.sourceHeading">Section: <span class="text-foreground">{{ card.sourceHeading }}</span></span>
+      <span v-if="card.decks.length > 0">Decks: <span class="text-foreground">{{ card.decks.map(d => d.name).join(', ') }}</span></span>
     </div>
 
     <!-- SRS Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">State</div>
-        <div class="text-xs font-medium mt-0.5">{{ card.state }}</div>
+    <div class="bg-muted/50 rounded-lg px-4 py-3 grid grid-cols-4 sm:grid-cols-7 gap-4">
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">State</div>
+        <div class="text-sm font-semibold mt-0.5">{{ card.state }}</div>
       </div>
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Due</div>
-        <div class="text-xs font-medium mt-0.5">{{ card.dueAt ? formatDate(card.dueAt) : '—' }}</div>
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Due</div>
+        <div class="text-sm font-semibold mt-0.5">{{ card.dueAt ? formatDate(card.dueAt) : '—' }}</div>
       </div>
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Stability</div>
-        <div class="text-xs font-medium mt-0.5">{{ card.stability != null ? card.stability.toFixed(2) : '—' }}</div>
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Stability</div>
+        <div class="text-sm font-semibold mt-0.5">{{ card.stability != null ? card.stability.toFixed(2) : '—' }}</div>
       </div>
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Difficulty</div>
-        <div class="text-xs font-medium mt-0.5">{{ card.difficulty != null ? card.difficulty.toFixed(2) : '—' }}</div>
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Difficulty</div>
+        <div class="text-sm font-semibold mt-0.5">{{ card.difficulty != null ? card.difficulty.toFixed(2) : '—' }}</div>
       </div>
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Step</div>
-        <div class="text-xs font-medium mt-0.5">{{ card.step ?? '—' }}</div>
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Step</div>
+        <div class="text-sm font-semibold mt-0.5">{{ card.step ?? '—' }}</div>
       </div>
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Last Review</div>
-        <div class="text-xs font-medium mt-0.5">{{ card.lastReviewedAt ? formatDate(card.lastReviewedAt) : '—' }}</div>
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Last Review</div>
+        <div class="text-sm font-semibold mt-0.5">{{ card.lastReviewedAt ? formatDate(card.lastReviewedAt) : '—' }}</div>
       </div>
-      <div class="rounded border border-border/60 px-3 py-2">
-        <div class="text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Created</div>
-        <div class="text-xs font-medium mt-0.5">{{ formatDate(card.createdAt) }}</div>
+      <div>
+        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Created</div>
+        <div class="text-sm font-semibold mt-0.5">{{ formatDate(card.createdAt) }}</div>
       </div>
     </div>
 
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
       <div class="space-y-1">
-        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front (question)</label>
+        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front (question)</div>
         <textarea
           v-model="front"
           class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
@@ -150,7 +160,7 @@ async function confirmDelete() {
         />
       </div>
       <div class="space-y-1">
-        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back (answer)</label>
+        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back (answer)</div>
         <textarea
           v-model="back"
           class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
@@ -167,14 +177,14 @@ async function confirmDelete() {
     </div>
 
     <!-- View mode -->
-    <div v-else class="space-y-4">
-      <div class="space-y-1">
-        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front</label>
-        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 p-4" v-html="render(card.front)" />
+    <div v-else class="space-y-5">
+      <div>
+        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front</div>
+        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.front)" />
       </div>
-      <div class="space-y-1">
-        <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back</label>
-        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 p-4" v-html="render(card.back)" />
+      <div>
+        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back</div>
+        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.back)" />
       </div>
     </div>
 
