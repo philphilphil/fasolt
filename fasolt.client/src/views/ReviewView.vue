@@ -14,13 +14,6 @@ const route = useRoute()
 const router = useRouter()
 const review = useReviewStore()
 
-const ratingToQuality: Record<ReviewRating, number> = {
-  again: 0,
-  hard: 2,
-  good: 4,
-  easy: 5,
-}
-
 const { register, cleanup } = useKeyboardShortcuts()
 
 onMounted(async () => {
@@ -30,10 +23,10 @@ onMounted(async () => {
   }
   register({
     ' ': () => { if (!review.isFlipped && !review.isComplete) review.flipCard() },
-    '1': () => { if (review.isFlipped) review.rate(0) },
-    '2': () => { if (review.isFlipped) review.rate(2) },
-    '3': () => { if (review.isFlipped) review.rate(4) },
-    '4': () => { if (review.isFlipped) review.rate(5) },
+    '1': () => { if (review.isFlipped) review.rate('again') },
+    '2': () => { if (review.isFlipped) review.rate('hard') },
+    '3': () => { if (review.isFlipped) review.rate('good') },
+    '4': () => { if (review.isFlipped) review.rate('easy') },
     'Escape': () => { review.endSession(); router.push('/dashboard') },
   })
 })
@@ -43,7 +36,7 @@ onUnmounted(() => {
 })
 
 async function onRate(rating: ReviewRating) {
-  await review.rate(ratingToQuality[rating])
+  await review.rate(rating)
 }
 
 function onDone() {

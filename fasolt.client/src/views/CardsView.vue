@@ -209,7 +209,8 @@ function applyStateFilter(val: string) {
           <option value="">All states</option>
           <option value="new">new</option>
           <option value="learning">learning</option>
-          <option value="mature">mature</option>
+          <option value="review">review</option>
+          <option value="relearning">relearning</option>
         </select>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
