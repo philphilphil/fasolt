@@ -89,15 +89,18 @@ public static class ReviewEndpoints
         if (card is null) return Results.NotFound();
 
         // Build FSRS.Core Card from our entity
-        var fsrsCard = new FsrsCard
-        {
-            State = ParseState(card.State),
-            Stability = card.Stability,
-            Difficulty = card.Difficulty,
-            Step = card.Step,
-            Due = card.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime,
-            LastReview = card.LastReviewedAt?.UtcDateTime,
-        };
+        // For new/unreviewed cards, use a fresh FsrsCard with defaults
+        var fsrsCard = card.State == "new"
+            ? new FsrsCard { Due = card.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime }
+            : new FsrsCard
+            {
+                State = ParseState(card.State),
+                Stability = card.Stability,
+                Difficulty = card.Difficulty,
+                Step = card.Step,
+                Due = card.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime,
+                LastReview = card.LastReviewedAt?.UtcDateTime,
+            };
 
         var now = DateTime.UtcNow;
         var (updated, _) = scheduler.ReviewCard(fsrsCard, fsrsRating, now, null);
