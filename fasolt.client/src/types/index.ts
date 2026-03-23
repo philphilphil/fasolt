@@ -5,11 +5,10 @@ export interface Card {
   front: string
   back: string
   createdAt: string
-  easeFactor: number
-  interval: number
-  repetitions: number
+  stability: number | null
+  difficulty: number | null
   dueAt: string | null
-  state: 'new' | 'learning' | 'mature'
+  state: 'new' | 'learning' | 'review' | 'relearning'
   decks: { id: string; name: string }[]
 }
 
@@ -51,9 +50,6 @@ export interface DueCard {
   sourceFile: string | null
   sourceHeading: string | null
   state: string
-  easeFactor: number
-  interval: number
-  repetitions: number
 }
 
 export interface ReviewStats {

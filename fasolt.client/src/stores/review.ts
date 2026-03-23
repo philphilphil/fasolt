@@ -55,25 +55,19 @@ export const useReviewStore = defineStore('review', () => {
     isFlipped.value = true
   }
 
-  async function rate(quality: number) {
+  async function rate(rating: 'again' | 'hard' | 'good' | 'easy') {
     const card = currentCard.value
     if (!card) return
 
     await apiFetch('/review/rate', {
       method: 'POST',
-      body: JSON.stringify({ cardId: card.id, quality }),
+      body: JSON.stringify({ cardId: card.id, rating }),
     })
 
     sessionStats.value.reviewed++
-    if (quality === 0) {
-      sessionStats.value.again++
+    sessionStats.value[rating]++
+    if (rating === 'again') {
       queue.value.push({ ...card })
-    } else if (quality === 2) {
-      sessionStats.value.hard++
-    } else if (quality === 4) {
-      sessionStats.value.good++
-    } else if (quality === 5) {
-      sessionStats.value.easy++
     }
 
     currentIndex.value++
