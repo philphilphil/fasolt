@@ -23,7 +23,7 @@ public class DeckService(AppDbContext db)
         db.Decks.Add(deck);
         await db.SaveChangesAsync();
 
-        return new DeckDto(deck.PublicId, deck.Name, deck.Description, 0, 0, deck.CreatedAt);
+        return new DeckDto(deck.PublicId, deck.Name, deck.Description, 0, 0, deck.CreatedAt, deck.IsActive);
     }
 
     public async Task<List<DeckDto>> ListDecks(string userId)
@@ -39,7 +39,8 @@ public class DeckService(AppDbContext db)
                 d.Description,
                 d.Cards.Count,
                 d.Cards.Count(dc => dc.Card.DueAt == null || dc.Card.DueAt <= now),
-                d.CreatedAt))
+                d.CreatedAt,
+                d.IsActive))
             .ToListAsync();
     }
 
@@ -60,7 +61,7 @@ public class DeckService(AppDbContext db)
 
         var dueCount = cards.Count(c => c.DueAt == null || c.DueAt <= now);
 
-        return new DeckDetailDto(deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards);
+        return new DeckDetailDto(deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards, deck.IsActive);
     }
 
     public async Task<DeckDto?> UpdateDeck(string userId, string publicId, string name, string? description)
@@ -79,7 +80,25 @@ public class DeckService(AppDbContext db)
         var dueCount = await db.DeckCards.CountAsync(dc =>
             dc.DeckId == deck.Id && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
 
-        return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt);
+        return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt, deck.IsActive);
+    }
+
+    public async Task<DeckDto?> SetActive(string userId, string publicId, bool isActive)
+    {
+        var deck = await db.Decks
+            .FirstOrDefaultAsync(d => d.PublicId == publicId && d.UserId == userId);
+
+        if (deck is null) return null;
+
+        deck.IsActive = isActive;
+        await db.SaveChangesAsync();
+
+        var now = DateTimeOffset.UtcNow;
+        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
+        var dueCount = await db.DeckCards.CountAsync(dc =>
+            dc.DeckId == deck.Id && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
+
+        return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt, deck.IsActive);
     }
 
     /// <returns>Result with Deleted flag and DeletedCardCount</returns>

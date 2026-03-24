@@ -4,9 +4,11 @@ public record CreateDeckRequest(string Name, string? Description);
 
 public record UpdateDeckRequest(string Name, string? Description);
 
-public record DeckDto(string Id, string Name, string? Description, int CardCount, int DueCount, DateTimeOffset CreatedAt);
+public record DeckDto(string Id, string Name, string? Description, int CardCount, int DueCount, DateTimeOffset CreatedAt, bool IsActive);
 
-public record DeckDetailDto(string Id, string Name, string? Description, int CardCount, int DueCount, List<DeckCardDto> Cards);
+public record DeckDetailDto(string Id, string Name, string? Description, int CardCount, int DueCount, List<DeckCardDto> Cards, bool IsActive);
+
+public record SetDeckActiveRequest(bool IsActive);
 
 public record DeckCardDto(
     string Id, string Front, string Back,
