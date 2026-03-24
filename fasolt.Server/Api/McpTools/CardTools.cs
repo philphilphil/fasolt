@@ -30,7 +30,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
+    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Each card can include SVG images for front and/or back. Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
     public async Task<string> CreateCards(
         [Description("Array of cards to create. Each card needs 'front' and 'back' text, plus optional 'sourceFile' and 'sourceHeading'.")] List<BulkCardItem> cards,
         [Description("Default source file name for all cards (individual cards can override)")] string? sourceFile = null,
@@ -74,14 +74,16 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         [Description("New front text")] string? newFront = null,
         [Description("New back text")] string? newBack = null,
         [Description("New source file")] string? newSourceFile = null,
-        [Description("New source heading")] string? newSourceHeading = null)
+        [Description("New source heading")] string? newSourceHeading = null,
+        [Description("New SVG image for front (raw SVG markup). Empty string clears.")] string? newFrontSvg = null,
+        [Description("New SVG image for back (raw SVG markup). Empty string clears.")] string? newBackSvg = null)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 
-        if (newFront is null && newBack is null && newSourceFile is null && newSourceHeading is null)
-            return JsonSerializer.Serialize(new { error = "Provide at least one field to update (newFront, newBack, newSourceFile, newSourceHeading)" }, McpJson.Options);
+        if (newFront is null && newBack is null && newSourceFile is null && newSourceHeading is null && newFrontSvg is null && newBackSvg is null)
+            return JsonSerializer.Serialize(new { error = "Provide at least one field to update" }, McpJson.Options);
 
-        var req = new UpdateCardFieldsRequest(newFront, newBack, newSourceFile, newSourceHeading);
+        var req = new UpdateCardFieldsRequest(newFront, newBack, newSourceFile, newSourceHeading, newFrontSvg, newBackSvg);
 
         UpdateCardResult result;
         if (cardId is not null)
@@ -113,5 +115,30 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
         var count = await cardService.DeleteCardsBySource(userId, sourceFile);
         return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
+    }
+
+    [McpServerTool, Description("Add an SVG image to a card. LLMs can generate SVG diagrams, charts, chemical structures, math visualizations, etc. The SVG is sanitized server-side for security.")]
+    public async Task<string> AddSvgToCard(
+        [Description("Card ID")] string cardId,
+        [Description("Which side: 'front' or 'back'")] string side,
+        [Description("Raw SVG markup (must start with <svg)")] string svg)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+
+        if (side is not "front" and not "back")
+            return JsonSerializer.Serialize(new { error = "Side must be 'front' or 'back'" }, McpJson.Options);
+
+        var req = side == "front"
+            ? new UpdateCardFieldsRequest(NewFrontSvg: svg)
+            : new UpdateCardFieldsRequest(NewBackSvg: svg);
+
+        var result = await cardService.UpdateCardFields(userId, cardId, req);
+
+        return result.Status switch
+        {
+            UpdateCardStatus.Success => JsonSerializer.Serialize(result.Card, McpJson.Options),
+            UpdateCardStatus.NotFound => JsonSerializer.Serialize(new { error = "Card not found" }, McpJson.Options),
+            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
+        };
     }
 }
