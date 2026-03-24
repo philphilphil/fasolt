@@ -33,6 +33,7 @@ builder.Services
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddOpenIddict()
@@ -122,6 +123,9 @@ builder.Services.AddAuthorization(options =>
             IdentityConstants.ApplicationScheme,
             OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
         .Build();
+    options.AddPolicy("AdminCookieOnly", policy =>
+        policy.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
+              .RequireRole("Admin"));
 });
 
 builder.Services.AddCors(options =>
