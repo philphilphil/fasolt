@@ -15,6 +15,8 @@ final class Card {
     var step: Int?
     var lastReviewedAt: Date?
     var createdAt: Date
+    var frontSvg: String?
+    var backSvg: String?
 
     @Relationship(inverse: \CachedDeck.cards)
     var decks: [CachedDeck] = []
@@ -25,7 +27,8 @@ final class Card {
         state: String = "new", dueAt: Date? = nil,
         stability: Double? = nil, difficulty: Double? = nil,
         step: Int? = nil, lastReviewedAt: Date? = nil,
-        createdAt: Date = .now
+        createdAt: Date = .now,
+        frontSvg: String? = nil, backSvg: String? = nil
     ) {
         self.publicId = publicId
         self.front = front
@@ -39,5 +42,7 @@ final class Card {
         self.step = step
         self.lastReviewedAt = lastReviewedAt
         self.createdAt = createdAt
+        self.frontSvg = frontSvg
+        self.backSvg = backSvg
     }
 }

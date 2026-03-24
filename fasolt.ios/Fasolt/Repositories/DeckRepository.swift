@@ -113,6 +113,8 @@ final class DeckRepository {
                 card.difficulty = cardDto.difficulty
                 card.step = cardDto.step
                 if let lastReviewed = cardDto.lastReviewedAt { card.lastReviewedAt = DateFormatters.iso8601.date(from: lastReviewed) }
+                card.frontSvg = cardDto.frontSvg
+                card.backSvg = cardDto.backSvg
                 if !card.decks.contains(where: { $0.publicId == deck.publicId }) {
                     card.decks.append(deck)
                 }
@@ -128,7 +130,9 @@ final class DeckRepository {
                     stability: cardDto.stability,
                     difficulty: cardDto.difficulty,
                     step: cardDto.step,
-                    lastReviewedAt: cardDto.lastReviewedAt.flatMap { DateFormatters.iso8601.date(from: $0) }
+                    lastReviewedAt: cardDto.lastReviewedAt.flatMap { DateFormatters.iso8601.date(from: $0) },
+                    frontSvg: cardDto.frontSvg,
+                    backSvg: cardDto.backSvg
                 )
                 card.decks.append(deck)
                 modelContext.insert(card)
@@ -171,7 +175,9 @@ final class DeckRepository {
                 stability: card.stability,
                 difficulty: card.difficulty,
                 step: card.step,
-                lastReviewedAt: card.lastReviewedAt.map { DateFormatters.iso8601.string(from: $0) }
+                lastReviewedAt: card.lastReviewedAt.map { DateFormatters.iso8601.string(from: $0) },
+                frontSvg: card.frontSvg,
+                backSvg: card.backSvg
             )
         }
         return DeckDetailDTO(
