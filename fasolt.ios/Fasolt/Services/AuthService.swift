@@ -16,7 +16,7 @@ final class AuthService {
     let apiClient: APIClient
 
     static let redirectURI = "fasolt://oauth/callback"
-    static let defaultServerURL = "http://localhost:8080"
+    static let defaultServerURL = "https://fasolt.app"
 
     init(keychain: KeychainHelper = KeychainHelper(), apiClient: APIClient = APIClient()) {
         self.keychain = keychain

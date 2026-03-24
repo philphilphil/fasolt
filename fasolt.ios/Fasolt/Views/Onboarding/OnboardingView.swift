@@ -4,6 +4,7 @@ struct OnboardingView: View {
     @Environment(AuthService.self) private var authService
     @State private var showServerField = false
     @State private var serverURL = AuthService.defaultServerURL
+    private static let selfHostDefault = "http://localhost:8080"
 
     var body: some View {
         VStack(spacing: 32) {
@@ -68,6 +69,7 @@ struct OnboardingView: View {
             if !showServerField {
                 Button("Self-hosting? Change server") {
                     withAnimation {
+                        serverURL = Self.selfHostDefault
                         showServerField = true
                     }
                 }
