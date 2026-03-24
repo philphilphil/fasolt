@@ -45,6 +45,13 @@ struct MainTabView: View {
                 Label("Decks", systemImage: "rectangle.stack")
             }
 
+            CardListView(
+                viewModel: CardListViewModel(apiClient: apiClient)
+            )
+            .tabItem {
+                Label("Cards", systemImage: "rectangle.on.rectangle")
+            }
+
             SettingsView(
                 viewModel: SettingsViewModel(apiClient: apiClient)
             )

@@ -36,7 +36,7 @@ struct TokenResponse: Decodable, Sendable {
 
 // MARK: - Cards
 
-struct CardDTO: Decodable, Sendable {
+struct CardDTO: Decodable, Sendable, Identifiable {
     let id: String
     let front: String
     let back: String
