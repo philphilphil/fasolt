@@ -94,6 +94,7 @@ public static class OAuthEndpoints
 
             identity.SetClaim(Claims.Subject, userId);
             identity.SetClaim(Claims.Name, userName);
+            identity.SetScopes(Scopes.OfflineAccess);
 
             identity.SetDestinations(static claim => claim.Type switch
             {
