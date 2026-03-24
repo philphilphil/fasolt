@@ -205,6 +205,13 @@ if (!app.Environment.IsEnvironment("Testing"))
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.MigrateAsync();
+
+    // Seed Admin role
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
 }
 
 if (app.Environment.IsDevelopment())
@@ -215,6 +222,19 @@ if (app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     await DevSeedData.SeedAsync(app.Services);
+}
+
+// Promote configured admin email
+var adminEmail = app.Configuration["Admin:Email"];
+if (!string.IsNullOrEmpty(adminEmail))
+{
+    using var scope = app.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser is not null && !await userManager.IsInRoleAsync(adminUser, "Admin"))
+    {
+        await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
 }
 
 var forwardedHeadersOptions = new ForwardedHeadersOptions

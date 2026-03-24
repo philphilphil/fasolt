@@ -14,7 +14,13 @@ public static class DevSeedData
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
 
         var existing = await userManager.FindByEmailAsync(DevEmail);
-        if (existing is not null) return;
+        if (existing is not null)
+        {
+            // Ensure dev user has Admin role even if already created
+            if (!await userManager.IsInRoleAsync(existing, "Admin"))
+                await userManager.AddToRoleAsync(existing, "Admin");
+            return;
+        }
 
         var user = new AppUser
         {
@@ -25,5 +31,6 @@ public static class DevSeedData
         };
 
         await userManager.CreateAsync(user, DevPassword);
+        await userManager.AddToRoleAsync(user, "Admin");
     }
 }
