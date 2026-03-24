@@ -1,8 +1,15 @@
 import SwiftUI
 
+enum DeckSortOrder: String, CaseIterable {
+    case name = "Name"
+    case cardCount = "Card Count"
+    case dueCount = "Due Count"
+}
+
 struct DeckListView: View {
     @State private var viewModel: DeckListViewModel
     @State private var searchText = ""
+    @State private var sortOrder: DeckSortOrder = .name
     private let deckRepository: DeckRepository
     private let studyViewModelFactory: () -> StudyViewModel
 
@@ -36,7 +43,7 @@ struct DeckListView: View {
                         }
                     }
                 } else {
-                    List(filteredDecks, id: \.id) { deck in
+                    List(sortedDecks(filteredDecks), id: \.id) { deck in
                         NavigationLink {
                             DeckDetailView(
                                 viewModel: DeckDetailViewModel(
@@ -57,6 +64,19 @@ struct DeckListView: View {
                 await viewModel.loadDecks()
             }
             .navigationTitle("Decks")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("Sort", selection: $sortOrder) {
+                            ForEach(DeckSortOrder.allCases, id: \.self) { order in
+                                Text(order.rawValue).tag(order)
+                            }
+                        }
+                    } label: {
+                        Label("Sort", systemImage: "arrow.up.arrow.down")
+                    }
+                }
+            }
             .overlay {
                 if viewModel.isLoading && viewModel.decks.isEmpty {
                     ProgressView()
@@ -72,6 +92,19 @@ struct DeckListView: View {
                 if !viewModel.decks.isEmpty {
                     Task { await viewModel.loadDecks() }
                 }
+            }
+        }
+    }
+
+    private func sortedDecks(_ decks: [DeckDTO]) -> [DeckDTO] {
+        decks.sorted { a, b in
+            switch sortOrder {
+            case .name:
+                return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+            case .cardCount:
+                return a.cardCount > b.cardCount
+            case .dueCount:
+                return a.dueCount > b.dueCount
             }
         }
     }
