@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
 import { Button } from '@/components/ui/button'
-import type { Deck } from '@/types'
 
 const router = useRouter()
 const reviewStore = useReviewStore()
