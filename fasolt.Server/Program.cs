@@ -59,10 +59,16 @@ builder.Services.AddOpenIddict()
             options.AddEncryptionCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12FromFile(encryptionCertPath, null))
                    .AddSigningCertificate(System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12FromFile(signingCertPath, null));
         }
-        else
+        else if (builder.Environment.IsDevelopment())
         {
             options.AddDevelopmentEncryptionCertificate()
                    .AddDevelopmentSigningCertificate();
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                "OpenIddict:EncryptionCertificatePath and OpenIddict:SigningCertificatePath " +
+                "must be configured in non-development environments.");
         }
 
         // Disable transport security: in dev there's no TLS, in prod Cloudflare/Traefik terminates TLS
