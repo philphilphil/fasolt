@@ -197,7 +197,7 @@ public class CardService(AppDbContext db)
         return card is null ? null : ToDto(card);
     }
 
-    public async Task<CardDto?> UpdateCard(string userId, string publicId, string front, string back)
+    public async Task<CardDto?> UpdateCard(string userId, string publicId, string front, string back, string? frontSvg = null, string? backSvg = null)
     {
         var card = await db.Cards
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
@@ -207,6 +207,10 @@ public class CardService(AppDbContext db)
 
         card.Front = front;
         card.Back = back;
+        if (frontSvg is not null)
+            card.FrontSvg = frontSvg == "" ? null : SvgSanitizer.Sanitize(frontSvg);
+        if (backSvg is not null)
+            card.BackSvg = backSvg == "" ? null : SvgSanitizer.Sanitize(backSvg);
         await db.SaveChangesAsync();
 
         return ToDto(card);

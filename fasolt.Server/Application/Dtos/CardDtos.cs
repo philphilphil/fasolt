@@ -1,7 +1,7 @@
 namespace Fasolt.Server.Application.Dtos;
 
 public record CreateCardRequest(string? SourceFile, string? SourceHeading, string Front, string Back, string? FrontSvg = null, string? BackSvg = null);
-public record UpdateCardRequest(string Front, string Back);
+public record UpdateCardRequest(string Front, string Back, string? FrontSvg = null, string? BackSvg = null);
 public record CardDto(
     string Id, string? SourceFile, string? SourceHeading,
     string Front, string Back, string State,

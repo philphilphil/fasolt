@@ -84,7 +84,7 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var dto = await cardService.UpdateCard(user.Id, id, request.Front, request.Back);
+        var dto = await cardService.UpdateCard(user.Id, id, request.Front, request.Back, request.FrontSvg, request.BackSvg);
         return dto is null ? Results.NotFound() : Results.Ok(dto);
     }
 
