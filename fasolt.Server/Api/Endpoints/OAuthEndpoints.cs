@@ -318,7 +318,13 @@ public static class OAuthEndpoints
             return Results.Ok(new
             {
                 clientName = displayName ?? clientId,
-                scopes = new[] { "offline_access" },
+                permissions = new[]
+                {
+                    "Read and create flashcards and decks",
+                    "View and manage sources",
+                    "Review cards and track study progress",
+                    "Stay signed in and refresh access",
+                },
             });
         }).RequireAuthorization();
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 const route = useRoute()
 
 const clientName = ref('')
-const scopes = ref<string[]>([])
+const permissions = ref<string[]>([])
 const loading = ref(true)
 const submitting = ref(false)
 const error = ref('')
@@ -32,7 +32,7 @@ onMounted(async () => {
     }
     const data = await res.json()
     clientName.value = data.clientName
-    scopes.value = data.scopes ?? []
+    permissions.value = data.permissions ?? []
   } catch {
     error.value = 'Failed to load application info.'
   } finally {
@@ -88,13 +88,12 @@ async function handleDecision(approved: boolean) {
           </p>
         </div>
 
-        <div v-if="scopes.length" class="rounded border border-border/60 bg-muted/30 px-3 py-2.5">
+        <div v-if="permissions.length" class="rounded border border-border/60 bg-muted/30 px-3 py-2.5">
           <p class="text-xs font-medium text-muted-foreground mb-1.5">This will allow the application to:</p>
           <ul class="text-xs space-y-1">
-            <li v-for="scope in scopes" :key="scope" class="flex items-center gap-1.5">
+            <li v-for="permission in permissions" :key="permission" class="flex items-center gap-1.5">
               <span class="text-muted-foreground">&#8226;</span>
-              <span v-if="scope === 'offline_access'">Stay signed in and refresh access</span>
-              <span v-else>{{ scope }}</span>
+              <span>{{ permission }}</span>
             </li>
           </ul>
         </div>
