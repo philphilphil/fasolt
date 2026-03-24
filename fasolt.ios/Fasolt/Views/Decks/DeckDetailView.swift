@@ -123,6 +123,11 @@ struct DeckDetailView: View {
                 await viewModel.loadDetail()
             }
         }
+        .onAppear {
+            if viewModel.detail != nil {
+                Task { await viewModel.loadDetail() }
+            }
+        }
     }
 
     private func sortedCards(_ cards: [DeckCardDTO]) -> [DeckCardDTO] {

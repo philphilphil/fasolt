@@ -66,6 +66,11 @@ struct DeckListView: View {
                     await viewModel.loadDecks()
                 }
             }
+            .onAppear {
+                if !viewModel.decks.isEmpty {
+                    Task { await viewModel.loadDecks() }
+                }
+            }
         }
     }
 
