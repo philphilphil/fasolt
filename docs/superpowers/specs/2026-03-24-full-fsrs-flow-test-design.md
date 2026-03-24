@@ -19,10 +19,11 @@ Replace three hardcoded time calls with .NET 8's built-in `TimeProvider`:
 | `GetDueCards` (line 56) | `DateTimeOffset.UtcNow` | `timeProvider.GetUtcNow()` |
 | `RateCard` (line 107) | `DateTime.UtcNow` | `timeProvider.GetUtcNow().UtcDateTime` |
 | `RateCard` (line 116) | `DateTimeOffset.UtcNow` | `timeProvider.GetUtcNow()` |
+| `GetStats` (line 128) | `DateTimeOffset.UtcNow` | `timeProvider.GetUtcNow()` |
 
 ASP.NET Core registers `TimeProvider.System` by default — no new DI registration needed. The endpoint method signatures gain a `TimeProvider timeProvider` parameter, which minimal API resolves automatically.
 
-**Scope:** Only `ReviewEndpoints.cs` changes. No other production files.
+**Scope:** Only `ReviewEndpoints.cs` changes (4 time calls). No other production files.
 
 ## Test Infrastructure
 
@@ -65,7 +66,7 @@ Simulates 180 days of realistic study with ~5 cards.
 **Assertions:**
 - All cards progress through new → learning → review
 - At least one card experiences a lapse (review → relearning → review)
-- Intervals grow monotonically for cards with consecutive "good" ratings in review state
+- Intervals grow monotonically for cards with unbroken consecutive "good" ratings in review state (reset tracking after any lapse)
 - After 180 days, cards in review state have intervals of days/weeks (not minutes)
 - No card has a nonsensical state (e.g., negative stability, due date in the past after rating)
 
@@ -86,7 +87,7 @@ Focused lapse lifecycle test.
 Verifies the due card filter works correctly at specific points in time.
 
 **Flow:**
-1. Create 3 cards, review each to different schedules (one due in 1 day, one in 7 days, one in 30 days)
+1. Create 3 cards, review them through FSRS to get into review state, then manually set `DueAt` to known offsets (1 day, 7 days, 30 days from start) for precise control over the due-time assertions
 2. Advance time to day 2 — assert only the 1-day card is due
 3. Advance time to day 8 — assert the 1-day and 7-day cards are due
 4. Advance time to day 31 — assert all 3 are due
@@ -97,3 +98,4 @@ Verifies the due card filter works correctly at specific points in time.
 - HTTP-level endpoint testing (we test at the service/DB layer)
 - UI/Playwright testing
 - ReviewLog persistence
+- `RateCardInDb` helper intentionally duplicates production mapping logic from `ReviewEndpoints.RateCard`. This is an accepted trade-off of testing at the service/DB layer. If the production mapping changes, the helper must be updated in lockstep.
