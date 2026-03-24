@@ -28,6 +28,8 @@ targets:
               - fasolt
         UILaunchScreen:
           UIColorName: ""
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fasolt.app
