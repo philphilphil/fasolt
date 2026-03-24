@@ -1,0 +1,2 @@
+Can we implement a unit test (or multiple combined) that verifies if FSRS is working correctly?
+Maybe we could even simulate a 6 month period and use the simulated date to check if cards get showed according to when they should be etc?
