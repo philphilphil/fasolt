@@ -32,7 +32,7 @@ export const useCardsStore = defineStore('cards', () => {
     return result
   }
 
-  async function updateCard(id: string, data: { front: string; back: string }): Promise<Card> {
+  async function updateCard(id: string, data: { front: string; back: string; frontSvg?: string | null; backSvg?: string | null }): Promise<Card> {
     const result = await apiFetch<Card>(`/cards/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

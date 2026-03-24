@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useCardsStore } from '@/stores/cards'
 import { useMarkdown } from '@/composables/useMarkdown'
+import { sanitizeSvg } from '@/composables/useSvgSanitizer'
 import type { Card } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +28,8 @@ const deleteOpen = ref(false)
 const editing = ref(false)
 const front = ref('')
 const back = ref('')
+const editFrontSvg = ref('')
+const editBackSvg = ref('')
 const saving = ref(false)
 const error = ref('')
 
@@ -49,6 +52,8 @@ function startEdit() {
   if (!card.value) return
   front.value = card.value.front
   back.value = card.value.back
+  editFrontSvg.value = card.value.frontSvg ?? ''
+  editBackSvg.value = card.value.backSvg ?? ''
   error.value = ''
   editing.value = true
 }
@@ -64,6 +69,8 @@ async function save() {
     card.value = await cardsStore.updateCard(card.value.id, {
       front: front.value,
       back: back.value,
+      frontSvg: editFrontSvg.value || null,
+      backSvg: editBackSvg.value || null,
     })
     editing.value = false
   } catch {
@@ -158,6 +165,21 @@ async function confirmDelete() {
           class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
           rows="3"
         />
+        <details class="mt-2">
+          <summary class="cursor-pointer text-xs text-muted-foreground">SVG (front)</summary>
+          <div class="mt-2 grid grid-cols-2 gap-2">
+            <textarea
+              v-model="editFrontSvg"
+              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-xs font-mono"
+              placeholder="Paste SVG markup here..."
+            />
+            <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
+              <div v-if="editFrontSvg" class="max-h-[200px] max-w-full [&>svg]:max-h-[200px] [&>svg]:max-w-full" v-html="sanitizeSvg(editFrontSvg)" />
+              <span v-else class="text-xs text-muted-foreground">Preview</span>
+            </div>
+          </div>
+          <Button v-if="editFrontSvg" variant="ghost" size="sm" class="mt-1 text-xs" @click="editFrontSvg = ''">Clear SVG</Button>
+        </details>
       </div>
       <div class="space-y-1">
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back (answer)</div>
@@ -166,6 +188,21 @@ async function confirmDelete() {
           class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
           rows="8"
         />
+        <details class="mt-2">
+          <summary class="cursor-pointer text-xs text-muted-foreground">SVG (back)</summary>
+          <div class="mt-2 grid grid-cols-2 gap-2">
+            <textarea
+              v-model="editBackSvg"
+              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-xs font-mono"
+              placeholder="Paste SVG markup here..."
+            />
+            <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
+              <div v-if="editBackSvg" class="max-h-[200px] max-w-full [&>svg]:max-h-[200px] [&>svg]:max-w-full" v-html="sanitizeSvg(editBackSvg)" />
+              <span v-else class="text-xs text-muted-foreground">Preview</span>
+            </div>
+          </div>
+          <Button v-if="editBackSvg" variant="ghost" size="sm" class="mt-1 text-xs" @click="editBackSvg = ''">Clear SVG</Button>
+        </details>
       </div>
       <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
       <div class="flex gap-2">
@@ -180,10 +217,16 @@ async function confirmDelete() {
     <div v-else class="space-y-5">
       <div>
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front</div>
+        <div v-if="card.frontSvg" class="mb-3 flex justify-center rounded border border-border/40 bg-muted/30 p-4">
+          <div class="max-h-[300px] max-w-full [&>svg]:max-h-[300px] [&>svg]:max-w-full" v-html="sanitizeSvg(card.frontSvg)" />
+        </div>
         <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.front)" />
       </div>
       <div>
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back</div>
+        <div v-if="card.backSvg" class="mb-3 flex justify-center rounded border border-border/40 bg-muted/30 p-4">
+          <div class="max-h-[300px] max-w-full [&>svg]:max-h-[300px] [&>svg]:max-w-full" v-html="sanitizeSvg(card.backSvg)" />
+        </div>
         <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.back)" />
       </div>
     </div>
