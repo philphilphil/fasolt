@@ -93,14 +93,12 @@ public static class OAuthEndpoints
                 roleType: Claims.Role);
 
             identity.SetClaim(Claims.Subject, userId);
+            identity.SetClaim(ClaimTypes.NameIdentifier, userId); // For UserManager.GetUserAsync()
             identity.SetClaim(Claims.Name, userName);
             identity.SetScopes(Scopes.OfflineAccess);
 
-            identity.SetDestinations(static claim => claim.Type switch
-            {
-                Claims.Name => [Destinations.AccessToken],
-                _ => [Destinations.AccessToken],
-            });
+            identity.SetDestinations(static claim =>
+                [Destinations.AccessToken, Destinations.IdentityToken]);
 
             return Results.SignIn(new ClaimsPrincipal(identity),
                 properties: null,
@@ -130,16 +128,18 @@ public static class OAuthEndpoints
                             [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The user no longer exists.",
                         }));
 
-                var identity = new ClaimsIdentity(principal.Claims,
+                var identity = new ClaimsIdentity(
                     authenticationType: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                     nameType: Claims.Name,
                     roleType: Claims.Role);
 
-                identity.SetDestinations(static claim => claim.Type switch
-                {
-                    Claims.Name => [Destinations.AccessToken],
-                    _ => [Destinations.AccessToken],
-                });
+                identity.SetClaim(Claims.Subject, userId);
+                identity.SetClaim(ClaimTypes.NameIdentifier, userId);
+                identity.SetClaim(Claims.Name, user.UserName);
+                identity.SetScopes(principal.GetScopes());
+
+                identity.SetDestinations(static claim =>
+                    [Destinations.AccessToken, Destinations.IdentityToken]);
 
                 return Results.SignIn(new ClaimsPrincipal(identity),
                     properties: null,

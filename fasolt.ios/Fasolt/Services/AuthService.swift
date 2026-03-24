@@ -2,6 +2,9 @@ import Foundation
 import AuthenticationServices
 import CryptoKit
 import UIKit
+import os
+
+private let authLogger = Logger(subsystem: "com.fasolt.app", category: "Auth")
 
 @Observable
 final class AuthService {
@@ -13,7 +16,7 @@ final class AuthService {
     let apiClient: APIClient
 
     static let redirectURI = "fasolt://oauth/callback"
-    static let defaultServerURL = "https://fasolt.app"
+    static let defaultServerURL = "http://localhost:8080"
 
     init(keychain: KeychainHelper = KeychainHelper(), apiClient: APIClient = APIClient()) {
         self.keychain = keychain
@@ -41,7 +44,8 @@ final class AuthService {
         isLoading = true
         errorMessage = nil
 
-        // Save server URL early so APIClient can use it for registration
+        // Clear any stale auth state before starting fresh
+        keychain.deleteAll()
         keychain.save(serverURL, forKey: "fasolt.serverURL")
 
         do {
@@ -155,6 +159,9 @@ final class AuthService {
 
         let tokenResponse: TokenResponse = try await apiClient.formPost("/oauth/token", params: params)
 
+        authLogger.info("TOKEN EXCHANGE: expiresIn=\(tokenResponse.expiresIn), tokenType=\(tokenResponse.tokenType), hasRefresh=\(tokenResponse.refreshToken != nil)")
+        let computedExpiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
+        authLogger.info("TOKEN EXCHANGE: computedExpiry=\(ISO8601DateFormatter().string(from: computedExpiry))")
         keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
         if let refreshToken = tokenResponse.refreshToken {
             keychain.save(refreshToken, forKey: "fasolt.refreshToken")

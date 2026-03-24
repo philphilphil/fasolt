@@ -35,16 +35,6 @@ builder.Services
     })
     .AddEntityFrameworkStores<AppDbContext>();
 
-// Forward Identity's BearerToken scheme to OpenIddict for all Bearer token validation.
-// AddIdentityApiEndpoints registers a handler that tries to decrypt Bearer tokens as
-// Data Protection tokens, which fails for OpenIddict JWE tokens. By forwarding to OpenIddict,
-// we let the correct handler validate OAuth tokens while cookies still work via Identity.
-builder.Services.PostConfigure<Microsoft.AspNetCore.Authentication.BearerToken.BearerTokenOptions>(
-    IdentityConstants.BearerScheme, options =>
-{
-    options.ForwardDefault = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-});
-
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {

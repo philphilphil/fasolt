@@ -97,12 +97,18 @@ final class APIClient: @unchecked Sendable {
         let (data, response) = try await performRaw(request)
 
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401, authenticated {
+            print("APIClient: got 401 for \(endpoint.path), attempting refresh...")
             if try await refreshTokenCoalesced() {
+                print("APIClient: refresh succeeded, retrying \(endpoint.path)")
                 try await injectAuth(&request)
                 let (retryData, retryResponse) = try await performRaw(request)
+                if let retryHttp = retryResponse as? HTTPURLResponse {
+                    print("APIClient: retry status for \(endpoint.path): \(retryHttp.statusCode)")
+                }
                 try validateResponse(retryResponse)
                 return retryData
             } else {
+                print("APIClient: refresh failed")
                 throw APIError.unauthorized
             }
         }
@@ -139,6 +145,8 @@ final class APIClient: @unchecked Sendable {
         }
 
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        print("APIClient: injecting token (first 80 chars): \(String(token.prefix(80)))...")
+        print("APIClient: token length: \(token.count)")
     }
 
     private func refreshTokenCoalesced() async throws -> Bool {
@@ -154,8 +162,11 @@ final class APIClient: @unchecked Sendable {
     private func doRefreshToken() async throws -> Bool {
         guard let refreshToken = keychain.retrieve("fasolt.refreshToken"),
               let clientId = keychain.retrieve("fasolt.clientId") else {
+            print("APIClient: no refresh token or client ID in keychain")
             return false
         }
+        let oldToken = keychain.retrieve("fasolt.accessToken") ?? "none"
+        print("APIClient: refreshing, old token prefix: \(String(oldToken.prefix(20)))")
 
         let params: [String: String] = [
             "grant_type": "refresh_token",
@@ -165,7 +176,10 @@ final class APIClient: @unchecked Sendable {
 
         do {
             let tokenResponse: TokenResponse = try await formPost("/oauth/token", params: params)
+            print("APIClient: new token prefix: \(String(tokenResponse.accessToken.prefix(20)))")
             keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
+            let verifyToken = keychain.retrieve("fasolt.accessToken") ?? "SAVE FAILED"
+            print("APIClient: verify saved token prefix: \(String(verifyToken.prefix(20)))")
             if let newRefresh = tokenResponse.refreshToken {
                 keychain.save(newRefresh, forKey: "fasolt.refreshToken")
             }
