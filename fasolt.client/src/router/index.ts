@@ -30,6 +30,12 @@ const router = createRouter({
       component: () => import('@/views/ResetPasswordView.vue'),
       meta: { public: true },
     },
+    {
+      path: '/oauth/consent',
+      name: 'oauth-consent',
+      component: () => import('@/views/OAuthConsentView.vue'),
+      meta: { public: true },
+    },
     // Landing page (public)
     {
       path: '/',

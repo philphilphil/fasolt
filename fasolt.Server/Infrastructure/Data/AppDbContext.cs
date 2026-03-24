@@ -13,6 +13,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Card> Cards => Set<Card>();
     public DbSet<Deck> Decks => Set<Deck>();
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
+    public DbSet<ConsentGrant> ConsentGrants => Set<ConsentGrant>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -62,6 +63,14 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.HasIndex(e => e.CardId);
             entity.HasOne(e => e.Deck).WithMany(d => d.Cards).HasForeignKey(e => e.DeckId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Card).WithMany(c => c.DeckCards).HasForeignKey(e => e.CardId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ConsentGrant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ClientId).HasMaxLength(255).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.ClientId }).IsUnique();
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
     }
