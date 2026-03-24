@@ -24,12 +24,20 @@ public static class OAuthEndpoints
         !url.StartsWith("//") &&
         !url.StartsWith("/\\");
 
-    private static bool IsAllowedRedirectUri(string uri, string[] allowedPatterns) =>
-        allowedPatterns.Any(pattern =>
+    private static bool IsAllowedRedirectUri(string uri, string[] allowedPatterns)
+    {
+        // Any HTTPS redirect URI is allowed — PKCE protects the flow, not the redirect URI.
+        // This enables any MCP client (Claude.ai, Cursor, etc.) to register without a whitelist entry.
+        if (uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        // For http:// and custom schemes, require explicit pattern match
+        return allowedPatterns.Any(pattern =>
             uri.StartsWith(pattern, StringComparison.OrdinalIgnoreCase) &&
             (uri.Length == pattern.Length ||
              pattern.EndsWith("://") || // custom schemes — scheme is the security boundary
              uri[pattern.Length] is '/' or ':' or '?'));
+    }
 
     public static void MapOAuthEndpoints(this WebApplication app)
     {
