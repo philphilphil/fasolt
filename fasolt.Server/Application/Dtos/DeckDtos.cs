@@ -11,6 +11,8 @@ public record DeckDetailDto(string Id, string Name, string? Description, int Car
 public record DeckCardDto(
     string Id, string Front, string Back,
     string? SourceFile, string? SourceHeading,
-    string State, DateTimeOffset? DueAt);
+    string State, DateTimeOffset? DueAt,
+    double? Stability = null, double? Difficulty = null,
+    int? Step = null, DateTimeOffset? LastReviewedAt = null);
 
 public record AddCardsToDeckRequest(List<string> CardIds);
