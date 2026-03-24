@@ -59,6 +59,7 @@ const router = createRouter({
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },
     { path: '/mcp', name: 'mcp', component: () => import('@/views/McpView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
+    { path: '/admin', name: 'admin', component: () => import('@/views/AdminView.vue'), meta: { requiresAdmin: true } },
     { path: '/dashboard', redirect: '/study' },
     // Catch-all 404
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'), meta: { public: true } },
@@ -81,6 +82,12 @@ router.beforeEach(async (to) => {
 
   if (to.meta.authRedirect && auth.isAuthenticated) {
     return { name: 'study' }
+  }
+
+  if (to.meta.requiresAdmin) {
+    if (!auth.isAdmin) {
+      return { name: 'study' }
+    }
   }
 })
 
