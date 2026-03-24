@@ -29,6 +29,7 @@ export interface Deck {
   cardCount: number
   dueCount: number
   createdAt: string
+  isActive: boolean
 }
 
 export interface DeckDetail extends Deck {
