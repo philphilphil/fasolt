@@ -1,0 +1,170 @@
+import Foundation
+
+@Observable
+final class APIClient: @unchecked Sendable {
+    private let session: URLSession
+    private let keychain: KeychainHelper
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
+
+    init(session: URLSession = .shared, keychain: KeychainHelper = KeychainHelper()) {
+        self.session = session
+        self.keychain = keychain
+        self.encoder = JSONEncoder()
+        self.decoder = JSONDecoder()
+    }
+
+    var baseURL: String? {
+        keychain.retrieve("fasolt.serverURL")
+    }
+
+    // MARK: - Authenticated requests
+
+    func request<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
+        let data = try await performRequest(endpoint, authenticated: true)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError(error.localizedDescription)
+        }
+    }
+
+    func request(_ endpoint: Endpoint) async throws {
+        _ = try await performRequest(endpoint, authenticated: true)
+    }
+
+    // MARK: - Unauthenticated requests (for auth flow)
+
+    func unauthenticatedRequest<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
+        let data = try await performRequest(endpoint, authenticated: false)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Form-encoded POST (for OAuth token endpoint)
+
+    func formPost<T: Decodable>(_ path: String, params: [String: String]) async throws -> T {
+        guard let base = baseURL else { throw APIError.invalidURL }
+        guard let url = URL(string: base + path) else { throw APIError.invalidURL }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let body = params
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
+            .joined(separator: "&")
+        request.httpBody = body.data(using: .utf8)
+
+        let (data, response) = try await performRaw(request)
+        try validateResponse(response)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError(error.localizedDescription)
+        }
+    }
+
+    // MARK: - Internal
+
+    private func performRequest(_ endpoint: Endpoint, authenticated: Bool) async throws -> Data {
+        guard let base = baseURL else { throw APIError.invalidURL }
+        let url = try endpoint.url(baseURL: base)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = endpoint.method.rawValue
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        if authenticated {
+            try await injectAuth(&request)
+        }
+
+        if let body = endpoint.body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try encoder.encode(body)
+        }
+
+        let (data, response) = try await performRaw(request)
+
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401, authenticated {
+            if try await refreshToken() {
+                try await injectAuth(&request)
+                let (retryData, retryResponse) = try await performRaw(request)
+                try validateResponse(retryResponse)
+                return retryData
+            } else {
+                throw APIError.unauthorized
+            }
+        }
+
+        try validateResponse(response)
+        return data
+    }
+
+    private func performRaw(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        do {
+            return try await session.data(for: request)
+        } catch {
+            throw APIError.networkError(error.localizedDescription)
+        }
+    }
+
+    private func injectAuth(_ request: inout URLRequest) async throws {
+        guard let token = keychain.retrieve("fasolt.accessToken") else {
+            throw APIError.unauthorized
+        }
+
+        if let expiryString = keychain.retrieve("fasolt.tokenExpiry"),
+           let expiry = ISO8601DateFormatter().date(from: expiryString),
+           expiry <= Date.now {
+            if try await refreshToken() {
+                guard let newToken = keychain.retrieve("fasolt.accessToken") else {
+                    throw APIError.unauthorized
+                }
+                request.setValue("Bearer \(newToken)", forHTTPHeaderField: "Authorization")
+                return
+            } else {
+                throw APIError.unauthorized
+            }
+        }
+
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+    }
+
+    private func refreshToken() async throws -> Bool {
+        guard let refreshToken = keychain.retrieve("fasolt.refreshToken"),
+              let clientId = keychain.retrieve("fasolt.clientId") else {
+            return false
+        }
+
+        let params: [String: String] = [
+            "grant_type": "refresh_token",
+            "refresh_token": refreshToken,
+            "client_id": clientId,
+        ]
+
+        do {
+            let tokenResponse: TokenResponse = try await formPost("/oauth/token", params: params)
+            keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
+            if let newRefresh = tokenResponse.refreshToken {
+                keychain.save(newRefresh, forKey: "fasolt.refreshToken")
+            }
+            let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
+            keychain.save(ISO8601DateFormatter().string(from: expiry), forKey: "fasolt.tokenExpiry")
+            return true
+        } catch {
+            keychain.deleteAll()
+            return false
+        }
+    }
+
+    private func validateResponse(_ response: URLResponse) throws {
+        guard let httpResponse = response as? HTTPURLResponse else { return }
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw APIError.fromStatus(httpResponse.statusCode)
+        }
+    }
+}
