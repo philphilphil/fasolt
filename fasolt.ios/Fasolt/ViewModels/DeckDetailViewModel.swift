@@ -34,4 +34,17 @@ final class DeckDetailViewModel {
 
         isLoading = false
     }
+
+    func toggleActive() async {
+        guard let current = detail else { return }
+        let newState = !current.isActive
+
+        do {
+            _ = try await deckRepository.setActive(id: deckId, isActive: newState)
+            await loadDetail() // Reload to get fresh data
+        } catch {
+            logger.error("Failed to toggle deck active state: \(error)")
+            errorMessage = "Could not update deck status."
+        }
+    }
 }

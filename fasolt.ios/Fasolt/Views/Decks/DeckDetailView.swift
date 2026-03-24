@@ -47,6 +47,14 @@ struct DeckDetailView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
+
+                            if !detail.isActive {
+                                Text("This deck is inactive. Cards are excluded from study.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 4)
+                            }
                         }
 
                         if detail.cards.isEmpty {
@@ -71,7 +79,7 @@ struct DeckDetailView: View {
                         }
                     }
 
-                    if detail.dueCount > 0 {
+                    if detail.dueCount > 0 && detail.isActive {
                         NavigationLink {
                             StudyView(viewModel: studyViewModelFactory(), deckId: viewModel.deckId)
                         } label: {
@@ -110,6 +118,16 @@ struct DeckDetailView: View {
                     }
                 } label: {
                     Label("Sort", systemImage: "arrow.up.arrow.down")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await viewModel.toggleActive() }
+                } label: {
+                    Label(
+                        viewModel.detail?.isActive == true ? "Deactivate" : "Activate",
+                        systemImage: viewModel.detail?.isActive == true ? "pause.circle" : "play.circle"
+                    )
                 }
             }
         }
