@@ -94,7 +94,8 @@ struct StudyView: View {
                     label: viewModel.isFlipped ? "Answer" : "Question",
                     text: viewModel.isFlipped ? card.back : card.front,
                     sourceFile: card.sourceFile,
-                    sourceHeading: viewModel.isFlipped ? card.sourceHeading : nil
+                    sourceHeading: viewModel.isFlipped ? card.sourceHeading : nil,
+                    svg: viewModel.isFlipped ? card.backSvg : card.frontSvg
                 )
                 .padding(.horizontal)
                 .rotation3DEffect(

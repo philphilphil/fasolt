@@ -104,6 +104,8 @@ struct DueCardDTO: Decodable, Sendable {
     let sourceFile: String?
     let sourceHeading: String?
     let state: String
+    let frontSvg: String?
+    let backSvg: String?
 }
 
 struct RateCardRequest: Encodable, Sendable {
