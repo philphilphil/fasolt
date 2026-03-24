@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 const router = useRouter()
 const reviewStore = useReviewStore()
 const decksStore = useDecksStore()
+
+const activeDecks = computed(() => decksStore.decks.filter(d => d.isActive))
 
 const dueCount = ref(0)
 const totalCards = ref(0)
@@ -55,7 +57,7 @@ onMounted(async () => {
       <div class="text-[11px] font-semibold uppercase tracking-[1.2px] text-muted-foreground mb-3">Study by deck</div>
       <div class="flex flex-col gap-2">
         <div
-          v-for="deck in decksStore.decks"
+          v-for="deck in activeDecks"
           :key="deck.id"
           class="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-foreground/20"
           @click="router.push(`/review?deckId=${deck.id}`)"
