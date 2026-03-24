@@ -49,16 +49,20 @@ final class AuthService {
         keychain.save(serverURL, forKey: "fasolt.serverURL")
 
         do {
+            authLogger.info("Starting sign-in to \(serverURL)")
             let clientId = try await ensureClientRegistered(serverURL: serverURL)
+            authLogger.info("Client registered: \(clientId)")
 
             let codeVerifier = Self.generateCodeVerifier()
             let codeChallenge = Self.generateCodeChallenge(from: codeVerifier)
 
+            authLogger.info("Opening auth session")
             let authCode = try await openAuthSession(
                 serverURL: serverURL,
                 clientId: clientId,
                 codeChallenge: codeChallenge
             )
+            authLogger.info("Got auth code, exchanging for token")
 
             try await exchangeCode(
                 authCode,
@@ -66,9 +70,14 @@ final class AuthService {
                 codeVerifier: codeVerifier
             )
 
+            authLogger.info("Sign-in complete")
             isAuthenticated = true
+        } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
+            authLogger.info("User cancelled sign-in")
+            keychain.delete("fasolt.serverURL")
+            errorMessage = nil
         } catch {
-            // Clear server URL on failure so stale URL doesn't persist
+            authLogger.error("Sign-in failed: \(error)")
             keychain.delete("fasolt.serverURL")
             errorMessage = "Could not connect. Check your server URL and try again."
         }
