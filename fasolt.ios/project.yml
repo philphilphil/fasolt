@@ -43,3 +43,4 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fasolt.app.tests
+        GENERATE_INFOPLIST_FILE: YES
