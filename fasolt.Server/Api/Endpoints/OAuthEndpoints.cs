@@ -28,6 +28,7 @@ public static class OAuthEndpoints
         allowedPatterns.Any(pattern =>
             uri.StartsWith(pattern, StringComparison.OrdinalIgnoreCase) &&
             (uri.Length == pattern.Length ||
+             pattern.EndsWith("://") || // custom schemes — scheme is the security boundary
              uri[pattern.Length] is '/' or ':' or '?'));
 
     public static void MapOAuthEndpoints(this WebApplication app)
