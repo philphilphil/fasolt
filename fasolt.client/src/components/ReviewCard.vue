@@ -18,7 +18,7 @@ const { render } = useMarkdown()
       {{ isFlipped ? 'Answer' : 'Question' }}
     </div>
     <div v-if="card.frontSvg" class="mt-4 flex w-full max-w-lg justify-center">
-      <div class="max-h-[300px] max-w-full [&>svg]:max-h-[300px] [&>svg]:max-w-full" v-html="sanitizeSvg(card.frontSvg)" />
+      <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.frontSvg)" />
     </div>
     <div
       class="mt-4 w-full max-w-lg text-center"
@@ -27,7 +27,7 @@ const { render } = useMarkdown()
       <div class="prose dark:prose-invert max-w-none" v-html="render(card.front)" />
     </div>
     <div v-if="isFlipped && card.backSvg" class="mt-4 flex w-full max-w-lg justify-center">
-      <div class="max-h-[300px] max-w-full [&>svg]:max-h-[300px] [&>svg]:max-w-full" v-html="sanitizeSvg(card.backSvg)" />
+      <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.backSvg)" />
     </div>
     <div v-if="isFlipped" class="mt-5 w-full max-w-lg text-center">
       <div class="prose dark:prose-invert max-w-none" v-html="render(card.back)" />

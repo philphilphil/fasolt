@@ -174,7 +174,7 @@ async function confirmDelete() {
               placeholder="Paste SVG markup here..."
             />
             <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
-              <div v-if="editFrontSvg" class="max-h-[200px] max-w-full [&>svg]:max-h-[200px] [&>svg]:max-w-full" v-html="sanitizeSvg(editFrontSvg)" />
+              <div v-if="editFrontSvg" class="max-h-[200px] w-full [&>svg]:max-h-[200px] [&>svg]:w-full" v-html="sanitizeSvg(editFrontSvg)" />
               <span v-else class="text-xs text-muted-foreground">Preview</span>
             </div>
           </div>
@@ -197,7 +197,7 @@ async function confirmDelete() {
               placeholder="Paste SVG markup here..."
             />
             <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
-              <div v-if="editBackSvg" class="max-h-[200px] max-w-full [&>svg]:max-h-[200px] [&>svg]:max-w-full" v-html="sanitizeSvg(editBackSvg)" />
+              <div v-if="editBackSvg" class="max-h-[200px] w-full [&>svg]:max-h-[200px] [&>svg]:w-full" v-html="sanitizeSvg(editBackSvg)" />
               <span v-else class="text-xs text-muted-foreground">Preview</span>
             </div>
           </div>
@@ -218,14 +218,14 @@ async function confirmDelete() {
       <div>
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front</div>
         <div v-if="card.frontSvg" class="mb-3 flex justify-center rounded border border-border/40 bg-muted/30 p-4">
-          <div class="max-h-[300px] max-w-full [&>svg]:max-h-[300px] [&>svg]:max-w-full" v-html="sanitizeSvg(card.frontSvg)" />
+          <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.frontSvg)" />
         </div>
         <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.front)" />
       </div>
       <div>
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back</div>
         <div v-if="card.backSvg" class="mb-3 flex justify-center rounded border border-border/40 bg-muted/30 p-4">
-          <div class="max-h-[300px] max-w-full [&>svg]:max-h-[300px] [&>svg]:max-w-full" v-html="sanitizeSvg(card.backSvg)" />
+          <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.backSvg)" />
         </div>
         <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.back)" />
       </div>
