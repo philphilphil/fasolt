@@ -45,12 +45,4 @@ final class CardRepository {
         try modelContext.save()
         return nil
     }
-
-    func flushPendingReviews() async throws -> Int {
-        let descriptor = FetchDescriptor<PendingReview>(
-            predicate: #Predicate { !$0.synced }
-        )
-        let pending = try modelContext.fetch(descriptor)
-        return pending.count
-    }
 }
