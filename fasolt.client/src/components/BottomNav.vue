@@ -1,16 +1,25 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const auth = useAuthStore()
 
-const tabs = [
-  { name: 'Study', path: '/study', icon: '◉' },
-  { name: 'Cards', path: '/cards', icon: '▤' },
-  { name: 'Decks', path: '/decks', icon: '⊞' },
-  { name: 'Sources', path: '/sources', icon: '◫' },
-  { name: 'MCP', path: '/mcp', icon: '⏚' },
-  { name: 'Settings', path: '/settings', icon: '⚙' },
-]
+const tabs = computed(() => {
+  const items = [
+    { name: 'Study', path: '/study', icon: '◉' },
+    { name: 'Cards', path: '/cards', icon: '▤' },
+    { name: 'Decks', path: '/decks', icon: '⊞' },
+    { name: 'Sources', path: '/sources', icon: '◫' },
+    { name: 'MCP', path: '/mcp', icon: '⏚' },
+    { name: 'Settings', path: '/settings', icon: '⚙' },
+  ]
+  if (auth.isAdmin) {
+    items.push({ name: 'Admin', path: '/admin', icon: '⛨' })
+  }
+  return items
+})
 
 function isActive(path: string) {
   return route.path === path

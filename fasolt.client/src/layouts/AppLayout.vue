@@ -5,23 +5,31 @@ import TopBar from '@/components/TopBar.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDarkMode } from '@/composables/useDarkMode'
+import { useAuthStore } from '@/stores/auth'
 
 useDarkMode()
 
 const route = useRoute()
+const auth = useAuthStore()
 
-const tabs = [
-  { label: 'Study', value: '/study' },
-  { label: 'Cards', value: '/cards' },
-  { label: 'Decks', value: '/decks' },
-  { label: 'Sources', value: '/sources' },
-  { label: 'MCP', value: '/mcp' },
-  { label: 'Settings', value: '/settings' },
-]
+const tabs = computed(() => {
+  const items = [
+    { label: 'Study', value: '/study' },
+    { label: 'Cards', value: '/cards' },
+    { label: 'Decks', value: '/decks' },
+    { label: 'Sources', value: '/sources' },
+    { label: 'MCP', value: '/mcp' },
+    { label: 'Settings', value: '/settings' },
+  ]
+  if (auth.isAdmin) {
+    items.push({ label: 'Admin', value: '/admin' })
+  }
+  return items
+})
 
 const activeTab = computed(() => {
   const path = route.path
-  const match = tabs.find(t => path === t.value || path.startsWith(t.value + '/'))
+  const match = tabs.value.find(t => path === t.value || path.startsWith(t.value + '/'))
   return match?.value ?? path
 })
 </script>
