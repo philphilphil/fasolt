@@ -8,7 +8,7 @@ namespace Fasolt.Server.Application.Services;
 
 public class CardService(AppDbContext db)
 {
-    public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading)
+    public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null)
     {
         var card = new Card
         {
@@ -20,6 +20,8 @@ public class CardService(AppDbContext db)
             Front = front,
             Back = back,
             CreatedAt = DateTimeOffset.UtcNow,
+            FrontSvg = SvgSanitizer.Sanitize(frontSvg),
+            BackSvg = SvgSanitizer.Sanitize(backSvg),
         };
 
         db.Cards.Add(card);
@@ -109,6 +111,8 @@ public class CardService(AppDbContext db)
                 Back = item.Back.Trim(),
                 CreatedAt = DateTimeOffset.UtcNow,
                 State = "new",
+                FrontSvg = SvgSanitizer.Sanitize(item.FrontSvg),
+                BackSvg = SvgSanitizer.Sanitize(item.BackSvg),
             };
             db.Cards.Add(card);
             created.Add(card);
@@ -135,7 +139,8 @@ public class CardService(AppDbContext db)
             deckId is not null
                 ? [new CardDeckInfoDto(deckId, "")]
                 : [],
-            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt)).ToList();
+            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
+            c.FrontSvg, c.BackSvg)).ToList();
 
         return BulkCreateResult.Success(new BulkCreateCardsResponse(createdDtos, skipped));
     }
@@ -172,7 +177,8 @@ public class CardService(AppDbContext db)
             .Take(take + 1)
             .Select(c => new CardDto(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
                 c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
-                c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt))
+                c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
+                c.FrontSvg, c.BackSvg))
             .ToListAsync();
 
         var hasMore = cards.Count > take;
@@ -256,6 +262,10 @@ public class CardService(AppDbContext db)
         if (req.NewBack is not null) card.Back = req.NewBack.Trim();
         if (req.NewSourceFile is not null) card.SourceFile = req.NewSourceFile.Trim();
         if (req.NewSourceHeading is not null) card.SourceHeading = req.NewSourceHeading.Trim();
+        if (req.NewFrontSvg is not null)
+            card.FrontSvg = req.NewFrontSvg == "" ? null : SvgSanitizer.Sanitize(req.NewFrontSvg);
+        if (req.NewBackSvg is not null)
+            card.BackSvg = req.NewBackSvg == "" ? null : SvgSanitizer.Sanitize(req.NewBackSvg);
 
         await db.SaveChangesAsync();
 
@@ -289,7 +299,8 @@ public class CardService(AppDbContext db)
     private static CardDto ToDto(Card c) =>
         new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
-            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt);
+            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
+            c.FrontSvg, c.BackSvg);
 
     private sealed class SourceFrontComparer : IEqualityComparer<(string, string)>
     {

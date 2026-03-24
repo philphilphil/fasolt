@@ -35,7 +35,7 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var dto = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.SourceHeading);
+        var dto = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.SourceHeading, request.FrontSvg, request.BackSvg);
         return Results.Created($"/api/cards/{dto.Id}", dto);
     }
 
