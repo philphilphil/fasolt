@@ -19,6 +19,7 @@ public static class DeckEndpoints
         group.MapDelete("/{id}", Delete);
         group.MapPost("/{id}/cards", AddCards);
         group.MapDelete("/{id}/cards/{cardId}", RemoveCard);
+        group.MapPut("/{id}/active", SetActive);
     }
 
     private static async Task<IResult> Create(
@@ -134,5 +135,19 @@ public static class DeckEndpoints
 
         var result = await deckService.RemoveCard(user.Id, id, cardId);
         return result == RemoveCardResult.Success ? Results.NoContent() : Results.NotFound();
+    }
+
+    private static async Task<IResult> SetActive(
+        string id,
+        SetDeckActiveRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        DeckService deckService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var dto = await deckService.SetActive(user.Id, id, request.IsActive);
+        return dto is null ? Results.NotFound() : Results.Ok(dto);
     }
 }
