@@ -67,7 +67,7 @@ struct StudyView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 Button("Retry") {
-                    Task { await viewModel.startSession() }
+                    Task { await viewModel.startSession(deckId: deckId) }
                 }
                 .buttonStyle(.bordered)
             } else {
