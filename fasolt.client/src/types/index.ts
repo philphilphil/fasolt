@@ -4,6 +4,8 @@ export interface Card {
   sourceHeading: string | null
   front: string
   back: string
+  frontSvg: string | null
+  backSvg: string | null
   createdAt: string
   stability: number | null
   difficulty: number | null
@@ -44,6 +46,8 @@ export interface DeckCard {
   sourceHeading: string | null
   state: string
   dueAt: string | null
+  frontSvg: string | null
+  backSvg: string | null
 }
 
 export interface DueCard {
@@ -53,6 +57,8 @@ export interface DueCard {
   sourceFile: string | null
   sourceHeading: string | null
   state: string
+  frontSvg: string | null
+  backSvg: string | null
 }
 
 export interface ReviewStats {
