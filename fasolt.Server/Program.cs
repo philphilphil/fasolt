@@ -354,6 +354,7 @@ app.MapDeckEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapOAuthEndpoints();
+app.MapAdminEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
 app.MapMcp("/mcp").RequireAuthorization();
