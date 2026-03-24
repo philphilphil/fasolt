@@ -72,7 +72,7 @@ public static class ReviewEndpoints
             .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
             .ThenBy(c => c.CreatedAt)
             .Take(take)
-            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State))
+            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.FrontSvg, c.BackSvg))
             .ToListAsync();
 
         return Results.Ok(cards);
