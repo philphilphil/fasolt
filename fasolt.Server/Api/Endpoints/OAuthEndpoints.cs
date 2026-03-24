@@ -16,7 +16,7 @@ namespace Fasolt.Server.Api.Endpoints;
 
 public static class OAuthEndpoints
 {
-    private static readonly string[] DefaultRedirectPatterns = ["fasolt://", "http://localhost", "http://127.0.0.1"];
+
 
     private static bool IsLocalUrl(string url) =>
         !string.IsNullOrEmpty(url) &&
@@ -58,7 +58,7 @@ public static class OAuthEndpoints
                 return Results.BadRequest(new { error = "invalid_client_metadata", error_description = "redirect_uris is required" });
 
             var allowedPatterns = configuration.GetSection("OAuth:AllowedRedirectPatterns").Get<string[]>()
-                ?? DefaultRedirectPatterns;
+                ?? throw new InvalidOperationException("OAuth:AllowedRedirectPatterns must be configured in appsettings.json");
 
             foreach (var uri in request.RedirectUris)
             {
