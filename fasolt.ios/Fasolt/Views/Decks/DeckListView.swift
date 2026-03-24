@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DeckListView: View {
     @State private var viewModel: DeckListViewModel
+    @State private var searchText = ""
     private let deckRepository: DeckRepository
     private let studyViewModelFactory: () -> StudyViewModel
 
@@ -35,7 +36,7 @@ struct DeckListView: View {
                         }
                     }
                 } else {
-                    List(viewModel.decks, id: \.id) { deck in
+                    List(filteredDecks, id: \.id) { deck in
                         NavigationLink {
                             DeckDetailView(
                                 viewModel: DeckDetailViewModel(
@@ -51,6 +52,7 @@ struct DeckListView: View {
                     }
                 }
             }
+            .searchable(text: $searchText, prompt: "Search decks")
             .refreshable {
                 await viewModel.loadDecks()
             }
@@ -71,6 +73,15 @@ struct DeckListView: View {
                     Task { await viewModel.loadDecks() }
                 }
             }
+        }
+    }
+
+    private var filteredDecks: [DeckDTO] {
+        if searchText.isEmpty { return viewModel.decks }
+        let query = searchText.lowercased()
+        return viewModel.decks.filter {
+            $0.name.lowercased().contains(query) ||
+            ($0.description?.lowercased().contains(query) ?? false)
         }
     }
 

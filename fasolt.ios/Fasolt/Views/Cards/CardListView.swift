@@ -3,6 +3,7 @@ import SwiftUI
 struct CardListView: View {
     @State private var viewModel: CardListViewModel
     @State private var selectedCard: CardDTO?
+    @State private var sortOrder: CardSortOrder = .dueDate
 
     init(viewModel: CardListViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -29,7 +30,7 @@ struct CardListView: View {
                     }
                 } else {
                     List {
-                        ForEach(viewModel.filteredCards) { card in
+                        ForEach(sortedCards(viewModel.filteredCards)) { card in
                             Button {
                                 selectedCard = card
                             } label: {
@@ -53,6 +54,19 @@ struct CardListView: View {
                 await viewModel.loadCards()
             }
             .navigationTitle("Cards")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("Sort", selection: $sortOrder) {
+                            ForEach(CardSortOrder.allCases, id: \.self) { order in
+                                Text(order.rawValue).tag(order)
+                            }
+                        }
+                    } label: {
+                        Label("Sort", systemImage: "arrow.up.arrow.down")
+                    }
+                }
+            }
             .overlay {
                 if viewModel.isLoading && viewModel.cards.isEmpty {
                     ProgressView()
@@ -66,6 +80,27 @@ struct CardListView: View {
             }
             .sheet(item: $selectedCard) { card in
                 cardDetailSheet(card)
+            }
+        }
+    }
+
+    private func sortedCards(_ cards: [CardDTO]) -> [CardDTO] {
+        cards.sorted { a, b in
+            switch sortOrder {
+            case .dueDate:
+                let aDate = a.dueAt ?? ""
+                let bDate = b.dueAt ?? ""
+                if aDate.isEmpty && bDate.isEmpty { return a.front < b.front }
+                if aDate.isEmpty { return false }
+                if bDate.isEmpty { return true }
+                return aDate < bDate
+            case .state:
+                let order = ["new": 0, "learning": 1, "relearning": 2, "review": 3]
+                return (order[a.state] ?? 99) < (order[b.state] ?? 99)
+            case .front:
+                return a.front.localizedCaseInsensitiveCompare(b.front) == .orderedAscending
+            case .sourceFile:
+                return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
             }
         }
     }
