@@ -68,6 +68,25 @@ struct DeckDTO: Decodable, Sendable {
     let createdAt: String
 }
 
+struct DeckDetailDTO: Decodable, Sendable {
+    let id: String
+    let name: String
+    let description: String?
+    let cardCount: Int
+    let dueCount: Int
+    let cards: [DeckCardDTO]
+}
+
+struct DeckCardDTO: Decodable, Sendable {
+    let id: String
+    let front: String
+    let back: String
+    let sourceFile: String?
+    let sourceHeading: String?
+    let state: String
+    let dueAt: String?
+}
+
 // MARK: - Review
 
 struct DueCardDTO: Decodable, Sendable {
