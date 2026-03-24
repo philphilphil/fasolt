@@ -39,8 +39,11 @@ No cascade delete from Deck — snapshots survive deck deletion so they can stil
       "publicId": "12-char",
       "front": "What is the te-form of 食べる?",
       "back": "食べて",
+      "frontSvg": null,
+      "backSvg": null,
       "sourceFile": "japanese/verbs.md",
       "sourceHeading": "Te-form",
+      "createdAt": "2026-03-18T10:00:00Z",
       "stability": 12.4,
       "difficulty": 0.3,
       "step": 0,
@@ -62,6 +65,8 @@ Each snapshot stores a `Version` integer. When deserializing during restore, the
 
 Keep the last 10 snapshots per deck. After creating new snapshots, delete the oldest ones exceeding the limit. This runs inline during the create flow — no background job.
 
+Empty decks (0 cards) are skipped during snapshot creation — no value in snapshotting nothing.
+
 ## API Endpoints
 
 ### REST
@@ -69,10 +74,12 @@ Keep the last 10 snapshots per deck. After creating new snapshots, delete the ol
 | Method | Route | Description |
 |--------|-------|-------------|
 | POST | `/api/snapshots` | Create snapshots for all decks. Returns count created. |
-| GET | `/api/decks/{id}/snapshots` | List snapshots for a deck. Returns PublicId, CardCount, CreatedAt. Newest first. |
-| GET | `/api/snapshots/{id}` | Get snapshot detail (full data). |
-| GET | `/api/snapshots/{id}/diff` | Compute diff between snapshot and current deck state. Returns three buckets. |
-| POST | `/api/snapshots/{id}/restore` | Execute selective restore. |
+| GET | `/api/decks/{id}/snapshots` | List snapshots for a deck (id = PublicId). Returns PublicId, CardCount, CreatedAt. Newest first. |
+| GET | `/api/snapshots/{id}` | Get snapshot detail by PublicId (full data). |
+| GET | `/api/snapshots/{id}/diff` | Compute diff between snapshot and current deck state (id = PublicId). Returns three buckets. |
+| POST | `/api/snapshots/{id}/restore` | Execute selective restore (id = PublicId). |
+
+All `{id}` parameters are PublicIds, consistent with the rest of the API.
 
 ### Diff Response Shape
 
@@ -120,7 +127,7 @@ Keep the last 10 snapshots per deck. After creating new snapshots, delete the ol
 }
 ```
 
-The backend validates that all provided IDs exist in the snapshot before executing.
+These IDs are the `cardId` (Guid) values from the diff response — not PublicIds. The backend validates that all provided IDs exist in the snapshot before executing.
 
 ### Restore Backend Logic
 
@@ -129,15 +136,17 @@ The backend validates that all provided IDs exist in the snapshot before executi
 2. If exists: update card to snapshot state, re-add to deck.
 3. If truly deleted: create new card with snapshot content and FSRS state (new Id and PublicId), add to deck.
 
+**Note on re-restored cards:** When a truly deleted card is restored, it gets a new Id/PublicId. If a user later restores from an older snapshot that references the original cardId, that card will appear as "deleted" again (since the original Id no longer exists). This is expected — the user can restore it again, creating another new card. This is simpler than trying to track lineage across restores.
+
 **For modified cards (card in both, user chose to revert):**
-1. Update existing card's front, back, sourceFile, sourceHeading, and FSRS fields to snapshotted values.
+1. Update existing card's front, back, frontSvg, backSvg, sourceFile, sourceHeading, createdAt, and FSRS fields to snapshotted values.
 
 ### MCP Tools
 
 | Tool | Parameters | Description |
 |------|-----------|-------------|
 | `CreateSnapshot` | none | Snapshot all decks. Returns count created. |
-| `ListSnapshots` | `deckId?` (optional) | List snapshots. Without deckId, lists recent across all decks. Returns PublicId, DeckName, CardCount, CreatedAt. |
+| `ListSnapshots` | `deckId?` (optional) | List snapshots. Without deckId, lists the 50 most recent across all decks. Returns PublicId, DeckName, CardCount, CreatedAt. |
 
 No restore via MCP — web only.
 
