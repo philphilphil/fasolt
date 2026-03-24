@@ -219,9 +219,37 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
         | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
         | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost,
 };
-// Trust all proxies in Docker/Cloudflare environments
-forwardedHeadersOptions.KnownProxies.Clear();
-forwardedHeadersOptions.KnownIPNetworks.Clear();
+
+var trustAllProxies = builder.Configuration.GetValue("ReverseProxy:TrustAllProxies",
+    defaultValue: app.Environment.IsDevelopment());
+
+if (trustAllProxies)
+{
+    forwardedHeadersOptions.KnownProxies.Clear();
+    forwardedHeadersOptions.KnownIPNetworks.Clear();
+
+    if (!app.Environment.IsDevelopment())
+    {
+        app.Logger.LogWarning("ReverseProxy:TrustAllProxies is enabled in a non-development environment. " +
+            "Consider configuring ReverseProxy:KnownNetworks for production.");
+    }
+}
+else
+{
+    var knownNetworks = builder.Configuration.GetSection("ReverseProxy:KnownNetworks").Get<string[]>();
+    if (knownNetworks is not null)
+    {
+        foreach (var cidr in knownNetworks)
+        {
+            var parts = cidr.Split('/');
+            if (parts.Length == 2 && System.Net.IPAddress.TryParse(parts[0], out var address) && int.TryParse(parts[1], out var prefixLength))
+            {
+                forwardedHeadersOptions.KnownIPNetworks.Add(new System.Net.IPNetwork(address, prefixLength));
+            }
+        }
+    }
+}
+
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (!app.Environment.IsDevelopment())
