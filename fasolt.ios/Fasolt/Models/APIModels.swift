@@ -50,6 +50,8 @@ struct CardDTO: Decodable, Sendable, Identifiable {
     let lastReviewedAt: String?
     let createdAt: String
     let decks: [CardDeckInfoDTO]
+    let frontSvg: String?
+    let backSvg: String?
 }
 
 struct CardDeckInfoDTO: Decodable, Sendable {
