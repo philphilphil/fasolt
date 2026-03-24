@@ -77,7 +77,7 @@ struct DeckDetailDTO: Decodable, Sendable {
     let cards: [DeckCardDTO]
 }
 
-struct DeckCardDTO: Decodable, Sendable {
+struct DeckCardDTO: Decodable, Sendable, Identifiable {
     let id: String
     let front: String
     let back: String
