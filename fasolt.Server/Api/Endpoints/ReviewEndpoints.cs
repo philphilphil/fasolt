@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 using FSRS.Core.Enums;
@@ -26,6 +27,7 @@ public static class ReviewEndpoints
         group.MapGet("/due", GetDueCards);
         group.MapPost("/rate", RateCard);
         group.MapGet("/stats", GetStats);
+        group.MapGet("/overview", GetOverview);
     }
 
     private static string MapState(State state) => state switch
@@ -131,5 +133,15 @@ public static class ReviewEndpoints
             c.UserId == user.Id && c.LastReviewedAt != null && c.LastReviewedAt >= todayStart);
 
         return Results.Ok(new ReviewStatsDto(dueCount, totalCards, studiedToday));
+    }
+
+    private static async Task<IResult> GetOverview(
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, OverviewService overviewService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var overview = await overviewService.GetOverview(user.Id);
+        return Results.Ok(overview);
     }
 }

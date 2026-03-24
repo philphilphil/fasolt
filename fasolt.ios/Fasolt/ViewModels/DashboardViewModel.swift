@@ -28,7 +28,7 @@ final class DashboardViewModel {
             }()
 
             async let overviewResult: OverviewDTO = {
-                let endpoint = Endpoint(path: "/api/overview", method: .get)
+                let endpoint = Endpoint(path: "/api/review/overview", method: .get)
                 return try await apiClient.request(endpoint)
             }()
 
