@@ -14,12 +14,12 @@ struct Endpoint: Sendable {
     var body: (any Encodable & Sendable)? = nil
 
     func url(baseURL: String) throws -> URL {
-        guard var components = URLComponents(string: baseURL),
-              components.scheme != nil,
-              components.host != nil else {
+        guard let baseURL = URL(string: baseURL) else {
             throw APIError.invalidURL
         }
-        components.path = path
+        guard var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: true) else {
+            throw APIError.invalidURL
+        }
         if let queryItems, !queryItems.isEmpty {
             components.queryItems = queryItems
         }

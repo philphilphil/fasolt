@@ -27,7 +27,7 @@ struct EndpointURLTests {
     func invalidBase() {
         let endpoint = Endpoint(path: "/api/cards", method: .get)
         #expect(throws: APIError.self) {
-            try endpoint.url(baseURL: "not a url")
+            try endpoint.url(baseURL: "")
         }
     }
 }

@@ -18,7 +18,16 @@ final class AuthService {
     init(keychain: KeychainHelper = KeychainHelper(), apiClient: APIClient = APIClient()) {
         self.keychain = keychain
         self.apiClient = apiClient
-        self.isAuthenticated = keychain.retrieve("fasolt.accessToken") != nil
+        self.isAuthenticated = {
+            guard keychain.retrieve("fasolt.accessToken") != nil else { return false }
+            // If token is expired, we need a refresh token to recover
+            if let expiryString = keychain.retrieve("fasolt.tokenExpiry"),
+               let expiry = ISO8601DateFormatter().date(from: expiryString),
+               expiry <= Date.now {
+                return keychain.retrieve("fasolt.refreshToken") != nil
+            }
+            return true
+        }()
     }
 
     // MARK: - Public API
@@ -31,8 +40,6 @@ final class AuthService {
     func signIn(serverURL: String) async {
         isLoading = true
         errorMessage = nil
-
-        keychain.save(serverURL, forKey: "fasolt.serverURL")
 
         do {
             let clientId = try await ensureClientRegistered(serverURL: serverURL)
@@ -52,6 +59,7 @@ final class AuthService {
                 codeVerifier: codeVerifier
             )
 
+            keychain.save(serverURL, forKey: "fasolt.serverURL")
             isAuthenticated = true
         } catch {
             errorMessage = "Could not connect. Check your server URL and try again."

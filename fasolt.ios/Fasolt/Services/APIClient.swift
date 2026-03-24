@@ -1,11 +1,12 @@
 import Foundation
 
-@Observable
 final class APIClient: @unchecked Sendable {
     private let session: URLSession
     private let keychain: KeychainHelper
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
+
+    private var refreshTask: Task<Bool, Error>?
 
     init(session: URLSession = .shared, keychain: KeychainHelper = KeychainHelper()) {
         self.session = session
@@ -46,6 +47,12 @@ final class APIClient: @unchecked Sendable {
 
     // MARK: - Form-encoded POST (for OAuth token endpoint)
 
+    private static let formURLEncodedAllowed: CharacterSet = {
+        var set = CharacterSet.alphanumerics
+        set.insert(charactersIn: "-._~")
+        return set
+    }()
+
     func formPost<T: Decodable>(_ path: String, params: [String: String]) async throws -> T {
         guard let base = baseURL else { throw APIError.invalidURL }
         guard let url = URL(string: base + path) else { throw APIError.invalidURL }
@@ -55,7 +62,7 @@ final class APIClient: @unchecked Sendable {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
         let body = params
-            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: Self.formURLEncodedAllowed) ?? $0.value)" }
             .joined(separator: "&")
         request.httpBody = body.data(using: .utf8)
 
@@ -90,7 +97,7 @@ final class APIClient: @unchecked Sendable {
         let (data, response) = try await performRaw(request)
 
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401, authenticated {
-            if try await refreshToken() {
+            if try await refreshTokenCoalesced() {
                 try await injectAuth(&request)
                 let (retryData, retryResponse) = try await performRaw(request)
                 try validateResponse(retryResponse)
@@ -120,7 +127,7 @@ final class APIClient: @unchecked Sendable {
         if let expiryString = keychain.retrieve("fasolt.tokenExpiry"),
            let expiry = ISO8601DateFormatter().date(from: expiryString),
            expiry <= Date.now {
-            if try await refreshToken() {
+            if try await refreshTokenCoalesced() {
                 guard let newToken = keychain.retrieve("fasolt.accessToken") else {
                     throw APIError.unauthorized
                 }
@@ -134,7 +141,17 @@ final class APIClient: @unchecked Sendable {
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
     }
 
-    private func refreshToken() async throws -> Bool {
+    private func refreshTokenCoalesced() async throws -> Bool {
+        if let existing = refreshTask {
+            return try await existing.value
+        }
+        let task = Task { [self] in try await doRefreshToken() }
+        refreshTask = task
+        defer { refreshTask = nil }
+        return try await task.value
+    }
+
+    private func doRefreshToken() async throws -> Bool {
         guard let refreshToken = keychain.retrieve("fasolt.refreshToken"),
               let clientId = keychain.retrieve("fasolt.clientId") else {
             return false
