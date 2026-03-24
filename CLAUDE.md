@@ -123,6 +123,10 @@ The server exposes a remote MCP endpoint at `/mcp` (streamable HTTP transport). 
 - `DeleteCardsBySource` — delete all cards from a specific source file
 - `GetOverview` — get account overview: total cards, due cards, cards by state, deck and source counts
 
+## Agent Teams
+
+Always use agent teams (`TeamCreate`) instead of plain subagents when parallelizing work. This requires `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` to be set. Teams provide better coordination, shared context, and visibility into parallel work.
+
 ## Key API Routes
 
 - `GET /api/health` — health check
