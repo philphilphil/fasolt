@@ -123,6 +123,8 @@ Stubs for Services, Repositories, and Views outside Part 1 scope are empty files
 | `fasolt.refreshToken` | Refresh token | 14-day lifetime |
 | `fasolt.tokenExpiry` | ISO 8601 date string | Computed from `expires_in` |
 
+**Single-server constraint:** The app supports one server at a time. Switching servers (via Settings) overwrites all Keychain keys. This is intentional for v1.
+
 ## APIClient
 
 ```swift
@@ -207,7 +209,7 @@ Single screen with two visual states:
 
 **States during auth:**
 - Loading spinner on button while registering client + opening browser
-- Error text inline if auth fails ("Login failed. Please try again.")
+- Error text inline if any step fails — client registration, browser auth, or token exchange. Generic message: "Could not connect. Check your server URL and try again."
 - On success: view dismissed, app shows TabView
 
 ## Navigation Architecture
