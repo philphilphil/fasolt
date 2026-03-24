@@ -10,5 +10,8 @@ build/
 *.xcuserdata
 *.xcuserstate
 
+# Local signing config (contains personal team ID)
+local.xcconfig
+
 # OS
 .DS_Store
