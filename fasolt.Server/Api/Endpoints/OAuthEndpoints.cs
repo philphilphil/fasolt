@@ -303,7 +303,159 @@ public static class OAuthEndpoints
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
         }).RequireRateLimiting("auth");
 
-        // Consent Info (GET)
+        // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
+        app.MapGet("/oauth/consent", async (
+            HttpContext context,
+            IOpenIddictApplicationManager applicationManager) =>
+        {
+            var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+            if (result?.Principal is null)
+                return Results.Redirect("/oauth/login");
+
+            var clientId = context.Request.Query["client_id"].FirstOrDefault() ?? "";
+            var application = await applicationManager.FindByClientIdAsync(clientId);
+            var clientName = application is not null
+                ? (await applicationManager.GetDisplayNameAsync(application) ?? clientId)
+                : clientId;
+
+            var clientIdEncoded = System.Web.HttpUtility.HtmlAttributeEncode(clientId);
+            var clientNameEncoded = System.Web.HttpUtility.HtmlEncode(clientName);
+
+            var html = $$"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <title>Authorize — fasolt</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #fafafa; padding: 16px; }
+                    .card { width: 100%; max-width: 380px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+                    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
+                    .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
+                    .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
+                    .app-name { font-weight: 600; color: #18181b; }
+                    .prompt { font-size: 0.875rem; color: #374151; text-align: center; margin-bottom: 16px; }
+                    .permissions { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
+                    .permissions-title { font-size: 0.75rem; font-weight: 500; color: #6b7280; margin-bottom: 8px; }
+                    .permissions ul { list-style: none; }
+                    .permissions li { font-size: 0.8125rem; color: #374151; padding: 3px 0; }
+                    .permissions li::before { content: "\2022"; color: #9ca3af; margin-right: 8px; }
+                    .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.15s; }
+                    .btn-approve { background: #18181b; color: white; margin-bottom: 8px; }
+                    .btn-approve:hover { background: #27272a; }
+                    .btn-approve:active { background: #09090b; }
+                    .btn-deny { background: white; color: #374151; border: 1px solid #d1d5db; }
+                    .btn-deny:hover { background: #f9fafb; }
+                    .btn-deny:active { background: #f3f4f6; }
+                    .footer { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #a1a1aa; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <div class="logo">fasolt</div>
+                    <p class="subtitle">Authorize application</p>
+                    <div class="divider"></div>
+                    <p class="prompt"><span class="app-name">{{clientNameEncoded}}</span> wants to access your account.</p>
+                    <div class="permissions">
+                        <div class="permissions-title">This will allow the application to:</div>
+                        <ul>
+                            <li>Read and create flashcards and decks</li>
+                            <li>View and manage sources</li>
+                            <li>Review cards and track study progress</li>
+                            <li>Stay signed in and refresh access</li>
+                        </ul>
+                    </div>
+                    <form method="post" action="/oauth/consent">
+                        <input type="hidden" name="client_id" value="{{clientIdEncoded}}" />
+                        <button type="submit" name="decision" value="approve" class="btn btn-approve">Authorize</button>
+                        <button type="submit" name="decision" value="deny" class="btn btn-deny">Deny</button>
+                    </form>
+                    <p class="footer">You'll be redirected back to your application.</p>
+                </div>
+            </body>
+            </html>
+            """;
+            return Results.Content(html, "text/html");
+        });
+
+        // OAuth Consent Handler (POST) — server-rendered form submission
+        app.MapPost("/oauth/consent", async (
+            HttpContext context,
+            IOpenIddictApplicationManager applicationManager,
+            IDataProtectionProvider dataProtection,
+            AppDbContext db) =>
+        {
+            var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+            if (result?.Principal is null)
+                return Results.Redirect("/oauth/login");
+
+            var userId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var form = await context.Request.ReadFormAsync();
+            var clientId = form["client_id"].FirstOrDefault() ?? "";
+            var decision = form["decision"].FirstOrDefault() ?? "";
+
+            var application = await applicationManager.FindByClientIdAsync(clientId);
+            if (application is null)
+                return Results.BadRequest("Unknown client");
+
+            // Validate that an active OAuth flow exists (cookie must be present)
+            var encryptedQuery = context.Request.Cookies["oauth_authorize_query"];
+            if (string.IsNullOrEmpty(encryptedQuery))
+                return Results.BadRequest("No active authorization flow");
+
+            // Decrypt and validate the stored query string
+            var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
+            string authorizeQuery;
+            try
+            {
+                authorizeQuery = protector.Unprotect(encryptedQuery);
+            }
+            catch
+            {
+                return Results.BadRequest("Invalid or expired authorization flow");
+            }
+
+            // Verify the client_id in the cookie matches the consent form
+            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(authorizeQuery.TrimStart('?'));
+            if (!queryParams.TryGetValue("client_id", out var cookieClientId) || cookieClientId != clientId)
+                return Results.BadRequest("Client ID mismatch");
+
+            context.Response.Cookies.Delete("oauth_authorize_query");
+
+            if (decision == "approve")
+            {
+                // Store consent grant
+                var existing = await db.ConsentGrants
+                    .FirstOrDefaultAsync(g => g.UserId == userId && g.ClientId == clientId);
+                if (existing is null)
+                {
+                    db.ConsentGrants.Add(new ConsentGrant
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        ClientId = clientId,
+                        GrantedAt = DateTimeOffset.UtcNow,
+                    });
+                    await db.SaveChangesAsync();
+                }
+
+                // Redirect back to authorize endpoint
+                return Results.Redirect($"/oauth/authorize{authorizeQuery}");
+            }
+            else
+            {
+                // Deny — redirect to client with error
+                var redirectUris = await applicationManager.GetRedirectUrisAsync(application);
+                var clientRedirectUri = redirectUris.FirstOrDefault() ?? "/";
+                var separator = clientRedirectUri.Contains('?') ? '&' : '?';
+                return Results.Redirect($"{clientRedirectUri}{separator}error=access_denied");
+            }
+        });
+
+        // Consent Info API (GET) — for Vue SPA fallback
         app.MapGet("/api/oauth/consent-info", async (
             HttpContext context,
             IOpenIddictApplicationManager applicationManager,
@@ -328,7 +480,7 @@ public static class OAuthEndpoints
             });
         }).RequireAuthorization();
 
-        // Consent Decision (POST)
+        // Consent Decision API (POST) — for Vue SPA fallback
         app.MapPost("/api/oauth/consent", async (
             HttpContext context,
             ConsentDecisionRequest request,
@@ -343,12 +495,10 @@ public static class OAuthEndpoints
             if (application is null)
                 return Results.NotFound(new { error = "Client not found" });
 
-            // Validate that an active OAuth flow exists (cookie must be present)
             var encryptedQuery = context.Request.Cookies["oauth_authorize_query"];
             if (string.IsNullOrEmpty(encryptedQuery))
                 return Results.BadRequest(new { error = "No active authorization flow" });
 
-            // Decrypt and validate the stored query string
             var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
             string authorizeQuery;
             try
@@ -360,7 +510,6 @@ public static class OAuthEndpoints
                 return Results.BadRequest(new { error = "Invalid or expired authorization flow" });
             }
 
-            // Verify the client_id in the cookie matches the consent request
             var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(authorizeQuery.TrimStart('?'));
             if (!queryParams.TryGetValue("client_id", out var cookieClientId) || cookieClientId != request.ClientId)
                 return Results.BadRequest(new { error = "Client ID mismatch" });
@@ -369,7 +518,6 @@ public static class OAuthEndpoints
 
             if (request.Approved)
             {
-                // Store consent grant
                 var existing = await db.ConsentGrants
                     .FirstOrDefaultAsync(g => g.UserId == userId && g.ClientId == request.ClientId);
                 if (existing is null)
@@ -384,13 +532,11 @@ public static class OAuthEndpoints
                     await db.SaveChangesAsync();
                 }
 
-                // Reconstruct authorize URL from the decrypted cookie
                 var redirectUrl = $"/oauth/authorize{authorizeQuery}";
                 return Results.Ok(new { redirectUrl });
             }
             else
             {
-                // Get client's redirect URI to send error back
                 var redirectUris = await applicationManager.GetRedirectUrisAsync(application);
                 var clientRedirectUri = redirectUris.FirstOrDefault() ?? "/";
                 var separator = clientRedirectUri.Contains('?') ? '&' : '?';
