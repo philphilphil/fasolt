@@ -41,6 +41,9 @@ final class AuthService {
         isLoading = true
         errorMessage = nil
 
+        // Save server URL early so APIClient can use it for registration
+        keychain.save(serverURL, forKey: "fasolt.serverURL")
+
         do {
             let clientId = try await ensureClientRegistered(serverURL: serverURL)
 
@@ -59,9 +62,10 @@ final class AuthService {
                 codeVerifier: codeVerifier
             )
 
-            keychain.save(serverURL, forKey: "fasolt.serverURL")
             isAuthenticated = true
         } catch {
+            // Clear server URL on failure so stale URL doesn't persist
+            keychain.delete("fasolt.serverURL")
             errorMessage = "Could not connect. Check your server URL and try again."
         }
 
