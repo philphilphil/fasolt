@@ -117,7 +117,10 @@ struct DeckDetailView: View {
             await viewModel.loadDetail()
         }
         .sheet(item: $selectedCard) { card in
-            cardDetailSheet(card)
+            CardDetailSheet(
+                card: card,
+                onDismiss: { selectedCard = nil }
+            )
         }
         .task {
             if viewModel.detail == nil {
@@ -150,99 +153,5 @@ struct DeckDetailView: View {
                 return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
             }
         }
-    }
-
-    private func cardDetailSheet(_ card: DeckCardDTO) -> some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    VStack(spacing: 8) {
-                        Text("Front")
-                            .font(.caption2)
-                            .textCase(.uppercase)
-                            .tracking(1)
-                            .foregroundStyle(.secondary)
-                        Text(card.front)
-                            .font(.title3)
-                            .multilineTextAlignment(.center)
-                    }
-
-                    Divider()
-
-                    VStack(spacing: 8) {
-                        Text("Back")
-                            .font(.caption2)
-                            .textCase(.uppercase)
-                            .tracking(1)
-                            .foregroundStyle(.secondary)
-                        Text(card.back)
-                            .font(.title3)
-                            .multilineTextAlignment(.center)
-                    }
-
-                    Divider()
-
-                    // FSRS Info
-                    VStack(spacing: 8) {
-                        Text("Scheduling")
-                            .font(.caption2)
-                            .textCase(.uppercase)
-                            .tracking(1)
-                            .foregroundStyle(.secondary)
-
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                            fsrsItem("State", value: card.state.capitalized)
-                            fsrsItem("Due", value: formatDate(card.dueAt) ?? "Not scheduled")
-                            fsrsItem("Stability", value: card.stability.map { String(format: "%.1f", $0) } ?? "\u{2014}")
-                            fsrsItem("Difficulty", value: card.difficulty.map { String(format: "%.1f", $0) } ?? "\u{2014}")
-                            fsrsItem("Step", value: card.step.map { "\($0)" } ?? "\u{2014}")
-                            fsrsItem("Last Review", value: formatDate(card.lastReviewedAt) ?? "Never")
-                        }
-                    }
-
-                    if let sourceFile = card.sourceFile {
-                        Divider()
-                        HStack(spacing: 4) {
-                            Image(systemName: "doc.text")
-                            Text(sourceFile)
-                            if let heading = card.sourceHeading {
-                                Text("\u{00B7}")
-                                Text(heading)
-                            }
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(24)
-            }
-            .navigationTitle("Card Detail")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { selectedCard = nil }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-
-    private func fsrsItem(_ label: String, value: String) -> some View {
-        VStack(spacing: 2) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.subheadline.weight(.medium))
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    private func formatDate(_ isoString: String?) -> String? {
-        guard let str = isoString, let date = ISO8601DateFormatter().date(from: str) else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
     }
 }

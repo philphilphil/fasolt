@@ -20,6 +20,16 @@ struct SettingsView: View {
                             Spacer()
                             ProgressView()
                         }
+                    } else if let error = viewModel.errorMessage {
+                        HStack {
+                            Label(error, systemImage: "exclamationmark.triangle")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Retry") {
+                                Task { await viewModel.loadUserInfo() }
+                            }
+                            .font(.subheadline)
+                        }
                     } else {
                         if let email = viewModel.email {
                             LabeledContent("Email", value: email)

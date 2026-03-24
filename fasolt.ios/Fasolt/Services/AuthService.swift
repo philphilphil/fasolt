@@ -25,7 +25,7 @@ final class AuthService {
             guard keychain.retrieve("fasolt.accessToken") != nil else { return false }
             // If token is expired, we need a refresh token to recover
             if let expiryString = keychain.retrieve("fasolt.tokenExpiry"),
-               let expiry = ISO8601DateFormatter().date(from: expiryString),
+               let expiry = DateFormatters.iso8601.date(from: expiryString),
                expiry <= Date.now {
                 return keychain.retrieve("fasolt.refreshToken") != nil
             }
@@ -172,15 +172,13 @@ final class AuthService {
 
         let tokenResponse: TokenResponse = try await apiClient.formPost("/oauth/token", params: params)
 
-        authLogger.info("TOKEN EXCHANGE: expiresIn=\(tokenResponse.expiresIn), tokenType=\(tokenResponse.tokenType), hasRefresh=\(tokenResponse.refreshToken != nil)")
-        let computedExpiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
-        authLogger.info("TOKEN EXCHANGE: computedExpiry=\(ISO8601DateFormatter().string(from: computedExpiry))")
         keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
         if let refreshToken = tokenResponse.refreshToken {
             keychain.save(refreshToken, forKey: "fasolt.refreshToken")
         }
         let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
-        keychain.save(ISO8601DateFormatter().string(from: expiry), forKey: "fasolt.tokenExpiry")
+        keychain.save(DateFormatters.iso8601.string(from: expiry), forKey: "fasolt.tokenExpiry")
+        authLogger.info("Token exchanged, expires at \(DateFormatters.iso8601.string(from: expiry))")
     }
 
     // MARK: - PKCE Helpers (static for testing)

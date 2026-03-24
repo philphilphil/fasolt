@@ -55,6 +55,7 @@ final class CardListViewModel {
             nextCursor = response.nextCursor
         } catch {
             logger.error("Failed to load more cards: \(error)")
+            hasMore = false
         }
     }
 

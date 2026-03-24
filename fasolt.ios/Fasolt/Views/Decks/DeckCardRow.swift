@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DeckCardRow: View {
-    let card: DeckCardDTO
+    let card: any CardDisplayable
     var deckNames: [String]? = nil
 
     var body: some View {
@@ -27,52 +27,20 @@ struct DeckCardRow: View {
 
                 Spacer()
 
-                if let dueText = formattedDueDate {
+                if let dueText = formattedDueDate(card.dueAt) {
                     Text(dueText)
                         .font(.caption2)
-                        .foregroundStyle(isDueOrOverdue ? .orange : .secondary)
+                        .foregroundStyle(isDueOrOverdue(card.dueAt) ? .orange : .secondary)
                 }
 
                 Text(card.state)
                     .font(.caption2.weight(.medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
-                    .background(stateColor.opacity(0.15), in: Capsule())
-                    .foregroundStyle(stateColor)
+                    .background(stateColor(card.state).opacity(0.15), in: Capsule())
+                    .foregroundStyle(stateColor(card.state))
             }
         }
         .padding(.vertical, 4)
-    }
-
-    private var stateColor: Color {
-        switch card.state {
-        case "new": return .green
-        case "review": return .blue
-        case "learning": return .orange
-        case "relearning": return .red
-        default: return .secondary
-        }
-    }
-
-    private var parsedDueDate: Date? {
-        guard let dueAt = card.dueAt else { return nil }
-        return ISO8601DateFormatter().date(from: dueAt)
-    }
-
-    private var isDueOrOverdue: Bool {
-        guard let date = parsedDueDate else { return false }
-        return date <= Date.now
-    }
-
-    private var formattedDueDate: String? {
-        guard let date = parsedDueDate else { return nil }
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) { return "Due today" }
-        if calendar.isDateInTomorrow(date) { return "Due tomorrow" }
-        if calendar.isDateInYesterday(date) { return "Overdue" }
-        if date < Date.now { return "Overdue" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return "Due \(formatter.string(from: date))"
     }
 }

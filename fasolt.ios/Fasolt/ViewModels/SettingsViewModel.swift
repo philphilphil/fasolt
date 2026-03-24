@@ -10,6 +10,7 @@ final class SettingsViewModel {
     var displayName: String?
     var serverURL: String?
     var isLoading = false
+    var errorMessage: String?
 
     private let apiClient: APIClient
 
@@ -19,6 +20,7 @@ final class SettingsViewModel {
 
     func loadUserInfo() async {
         isLoading = true
+        errorMessage = nil
 
         serverURL = apiClient.baseURL
 
@@ -30,6 +32,7 @@ final class SettingsViewModel {
             logger.info("Loaded user info: \(userInfo.email)")
         } catch {
             logger.error("Failed to load user info: \(error)")
+            errorMessage = "Could not load account info."
             email = nil
         }
 

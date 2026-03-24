@@ -1,5 +1,8 @@
 import Foundation
 import SwiftData
+import os
+
+private let logger = Logger(subsystem: "com.fasolt.app", category: "CardRepository")
 
 @MainActor
 @Observable
@@ -20,7 +23,9 @@ final class CardRepository {
             queryItems.append(URLQueryItem(name: "deckId", value: deckId))
         }
         let endpoint = Endpoint(path: "/api/review/due", method: .get, queryItems: queryItems)
-        return try await apiClient.request(endpoint)
+        let cards: [DueCardDTO] = try await apiClient.request(endpoint)
+        logger.info("Fetched \(cards.count) due cards")
+        return cards
     }
 
     func rateCard(cardId: String, rating: String) async throws -> RateCardResponse? {
@@ -29,10 +34,12 @@ final class CardRepository {
                 let body = RateCardRequest(cardId: cardId, rating: rating)
                 let endpoint = Endpoint(path: "/api/review/rate", method: .post, body: body)
                 let response: RateCardResponse = try await apiClient.request(endpoint)
+                logger.info("Rated card \(cardId) as \(rating)")
                 return response
             } catch let error as APIError {
                 switch error {
                 case .networkError:
+                    logger.warning("Network error rating card \(cardId), queueing offline")
                     break
                 default:
                     throw error
@@ -40,6 +47,7 @@ final class CardRepository {
             }
         }
 
+        logger.info("Queueing offline review for card \(cardId) with rating \(rating)")
         let pending = PendingReview(cardPublicId: cardId, rating: rating)
         modelContext.insert(pending)
         try modelContext.save()

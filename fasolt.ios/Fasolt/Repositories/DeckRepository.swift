@@ -106,11 +106,11 @@ final class DeckRepository {
                 card.sourceFile = cardDto.sourceFile
                 card.sourceHeading = cardDto.sourceHeading
                 card.state = cardDto.state
-                if let dueAt = cardDto.dueAt { card.dueAt = ISO8601DateFormatter().date(from: dueAt) }
+                if let dueAt = cardDto.dueAt { card.dueAt = DateFormatters.iso8601.date(from: dueAt) }
                 card.stability = cardDto.stability
                 card.difficulty = cardDto.difficulty
                 card.step = cardDto.step
-                if let lastReviewed = cardDto.lastReviewedAt { card.lastReviewedAt = ISO8601DateFormatter().date(from: lastReviewed) }
+                if let lastReviewed = cardDto.lastReviewedAt { card.lastReviewedAt = DateFormatters.iso8601.date(from: lastReviewed) }
                 if !card.decks.contains(where: { $0.publicId == deck.publicId }) {
                     card.decks.append(deck)
                 }
@@ -122,11 +122,11 @@ final class DeckRepository {
                     sourceFile: cardDto.sourceFile,
                     sourceHeading: cardDto.sourceHeading,
                     state: cardDto.state,
-                    dueAt: cardDto.dueAt.flatMap { ISO8601DateFormatter().date(from: $0) },
+                    dueAt: cardDto.dueAt.flatMap { DateFormatters.iso8601.date(from: $0) },
                     stability: cardDto.stability,
                     difficulty: cardDto.difficulty,
                     step: cardDto.step,
-                    lastReviewedAt: cardDto.lastReviewedAt.flatMap { ISO8601DateFormatter().date(from: $0) }
+                    lastReviewedAt: cardDto.lastReviewedAt.flatMap { DateFormatters.iso8601.date(from: $0) }
                 )
                 card.decks.append(deck)
                 modelContext.insert(card)
@@ -148,7 +148,7 @@ final class DeckRepository {
                 description: deck.deckDescription,
                 cardCount: deck.cardCount,
                 dueCount: deck.dueCount,
-                createdAt: ISO8601DateFormatter().string(from: deck.createdAt)
+                createdAt: DateFormatters.iso8601.string(from: deck.createdAt)
             )
         }
     }
@@ -164,11 +164,11 @@ final class DeckRepository {
                 sourceFile: card.sourceFile,
                 sourceHeading: card.sourceHeading,
                 state: card.state,
-                dueAt: card.dueAt.map { ISO8601DateFormatter().string(from: $0) },
+                dueAt: card.dueAt.map { DateFormatters.iso8601.string(from: $0) },
                 stability: card.stability,
                 difficulty: card.difficulty,
                 step: card.step,
-                lastReviewedAt: card.lastReviewedAt.map { ISO8601DateFormatter().string(from: $0) }
+                lastReviewedAt: card.lastReviewedAt.map { DateFormatters.iso8601.string(from: $0) }
             )
         }
         return DeckDetailDTO(

@@ -61,20 +61,21 @@ struct StudyView: View {
     // MARK: - Loading
 
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        Group {
             if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button("Retry") {
-                    Task { await viewModel.startSession(deckId: deckId) }
+                ContentUnavailableView {
+                    Label("Could not load", systemImage: "wifi.slash")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Retry") {
+                        Task { await viewModel.startSession(deckId: deckId) }
+                    }
                 }
-                .buttonStyle(.bordered)
             } else {
                 ProgressView("Loading cards...")
             }
         }
-        .padding()
     }
 
     // MARK: - Card Content
