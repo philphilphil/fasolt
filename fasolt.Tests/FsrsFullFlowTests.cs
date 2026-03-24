@@ -227,13 +227,14 @@ public class FsrsFullFlowTests : IAsyncLifetime
                 var previousState = card.State;
                 var previousDueAt = card.DueAt;
 
-                // Rating pattern: mostly good, occasional again for lapses
+                // Rating pattern: mostly good, with a deliberate lapse on the 3rd review
+                // (Cards in 180 days typically get ~5 reviews total; lapse on review 3 ensures it triggers)
                 Rating rating;
-                if (previousState == "review" && totalReviews > 0 && totalReviews % 20 == 0)
+                if (previousState == "review" && totalReviews == 3)
                 {
-                    rating = Rating.Again; // trigger lapse every ~20th review
+                    rating = Rating.Again; // deliberate lapse on 3rd review
                 }
-                else if (previousState == "review" && totalReviews % 15 == 0)
+                else if (previousState == "review" && totalReviews % 7 == 0)
                 {
                     rating = Rating.Easy;
                 }
