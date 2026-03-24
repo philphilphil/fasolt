@@ -12,6 +12,8 @@ public class Card
     public string? SourceHeading { get; set; }
     public string Front { get; set; } = default!;
     public string Back { get; set; } = default!;
+    public string? FrontSvg { get; set; }
+    public string? BackSvg { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
     public double? Stability { get; set; }
