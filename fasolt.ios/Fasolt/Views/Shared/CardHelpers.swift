@@ -13,6 +13,8 @@ protocol CardDisplayable {
     var difficulty: Double? { get }
     var step: Int? { get }
     var lastReviewedAt: String? { get }
+    var frontSvg: String? { get }
+    var backSvg: String? { get }
 }
 
 extension CardDTO: CardDisplayable {}

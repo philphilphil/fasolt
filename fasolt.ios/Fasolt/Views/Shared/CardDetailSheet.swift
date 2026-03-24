@@ -15,6 +15,10 @@ struct CardDetailSheet: View {
                             .textCase(.uppercase)
                             .tracking(1)
                             .foregroundStyle(.secondary)
+                        if let svg = card.frontSvg, !svg.isEmpty {
+                            SvgView(svg: svg)
+                                .frame(height: 200)
+                        }
                         Text(card.front)
                             .font(.title3)
                             .multilineTextAlignment(.center)
@@ -28,6 +32,10 @@ struct CardDetailSheet: View {
                             .textCase(.uppercase)
                             .tracking(1)
                             .foregroundStyle(.secondary)
+                        if let svg = card.backSvg, !svg.isEmpty {
+                            SvgView(svg: svg)
+                                .frame(height: 200)
+                        }
                         Text(card.back)
                             .font(.title3)
                             .multilineTextAlignment(.center)
