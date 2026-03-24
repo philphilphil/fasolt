@@ -57,10 +57,14 @@ public static class ReviewEndpoints
         var query = db.Cards
             .Where(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
 
+        // Exclude cards that are only in inactive decks
+        query = query.Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive));
+
         if (deckId is not null)
         {
             var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == user.Id);
             if (deck is null) return Results.NotFound();
+            if (!deck.IsActive) return Results.Ok(Array.Empty<DueCardDto>());
             query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deck.Id));
         }
 
@@ -126,11 +130,17 @@ public static class ReviewEndpoints
         if (user is null) return Results.Unauthorized();
 
         var now = DateTimeOffset.UtcNow;
-        var dueCount = await db.Cards.CountAsync(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
-        var totalCards = await db.Cards.CountAsync(c => c.UserId == user.Id);
+
+        // Study-active filter: cards with no decks OR at least one active deck
+        var activeCards = db.Cards
+            .Where(c => c.UserId == user.Id)
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive));
+
+        var dueCount = await activeCards.CountAsync(c => c.DueAt == null || c.DueAt <= now);
+        var totalCards = await activeCards.CountAsync();
         var todayStart = new DateTimeOffset(now.Date, TimeSpan.Zero);
-        var studiedToday = await db.Cards.CountAsync(c =>
-            c.UserId == user.Id && c.LastReviewedAt != null && c.LastReviewedAt >= todayStart);
+        var studiedToday = await activeCards.CountAsync(c =>
+            c.LastReviewedAt != null && c.LastReviewedAt >= todayStart);
 
         return Results.Ok(new ReviewStatsDto(dueCount, totalCards, studiedToday));
     }
