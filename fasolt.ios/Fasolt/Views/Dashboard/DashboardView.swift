@@ -46,6 +46,7 @@ struct DashboardView: View {
             .task {
                 await viewModel.loadStats()
             }
+            .offlineBanner()
         }
     }
 

@@ -65,8 +65,7 @@ struct DeckDetailView: View {
 
                     if detail.dueCount > 0 {
                         NavigationLink {
-                            // TODO: pass deckId once StudyView is updated in Task 8
-                            StudyView(viewModel: studyViewModelFactory())
+                            StudyView(viewModel: studyViewModelFactory(), deckId: viewModel.deckId)
                         } label: {
                             Text("Study This Deck")
                                 .font(.headline)

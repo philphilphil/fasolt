@@ -5,9 +5,11 @@ struct StudyView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: StudyViewModel
     @State private var showExitConfirmation = false
+    private let deckId: String?
 
-    init(viewModel: StudyViewModel) {
+    init(viewModel: StudyViewModel, deckId: String? = nil) {
         _viewModel = State(initialValue: viewModel)
+        self.deckId = deckId
     }
 
     var body: some View {
@@ -50,9 +52,10 @@ struct StudyView: View {
         }
         .task {
             if viewModel.state == .idle {
-                await viewModel.startSession()
+                await viewModel.startSession(deckId: deckId)
             }
         }
+        .offlineBanner()
     }
 
     // MARK: - Loading
@@ -97,6 +100,7 @@ struct StudyView: View {
                     axis: (x: 0, y: 1, z: 0),
                     perspective: 0.5
                 )
+                .scaleEffect(x: viewModel.isFlipped ? -1 : 1)
                 .onTapGesture {
                     if !viewModel.isFlipped {
                         flipWithHaptic()
@@ -168,8 +172,14 @@ struct StudyView: View {
 
     private func ratingButton(_ label: String, color: Color, rating: String) -> some View {
         Button {
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
             Task {
                 await viewModel.rateCard(rating)
+                if viewModel.state == .summary {
+                    let notification = UINotificationFeedbackGenerator()
+                    notification.notificationOccurred(.success)
+                }
             }
         } label: {
             Text(label)
