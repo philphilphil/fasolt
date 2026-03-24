@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct FasoltApp: App {
     @State private var authService = AuthService()
+    @State private var networkMonitor = NetworkMonitor()
 
     var body: some Scene {
         WindowGroup {
@@ -17,6 +18,7 @@ struct FasoltApp: App {
             .animation(.default, value: authService.isAuthenticated)
         }
         .environment(authService)
+        .environment(networkMonitor)
         .modelContainer(for: [Card.self, CachedDeck.self, PendingReview.self])
     }
 }
