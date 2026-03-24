@@ -33,7 +33,8 @@ public static class AccountEndpoints
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
-        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));
+        var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
+        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName, isAdmin));
     }
 
     private static async Task<IResult> UpdateProfile(
@@ -47,7 +48,8 @@ public static class AccountEndpoints
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
             return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));
+        var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
+        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName, isAdmin));
     }
 
     private static async Task<IResult> ChangeEmail(
@@ -88,7 +90,8 @@ public static class AccountEndpoints
 
         user.UserName = request.NewEmail;
         await userManager.UpdateAsync(user);
-        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName));
+        var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
+        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName, isAdmin));
     }
 
     private static async Task<IResult> ChangePassword(
