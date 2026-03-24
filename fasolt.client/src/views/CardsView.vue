@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, onMounted, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -37,6 +37,7 @@ import {
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
 import CardEditDialog from '@/components/CardEditDialog.vue'
 
+const route = useRoute()
 const cardsStore = useCardsStore()
 const decks = useDecksStore()
 
@@ -50,6 +51,10 @@ const addToDeckId = ref('')
 
 onMounted(async () => {
   await Promise.all([cardsStore.fetchCards(), decks.fetchDecks()])
+  const sf = route.query.sourceFile
+  if (sf && typeof sf === 'string') {
+    applySourceFilter(sf)
+  }
 })
 
 function openEdit(card: Card) {
