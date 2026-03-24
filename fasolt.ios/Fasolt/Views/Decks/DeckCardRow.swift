@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DeckCardRow: View {
     let card: DeckCardDTO
+    var deckNames: [String]? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -17,7 +18,20 @@ struct DeckCardRow: View {
                         .lineLimit(1)
                 }
 
+                if let deckNames, !deckNames.isEmpty {
+                    Label(deckNames.joined(separator: ", "), systemImage: "rectangle.stack")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
                 Spacer()
+
+                if let dueText = formattedDueDate {
+                    Text(dueText)
+                        .font(.caption2)
+                        .foregroundStyle(isDueOrOverdue ? .orange : .secondary)
+                }
 
                 Text(card.state)
                     .font(.caption2.weight(.medium))
@@ -38,5 +52,27 @@ struct DeckCardRow: View {
         case "relearning": return .red
         default: return .secondary
         }
+    }
+
+    private var parsedDueDate: Date? {
+        guard let dueAt = card.dueAt else { return nil }
+        return ISO8601DateFormatter().date(from: dueAt)
+    }
+
+    private var isDueOrOverdue: Bool {
+        guard let date = parsedDueDate else { return false }
+        return date <= Date.now
+    }
+
+    private var formattedDueDate: String? {
+        guard let date = parsedDueDate else { return nil }
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) { return "Due today" }
+        if calendar.isDateInTomorrow(date) { return "Due tomorrow" }
+        if calendar.isDateInYesterday(date) { return "Overdue" }
+        if date < Date.now { return "Overdue" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return "Due \(formatter.string(from: date))"
     }
 }

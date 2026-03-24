@@ -132,13 +132,33 @@ struct DeckDetailView: View {
                             .multilineTextAlignment(.center)
                     }
 
+                    Divider()
+
+                    // FSRS Info
+                    VStack(spacing: 8) {
+                        Text("Scheduling")
+                            .font(.caption2)
+                            .textCase(.uppercase)
+                            .tracking(1)
+                            .foregroundStyle(.secondary)
+
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                            fsrsItem("State", value: card.state.capitalized)
+                            fsrsItem("Due", value: formatDate(card.dueAt) ?? "Not scheduled")
+                            fsrsItem("Stability", value: card.stability.map { String(format: "%.1f", $0) } ?? "\u{2014}")
+                            fsrsItem("Difficulty", value: card.difficulty.map { String(format: "%.1f", $0) } ?? "\u{2014}")
+                            fsrsItem("Step", value: card.step.map { "\($0)" } ?? "\u{2014}")
+                            fsrsItem("Last Review", value: formatDate(card.lastReviewedAt) ?? "Never")
+                        }
+                    }
+
                     if let sourceFile = card.sourceFile {
                         Divider()
                         HStack(spacing: 4) {
                             Image(systemName: "doc.text")
                             Text(sourceFile)
                             if let heading = card.sourceHeading {
-                                Text("·")
+                                Text("\u{00B7}")
                                 Text(heading)
                             }
                         }
@@ -157,5 +177,24 @@ struct DeckDetailView: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+
+    private func fsrsItem(_ label: String, value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.weight(.medium))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func formatDate(_ isoString: String?) -> String? {
+        guard let str = isoString, let date = ISO8601DateFormatter().date(from: str) else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 }

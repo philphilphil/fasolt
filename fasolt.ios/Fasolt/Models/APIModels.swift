@@ -85,6 +85,10 @@ struct DeckCardDTO: Decodable, Sendable, Identifiable {
     let sourceHeading: String?
     let state: String
     let dueAt: String?
+    let stability: Double?
+    let difficulty: Double?
+    let step: Int?
+    let lastReviewedAt: String?
 }
 
 // MARK: - Review
