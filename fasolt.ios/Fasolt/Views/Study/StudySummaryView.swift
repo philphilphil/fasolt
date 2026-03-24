@@ -3,6 +3,7 @@ import SwiftUI
 struct StudySummaryView: View {
     let cardsStudied: Int
     let ratingsCount: [String: Int]
+    var failedRatings: Int = 0
     let onDone: () -> Void
 
     var body: some View {
@@ -34,6 +35,16 @@ struct StudySummaryView: View {
             }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+
+            if failedRatings > 0 {
+                Label(
+                    "\(failedRatings) rating\(failedRatings == 1 ? "" : "s") may not have been saved. They'll sync when you're back online.",
+                    systemImage: "exclamationmark.triangle"
+                )
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .padding(.horizontal)
+            }
 
             Spacer()
 

@@ -9,11 +9,13 @@ final class StudyViewModel {
 
     var state: SessionState = .idle
     var errorMessage: String?
+    var ratingError: String?
     var cards: [DueCardDTO] = []
     var currentIndex: Int = 0
     var isFlipped: Bool = false
     var ratingsCount: [String: Int] = ["again": 0, "hard": 0, "good": 0, "easy": 0]
     var cardsStudied: Int = 0
+    var failedRatings: Int = 0
 
     private let cardRepository: CardRepository
 
@@ -44,6 +46,7 @@ final class StudyViewModel {
                 currentIndex = 0
                 isFlipped = false
                 cardsStudied = 0
+                failedRatings = 0
                 ratingsCount = ["again": 0, "hard": 0, "good": 0, "easy": 0]
                 state = .studying
             }
@@ -60,10 +63,12 @@ final class StudyViewModel {
 
     func rateCard(_ rating: String) async {
         guard let card = currentCard else { return }
+        ratingError = nil
         do {
             _ = try await cardRepository.rateCard(cardId: card.id, rating: rating)
         } catch {
-            // Non-network error — continue session anyway
+            failedRatings += 1
+            ratingError = "Rating may not have been saved."
         }
         ratingsCount[rating, default: 0] += 1
         cardsStudied += 1

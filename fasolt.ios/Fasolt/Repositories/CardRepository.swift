@@ -48,6 +48,13 @@ final class CardRepository {
         }
 
         logger.info("Queueing offline review for card \(cardId) with rating \(rating)")
+        let descriptor = FetchDescriptor<PendingReview>(
+            predicate: #Predicate { $0.cardPublicId == cardId && $0.synced == false }
+        )
+        let existing = (try? modelContext.fetch(descriptor)) ?? []
+        for old in existing {
+            modelContext.delete(old)
+        }
         let pending = PendingReview(cardPublicId: cardId, rating: rating)
         modelContext.insert(pending)
         try modelContext.save()

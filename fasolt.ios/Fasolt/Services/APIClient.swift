@@ -158,8 +158,14 @@ final class APIClient: @unchecked Sendable {
         }
         let task = Task { [self] in try await doRefreshToken() }
         refreshTask = task
-        defer { refreshTask = nil }
-        return try await task.value
+        do {
+            let result = try await task.value
+            refreshTask = nil
+            return result
+        } catch {
+            refreshTask = nil
+            throw error
+        }
     }
 
     private func doRefreshToken() async throws -> Bool {

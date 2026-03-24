@@ -1,11 +1,15 @@
 import Foundation
 import Security
+import os
+
+private let logger = Logger(subsystem: "com.fasolt.app", category: "Keychain")
 
 struct KeychainHelper: Sendable {
     private let service = "com.fasolt.app"
 
-    func save(_ value: String, forKey key: String) {
-        guard let data = value.data(using: .utf8) else { return }
+    @discardableResult
+    func save(_ value: String, forKey key: String) -> Bool {
+        guard let data = value.data(using: .utf8) else { return false }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -15,7 +19,11 @@ struct KeychainHelper: Sendable {
         var addQuery = query
         addQuery[kSecValueData as String] = data
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-        SecItemAdd(addQuery as CFDictionary, nil)
+        let status = SecItemAdd(addQuery as CFDictionary, nil)
+        if status != errSecSuccess {
+            logger.error("Keychain save failed for \(key): OSStatus \(status)")
+        }
+        return status == errSecSuccess
     }
 
     func retrieve(_ key: String) -> String? {
@@ -32,20 +40,30 @@ struct KeychainHelper: Sendable {
         return String(data: data, encoding: .utf8)
     }
 
-    func delete(_ key: String) {
+    @discardableResult
+    func delete(_ key: String) -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
         ]
-        SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            logger.error("Keychain delete failed for \(key): OSStatus \(status)")
+        }
+        return status == errSecSuccess || status == errSecItemNotFound
     }
 
-    func deleteAll() {
+    @discardableResult
+    func deleteAll() -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
         ]
-        SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            logger.error("Keychain deleteAll failed: OSStatus \(status)")
+        }
+        return status == errSecSuccess || status == errSecItemNotFound
     }
 }

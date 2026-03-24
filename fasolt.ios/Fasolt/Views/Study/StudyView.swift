@@ -23,6 +23,7 @@ struct StudyView: View {
                 StudySummaryView(
                     cardsStudied: viewModel.cardsStudied,
                     ratingsCount: viewModel.ratingsCount,
+                    failedRatings: viewModel.failedRatings,
                     onDone: { dismiss() }
                 )
             }
@@ -110,6 +111,14 @@ struct StudyView: View {
             }
 
             Spacer()
+
+            if let ratingError = viewModel.ratingError {
+                Text(ratingError)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal)
+                    .transition(.opacity)
+            }
 
             if viewModel.isFlipped {
                 ratingButtons

@@ -21,7 +21,11 @@ extension DeckCardDTO: CardDisplayable {}
 // MARK: - Shared Date Formatters
 
 enum DateFormatters {
-    nonisolated(unsafe) static let iso8601 = ISO8601DateFormatter()
+    nonisolated(unsafe) static let iso8601: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
 
     static let mediumDateTime: DateFormatter = {
         let f = DateFormatter()
