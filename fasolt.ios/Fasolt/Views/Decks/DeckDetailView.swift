@@ -1,9 +1,17 @@
 import SwiftUI
 import UIKit
 
+enum CardSortOrder: String, CaseIterable {
+    case dueDate = "Due Date"
+    case state = "State"
+    case front = "Front"
+    case sourceFile = "Source"
+}
+
 struct DeckDetailView: View {
     @State private var viewModel: DeckDetailViewModel
     @State private var selectedCard: DeckCardDTO?
+    @State private var sortOrder: CardSortOrder = .dueDate
     private let studyViewModelFactory: () -> StudyViewModel
 
     init(
@@ -51,7 +59,7 @@ struct DeckDetailView: View {
                             }
                         } else {
                             Section("Cards") {
-                                ForEach(detail.cards, id: \.id) { card in
+                                ForEach(sortedCards(detail.cards), id: \.id) { card in
                                     Button {
                                         selectedCard = card
                                     } label: {
@@ -91,6 +99,19 @@ struct DeckDetailView: View {
             }
         }
         .navigationTitle(viewModel.deckName)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Picker("Sort", selection: $sortOrder) {
+                        ForEach(CardSortOrder.allCases, id: \.self) { order in
+                            Text(order.rawValue).tag(order)
+                        }
+                    }
+                } label: {
+                    Label("Sort", systemImage: "arrow.up.arrow.down")
+                }
+            }
+        }
         .refreshable {
             await viewModel.loadDetail()
         }
@@ -100,6 +121,27 @@ struct DeckDetailView: View {
         .task {
             if viewModel.detail == nil {
                 await viewModel.loadDetail()
+            }
+        }
+    }
+
+    private func sortedCards(_ cards: [DeckCardDTO]) -> [DeckCardDTO] {
+        cards.sorted { a, b in
+            switch sortOrder {
+            case .dueDate:
+                let aDate = a.dueAt ?? ""
+                let bDate = b.dueAt ?? ""
+                if aDate.isEmpty && bDate.isEmpty { return a.front < b.front }
+                if aDate.isEmpty { return false }
+                if bDate.isEmpty { return true }
+                return aDate < bDate
+            case .state:
+                let order = ["new": 0, "learning": 1, "relearning": 2, "review": 3]
+                return (order[a.state] ?? 99) < (order[b.state] ?? 99)
+            case .front:
+                return a.front.localizedCaseInsensitiveCompare(b.front) == .orderedAscending
+            case .sourceFile:
+                return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
             }
         }
     }
