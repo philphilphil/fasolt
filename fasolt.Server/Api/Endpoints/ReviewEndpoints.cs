@@ -47,13 +47,13 @@ public static class ReviewEndpoints
     };
 
     private static async Task<IResult> GetDueCards(
-        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, int limit = 50, string? deckId = null)
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, TimeProvider timeProvider, int limit = 50, string? deckId = null)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
         var take = Math.Clamp(limit, 1, 200);
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
         var query = db.Cards
             .Where(c => c.UserId == user.Id && (c.DueAt == null || c.DueAt <= now));
 
@@ -80,7 +80,7 @@ public static class ReviewEndpoints
 
     private static async Task<IResult> RateCard(
         RateCardRequest request, ClaimsPrincipal principal, UserManager<AppUser> userManager,
-        AppDbContext db, IScheduler scheduler)
+        AppDbContext db, IScheduler scheduler, TimeProvider timeProvider)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -108,7 +108,7 @@ public static class ReviewEndpoints
                 LastReview = card.LastReviewedAt?.UtcDateTime,
             };
 
-        var now = DateTime.UtcNow;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var (updated, _) = scheduler.ReviewCard(fsrsCard, fsrsRating, now, null);
 
         // Map back to our entity
@@ -117,19 +117,19 @@ public static class ReviewEndpoints
         card.Step = updated.Step;
         card.State = MapState(updated.State);
         card.DueAt = new DateTimeOffset(updated.Due, TimeSpan.Zero);
-        card.LastReviewedAt = DateTimeOffset.UtcNow;
+        card.LastReviewedAt = timeProvider.GetUtcNow();
 
         await db.SaveChangesAsync();
         return Results.Ok(new RateCardResponse(card.PublicId, card.Stability, card.Difficulty, card.DueAt, card.State));
     }
 
     private static async Task<IResult> GetStats(
-        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db)
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, AppDbContext db, TimeProvider timeProvider)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
 
         // Study-active filter: cards with no decks OR at least one active deck
         var activeCards = db.Cards
