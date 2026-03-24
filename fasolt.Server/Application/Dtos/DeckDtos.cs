@@ -15,6 +15,7 @@ public record DeckCardDto(
     string? SourceFile, string? SourceHeading,
     string State, DateTimeOffset? DueAt,
     double? Stability = null, double? Difficulty = null,
-    int? Step = null, DateTimeOffset? LastReviewedAt = null);
+    int? Step = null, DateTimeOffset? LastReviewedAt = null,
+    string? FrontSvg = null, string? BackSvg = null);
 
 public record AddCardsToDeckRequest(List<string> CardIds);

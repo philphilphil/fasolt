@@ -7,6 +7,7 @@ public record RateCardResponse(string CardId, double? Stability, double? Difficu
 public record DueCardDto(
     string Id, string Front, string Back,
     string? SourceFile, string? SourceHeading,
-    string State);
+    string State,
+    string? FrontSvg = null, string? BackSvg = null);
 
 public record ReviewStatsDto(int DueCount, int TotalCards, int StudiedToday);
