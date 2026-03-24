@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
@@ -16,6 +17,13 @@ const newDescription = ref('')
 const dialogOpen = ref(false)
 
 onMounted(() => decks.fetchDecks())
+
+const sortedDecks = computed(() =>
+  [...decks.decks].sort((a, b) => {
+    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1
+    return 0
+  })
+)
 
 async function createDeck() {
   const name = newName.value.trim()
@@ -54,9 +62,10 @@ async function createDeck() {
 
     <div v-else class="grid gap-2.5 sm:grid-cols-2">
       <Card
-        v-for="deck in decks.decks"
+        v-for="deck in sortedDecks"
         :key="deck.id"
         class="cursor-pointer border-border/60 hover:border-accent/30 transition-colors"
+        :class="{ 'opacity-50': !deck.isActive }"
         @click="router.push(`/decks/${deck.id}`)"
       >
         <CardContent class="p-4">
@@ -65,9 +74,12 @@ async function createDeck() {
               <div class="text-sm font-semibold text-foreground">{{ deck.name }}</div>
               <div v-if="deck.description" class="mt-0.5 text-[11px] text-muted-foreground">{{ deck.description }}</div>
             </div>
-            <span v-if="deck.dueCount > 0" class="text-xs text-warning whitespace-nowrap ml-3">
-              {{ deck.dueCount }} due
-            </span>
+            <div class="flex items-center gap-1 ml-3">
+              <span v-if="deck.dueCount > 0" class="text-xs text-warning whitespace-nowrap">
+                {{ deck.dueCount }} due
+              </span>
+              <Badge v-if="!deck.isActive" variant="outline" class="text-[10px] ml-2">Inactive</Badge>
+            </div>
           </div>
           <div class="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
             {{ deck.cardCount }} cards
