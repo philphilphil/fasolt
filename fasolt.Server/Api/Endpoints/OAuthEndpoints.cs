@@ -66,8 +66,8 @@ public static class OAuthEndpoints
             if (request.RedirectUris is null || request.RedirectUris.Length == 0)
                 return Results.BadRequest(new { error = "invalid_client_metadata", error_description = "redirect_uris is required" });
 
-            var allowedPatterns = configuration.GetSection("OAuth:AllowedRedirectPatterns").Get<string[]>()
-                ?? throw new InvalidOperationException("OAuth:AllowedRedirectPatterns must be configured in appsettings.json");
+            var allowedPatterns = configuration.GetSection("OAuth:AllowedNonHttpsRedirectPatterns").Get<string[]>()
+                ?? throw new InvalidOperationException("OAuth:AllowedNonHttpsRedirectPatterns must be configured in appsettings.json");
 
             foreach (var uri in request.RedirectUris)
             {
