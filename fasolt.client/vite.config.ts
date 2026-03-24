@@ -21,7 +21,10 @@ export default defineConfig({
       '/api': 'http://localhost:8080',
       '/mcp': 'http://localhost:8080',
       '/.well-known': 'http://localhost:8080',
-      '/oauth': 'http://localhost:8080',
+      '/oauth/register': 'http://localhost:8080',
+      '/oauth/authorize': 'http://localhost:8080',
+      '/oauth/token': 'http://localhost:8080',
+      '/oauth/login': 'http://localhost:8080',
     },
   },
 })
