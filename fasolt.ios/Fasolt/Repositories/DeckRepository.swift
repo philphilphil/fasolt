@@ -75,13 +75,15 @@ final class DeckRepository {
                 deck.deckDescription = dto.description
                 deck.cardCount = dto.cardCount
                 deck.dueCount = dto.dueCount
+                deck.isActive = dto.isActive
             } else {
                 let deck = CachedDeck(
                     publicId: dto.id,
                     name: dto.name,
                     deckDescription: dto.description,
                     cardCount: dto.cardCount,
-                    dueCount: dto.dueCount
+                    dueCount: dto.dueCount,
+                    isActive: dto.isActive
                 )
                 modelContext.insert(deck)
             }
@@ -148,7 +150,8 @@ final class DeckRepository {
                 description: deck.deckDescription,
                 cardCount: deck.cardCount,
                 dueCount: deck.dueCount,
-                createdAt: DateFormatters.iso8601.string(from: deck.createdAt)
+                createdAt: DateFormatters.iso8601.string(from: deck.createdAt),
+                isActive: deck.isActive
             )
         }
     }
@@ -177,7 +180,26 @@ final class DeckRepository {
             description: deck.deckDescription,
             cardCount: deck.cardCount,
             dueCount: deck.dueCount,
+            isActive: deck.isActive,
             cards: cards
         )
+    }
+
+    func setActive(id: String, isActive: Bool) async throws -> DeckDTO {
+        let endpoint = Endpoint(
+            path: "/api/decks/\(id)/active",
+            method: .put,
+            body: ["isActive": isActive]
+        )
+        let result: DeckDTO = try await apiClient.request(endpoint)
+
+        // Update cache
+        let predicate = #Predicate<CachedDeck> { $0.publicId == id }
+        if let cached = try? modelContext.fetch(FetchDescriptor(predicate: predicate)).first {
+            cached.isActive = result.isActive
+            try? modelContext.save()
+        }
+
+        return result
     }
 }

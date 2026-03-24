@@ -66,6 +66,7 @@ struct DeckDTO: Decodable, Sendable {
     let cardCount: Int
     let dueCount: Int
     let createdAt: String
+    let isActive: Bool
 }
 
 struct DeckDetailDTO: Decodable, Sendable {
@@ -74,6 +75,7 @@ struct DeckDetailDTO: Decodable, Sendable {
     let description: String?
     let cardCount: Int
     let dueCount: Int
+    let isActive: Bool
     let cards: [DeckCardDTO]
 }
 
