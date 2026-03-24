@@ -17,8 +17,8 @@ public static class AccountEndpoints
         group.MapPut("/email", ChangeEmail).RequireAuthorization();
         group.MapPost("/confirm-email-change", ConfirmEmailChange).RequireAuthorization();
         group.MapPut("/password", ChangePassword).RequireAuthorization();
-        group.MapPost("/forgot-password", ForgotPassword);
-        group.MapPost("/reset-password", ResetPassword);
+        group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
+        group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
     }
 
     private static async Task<IResult> Logout(SignInManager<AppUser> signInManager)
