@@ -5,12 +5,14 @@ import { apiFetch } from '@/api/client'
 interface User {
   email: string
   displayName: string | null
+  isAdmin: boolean
 }
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isLoading = ref(true)
   const isAuthenticated = computed(() => user.value !== null)
+  const isAdmin = computed(() => user.value?.isAdmin ?? false)
 
   async function fetchUser() {
     try {
@@ -95,6 +97,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isLoading,
     isAuthenticated,
+    isAdmin,
     fetchUser,
     register,
     login,
