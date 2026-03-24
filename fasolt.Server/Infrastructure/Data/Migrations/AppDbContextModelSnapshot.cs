@@ -169,6 +169,32 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.ToTable("Cards");
                 });
 
+            modelBuilder.Entity("Fasolt.Server.Domain.Entities.ConsentGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTimeOffset>("GrantedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ClientId")
+                        .IsUnique();
+
+                    b.ToTable("ConsentGrants");
+                });
+
             modelBuilder.Entity("Fasolt.Server.Domain.Entities.Deck", b =>
                 {
                     b.Property<Guid>("Id")
@@ -571,6 +597,17 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Fasolt.Server.Domain.Entities.Card", b =>
+                {
+                    b.HasOne("Fasolt.Server.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Fasolt.Server.Domain.Entities.ConsentGrant", b =>
                 {
                     b.HasOne("Fasolt.Server.Domain.Entities.AppUser", "User")
                         .WithMany()
