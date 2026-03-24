@@ -99,6 +99,7 @@ struct DeckDetailView: View {
             }
         }
         .navigationTitle(viewModel.deckName)
+        .offlineBanner()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {

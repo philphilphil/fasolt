@@ -24,13 +24,6 @@ final class DashboardViewModel {
         isLoading = true
         errorMessage = nil
 
-        let kc = KeychainHelper()
-        logger.info("loadStats: starting")
-        logger.info("loadStats: baseURL = \(self.apiClient.baseURL ?? "nil")")
-        logger.info("loadStats: hasAccessToken = \(kc.retrieve("fasolt.accessToken") != nil)")
-        logger.info("loadStats: hasRefreshToken = \(kc.retrieve("fasolt.refreshToken") != nil)")
-        logger.info("loadStats: tokenExpiry = \(kc.retrieve("fasolt.tokenExpiry") ?? "nil")")
-
         do {
             logger.info("loadStats: fetching stats...")
             let statsEndpoint = Endpoint(path: "/api/review/stats", method: .get)

@@ -117,7 +117,9 @@ final class AuthService {
         clientId: String,
         codeChallenge: String
     ) async throws -> String {
-        var components = URLComponents(string: serverURL + "/oauth/authorize")!
+        guard var components = URLComponents(string: serverURL + "/oauth/authorize") else {
+            throw APIError.invalidURL
+        }
         components.queryItems = [
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: clientId),
@@ -127,7 +129,9 @@ final class AuthService {
             URLQueryItem(name: "scope", value: "offline_access"),
         ]
 
-        let authURL = components.url!
+        guard let authURL = components.url else {
+            throw APIError.invalidURL
+        }
 
         let callbackURL = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<URL, Error>) in
             let session = ASWebAuthenticationSession(

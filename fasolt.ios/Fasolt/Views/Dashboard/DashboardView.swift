@@ -31,7 +31,7 @@ struct DashboardView: View {
                 }
             }
             .overlay {
-                if let error = viewModel.errorMessage {
+                if let error = viewModel.errorMessage, viewModel.totalCards == 0 {
                     ContentUnavailableView {
                         Label("Could not load", systemImage: "wifi.slash")
                     } description: {
@@ -41,6 +41,15 @@ struct DashboardView: View {
                             Task { await viewModel.loadStats() }
                         }
                     }
+                }
+            }
+            .overlay {
+                if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
+                    ContentUnavailableView(
+                        "No cards yet",
+                        systemImage: "rectangle.on.rectangle",
+                        description: Text("Create cards via the API or MCP tools to get started")
+                    )
                 }
             }
             .task {

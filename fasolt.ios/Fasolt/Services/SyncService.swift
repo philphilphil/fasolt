@@ -13,6 +13,7 @@ final class SyncService {
     var pendingCount: Int = 0
 
     private var wasConnected = true
+    private var isFlushing = false
 
     init(apiClient: APIClient, networkMonitor: NetworkMonitor, modelContext: ModelContext) {
         self.apiClient = apiClient
@@ -43,6 +44,10 @@ final class SyncService {
     }
 
     func flushPendingReviews() async {
+        guard !isFlushing else { return }
+        isFlushing = true
+        defer { isFlushing = false }
+
         let descriptor = FetchDescriptor<PendingReview>(
             predicate: #Predicate<PendingReview> { !$0.synced }
         )
