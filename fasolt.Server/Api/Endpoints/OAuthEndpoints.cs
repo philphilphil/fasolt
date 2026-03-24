@@ -2,16 +2,34 @@ using System.Security.Claims;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Api.Endpoints;
 
 public static class OAuthEndpoints
 {
+    private static readonly string[] DefaultRedirectPatterns = ["fasolt://", "http://localhost", "http://127.0.0.1"];
+
+    private static bool IsLocalUrl(string url) =>
+        !string.IsNullOrEmpty(url) &&
+        url.StartsWith('/') &&
+        !url.StartsWith("//") &&
+        !url.StartsWith("/\\");
+
+    private static bool IsAllowedRedirectUri(string uri, string[] allowedPatterns) =>
+        allowedPatterns.Any(pattern =>
+            uri.StartsWith(pattern, StringComparison.OrdinalIgnoreCase) &&
+            (uri.Length == pattern.Length ||
+             uri[pattern.Length] is '/' or ':' or '?'));
+
     public static void MapOAuthEndpoints(this WebApplication app)
     {
         // Protected Resource Metadata (RFC 9728)
@@ -29,7 +47,8 @@ public static class OAuthEndpoints
         // Dynamic Client Registration (RFC 7591)
         app.MapPost("/oauth/register", [AllowAnonymous] async (
             HttpContext context,
-            IOpenIddictApplicationManager applicationManager) =>
+            IOpenIddictApplicationManager applicationManager,
+            IConfiguration configuration) =>
         {
             var request = await context.Request.ReadFromJsonAsync<ClientRegistrationRequest>();
             if (request is null || string.IsNullOrEmpty(request.ClientName))
@@ -37,6 +56,19 @@ public static class OAuthEndpoints
 
             if (request.RedirectUris is null || request.RedirectUris.Length == 0)
                 return Results.BadRequest(new { error = "invalid_client_metadata", error_description = "redirect_uris is required" });
+
+            var allowedPatterns = configuration.GetSection("OAuth:AllowedRedirectPatterns").Get<string[]>()
+                ?? DefaultRedirectPatterns;
+
+            foreach (var uri in request.RedirectUris)
+            {
+                if (!IsAllowedRedirectUri(uri, allowedPatterns))
+                    return Results.BadRequest(new
+                    {
+                        error = "invalid_client_metadata",
+                        error_description = $"redirect_uri '{uri}' is not allowed. Must match: {string.Join(", ", allowedPatterns)}"
+                    });
+            }
 
             var clientId = Guid.NewGuid().ToString();
 
@@ -71,10 +103,10 @@ public static class OAuthEndpoints
                 response_types = new[] { "code" },
                 token_endpoint_auth_method = "none",
             });
-        });
+        }).RequireRateLimiting("auth-strict");
 
         // Authorization Endpoint
-        app.MapGet("/oauth/authorize", async (HttpContext context) =>
+        app.MapGet("/oauth/authorize", async (HttpContext context, AppDbContext db, IDataProtectionProvider dataProtection) =>
         {
             var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
             if (result?.Principal is null)
@@ -87,18 +119,50 @@ public static class OAuthEndpoints
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var userName = user.FindFirstValue(ClaimTypes.Name) ?? user.FindFirstValue(ClaimTypes.Email) ?? "";
 
+            // Check for existing consent grant
+            var openIddictRequest = context.GetOpenIddictServerRequest();
+            var clientId = openIddictRequest?.ClientId;
+
+            if (clientId is not null)
+            {
+                var hasConsent = await db.ConsentGrants
+                    .AnyAsync(g => g.UserId == userId && g.ClientId == clientId);
+
+                if (!hasConsent)
+                {
+                    // Store the original query string in an encrypted cookie for reconstruction after consent
+                    var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
+                    var encrypted = protector.Protect(context.Request.QueryString.Value ?? "");
+
+                    context.Response.Cookies.Append("oauth_authorize_query", encrypted, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Strict,
+                        Secure = !context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
+                        MaxAge = TimeSpan.FromMinutes(10),
+                    });
+
+                    return Results.Redirect($"/oauth/consent?client_id={Uri.EscapeDataString(clientId)}");
+                }
+            }
+
             var identity = new ClaimsIdentity(
                 authenticationType: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                 nameType: Claims.Name,
                 roleType: Claims.Role);
 
             identity.SetClaim(Claims.Subject, userId);
-            identity.SetClaim(ClaimTypes.NameIdentifier, userId); // For UserManager.GetUserAsync()
+            identity.SetClaim(ClaimTypes.NameIdentifier, userId);
             identity.SetClaim(Claims.Name, userName);
             identity.SetScopes(Scopes.OfflineAccess);
 
-            identity.SetDestinations(static claim =>
-                [Destinations.AccessToken, Destinations.IdentityToken]);
+            identity.SetDestinations(static claim => claim.Type switch
+            {
+                ClaimTypes.NameIdentifier => [Destinations.AccessToken],
+                Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
+                Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                _ => [Destinations.AccessToken],
+            });
 
             return Results.SignIn(new ClaimsPrincipal(identity),
                 properties: null,
@@ -138,8 +202,13 @@ public static class OAuthEndpoints
                 identity.SetClaim(Claims.Name, user.UserName);
                 identity.SetScopes(principal.GetScopes());
 
-                identity.SetDestinations(static claim =>
-                    [Destinations.AccessToken, Destinations.IdentityToken]);
+                identity.SetDestinations(static claim => claim.Type switch
+                {
+                    ClaimTypes.NameIdentifier => [Destinations.AccessToken],
+                    Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
+                    Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                    _ => [Destinations.AccessToken],
+                });
 
                 return Results.SignIn(new ClaimsPrincipal(identity),
                     properties: null,
@@ -151,12 +220,13 @@ public static class OAuthEndpoints
                 error = Errors.UnsupportedGrantType,
                 error_description = "The specified grant type is not supported.",
             });
-        });
+        }).RequireRateLimiting("auth");
 
         // OAuth Login Page (GET)
         app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context) =>
         {
-            var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
             var error = context.Request.Query["error"].FirstOrDefault();
 
             var errorHtml = error is not null
@@ -227,14 +297,107 @@ public static class OAuthEndpoints
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
-                return Results.Redirect(returnUrl);
+                return Results.Redirect(IsLocalUrl(returnUrl) ? returnUrl : "/");
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
-        });
+        }).RequireRateLimiting("auth");
+
+        // Consent Info (GET)
+        app.MapGet("/api/oauth/consent-info", async (
+            HttpContext context,
+            IOpenIddictApplicationManager applicationManager,
+            [FromQuery(Name = "client_id")] string clientId) =>
+        {
+            var application = await applicationManager.FindByClientIdAsync(clientId);
+            if (application is null)
+                return Results.NotFound(new { error = "Client not found" });
+
+            var displayName = await applicationManager.GetDisplayNameAsync(application);
+
+            return Results.Ok(new
+            {
+                clientName = displayName ?? clientId,
+                scopes = new[] { "offline_access" },
+            });
+        }).RequireAuthorization();
+
+        // Consent Decision (POST)
+        app.MapPost("/api/oauth/consent", async (
+            HttpContext context,
+            ConsentDecisionRequest request,
+            IOpenIddictApplicationManager applicationManager,
+            IDataProtectionProvider dataProtection,
+            AppDbContext db,
+            ClaimsPrincipal principal) =>
+        {
+            var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var application = await applicationManager.FindByClientIdAsync(request.ClientId);
+            if (application is null)
+                return Results.NotFound(new { error = "Client not found" });
+
+            // Validate that an active OAuth flow exists (cookie must be present)
+            var encryptedQuery = context.Request.Cookies["oauth_authorize_query"];
+            if (string.IsNullOrEmpty(encryptedQuery))
+                return Results.BadRequest(new { error = "No active authorization flow" });
+
+            // Decrypt and validate the stored query string
+            var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
+            string authorizeQuery;
+            try
+            {
+                authorizeQuery = protector.Unprotect(encryptedQuery);
+            }
+            catch
+            {
+                return Results.BadRequest(new { error = "Invalid or expired authorization flow" });
+            }
+
+            // Verify the client_id in the cookie matches the consent request
+            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(authorizeQuery.TrimStart('?'));
+            if (!queryParams.TryGetValue("client_id", out var cookieClientId) || cookieClientId != request.ClientId)
+                return Results.BadRequest(new { error = "Client ID mismatch" });
+
+            context.Response.Cookies.Delete("oauth_authorize_query");
+
+            if (request.Approved)
+            {
+                // Store consent grant
+                var existing = await db.ConsentGrants
+                    .FirstOrDefaultAsync(g => g.UserId == userId && g.ClientId == request.ClientId);
+                if (existing is null)
+                {
+                    db.ConsentGrants.Add(new ConsentGrant
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        ClientId = request.ClientId,
+                        GrantedAt = DateTimeOffset.UtcNow,
+                    });
+                    await db.SaveChangesAsync();
+                }
+
+                // Reconstruct authorize URL from the decrypted cookie
+                var redirectUrl = $"/oauth/authorize{authorizeQuery}";
+                return Results.Ok(new { redirectUrl });
+            }
+            else
+            {
+                // Get client's redirect URI to send error back
+                var redirectUris = await applicationManager.GetRedirectUrisAsync(application);
+                var clientRedirectUri = redirectUris.FirstOrDefault() ?? "/";
+                var separator = clientRedirectUri.Contains('?') ? '&' : '?';
+                return Results.Ok(new { redirectUrl = $"{clientRedirectUri}{separator}error=access_denied" });
+            }
+        }).RequireAuthorization();
     }
 }
 
 record ClientRegistrationRequest(
     [property: System.Text.Json.Serialization.JsonPropertyName("client_name")] string? ClientName,
     [property: System.Text.Json.Serialization.JsonPropertyName("redirect_uris")] string[]? RedirectUris);
+
+record ConsentDecisionRequest(
+    [property: System.Text.Json.Serialization.JsonPropertyName("clientId")] string ClientId,
+    [property: System.Text.Json.Serialization.JsonPropertyName("approved")] bool Approved);
