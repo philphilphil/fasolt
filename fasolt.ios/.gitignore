@@ -1,0 +1,14 @@
+# Xcode project (regenerated from project.yml)
+*.xcodeproj
+*.xcworkspace
+
+# Build artifacts
+DerivedData/
+build/
+
+# Xcode user state
+*.xcuserdata
+*.xcuserstate
+
+# OS
+.DS_Store
