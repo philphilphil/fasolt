@@ -12,13 +12,17 @@ public class OverviewService(AppDbContext db)
     {
         var now = DateTimeOffset.UtcNow;
 
-        var totalCards = await db.Cards.CountAsync(c => c.UserId == userId);
-
-        var dueCards = await db.Cards.CountAsync(c =>
-            c.UserId == userId && (c.DueAt == null || c.DueAt <= now));
-
-        var stateCounts = await db.Cards
+        // Study-active cards: no decks OR at least one active deck
+        var activeCards = db.Cards
             .Where(c => c.UserId == userId)
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive));
+
+        var totalCards = await activeCards.CountAsync();
+
+        var dueCards = await activeCards.CountAsync(c =>
+            c.DueAt == null || c.DueAt <= now);
+
+        var stateCounts = await activeCards
             .GroupBy(c => c.State)
             .Select(g => new { State = g.Key, Count = g.Count() })
             .ToListAsync();
@@ -29,8 +33,8 @@ public class OverviewService(AppDbContext db)
 
         var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId);
 
-        var totalSources = await db.Cards
-            .Where(c => c.UserId == userId && c.SourceFile != null)
+        var totalSources = await activeCards
+            .Where(c => c.SourceFile != null)
             .Select(c => c.SourceFile)
             .Distinct()
             .CountAsync();
