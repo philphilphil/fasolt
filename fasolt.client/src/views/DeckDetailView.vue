@@ -87,6 +87,12 @@ async function removeCard(cardId: string) {
   await refresh()
 }
 
+async function toggleActive() {
+  if (!deck.value) return
+  const updated = await decks.setActive(deck.value.id, !deck.value.isActive)
+  deck.value = { ...deck.value, isActive: updated.isActive }
+}
+
 const columns: ColumnDef<DeckCard>[] = [
   {
     accessorKey: 'front',
@@ -174,16 +180,24 @@ const table = useVueTable({
       </div>
       <div class="flex items-center gap-2">
         <Button
-          v-if="deck.dueCount > 0"
+          v-if="deck.dueCount > 0 && deck.isActive"
           size="sm"
           class="text-xs"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
         </Button>
+        <Button variant="outline" size="sm" class="text-xs" @click="toggleActive">
+          {{ deck.isActive ? 'Deactivate' : 'Activate' }}
+        </Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
       </div>
+    </div>
+
+    <!-- Inactive banner -->
+    <div v-if="!deck.isActive" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
+      This deck is inactive. Cards are excluded from study.
     </div>
 
     <!-- Stat bar -->
