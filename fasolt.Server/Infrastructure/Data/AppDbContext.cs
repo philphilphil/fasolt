@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Deck> Decks => Set<Deck>();
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
     public DbSet<ConsentGrant> ConsentGrants => Set<ConsentGrant>();
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -71,6 +72,19 @@ public class AppDbContext : IdentityDbContext<AppUser>
             entity.Property(e => e.ClientId).HasMaxLength(255).IsRequired();
             entity.HasIndex(e => new { e.UserId, e.ClientId }).IsUnique();
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<DeviceToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).HasMaxLength(200).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<AppUser>(entity =>
+        {
+            entity.Property(e => e.NotificationIntervalHours).HasDefaultValue(8);
         });
 
     }
