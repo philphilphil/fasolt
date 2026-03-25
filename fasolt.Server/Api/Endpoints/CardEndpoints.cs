@@ -18,6 +18,7 @@ public static class CardEndpoints
         group.MapGet("/{id}", GetById);
         group.MapPut("/{id}", Update);
         group.MapDelete("/{id}", Delete);
+        group.MapPost("/{id}/reset", ResetProgress);
     }
 
     private static async Task<IResult> Create(
@@ -99,6 +100,19 @@ public static class CardEndpoints
 
         var deleted = await cardService.DeleteCard(user.Id, id);
         return deleted ? Results.NoContent() : Results.NotFound();
+    }
+
+    private static async Task<IResult> ResetProgress(
+        string id,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        CardService cardService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var dto = await cardService.ResetProgress(user.Id, id);
+        return dto is null ? Results.NotFound() : Results.Ok(dto);
     }
 
     private static async Task<IResult> BulkCreate(
