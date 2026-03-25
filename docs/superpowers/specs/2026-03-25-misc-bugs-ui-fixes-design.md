@@ -35,6 +35,7 @@ Extract a shared `CardTable` component used by both views. Configuration via pro
 
 **Active filter (Cards view only):**
 - Default-on checkbox labeled "Active" at the top of the filter bar
+- Decks have an `isActive: boolean` property (default `true`) on the `Deck` entity. A deck is "inactive" when `isActive === false`.
 - When on: hides cards that belong *only* to inactive decks
 - Cards with no deck assignment are always considered active (always shown)
 - Cards in at least one active deck are shown
@@ -64,7 +65,7 @@ Deck names aren't clickable. Source, section, and decks are on the same line. Ed
 
 - **Deck links:** Each deck name becomes a `<RouterLink>` to `/decks/:id`
 - **Metadata layout:** Move source file, section, and decks to a dedicated line below the current header area. Group as: `Source: filename.md | Section: heading` on one line, `Decks: Deck A, Deck B` on the next
-- **Edit mode:** Add source file input, section (heading) input, and deck multi-select to the edit form. Reuse the same controls/patterns as the card table inline editing.
+- **Edit mode:** Add source file input, section (heading) input, and deck multi-select to the edit form. Edit is triggered via a button that opens a dialog (same pattern as the card table Edit action).
 
 ### Files to change
 - Edit: `fasolt.client/src/views/CardDetailView.vue`
@@ -153,7 +154,13 @@ Display name adds complexity with little value. Email is sufficient for user ide
 - Edit: `fasolt.client/src/views/SettingsView.vue` — remove display name field
 - Edit: `fasolt.client/src/components/TopBar.vue` — use email for initial/label
 - Edit: `fasolt.client/src/stores/auth.ts` — remove updateProfile or display name logic
-- Edit: Backend user model, DbContext, and profile endpoint
+- Edit: `fasolt.Server/Domain/Entities/AppUser.cs` — remove `DisplayName` property
+- Edit: `fasolt.Server/Application/Dtos/AccountDtos.cs` — remove DisplayName from DTOs
+- Edit: `fasolt.Server/Api/Endpoints/AccountEndpoints.cs` — remove profile update endpoint or DisplayName mapping
+- Edit: `fasolt.Server/Api/Endpoints/OAuthEndpoints.cs` — remove DisplayName reference
+- Edit: `fasolt.Server/Application/Services/AdminService.cs` — remove DisplayName from admin user listing
+- Edit: `fasolt.Server/Application/Dtos/AdminDtos.cs` — remove DisplayName from admin DTOs
+- Edit: `fasolt.Server/Infrastructure/Data/DevSeedData.cs` — remove DisplayName from seed data
 - New: EF Core migration to drop DisplayName column
 
 ---
