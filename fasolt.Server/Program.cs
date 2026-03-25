@@ -174,6 +174,19 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1),
                 QueueLimit = 0,
             }));
+
+    options.AddPolicy("api", context =>
+    {
+        var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? context.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        });
+    });
 });
 
 builder.Services.AddScoped<CardService>();
@@ -215,6 +228,16 @@ if (!app.Environment.IsEnvironment("Testing"))
     }
 }
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler(error => error.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync("{\"error\":\"An unexpected error occurred.\"}");
+    }));
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -235,6 +258,15 @@ if (!string.IsNullOrEmpty(adminEmail))
     if (adminUser is not null && !await userManager.IsInRoleAsync(adminUser, "Admin"))
     {
         await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+}
+
+if (!app.Environment.IsDevelopment())
+{
+    var corsOrigins = app.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+    if (corsOrigins is null || corsOrigins.Length == 0)
+    {
+        app.Logger.LogWarning("Cors:AllowedOrigins is not configured. CORS will block all cross-origin requests in production.");
     }
 }
 
@@ -288,6 +320,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'";
     await next();
 });
 
@@ -357,7 +390,7 @@ app.MapOAuthEndpoints();
 app.MapAdminEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
-app.MapMcp("/mcp").RequireAuthorization();
+app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");
