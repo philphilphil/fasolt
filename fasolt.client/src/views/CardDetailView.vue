@@ -2,11 +2,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useCardsStore } from '@/stores/cards'
+import { useDecksStore } from '@/stores/decks'
 import { useMarkdown } from '@/composables/useMarkdown'
 import { sanitizeSvg } from '@/composables/useSvgSanitizer'
 import type { Card } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
@@ -14,6 +16,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const cardsStore = useCardsStore()
+const decksStore = useDecksStore()
 const { render } = useMarkdown()
 
 function formatDate(iso: string): string {
@@ -30,6 +33,9 @@ const front = ref('')
 const back = ref('')
 const editFrontSvg = ref('')
 const editBackSvg = ref('')
+const editSourceFile = ref('')
+const editSourceHeading = ref('')
+const editDeckIds = ref<string[]>([])
 const saving = ref(false)
 const error = ref('')
 const resetOpen = ref(false)
@@ -49,6 +55,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  decksStore.fetchDecks()
 })
 
 function startEdit() {
@@ -57,6 +64,9 @@ function startEdit() {
   back.value = card.value.back
   editFrontSvg.value = card.value.frontSvg ?? ''
   editBackSvg.value = card.value.backSvg ?? ''
+  editSourceFile.value = card.value.sourceFile ?? ''
+  editSourceHeading.value = card.value.sourceHeading ?? ''
+  editDeckIds.value = card.value.decks.map(d => d.id)
   error.value = ''
   editing.value = true
 }
@@ -74,6 +84,9 @@ async function save() {
       back: back.value,
       frontSvg: editFrontSvg.value || null,
       backSvg: editBackSvg.value || null,
+      sourceFile: editSourceFile.value || null,
+      sourceHeading: editSourceHeading.value || null,
+      deckIds: editDeckIds.value,
     })
     editing.value = false
   } catch {
@@ -151,10 +164,17 @@ async function confirmDelete() {
     </div>
 
     <!-- Metadata -->
-    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
-      <span v-if="card.sourceFile">Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
-      <span v-if="card.sourceHeading">Section: <span class="text-foreground">{{ card.sourceHeading }}</span></span>
-      <span v-if="card.decks.length > 0">Decks: <span class="text-foreground">{{ card.decks.map(d => d.name).join(', ') }}</span></span>
+    <div class="space-y-1 text-xs text-muted-foreground">
+      <div v-if="card.sourceFile || card.sourceHeading" class="flex flex-wrap gap-x-6">
+        <span v-if="card.sourceFile">Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
+        <span v-if="card.sourceHeading">Section: <span class="text-foreground">{{ card.sourceHeading }}</span></span>
+      </div>
+      <div v-if="card.decks.length > 0">
+        Decks:
+        <template v-for="(d, i) in card.decks" :key="d.id">
+          <RouterLink :to="`/decks/${d.id}`" class="text-foreground hover:text-accent transition-colors">{{ d.name }}</RouterLink><span v-if="i < card.decks.length - 1">, </span>
+        </template>
+      </div>
     </div>
 
     <!-- SRS Stats -->
@@ -193,6 +213,34 @@ async function confirmDelete() {
 
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="text-[11px] font-medium text-muted-foreground">Source file</label>
+          <Input v-model="editSourceFile" placeholder="e.g. notes.md" class="h-8 text-xs" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-[11px] font-medium text-muted-foreground">Section</label>
+          <Input v-model="editSourceHeading" placeholder="e.g. Chapter 1" class="h-8 text-xs" />
+        </div>
+      </div>
+      <div class="space-y-1">
+        <label class="text-[11px] font-medium text-muted-foreground">Decks</label>
+        <div class="flex flex-wrap gap-2">
+          <label
+            v-for="d in decksStore.decks"
+            :key="d.id"
+            class="flex items-center gap-1.5 text-xs cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              :checked="editDeckIds.includes(d.id)"
+              class="rounded border-border"
+              @change="editDeckIds.includes(d.id) ? editDeckIds = editDeckIds.filter(id => id !== d.id) : editDeckIds.push(d.id)"
+            />
+            {{ d.name }}
+          </label>
+        </div>
+      </div>
       <div class="space-y-1">
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front (question)</div>
         <textarea

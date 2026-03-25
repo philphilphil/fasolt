@@ -197,7 +197,7 @@ public class CardService(AppDbContext db)
         return card is null ? null : ToDto(card);
     }
 
-    public async Task<CardDto?> UpdateCard(string userId, string publicId, string front, string back, string? frontSvg = null, string? backSvg = null)
+    public async Task<CardDto?> UpdateCard(string userId, string publicId, UpdateCardRequest request)
     {
         var card = await db.Cards
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
@@ -205,13 +205,32 @@ public class CardService(AppDbContext db)
 
         if (card is null) return null;
 
-        card.Front = front;
-        card.Back = back;
-        if (frontSvg is not null)
-            card.FrontSvg = frontSvg == "" ? null : SvgSanitizer.Sanitize(frontSvg);
-        if (backSvg is not null)
-            card.BackSvg = backSvg == "" ? null : SvgSanitizer.Sanitize(backSvg);
+        card.Front = request.Front;
+        card.Back = request.Back;
+        if (request.FrontSvg is not null)
+            card.FrontSvg = request.FrontSvg == "" ? null : SvgSanitizer.Sanitize(request.FrontSvg);
+        if (request.BackSvg is not null)
+            card.BackSvg = request.BackSvg == "" ? null : SvgSanitizer.Sanitize(request.BackSvg);
+        card.SourceFile = request.SourceFile;
+        card.SourceHeading = request.SourceHeading;
+
+        if (request.DeckIds is not null)
+        {
+            db.DeckCards.RemoveRange(card.DeckCards);
+            foreach (var deckPublicId in request.DeckIds)
+            {
+                var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
+                if (deck is not null)
+                {
+                    db.DeckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
+                }
+            }
+        }
+
         await db.SaveChangesAsync();
+
+        // Reload DeckCards after potential changes
+        await db.Entry(card).Collection(c => c.DeckCards).Query().Include(dc => dc.Deck).LoadAsync();
 
         return ToDto(card);
     }
