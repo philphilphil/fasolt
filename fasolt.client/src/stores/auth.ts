@@ -4,7 +4,6 @@ import { apiFetch } from '@/api/client'
 
 interface User {
   email: string
-  displayName: string | null
   isAdmin: boolean
 }
 
@@ -54,15 +53,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function updateProfile(displayName: string | null) {
-    const result = await apiFetch<User>('/account/profile', {
-      method: 'PUT',
-      body: JSON.stringify({ displayName }),
-    })
-    user.value = result
-    return result
-  }
-
   async function changeEmail(newEmail: string, currentPassword: string) {
     const result = await apiFetch<User>('/account/email', {
       method: 'PUT',
@@ -102,7 +92,6 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     login,
     logout,
-    updateProfile,
     changeEmail,
     changePassword,
     forgotPassword,

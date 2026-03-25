@@ -5,14 +5,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/api/client'
-import { useDarkMode } from '@/composables/useDarkMode'
 
 const auth = useAuthStore()
-const { theme, setTheme } = useDarkMode()
-
-const displayName = ref('')
-const displayNameSuccess = ref(false)
-const displayNameError = ref('')
 
 const newEmail = ref('')
 const emailCurrentPassword = ref('')
@@ -26,20 +20,8 @@ const passwordSuccess = ref(false)
 const passwordError = ref('')
 
 onMounted(() => {
-  displayName.value = auth.user?.displayName || ''
   newEmail.value = auth.user?.email || ''
 })
-
-async function saveDisplayName() {
-  displayNameSuccess.value = false
-  displayNameError.value = ''
-  try {
-    await auth.updateProfile(displayName.value || null)
-    displayNameSuccess.value = true
-  } catch (e) {
-    displayNameError.value = 'Failed to update display name.'
-  }
-}
 
 async function saveEmail() {
   emailSuccess.value = false
@@ -86,20 +68,6 @@ async function savePassword() {
 
     <Card class="border-border/60">
       <CardHeader>
-        <CardTitle class="text-sm">Display name</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form class="flex flex-col gap-3" @submit.prevent="saveDisplayName">
-          <div v-if="displayNameSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Saved.</div>
-          <div v-if="displayNameError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ displayNameError }}</div>
-          <Input v-model="displayName" placeholder="Your display name" />
-          <Button type="submit" size="sm" class="self-start text-xs">Save</Button>
-        </form>
-      </CardContent>
-    </Card>
-
-    <Card class="border-border/60">
-      <CardHeader>
         <CardTitle class="text-sm">Email address</CardTitle>
       </CardHeader>
       <CardContent>
@@ -141,25 +109,6 @@ async function savePassword() {
           </div>
           <Button type="submit" size="sm" class="self-start text-xs">Change password</Button>
         </form>
-      </CardContent>
-    </Card>
-
-    <Card class="border-border/60">
-      <CardHeader>
-        <CardTitle class="text-sm">Appearance</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div class="flex gap-1 rounded-lg border border-border p-1">
-          <button
-            v-for="opt in (['light', 'system', 'dark'] as const)"
-            :key="opt"
-            class="rounded-md px-4 py-1.5 text-xs capitalize transition-colors"
-            :class="theme === opt ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'"
-            @click="setTheme(opt)"
-          >
-            {{ opt }}
-          </button>
-        </div>
       </CardContent>
     </Card>
 
