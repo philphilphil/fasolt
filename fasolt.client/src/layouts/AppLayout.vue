@@ -11,6 +11,7 @@ useDarkMode()
 
 const route = useRoute()
 const auth = useAuthStore()
+const version = __APP_VERSION__
 
 const tabs = computed(() => {
   const items = [
@@ -61,6 +62,9 @@ const activeTab = computed(() => {
         <slot />
       </div>
     </main>
+    <footer class="hidden border-t border-border/40 px-5 py-2 text-[10px] text-muted-foreground/50 sm:block">
+      fasolt v{{ version }}
+    </footer>
     <BottomNav />
   </div>
 </template>

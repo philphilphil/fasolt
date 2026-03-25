@@ -4,6 +4,6 @@ public static class HealthEndpoints
 {
     public static void MapHealthEndpoints(this WebApplication app)
     {
-        app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" })).AllowAnonymous();
+        app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", version = "0.1.0" })).AllowAnonymous();
     }
 }
