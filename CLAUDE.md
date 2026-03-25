@@ -94,7 +94,7 @@ docker compose down          # stop Postgres
 
 ## Requirements
 
-Feature requirements live in `docs/requirements/`. Each file is a self-contained spec for one feature area. To implement a feature, read the corresponding `XX-feature-name.md` file. After implementing a requirement, move it to `docs/requirements/done/`.
+Feature requirements are tracked as GitHub issues. Use `gh issue list` to see open work and `gh issue view <number>` to read the full spec before implementing. Close issues when done.
 
 ## Dev Seed User
 

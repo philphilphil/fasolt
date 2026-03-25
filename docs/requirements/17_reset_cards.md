@@ -1,1 +1,0 @@
-would it make sense to add a button to reset cards study scores etc? not sure.
