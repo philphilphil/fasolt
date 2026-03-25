@@ -9,7 +9,7 @@ public static class SourceEndpoints
 {
     public static void MapSourceEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/sources").RequireAuthorization();
+        var group = app.MapGroup("/api/sources").RequireAuthorization().RequireRateLimiting("api");
         group.MapGet("", List);
     }
 

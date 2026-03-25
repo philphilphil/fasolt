@@ -10,7 +10,7 @@ public static class CardEndpoints
 {
     public static void MapCardEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/cards").RequireAuthorization();
+        var group = app.MapGroup("/api/cards").RequireAuthorization().RequireRateLimiting("api");
 
         group.MapPost("/", Create);
         group.MapPost("/bulk", BulkCreate);

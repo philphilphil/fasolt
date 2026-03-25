@@ -23,7 +23,7 @@ public static class ReviewEndpoints
 
     public static void MapReviewEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/review").RequireAuthorization();
+        var group = app.MapGroup("/api/review").RequireAuthorization().RequireRateLimiting("api");
         group.MapGet("/due", GetDueCards);
         group.MapPost("/rate", RateCard);
         group.MapGet("/stats", GetStats);
