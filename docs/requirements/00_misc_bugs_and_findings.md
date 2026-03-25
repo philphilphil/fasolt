@@ -12,6 +12,9 @@ Web:
     - move the mcp help page to /mcp-setup so it does not conflict with out mcp endpoint
     - why do we have/need the display name? maybe we can get rid of it
     - make dark/light mode toggle to the top right in nav bar, like many other apps do it.
+- search:
+    - result window is to small we need to make it threetime as big
+    - show decks before cards
 
 iOS:
 - On app reopen, refresh. like when app is closed (but not really closed, i'm just in another app) and go back, it does refresh automatically. Or, background app refresh?
