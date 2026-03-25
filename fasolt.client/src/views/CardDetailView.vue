@@ -12,17 +12,14 @@ import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
+import { formatDate } from '@/lib/formatDate'
 
 const route = useRoute()
 const router = useRouter()
 const cardsStore = useCardsStore()
 const decksStore = useDecksStore()
 const { render } = useMarkdown()
-
-function formatDate(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
 
 const card = ref<Card | null>(null)
 const loading = ref(true)
@@ -56,6 +53,9 @@ onMounted(async () => {
     loading.value = false
   }
   decksStore.fetchDecks()
+  if (route.query.edit === 'true' && card.value) {
+    startEdit()
+  }
 })
 
 function startEdit() {
@@ -112,15 +112,8 @@ async function confirmReset() {
   }
 }
 
-async function confirmDelete() {
-  if (!card.value) return
-  try {
-    await cardsStore.deleteCard(card.value.id)
-    router.replace('/cards')
-  } catch {
-    error.value = 'Failed to delete card. Please try again.'
-    deleteOpen.value = false
-  }
+function onDeleted() {
+  router.replace('/cards')
 }
 </script>
 
@@ -315,25 +308,7 @@ async function confirmDelete() {
     </div>
 
     <!-- Delete confirmation -->
-    <Dialog v-model:open="deleteOpen">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete card</DialogTitle>
-          <DialogDescription>
-            <template v-if="card.decks.length > 0">
-              This card will be permanently deleted and removed from: <strong>{{ card.decks.map(d => d.name).join(', ') }}</strong>.
-            </template>
-            <template v-else>
-              This card will be permanently deleted.
-            </template>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" @click="deleteOpen = false">Cancel</Button>
-          <Button variant="destructive" @click="confirmDelete">Delete</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <CardDeleteDialog v-model:open="deleteOpen" :card="card" @deleted="onDeleted" />
 
     <Dialog v-model:open="resetOpen">
       <DialogContent>

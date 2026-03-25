@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/api/client'
+import { usePasswordRules } from '@/composables/usePasswordRules'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -19,17 +20,12 @@ const error = ref('')
 const success = ref(false)
 const loading = ref(false)
 
-const passwordRules = computed(() => [
-  { label: 'At least 8 characters', valid: password.value.length >= 8 },
-  { label: 'Uppercase letter', valid: /[A-Z]/.test(password.value) },
-  { label: 'Lowercase letter', valid: /[a-z]/.test(password.value) },
-  { label: 'Number', valid: /\d/.test(password.value) },
-])
+const { rules: passwordRules, allValid: passwordValid } = usePasswordRules(password)
 
 const passwordsMatch = computed(() => password.value === confirmPassword.value)
 
 const canSubmit = computed(
-  () => passwordRules.value.every((r) => r.valid) && passwordsMatch.value && !loading.value,
+  () => passwordValid.value && passwordsMatch.value && !loading.value,
 )
 
 async function handleSubmit() {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import type { ColumnDef, SortingState } from '@tanstack/vue-table'
 import {
   FlexRender,
@@ -15,6 +15,9 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { formatDateDot } from '@/lib/formatDate'
+
+const router = useRouter()
 
 const props = withDefaults(defineProps<{
   cards: any[]
@@ -28,20 +31,10 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  edit: [card: any]
   delete: [card: any]
   remove: [card: any]
   addToDeck: [card: any]
 }>()
-
-function formatDue(iso: string | null | undefined): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}.${mm}.${yyyy}`
-}
 
 const columns = computed<ColumnDef<any>[]>(() => {
   const cols: ColumnDef<any>[] = [
@@ -94,7 +87,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
     accessorKey: 'dueAt',
     header: 'Due',
     meta: { className: 'w-[100px] whitespace-nowrap' },
-    cell: ({ row }) => h('span', { class: 'text-muted-foreground' }, formatDue(row.getValue('dueAt') as string | null)),
+    cell: ({ row }) => h('span', { class: 'text-muted-foreground' }, formatDateDot(row.getValue('dueAt') as string | null)),
   })
 
   cols.push({
@@ -105,7 +98,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
     cell: ({ row }) => {
       const card = row.original
       const buttons = [
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => emit('edit', card) }, () => 'Edit'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => router.push(`/cards/${card.id}?edit=true`) }, () => 'Edit'),
       ]
       if (!props.showDecks) {
         buttons.push(

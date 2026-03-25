@@ -10,17 +10,15 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
-import CardEditDialog from '@/components/CardEditDialog.vue'
+import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import CardTable from '@/components/CardTable.vue'
 
 const route = useRoute()
 const cardsStore = useCardsStore()
 const decks = useDecksStore()
 
-const editTarget = ref<Card | null>(null)
-const editOpen = ref(false)
 const deleteTarget = ref<Card | null>(null)
-const deleteError = ref('')
+const deleteOpen = ref(false)
 const createOpen = ref(false)
 const addToDeckCard = ref<Card | null>(null)
 const addToDeckId = ref('')
@@ -39,20 +37,9 @@ onMounted(async () => {
   }
 })
 
-function openEdit(card: Card) {
-  editTarget.value = card
-  editOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteError.value = ''
-  try {
-    await cardsStore.deleteCard(deleteTarget.value.id)
-    deleteTarget.value = null
-  } catch {
-    deleteError.value = 'Failed to delete card.'
-  }
+function onCardDeleted() {
+  deleteTarget.value = null
+  deleteOpen.value = false
 }
 
 async function addCardToDeck() {
@@ -157,8 +144,7 @@ const filteredCards = computed(() => {
       :cards="filteredCards"
       show-decks
       show-pagination
-      @edit="openEdit"
-      @delete="(card) => deleteTarget = card"
+      @delete="(card) => { deleteTarget = card; deleteOpen = true }"
       @add-to-deck="(card) => addToDeckCard = card"
     >
       <template #empty>No cards yet. Create one or use the MCP agent to generate cards from your notes.</template>
@@ -172,32 +158,11 @@ const filteredCards = computed(() => {
       @created="cardsStore.fetchCards()"
     />
 
-    <CardEditDialog
-      v-model:open="editOpen"
-      :card="editTarget"
-      @updated="cardsStore.fetchCards()"
+    <CardDeleteDialog
+      v-model:open="deleteOpen"
+      :card="deleteTarget"
+      @deleted="onCardDeleted"
     />
-
-    <Dialog :open="!!deleteTarget" @update:open="deleteTarget = null">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete card</DialogTitle>
-          <DialogDescription>
-            <template v-if="deleteTarget?.decks?.length">
-              This card will be permanently deleted and removed from: <strong>{{ deleteTarget.decks.map(d => d.name).join(', ') }}</strong>.
-            </template>
-            <template v-else>
-              This card will be permanently deleted.
-            </template>
-          </DialogDescription>
-        </DialogHeader>
-        <div v-if="deleteError" class="text-xs text-destructive">{{ deleteError }}</div>
-        <DialogFooter>
-          <Button variant="outline" @click="deleteTarget = null">Cancel</Button>
-          <Button variant="destructive" @click="confirmDelete">Delete</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
 
     <Dialog :open="!!addToDeckCard" @update:open="addToDeckCard = null">
       <DialogContent>

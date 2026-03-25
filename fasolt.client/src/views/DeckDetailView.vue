@@ -2,7 +2,6 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
-import { useCardsStore } from '@/stores/cards'
 import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,13 +9,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import CardEditDialog from '@/components/CardEditDialog.vue'
+import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import CardTable from '@/components/CardTable.vue'
 
 const route = useRoute()
 const router = useRouter()
 const decks = useDecksStore()
-const cardsStore = useCardsStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
@@ -29,10 +27,8 @@ const deleteOpen = ref(false)
 const deleteCards = ref(false)
 const deleteError = ref('')
 
-const editTarget = ref<any>(null)
-const editCardOpen = ref(false)
 const deleteCardTarget = ref<any>(null)
-const deleteCardError = ref('')
+const deleteCardOpen = ref(false)
 
 onMounted(async () => {
   try {
@@ -90,21 +86,10 @@ async function toggleActive() {
   deck.value = { ...deck.value, isActive: updated.isActive }
 }
 
-function openEditCard(card: any) {
-  editTarget.value = card
-  editCardOpen.value = true
-}
-
-async function confirmDeleteCard() {
-  if (!deleteCardTarget.value) return
-  deleteCardError.value = ''
-  try {
-    await cardsStore.deleteCard(deleteCardTarget.value.id)
-    deleteCardTarget.value = null
-    await refresh()
-  } catch {
-    deleteCardError.value = 'Failed to delete card.'
-  }
+async function onCardDeleted() {
+  deleteCardTarget.value = null
+  deleteCardOpen.value = false
+  await refresh()
 }
 
 const stateCounts = computed(() => {
@@ -181,8 +166,7 @@ const stateCounts = computed(() => {
       <CardTable
         v-if="deck.cards.length > 0"
         :cards="deck.cards"
-        @edit="openEditCard"
-        @delete="(card) => deleteCardTarget = card"
+        @delete="(card) => { deleteCardTarget = card; deleteCardOpen = true }"
         @remove="(card) => removeCard(card.id)"
       >
         <template #empty>No cards in this deck yet.</template>
@@ -232,28 +216,11 @@ const stateCounts = computed(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- Edit card dialog -->
-    <CardEditDialog
-      v-model:open="editCardOpen"
-      :card="editTarget"
-      @updated="refresh()"
-    />
-
     <!-- Delete card dialog -->
-    <Dialog :open="!!deleteCardTarget" @update:open="deleteCardTarget = null">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete card</DialogTitle>
-          <DialogDescription>
-            This card will be permanently deleted.
-          </DialogDescription>
-        </DialogHeader>
-        <div v-if="deleteCardError" class="text-xs text-destructive">{{ deleteCardError }}</div>
-        <DialogFooter>
-          <Button variant="outline" @click="deleteCardTarget = null">Cancel</Button>
-          <Button variant="destructive" @click="confirmDeleteCard">Delete</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <CardDeleteDialog
+      v-model:open="deleteCardOpen"
+      :card="deleteCardTarget"
+      @deleted="onCardDeleted"
+    />
   </div>
 </template>
