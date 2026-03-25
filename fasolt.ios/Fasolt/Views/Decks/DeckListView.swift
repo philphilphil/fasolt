@@ -93,6 +93,9 @@ struct DeckListView: View {
                     Task { await viewModel.loadDecks() }
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+                Task { await viewModel.loadDecks() }
+            }
         }
     }
 

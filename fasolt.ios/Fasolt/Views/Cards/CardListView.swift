@@ -82,6 +82,9 @@ struct CardListView: View {
                     await viewModel.loadCards()
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+                Task { await viewModel.loadCards() }
+            }
         }
     }
 
