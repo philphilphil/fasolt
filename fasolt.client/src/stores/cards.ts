@@ -52,5 +52,12 @@ export const useCardsStore = defineStore('cards', () => {
     return apiFetch<Card>(`/cards/${id}`)
   }
 
-  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard }
+  async function resetProgress(id: string): Promise<Card> {
+    const result = await apiFetch<Card>(`/cards/${id}/reset`, { method: 'POST' })
+    const idx = cards.value.findIndex(c => c.id === id)
+    if (idx !== -1) cards.value[idx] = result
+    return result
+  }
+
+  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, resetProgress }
 })
