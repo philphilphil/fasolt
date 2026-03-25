@@ -23,7 +23,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:8080',
-      '/mcp': 'http://localhost:8080',
+      '/mcp': {
+        target: 'http://localhost:8080',
+        rewrite: undefined,
+        bypass(req) {
+          // Only proxy exact /mcp path, not /mcp-setup (which is a frontend route)
+          if (req.url?.startsWith('/mcp-setup')) return req.url
+        },
+      },
       '/.well-known': 'http://localhost:8080',
       '/oauth/register': 'http://localhost:8080',
       '/oauth/authorize': 'http://localhost:8080',
