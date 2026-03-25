@@ -1,8 +1,6 @@
 namespace Fasolt.Server.Application.Dtos;
 
-public record UserInfoResponse(string Email, string? DisplayName, bool IsAdmin);
-
-public record UpdateProfileRequest(string? DisplayName);
+public record UserInfoResponse(string Email, bool IsAdmin);
 
 public record ChangeEmailRequest(string NewEmail, string CurrentPassword);
 

@@ -24,7 +24,6 @@ public class AdminService
             .Select(u => new AdminUserDto(
                 u.Id,
                 u.Email!,
-                u.DisplayName,
                 _db.Cards.Count(c => c.UserId == u.Id),
                 _db.Decks.Count(d => d.UserId == u.Id),
                 u.LockoutEnabled && u.LockoutEnd > DateTimeOffset.UtcNow))

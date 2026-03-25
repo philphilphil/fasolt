@@ -31,7 +31,6 @@ public static class DevSeedData
         {
             UserName = DevEmail,
             Email = DevEmail,
-            DisplayName = "Dev User",
             EmailConfirmed = true,
         };
         await userManager.CreateAsync(adminUser, DevPassword);
@@ -42,7 +41,6 @@ public static class DevSeedData
         {
             UserName = RegularEmail,
             Email = RegularEmail,
-            DisplayName = "Regular User",
             EmailConfirmed = true,
         };
         await userManager.CreateAsync(regularUser, DevPassword);

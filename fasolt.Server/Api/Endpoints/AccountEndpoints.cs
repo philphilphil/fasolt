@@ -13,7 +13,6 @@ public static class AccountEndpoints
 
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
-        group.MapPut("/profile", UpdateProfile).RequireAuthorization();
         group.MapPut("/email", ChangeEmail).RequireAuthorization();
         group.MapPost("/confirm-email-change", ConfirmEmailChange).RequireAuthorization();
         group.MapPut("/password", ChangePassword).RequireAuthorization();
@@ -34,22 +33,7 @@ public static class AccountEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName, isAdmin));
-    }
-
-    private static async Task<IResult> UpdateProfile(
-        UpdateProfileRequest request,
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager)
-    {
-        var user = await userManager.GetUserAsync(principal);
-        if (user is null) return Results.Unauthorized();
-        user.DisplayName = request.DisplayName;
-        var result = await userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-        var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName, isAdmin));
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin));
     }
 
     private static async Task<IResult> ChangeEmail(
@@ -91,7 +75,7 @@ public static class AccountEndpoints
         user.UserName = request.NewEmail;
         await userManager.UpdateAsync(user);
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        return Results.Ok(new UserInfoResponse(user.Email!, user.DisplayName, isAdmin));
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin));
     }
 
     private static async Task<IResult> ChangePassword(
