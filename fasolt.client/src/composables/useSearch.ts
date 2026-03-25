@@ -19,8 +19,8 @@ export function useSearch() {
 
   const flatItems = computed<SearchItem[]>(() => {
     const items: SearchItem[] = []
-    for (const card of results.value.cards) items.push({ type: 'card', data: card })
     for (const deck of results.value.decks) items.push({ type: 'deck', data: deck })
+    for (const card of results.value.cards) items.push({ type: 'card', data: card })
     return items
   })
 
