@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */; };
 		0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */; };
+		B3C4D5E6F7081920A1B2C3D4 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */; };
 		0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876CBB32009796B1341C8D59 /* NetworkMonitor.swift */; };
 		0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */; };
 		1851DEEFAB7935C8224DD05B /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */; };
@@ -64,6 +65,7 @@
 		22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailView.swift; sourceTree = "<group>"; };
 		2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailSheet.swift; sourceTree = "<group>"; };
+		E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		2E2E5EDB31357B7ECA46E216 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		36B52198B8E5A1593EA701B5 /* CardRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardRepository.swift; sourceTree = "<group>"; };
 		3794A93C12869786BF3468EE /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -274,6 +276,7 @@
 			isa = PBXGroup;
 			children = (
 				2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */,
+				E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */,
 				E2686816B7E21E3DB2171066 /* CardHelpers.swift */,
 				69E947CBD44E199505935FEF /* OfflineBanner.swift */,
 			);
@@ -387,6 +390,7 @@
 				A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */,
 				D578E86690C15FA330A7530A /* Card.swift in Sources */,
 				0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */,
+				B3C4D5E6F7081920A1B2C3D4 /* CardDetailView.swift in Sources */,
 				1F108C44139D54CBA1C25505 /* CardHelpers.swift in Sources */,
 				562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */,
 				A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */,

@@ -10,7 +10,6 @@ enum CardSortOrder: String, CaseIterable {
 
 struct DeckDetailView: View {
     @State private var viewModel: DeckDetailViewModel
-    @State private var selectedCard: DeckCardDTO?
     @State private var sortOrder: CardSortOrder = .dueDate
     private let studyViewModelFactory: () -> StudyViewModel
 
@@ -68,12 +67,11 @@ struct DeckDetailView: View {
                         } else {
                             Section("Cards") {
                                 ForEach(sortedCards(detail.cards), id: \.id) { card in
-                                    Button {
-                                        selectedCard = card
+                                    NavigationLink {
+                                        CardDetailView(card: card)
                                     } label: {
                                         DeckCardRow(card: card)
                                     }
-                                    .tint(.primary)
                                 }
                             }
                         }
@@ -133,12 +131,6 @@ struct DeckDetailView: View {
         }
         .refreshable {
             await viewModel.loadDetail()
-        }
-        .sheet(item: $selectedCard) { card in
-            CardDetailSheet(
-                card: card,
-                onDismiss: { selectedCard = nil }
-            )
         }
         .task {
             if viewModel.detail == nil {

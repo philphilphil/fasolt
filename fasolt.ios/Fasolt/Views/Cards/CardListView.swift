@@ -2,7 +2,6 @@ import SwiftUI
 
 struct CardListView: View {
     @State private var viewModel: CardListViewModel
-    @State private var selectedCard: CardDTO?
     @State private var sortOrder: CardSortOrder = .dueDate
 
     init(viewModel: CardListViewModel) {
@@ -31,15 +30,17 @@ struct CardListView: View {
                 } else {
                     List {
                         ForEach(sortedCards(viewModel.filteredCards)) { card in
-                            Button {
-                                selectedCard = card
+                            NavigationLink {
+                                CardDetailView(
+                                    card: card,
+                                    deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
+                                )
                             } label: {
                                 DeckCardRow(
                                     card: card,
                                     deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
                                 )
                             }
-                            .tint(.primary)
                         }
 
                         if viewModel.hasMore && viewModel.searchText.isEmpty {
@@ -80,13 +81,6 @@ struct CardListView: View {
                 if viewModel.cards.isEmpty {
                     await viewModel.loadCards()
                 }
-            }
-            .sheet(item: $selectedCard) { card in
-                CardDetailSheet(
-                    card: card,
-                    deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name),
-                    onDismiss: { selectedCard = nil }
-                )
             }
         }
     }
