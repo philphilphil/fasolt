@@ -23,8 +23,12 @@ struct MainTabView: View {
             modelContext: modelContext
         )
 
+        let notificationService = NotificationService(apiClient: apiClient)
+
         let studyViewModelFactory: () -> StudyViewModel = {
-            StudyViewModel(cardRepository: cardRepository)
+            let vm = StudyViewModel(cardRepository: cardRepository)
+            vm.notificationService = notificationService
+            return vm
         }
 
         TabView {

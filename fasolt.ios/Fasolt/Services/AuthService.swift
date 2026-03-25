@@ -86,6 +86,11 @@ final class AuthService {
     }
 
     func signOut() {
+        let client = apiClient
+        Task { @MainActor in
+            let service = NotificationService(apiClient: client)
+            await service.deleteDeviceToken()
+        }
         keychain.deleteAll()
         isAuthenticated = false
     }

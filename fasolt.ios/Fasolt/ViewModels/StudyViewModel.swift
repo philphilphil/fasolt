@@ -17,6 +17,13 @@ final class StudyViewModel {
     var cardsStudied: Int = 0
     var failedRatings: Int = 0
 
+    var notificationService: NotificationService?
+
+    private var hasRequestedPermission: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasRequestedNotificationPermission") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasRequestedNotificationPermission") }
+    }
+
     private let cardRepository: CardRepository
 
     init(cardRepository: CardRepository) {
@@ -76,8 +83,17 @@ final class StudyViewModel {
         isFlipped = false
         if currentIndex >= cards.count {
             state = .summary
+            requestNotificationPermissionIfNeeded()
         } else {
             state = .studying
+        }
+    }
+
+    private func requestNotificationPermissionIfNeeded() {
+        guard !hasRequestedPermission else { return }
+        hasRequestedPermission = true
+        Task {
+            await notificationService?.requestPermissionAndRegister()
         }
     }
 

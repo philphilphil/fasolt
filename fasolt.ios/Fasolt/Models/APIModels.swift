@@ -153,3 +153,18 @@ struct UserInfoResponse: Decodable, Sendable {
     let email: String
     let displayName: String?
 }
+
+// MARK: - Notifications
+
+struct DeviceTokenRequest: Encodable, Sendable {
+    let token: String
+}
+
+struct NotificationSettingsResponse: Decodable, Sendable {
+    let intervalHours: Int
+    let hasDeviceToken: Bool
+}
+
+struct UpdateNotificationSettingsRequest: Encodable, Sendable {
+    let intervalHours: Int
+}
