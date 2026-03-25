@@ -12,7 +12,7 @@ const tabs = computed(() => {
     { name: 'Cards', path: '/cards', icon: '▤' },
     { name: 'Decks', path: '/decks', icon: '⊞' },
     { name: 'Sources', path: '/sources', icon: '◫' },
-    { name: 'MCP', path: '/mcp', icon: '⏚' },
+    { name: 'MCP', path: '/mcp-setup', icon: '⏚' },
     { name: 'Settings', path: '/settings', icon: '⚙' },
   ]
   if (auth.isAdmin) {

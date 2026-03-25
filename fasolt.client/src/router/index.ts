@@ -57,7 +57,7 @@ const router = createRouter({
     { path: '/decks', name: 'decks', component: () => import('@/views/DecksView.vue') },
     { path: '/decks/:id', name: 'deck-detail', component: () => import('@/views/DeckDetailView.vue') },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },
-    { path: '/mcp', name: 'mcp', component: () => import('@/views/McpView.vue') },
+    { path: '/mcp-setup', name: 'mcp', component: () => import('@/views/McpView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
     { path: '/admin', name: 'admin', component: () => import('@/views/AdminView.vue'), meta: { requiresAdmin: true } },
     { path: '/dashboard', redirect: '/study' },

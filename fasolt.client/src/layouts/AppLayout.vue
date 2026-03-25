@@ -19,7 +19,7 @@ const tabs = computed(() => {
     { label: 'Cards', value: '/cards' },
     { label: 'Decks', value: '/decks' },
     { label: 'Sources', value: '/sources' },
-    { label: 'MCP', value: '/mcp' },
+    { label: 'MCP', value: '/mcp-setup' },
     { label: 'Settings', value: '/settings' },
   ]
   if (auth.isAdmin) {
