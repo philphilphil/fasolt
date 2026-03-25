@@ -211,8 +211,10 @@ public class CardService(AppDbContext db)
             card.FrontSvg = request.FrontSvg == "" ? null : SvgSanitizer.Sanitize(request.FrontSvg);
         if (request.BackSvg is not null)
             card.BackSvg = request.BackSvg == "" ? null : SvgSanitizer.Sanitize(request.BackSvg);
-        card.SourceFile = request.SourceFile;
-        card.SourceHeading = request.SourceHeading;
+        if (request.SourceFile is not null)
+            card.SourceFile = request.SourceFile == "" ? null : request.SourceFile;
+        if (request.SourceHeading is not null)
+            card.SourceHeading = request.SourceHeading == "" ? null : request.SourceHeading;
 
         if (request.DeckIds is not null)
         {
