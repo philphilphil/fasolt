@@ -32,6 +32,9 @@ const editFrontSvg = ref('')
 const editBackSvg = ref('')
 const saving = ref(false)
 const error = ref('')
+const resetOpen = ref(false)
+const resetting = ref(false)
+const resetSuccess = ref(false)
 
 const truncatedFront = computed(() => {
   if (!card.value) return ''
@@ -80,6 +83,22 @@ async function save() {
   }
 }
 
+async function confirmReset() {
+  if (!card.value) return
+  resetting.value = true
+  try {
+    card.value = await cardsStore.resetProgress(card.value.id)
+    resetOpen.value = false
+    resetSuccess.value = true
+    setTimeout(() => resetSuccess.value = false, 2000)
+  } catch {
+    error.value = 'Failed to reset progress. Please try again.'
+    resetOpen.value = false
+  } finally {
+    resetting.value = false
+  }
+}
+
 async function confirmDelete() {
   if (!card.value) return
   try {
@@ -111,6 +130,15 @@ async function confirmDelete() {
       </div>
       <div class="flex items-center gap-2">
         <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-[10px]" @click="startEdit">Edit</Button>
+        <Button
+          v-if="!editing"
+          variant="outline"
+          size="sm"
+          class="h-7 text-[10px] text-destructive hover:text-destructive"
+          @click="resetOpen = true"
+        >
+          Reset Progress
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -160,6 +188,8 @@ async function confirmDelete() {
         <div class="text-sm font-semibold mt-0.5">{{ formatDate(card.createdAt) }}</div>
       </div>
     </div>
+
+    <div v-if="resetSuccess" class="text-xs text-green-600 dark:text-green-400">Progress reset.</div>
 
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
@@ -248,6 +278,23 @@ async function confirmDelete() {
         <DialogFooter>
           <Button variant="outline" @click="deleteOpen = false">Cancel</Button>
           <Button variant="destructive" @click="confirmDelete">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog v-model:open="resetOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reset study progress</DialogTitle>
+          <DialogDescription>
+            This will clear all SRS data (stability, difficulty, scheduling) and return the card to "new" state.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="resetOpen = false">Cancel</Button>
+          <Button variant="destructive" :disabled="resetting" @click="confirmReset">
+            {{ resetting ? 'Resetting...' : 'Reset' }}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
