@@ -300,6 +300,26 @@ public class CardService(AppDbContext db)
             .ExecuteDeleteAsync();
     }
 
+    public async Task<CardDto?> ResetProgress(string userId, string publicId)
+    {
+        var card = await db.Cards
+            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
+            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
+
+        if (card is null) return null;
+
+        card.Stability = null;
+        card.Difficulty = null;
+        card.Step = null;
+        card.DueAt = null;
+        card.State = "new";
+        card.LastReviewedAt = null;
+
+        await db.SaveChangesAsync();
+
+        return ToDto(card);
+    }
+
     private static CardDto ToDto(Card c) =>
         new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
