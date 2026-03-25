@@ -8,9 +8,12 @@ namespace Fasolt.Server.Api.Endpoints;
 
 public static class NotificationEndpoints
 {
+    private static readonly int[] AllowedIntervals = [4, 6, 8, 10, 12, 24];
+
     public static void MapNotificationEndpoints(this WebApplication app)
     {
         var group = app.MapGroup("/api/notifications").RequireAuthorization().RequireRateLimiting("api");
+
         group.MapPut("/device-token", UpsertDeviceToken);
         group.MapDelete("/device-token", DeleteDeviceToken);
         group.MapGet("/settings", GetSettings);
@@ -18,19 +21,26 @@ public static class NotificationEndpoints
     }
 
     private static async Task<IResult> UpsertDeviceToken(
-        UpsertDeviceTokenRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         AppDbContext db,
-        TimeProvider timeProvider)
+        UpsertDeviceTokenRequest request)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var existing = await db.DeviceTokens.FirstOrDefaultAsync(t => t.UserId == user.Id);
-        var now = timeProvider.GetUtcNow();
+        if (string.IsNullOrWhiteSpace(request.Token))
+            return Results.BadRequest("Token is required.");
 
-        if (existing is null)
+        var existing = await db.DeviceTokens.FirstOrDefaultAsync(d => d.UserId == user.Id);
+        var now = DateTimeOffset.UtcNow;
+
+        if (existing is not null)
+        {
+            existing.Token = request.Token;
+            existing.UpdatedAt = now;
+        }
+        else
         {
             db.DeviceTokens.Add(new DeviceToken
             {
@@ -40,14 +50,9 @@ public static class NotificationEndpoints
                 UpdatedAt = now,
             });
         }
-        else
-        {
-            existing.Token = request.Token;
-            existing.UpdatedAt = now;
-        }
 
         await db.SaveChangesAsync();
-        return Results.Ok();
+        return Results.NoContent();
     }
 
     private static async Task<IResult> DeleteDeviceToken(
@@ -58,47 +63,49 @@ public static class NotificationEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var existing = await db.DeviceTokens.FirstOrDefaultAsync(t => t.UserId == user.Id);
+        var existing = await db.DeviceTokens.FirstOrDefaultAsync(d => d.UserId == user.Id);
         if (existing is not null)
         {
             db.DeviceTokens.Remove(existing);
             await db.SaveChangesAsync();
         }
 
-        return Results.Ok();
+        return Results.NoContent();
     }
 
     private static async Task<IResult> GetSettings(
         ClaimsPrincipal principal,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        AppDbContext db)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        return Results.Ok(new NotificationSettingsResponse(user.NotificationIntervalHours));
+        var hasToken = await db.DeviceTokens.AnyAsync(d => d.UserId == user.Id);
+
+        return Results.Ok(new NotificationSettingsResponse(
+            user.NotificationIntervalHours,
+            hasToken));
     }
 
     private static async Task<IResult> UpdateSettings(
-        NotificationSettingsRequest request,
         ClaimsPrincipal principal,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        UpdateNotificationSettingsRequest request)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        if (request.IntervalHours < 1 || request.IntervalHours > 24)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                ["intervalHours"] = ["Interval must be between 1 and 24 hours."]
-            });
+        if (!AllowedIntervals.Contains(request.IntervalHours))
+            return Results.BadRequest($"intervalHours must be one of: {string.Join(", ", AllowedIntervals)}");
 
         user.NotificationIntervalHours = request.IntervalHours;
         await userManager.UpdateAsync(user);
 
-        return Results.Ok(new NotificationSettingsResponse(user.NotificationIntervalHours));
+        return Results.NoContent();
     }
 }
 
 public record UpsertDeviceTokenRequest(string Token);
-public record NotificationSettingsRequest(int IntervalHours);
-public record NotificationSettingsResponse(int IntervalHours);
+public record UpdateNotificationSettingsRequest(int IntervalHours);
+public record NotificationSettingsResponse(int IntervalHours, bool HasDeviceToken);
