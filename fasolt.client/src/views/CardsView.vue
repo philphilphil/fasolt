@@ -1,41 +1,17 @@
 <script setup lang="ts">
-import { h, ref, onMounted, computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
-import type {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-} from '@tanstack/vue-table'
-import {
-  FlexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useVueTable,
-} from '@tanstack/vue-table'
-import { valueUpdater } from '@/lib/utils'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useCardsStore } from '@/stores/cards'
 import { useDecksStore } from '@/stores/decks'
 import type { Card } from '@/types'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
 import CardEditDialog from '@/components/CardEditDialog.vue'
+import CardTable from '@/components/CardTable.vue'
 
 const route = useRoute()
 const cardsStore = useCardsStore()
@@ -49,11 +25,17 @@ const createOpen = ref(false)
 const addToDeckCard = ref<Card | null>(null)
 const addToDeckId = ref('')
 
+const filterValue = ref('')
+const sourceFilter = ref('')
+const stateFilter = ref('')
+const activeOnly = ref(true)
+const deckFilter = ref('')
+
 onMounted(async () => {
   await Promise.all([cardsStore.fetchCards(), decks.fetchDecks()])
   const sf = route.query.sourceFile
   if (sf && typeof sf === 'string') {
-    applySourceFilter(sf)
+    sourceFilter.value = sf
   }
 })
 
@@ -85,109 +67,45 @@ async function addCardToDeck() {
   }
 }
 
-const columns: ColumnDef<Card>[] = [
-  {
-    accessorKey: 'front',
-    header: 'Front',
-    cell: ({ row }) => {
-      const val = row.getValue('front') as string
-      const display = val.length > 80 ? val.slice(0, 80) + '…' : val
-      const source = row.original.sourceFile
-      return h('div', { class: 'min-w-0' }, [
-        h(RouterLink, {
-          to: `/cards/${row.original.id}`,
-          class: 'hover:text-accent transition-colors',
-        }, () => display),
-        source
-          ? h('div', { class: 'truncate text-[11px] text-muted-foreground mt-0.5' }, source)
-          : null,
-      ])
-    },
-  },
-  {
-    id: 'source',
-    accessorFn: (row) => row.sourceFile ?? '',
-    filterFn: (row, _id, value) => !value || row.original.sourceFile === value,
-    enableHiding: false,
-  },
-  {
-    accessorKey: 'state',
-    header: 'State',
-    meta: { className: 'w-[80px]' },
-    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
-    filterFn: (row, _id, value) => !value || row.getValue('state') === value,
-  },
-  {
-    id: 'decks',
-    header: 'Decks',
-    meta: { className: 'w-[160px]' },
-    accessorFn: (row) => row.decks.map(d => d.name).join(', '),
-    cell: ({ row }) => {
-      const deckList = row.original.decks
-      return h('div', { class: 'flex flex-wrap gap-1' }, [
-        ...deckList.map(d => h(Badge, { key: d.id, variant: 'outline', class: 'text-[10px] whitespace-nowrap' }, () => d.name)),
-        h('button', {
-          class: 'text-[10px] text-muted-foreground hover:text-accent',
-          onClick: () => { addToDeckCard.value = row.original },
-        }, '+'),
-      ])
-    },
-  },
-  {
-    id: 'actions',
-    enableHiding: false,
-    meta: { className: 'w-[90px]' },
-    cell: ({ row }) => {
-      const card = row.original
-      return h('div', { class: 'flex gap-1' }, [
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => openEdit(card) }, () => 'Edit'),
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => { deleteTarget.value = card } }, () => '×'),
-      ])
-    },
-  },
-]
+const filteredCards = computed(() => {
+  let result = cardsStore.cards
 
-const sorting = ref<SortingState>([])
-const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({ source: false })
+  // Active filter: hide cards belonging only to inactive decks
+  if (activeOnly.value) {
+    result = result.filter(card => {
+      if (card.decks.length === 0) return true
+      return card.decks.some(d => {
+        const deck = decks.decks.find(dd => dd.id === d.id)
+        return deck ? deck.isActive : true
+      })
+    })
+  }
 
-const table = useVueTable({
-  get data() { return cardsStore.cards },
-  columns,
-  getCoreRowModel: getCoreRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
-  getSortedRowModel: getSortedRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
-  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
-  onColumnFiltersChange: updaterOrValue => valueUpdater(updaterOrValue, columnFilters),
-  onColumnVisibilityChange: updaterOrValue => valueUpdater(updaterOrValue, columnVisibility),
-  state: {
-    get sorting() { return sorting.value },
-    get columnFilters() { return columnFilters.value },
-    get columnVisibility() { return columnVisibility.value },
-  },
-  initialState: {
-    pagination: { pageSize: 20 },
-  },
+  // Deck filter
+  if (deckFilter.value === 'none') {
+    result = result.filter(card => card.decks.length === 0)
+  } else if (deckFilter.value) {
+    result = result.filter(card => card.decks.some(d => d.id === deckFilter.value))
+  }
+
+  // Text filter
+  if (filterValue.value) {
+    const q = filterValue.value.toLowerCase()
+    result = result.filter(card => card.front.toLowerCase().includes(q))
+  }
+
+  // Source filter
+  if (sourceFilter.value) {
+    result = result.filter(card => card.sourceFile === sourceFilter.value)
+  }
+
+  // State filter
+  if (stateFilter.value) {
+    result = result.filter(card => card.state === stateFilter.value)
+  }
+
+  return result
 })
-
-const filterValue = computed({
-  get: () => (table.getColumn('front')?.getFilterValue() as string) ?? '',
-  set: (val) => table.getColumn('front')?.setFilterValue(val),
-})
-
-const sourceFilter = ref('')
-const stateFilter = ref('')
-
-function applySourceFilter(val: string) {
-  sourceFilter.value = val
-  table.getColumn('source')?.setFilterValue(val || undefined)
-}
-
-function applyStateFilter(val: string) {
-  stateFilter.value = val
-  table.getColumn('state')?.setFilterValue(val || undefined)
-}
 </script>
 
 <template>
@@ -206,15 +124,13 @@ function applyStateFilter(val: string) {
         class="h-8 max-w-[200px] text-xs"
       />
       <Input
-        :value="sourceFilter"
+        v-model="sourceFilter"
         placeholder="Filter by source..."
         class="h-8 max-w-[200px] text-xs"
-        @input="applySourceFilter(($event.target as HTMLInputElement).value)"
       />
       <select
-        :value="stateFilter"
+        v-model="stateFilter"
         class="h-8 rounded border border-border bg-transparent px-2 text-xs text-foreground"
-        @change="applyStateFilter(($event.target as HTMLSelectElement).value)"
       >
         <option value="">All states</option>
         <option value="new">new</option>
@@ -222,82 +138,31 @@ function applyStateFilter(val: string) {
         <option value="review">review</option>
         <option value="relearning">relearning</option>
       </select>
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button variant="outline" size="sm" class="h-8 text-xs ml-auto">
-            Columns
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuCheckboxItem
-            v-for="column in table.getAllColumns().filter(c => c.getCanHide())"
-            :key="column.id"
-            class="capitalize text-xs"
-            :model-value="column.getIsVisible()"
-            @update:model-value="(value: boolean) => column.toggleVisibility(!!value)"
-          >
-            {{ column.id }}
-          </DropdownMenuCheckboxItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <select
+        v-model="deckFilter"
+        class="h-8 rounded border border-border bg-transparent px-2 text-xs text-foreground"
+      >
+        <option value="">All decks</option>
+        <option value="none">None (no deck)</option>
+        <option v-for="d in decks.decks" :key="d.id" :value="d.id">{{ d.name }}</option>
+      </select>
+      <label class="flex items-center gap-1.5 text-xs cursor-pointer">
+        <input type="checkbox" v-model="activeOnly" class="rounded border-border" />
+        Active
+      </label>
     </div>
 
     <!-- Table -->
-    <div class="rounded border border-border/60">
-      <Table>
-        <TableHeader>
-          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-            <TableHead
-              v-for="header in headerGroup.headers"
-              :key="header.id"
-              class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
-              :class="(header.column.columnDef.meta as any)?.className"
-              @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
-            >
-              <div class="flex items-center gap-1">
-                <FlexRender
-                  v-if="!header.isPlaceholder"
-                  :render="header.column.columnDef.header"
-                  :props="header.getContext()"
-                />
-                <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
-                <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
-              </div>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <template v-if="table.getRowModel().rows?.length">
-            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
-              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
-                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-              </TableCell>
-            </TableRow>
-          </template>
-          <template v-else>
-            <TableRow>
-              <TableCell :colspan="columns.length" class="h-24 text-center text-xs text-muted-foreground">
-                No cards yet. Create one or use the MCP agent to generate cards from your notes.
-              </TableCell>
-            </TableRow>
-          </template>
-        </TableBody>
-      </Table>
-    </div>
-
-    <!-- Pagination -->
-    <div v-if="table.getPageCount() > 1" class="flex items-center justify-between text-[11px] text-muted-foreground">
-      <span>{{ table.getFilteredRowModel().rows.length }} card(s)</span>
-      <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
-          Previous
-        </Button>
-        <span>Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}</span>
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
-          Next
-        </Button>
-      </div>
-    </div>
+    <CardTable
+      :cards="filteredCards"
+      show-decks
+      show-pagination
+      @edit="openEdit"
+      @delete="(card) => deleteTarget = card"
+      @add-to-deck="(card) => addToDeckCard = card"
+    >
+      <template #empty>No cards yet. Create one or use the MCP agent to generate cards from your notes.</template>
+    </CardTable>
 
     <!-- Dialogs -->
     <CardCreateDialog
@@ -318,7 +183,12 @@ function applyStateFilter(val: string) {
         <DialogHeader>
           <DialogTitle>Delete card</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this card? It will be removed from study.
+            <template v-if="deleteTarget?.decks?.length">
+              This card will be permanently deleted and removed from: <strong>{{ deleteTarget.decks.map(d => d.name).join(', ') }}</strong>.
+            </template>
+            <template v-else>
+              This card will be permanently deleted.
+            </template>
           </DialogDescription>
         </DialogHeader>
         <div v-if="deleteError" class="text-xs text-destructive">{{ deleteError }}</div>

@@ -1,0 +1,199 @@
+<script setup lang="ts">
+import { h, ref, computed } from 'vue'
+import { RouterLink } from 'vue-router'
+import type { ColumnDef, SortingState } from '@tanstack/vue-table'
+import {
+  FlexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useVueTable,
+} from '@tanstack/vue-table'
+import { valueUpdater } from '@/lib/utils'
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+
+const props = withDefaults(defineProps<{
+  cards: any[]
+  showDecks?: boolean
+  showPagination?: boolean
+  pageSize?: number
+}>(), {
+  showDecks: false,
+  showPagination: false,
+  pageSize: 20,
+})
+
+const emit = defineEmits<{
+  edit: [card: any]
+  delete: [card: any]
+  remove: [card: any]
+  addToDeck: [card: any]
+}>()
+
+function formatDue(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  return `${dd}.${mm}.${yyyy}`
+}
+
+const columns = computed<ColumnDef<any>[]>(() => {
+  const cols: ColumnDef<any>[] = [
+    {
+      accessorKey: 'front',
+      header: 'Front',
+      cell: ({ row }) => {
+        const val = row.getValue('front') as string
+        const display = val.length > 80 ? val.slice(0, 80) + '…' : val
+        const source = row.original.sourceFile
+        return h('div', { class: 'min-w-0' }, [
+          h(RouterLink, {
+            to: `/cards/${row.original.id}`,
+            class: 'hover:text-accent transition-colors',
+          }, () => display),
+          source
+            ? h('div', { class: 'truncate text-[11px] text-muted-foreground mt-0.5' }, source)
+            : null,
+        ])
+      },
+    },
+    {
+      accessorKey: 'state',
+      header: 'State',
+      meta: { className: 'w-[80px]' },
+      cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
+    },
+  ]
+
+  if (props.showDecks) {
+    cols.push({
+      id: 'decks',
+      header: 'Decks',
+      meta: { className: 'w-[160px]' },
+      accessorFn: (row) => row.decks?.map((d: any) => d.name).join(', ') ?? '',
+      cell: ({ row }) => {
+        const deckList = row.original.decks ?? []
+        return h('div', { class: 'flex flex-wrap gap-1' }, [
+          ...deckList.map((d: any) => h(Badge, { key: d.id, variant: 'outline', class: 'text-[10px] whitespace-nowrap' }, () => d.name)),
+          h('button', {
+            class: 'text-[10px] text-muted-foreground hover:text-accent',
+            onClick: () => emit('addToDeck', row.original),
+          }, '+'),
+        ])
+      },
+    })
+  }
+
+  cols.push({
+    accessorKey: 'dueAt',
+    header: 'Due',
+    meta: { className: 'w-[100px] whitespace-nowrap' },
+    cell: ({ row }) => h('span', { class: 'text-muted-foreground' }, formatDue(row.getValue('dueAt') as string | null)),
+  })
+
+  cols.push({
+    id: 'actions',
+    enableSorting: false,
+    enableHiding: false,
+    meta: { className: 'w-[90px]' },
+    cell: ({ row }) => {
+      const card = row.original
+      const buttons = [
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => emit('edit', card) }, () => 'Edit'),
+      ]
+      if (!props.showDecks) {
+        buttons.push(
+          h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => emit('remove', card) }, () => 'Remove'),
+        )
+      }
+      buttons.push(
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => emit('delete', card) }, () => '×'),
+      )
+      return h('div', { class: 'flex gap-1' }, buttons)
+    },
+  })
+
+  return cols
+})
+
+const sorting = ref<SortingState>([])
+
+const table = useVueTable({
+  get data() { return props.cards },
+  get columns() { return columns.value },
+  getCoreRowModel: getCoreRowModel(),
+  getPaginationRowModel: getPaginationRowModel(),
+  getSortedRowModel: getSortedRowModel(),
+  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
+  state: {
+    get sorting() { return sorting.value },
+  },
+  initialState: {
+    pagination: { pageSize: props.pageSize },
+  },
+})
+</script>
+
+<template>
+  <div class="rounded border border-border/60">
+    <Table>
+      <TableHeader>
+        <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+          <TableHead
+            v-for="header in headerGroup.headers"
+            :key="header.id"
+            class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
+            :class="(header.column.columnDef.meta as any)?.className"
+            @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
+          >
+            <div class="flex items-center gap-1">
+              <FlexRender
+                v-if="!header.isPlaceholder"
+                :render="header.column.columnDef.header"
+                :props="header.getContext()"
+              />
+              <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
+              <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
+            </div>
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <template v-if="table.getRowModel().rows?.length">
+          <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
+            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
+              <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+            </TableCell>
+          </TableRow>
+        </template>
+        <template v-else>
+          <TableRow>
+            <TableCell :colspan="columns.length" class="h-24 text-center text-xs text-muted-foreground">
+              <slot name="empty">No cards.</slot>
+            </TableCell>
+          </TableRow>
+        </template>
+      </TableBody>
+    </Table>
+  </div>
+
+  <!-- Pagination -->
+  <div v-if="showPagination && table.getPageCount() > 1" class="flex items-center justify-between text-[11px] text-muted-foreground mt-4">
+    <span>{{ table.getFilteredRowModel().rows.length }} card(s)</span>
+    <div class="flex items-center gap-2">
+      <Button variant="outline" size="sm" class="h-7 text-[10px]" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+        Previous
+      </Button>
+      <span>Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}</span>
+      <Button variant="outline" size="sm" class="h-7 text-[10px]" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+        Next
+      </Button>
+    </div>
+  </div>
+</template>

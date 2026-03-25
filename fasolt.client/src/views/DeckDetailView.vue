@@ -1,30 +1,22 @@
 <script setup lang="ts">
-import { h, ref, onMounted, computed } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import type { ColumnDef, SortingState } from '@tanstack/vue-table'
-import {
-  FlexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useVueTable,
-} from '@tanstack/vue-table'
-import { valueUpdater } from '@/lib/utils'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
-import type { DeckDetail, DeckCard } from '@/types'
+import { useCardsStore } from '@/stores/cards'
+import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
+import CardEditDialog from '@/components/CardEditDialog.vue'
+import CardTable from '@/components/CardTable.vue'
 
 const route = useRoute()
 const router = useRouter()
 const decks = useDecksStore()
+const cardsStore = useCardsStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
@@ -37,11 +29,10 @@ const deleteOpen = ref(false)
 const deleteCards = ref(false)
 const deleteError = ref('')
 
-function formatDate(iso: string | null): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-}
+const editTarget = ref<any>(null)
+const editCardOpen = ref(false)
+const deleteCardTarget = ref<any>(null)
+const deleteCardError = ref('')
 
 onMounted(async () => {
   try {
@@ -99,77 +90,29 @@ async function toggleActive() {
   deck.value = { ...deck.value, isActive: updated.isActive }
 }
 
-const columns: ColumnDef<DeckCard>[] = [
-  {
-    accessorKey: 'front',
-    header: 'Front',
-    cell: ({ row }) => {
-      const val = row.getValue('front') as string
-      const display = val.length > 80 ? val.slice(0, 80) + '…' : val
-      const source = row.original.sourceFile
-      const hasSvg = row.original.frontSvg || row.original.backSvg
-      return h('div', { class: 'min-w-0' }, [
-        h('div', { class: 'flex items-center gap-1.5' }, [
-          h(RouterLink, {
-            to: `/cards/${row.original.id}`,
-            class: 'hover:text-accent transition-colors',
-          }, () => display),
-          hasSvg
-            ? h('span', { class: 'text-muted-foreground', title: 'Has SVG image' }, '◆')
-            : null,
-        ]),
-        source
-          ? h('div', { class: 'truncate text-[11px] text-muted-foreground mt-0.5' }, source)
-          : null,
-      ])
-    },
-  },
-  {
-    accessorKey: 'state',
-    header: 'State',
-    meta: { className: 'w-[80px]' },
-    cell: ({ row }) => h(Badge, { variant: 'outline', class: 'text-[10px]' }, () => row.getValue('state')),
-  },
-  {
-    accessorKey: 'dueAt',
-    header: 'Due',
-    meta: { className: 'w-[120px] hidden sm:table-cell' },
-    cell: ({ row }) => h('span', { class: 'text-muted-foreground' }, formatDate(row.getValue('dueAt') as string | null)),
-  },
-  {
-    id: 'actions',
-    enableSorting: false,
-    meta: { className: 'w-[70px]' },
-    cell: ({ row }) => h(Button, {
-      variant: 'ghost',
-      size: 'sm',
-      class: 'h-6 text-[10px] text-destructive hover:text-destructive',
-      onClick: () => removeCard(row.original.id),
-    }, () => 'Remove'),
-  },
-]
+function openEditCard(card: any) {
+  editTarget.value = card
+  editCardOpen.value = true
+}
 
-const sorting = ref<SortingState>([])
-
-const cardData = computed(() => deck.value?.cards ?? [])
+async function confirmDeleteCard() {
+  if (!deleteCardTarget.value) return
+  deleteCardError.value = ''
+  try {
+    await cardsStore.deleteCard(deleteCardTarget.value.id)
+    deleteCardTarget.value = null
+    await refresh()
+  } catch {
+    deleteCardError.value = 'Failed to delete card.'
+  }
+}
 
 const stateCounts = computed(() => {
   const counts: Record<string, number> = {}
-  for (const c of cardData.value) {
+  for (const c of deck.value?.cards ?? []) {
     counts[c.state] = (counts[c.state] || 0) + 1
   }
   return counts
-})
-
-const table = useVueTable({
-  get data() { return cardData.value },
-  columns,
-  getCoreRowModel: getCoreRowModel(),
-  getSortedRowModel: getSortedRowModel(),
-  onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
-  state: {
-    get sorting() { return sorting.value },
-  },
 })
 </script>
 
@@ -235,46 +178,22 @@ const table = useVueTable({
     <div>
       <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Cards in this deck</div>
 
-      <!-- Card table -->
-      <div v-if="deck.cards.length > 0" class="rounded border border-border/60">
-        <Table>
-          <TableHeader>
-            <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-              <TableHead
-                v-for="header in headerGroup.headers"
-                :key="header.id"
-                class="h-9 text-[10px] uppercase tracking-[0.15em] text-muted-foreground cursor-pointer select-none"
-                :class="(header.column.columnDef.meta as any)?.className"
-                @click="header.column.getCanSort() ? header.column.toggleSorting() : undefined"
-              >
-                <div class="flex items-center gap-1">
-                  <FlexRender
-                    v-if="!header.isPlaceholder"
-                    :render="header.column.columnDef.header"
-                    :props="header.getContext()"
-                  />
-                  <span v-if="header.column.getIsSorted() === 'asc'" class="text-accent">↑</span>
-                  <span v-else-if="header.column.getIsSorted() === 'desc'" class="text-accent">↓</span>
-                </div>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
-              <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
-                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+      <CardTable
+        v-if="deck.cards.length > 0"
+        :cards="deck.cards"
+        @edit="openEditCard"
+        @delete="(card) => deleteCardTarget = card"
+        @remove="(card) => removeCard(card.id)"
+      >
+        <template #empty>No cards in this deck yet.</template>
+      </CardTable>
 
       <div v-else class="py-12 text-center text-xs text-muted-foreground">
         No cards in this deck yet. Add cards from the Cards view.
       </div>
     </div>
 
-    <!-- Edit dialog -->
+    <!-- Edit deck dialog -->
     <Dialog v-model:open="editOpen">
       <DialogContent>
         <DialogHeader>
@@ -290,7 +209,7 @@ const table = useVueTable({
       </DialogContent>
     </Dialog>
 
-    <!-- Delete confirmation dialog -->
+    <!-- Delete deck dialog -->
     <Dialog v-model:open="deleteOpen">
       <DialogContent>
         <DialogHeader>
@@ -309,6 +228,30 @@ const table = useVueTable({
         <DialogFooter class="gap-2">
           <Button variant="outline" size="sm" @click="deleteOpen = false">Cancel</Button>
           <Button variant="destructive" size="sm" @click="handleDelete">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Edit card dialog -->
+    <CardEditDialog
+      v-model:open="editCardOpen"
+      :card="editTarget"
+      @updated="refresh()"
+    />
+
+    <!-- Delete card dialog -->
+    <Dialog :open="!!deleteCardTarget" @update:open="deleteCardTarget = null">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete card</DialogTitle>
+          <DialogDescription>
+            This card will be permanently deleted.
+          </DialogDescription>
+        </DialogHeader>
+        <div v-if="deleteCardError" class="text-xs text-destructive">{{ deleteCardError }}</div>
+        <DialogFooter>
+          <Button variant="outline" @click="deleteCardTarget = null">Cancel</Button>
+          <Button variant="destructive" @click="confirmDeleteCard">Delete</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
