@@ -17,9 +17,9 @@ const { isDark, toggle } = useDarkMode()
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <span class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-          <img src="/logo.svg" alt="fasolt" class="h-7 object-contain" />
+          <img src="/logo.svg" alt="fasolt" class="h-10 object-contain" />
           fasolt
-          <span class="rounded border border-accent/30 bg-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-accent">beta</span>
+          <span class="rounded border border-accent/30 bg-accent/10 px-1 text-[8px] leading-4 font-medium text-accent">beta</span>
         </span>
         <div class="flex items-center gap-2">
           <button
