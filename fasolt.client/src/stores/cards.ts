@@ -11,8 +11,9 @@ export const useCardsStore = defineStore('cards', () => {
   async function fetchCards(sourceFile?: string) {
     loading.value = true
     try {
-      const params = sourceFile ? `?sourceFile=${encodeURIComponent(sourceFile)}` : ''
-      const response = await apiFetch<PaginatedResponse<Card>>(`/cards${params}`)
+      const params = new URLSearchParams({ limit: '200' })
+      if (sourceFile) params.set('sourceFile', sourceFile)
+      const response = await apiFetch<PaginatedResponse<Card>>(`/cards?${params}`)
       cards.value = response.items
     } finally {
       loading.value = false
