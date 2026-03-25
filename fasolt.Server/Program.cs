@@ -205,6 +205,18 @@ builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<SourceService>();
 builder.Services.AddScoped<OverviewService>();
 
+var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
+if (apnsSettings is not null && !string.IsNullOrEmpty(apnsSettings.KeyId))
+{
+    builder.Services.AddSingleton(apnsSettings);
+    builder.Services.AddHttpClient<ApnsService>()
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            EnableMultipleHttp2Connections = true,
+        });
+    builder.Services.AddHostedService<NotificationBackgroundService>();
+}
+
 builder.Services.AddFSRS(options =>
 {
     options.DesiredRetention = 0.9;
