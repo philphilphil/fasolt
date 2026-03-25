@@ -3,92 +3,120 @@ using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Infrastructure.Services;
 
-public class NotificationBackgroundService : BackgroundService
+public class NotificationBackgroundService(
+    IServiceScopeFactory scopeFactory,
+    ApnsService apnsService,
+    ILogger<NotificationBackgroundService> logger) : BackgroundService
 {
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<NotificationBackgroundService> _logger;
-    private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(1);
-
-    public NotificationBackgroundService(
-        IServiceScopeFactory scopeFactory,
-        ILogger<NotificationBackgroundService> logger)
-    {
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-    }
+    private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Notification background service started.");
+        logger.LogInformation("NotificationBackgroundService started, running every {Interval}", Interval);
 
-        using var timer = new PeriodicTimer(CheckInterval);
+        using var timer = new PeriodicTimer(Interval);
 
-        do
+        // Run once immediately on startup, then on each tick
+        await ProcessNotifications(stoppingToken);
+
+        while (await timer.WaitForNextTickAsync(stoppingToken))
         {
-            try
-            {
-                await SendPendingNotificationsAsync(stoppingToken);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                _logger.LogError(ex, "Error in notification background service.");
-            }
+            await ProcessNotifications(stoppingToken);
         }
-        while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 
-    private async Task SendPendingNotificationsAsync(CancellationToken stoppingToken)
+    private async Task ProcessNotifications(CancellationToken stoppingToken)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var apns = scope.ServiceProvider.GetRequiredService<ApnsService>();
+        logger.LogInformation("Checking for users with due cards to notify");
 
-        var now = DateTimeOffset.UtcNow;
-
-        // Find all device tokens where the user has due cards and is past their notification interval
-        var candidates = await db.DeviceTokens
-            .Include(d => d.User)
-            .Where(d =>
-                (d.User.LastNotifiedAt == null ||
-                 d.User.LastNotifiedAt.Value.AddHours(d.User.NotificationIntervalHours) <= now))
-            .ToListAsync(stoppingToken);
-
-        foreach (var deviceToken in candidates)
+        try
         {
-            if (stoppingToken.IsCancellationRequested) break;
+            using var scope = scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var now = DateTimeOffset.UtcNow;
 
-            var dueCount = await db.Cards
-                .CountAsync(c =>
-                    c.UserId == deviceToken.UserId &&
-                    (c.DueAt == null || c.DueAt <= now) &&
-                    (!c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive)),
-                    stoppingToken);
+            var eligibleUsers = await db.DeviceTokens
+                .Include(d => d.User)
+                .Where(d =>
+                    d.User.LastNotifiedAt == null ||
+                    d.User.LastNotifiedAt.Value.AddHours(d.User.NotificationIntervalHours) <= now)
+                .Select(d => new
+                {
+                    d.UserId,
+                    d.Token,
+                    d.User.NotificationIntervalHours,
+                })
+                .ToListAsync(stoppingToken);
 
-            if (dueCount == 0) continue;
+            logger.LogInformation("Found {Count} eligible users to check", eligibleUsers.Count);
 
-            var title = "Cards due for review";
-            var body = dueCount == 1
-                ? "You have 1 card due for review."
-                : $"You have {dueCount} cards due for review.";
-
-            _logger.LogInformation(
-                "Sending notification to user {UserId}: {DueCount} due cards.", deviceToken.UserId, dueCount);
-
-            var success = await apns.SendNotification(deviceToken.Token, title, body, dueCount);
-
-            if (!success)
+            foreach (var entry in eligibleUsers)
             {
-                // Token is invalid (410 Gone) — remove it
-                _logger.LogInformation("Removing invalid device token for user {UserId}.", deviceToken.UserId);
-                db.DeviceTokens.Remove(deviceToken);
-                await db.SaveChangesAsync(stoppingToken);
-            }
-            else
-            {
-                // Update LastNotifiedAt
-                deviceToken.User.LastNotifiedAt = now;
-                await db.SaveChangesAsync(stoppingToken);
+                if (stoppingToken.IsCancellationRequested) break;
+
+                try
+                {
+                    await ProcessUserNotification(db, entry.UserId, entry.Token, now, stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to process notification for user {UserId}", entry.UserId);
+                }
             }
         }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during notification processing cycle");
+        }
+    }
+
+    private async Task ProcessUserNotification(
+        AppDbContext db, string userId, string deviceToken,
+        DateTimeOffset now, CancellationToken stoppingToken)
+    {
+        var dueCardsByDeck = await db.Cards
+            .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now))
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive))
+            .SelectMany(c => c.DeckCards.DefaultIfEmpty(),
+                (card, deckCard) => new { DeckName = deckCard != null ? deckCard.Deck.Name : null })
+            .GroupBy(x => x.DeckName ?? "Unsorted")
+            .Select(g => new { DeckName = g.Key, Count = g.Count() })
+            .ToListAsync(stoppingToken);
+
+        var totalDue = dueCardsByDeck.Sum(g => g.Count);
+
+        if (totalDue == 0)
+        {
+            logger.LogDebug("User {UserId} has no due cards, skipping", userId);
+            return;
+        }
+
+        var deckBreakdown = string.Join(", ",
+            dueCardsByDeck.OrderByDescending(g => g.Count).Select(g => $"{g.Count} in {g.DeckName}"));
+        var body = $"You have {totalDue} card{(totalDue == 1 ? "" : "s")} due: {deckBreakdown}";
+        var title = "Cards due";
+
+        var tokenValid = await apnsService.SendNotification(deviceToken, title, body, totalDue);
+
+        if (!tokenValid)
+        {
+            var token = await db.DeviceTokens.FirstOrDefaultAsync(d => d.UserId == userId, stoppingToken);
+            if (token is not null)
+            {
+                db.DeviceTokens.Remove(token);
+                await db.SaveChangesAsync(stoppingToken);
+                logger.LogInformation("Removed invalid device token for user {UserId}", userId);
+            }
+            return;
+        }
+
+        var user = await db.Users.FindAsync([userId], stoppingToken);
+        if (user is not null)
+        {
+            user.LastNotifiedAt = now;
+            await db.SaveChangesAsync(stoppingToken);
+        }
+
+        logger.LogInformation("Sent notification to user {UserId}: {TotalDue} cards due", userId, totalDue);
     }
 }

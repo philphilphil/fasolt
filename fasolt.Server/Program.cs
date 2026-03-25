@@ -9,6 +9,7 @@ using Fasolt.Server.Infrastructure.Data;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Infrastructure.Services;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using FSRS.Core.Extensions;
 using OpenIddict.Validation.AspNetCore;
 
@@ -113,13 +114,9 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
     options.TokenLifespan = TimeSpan.FromHours(1);
 });
 
-var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
-if (dpKeysPath is not null)
-{
-    builder.Services.AddDataProtection()
-        .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath))
-        .SetApplicationName("fasolt");
-}
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<AppDbContext>()
+    .SetApplicationName("fasolt");
 
 if (builder.Environment.IsDevelopment())
     builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
@@ -209,11 +206,7 @@ var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
 if (apnsSettings is not null && !string.IsNullOrEmpty(apnsSettings.KeyId))
 {
     builder.Services.AddSingleton(apnsSettings);
-    builder.Services.AddHttpClient<ApnsService>()
-        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-        {
-            EnableMultipleHttp2Connections = true,
-        });
+    builder.Services.AddHttpClient<ApnsService>();
     builder.Services.AddHostedService<NotificationBackgroundService>();
 }
 
