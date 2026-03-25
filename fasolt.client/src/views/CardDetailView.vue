@@ -82,8 +82,13 @@ async function save() {
 
 async function confirmDelete() {
   if (!card.value) return
-  await cardsStore.deleteCard(card.value.id)
-  router.replace('/cards')
+  try {
+    await cardsStore.deleteCard(card.value.id)
+    router.replace('/cards')
+  } catch {
+    error.value = 'Failed to delete card. Please try again.'
+    deleteOpen.value = false
+  }
 }
 </script>
 

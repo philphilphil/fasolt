@@ -15,6 +15,7 @@ const decks = useDecksStore()
 const newName = ref('')
 const newDescription = ref('')
 const dialogOpen = ref(false)
+const createError = ref('')
 
 onMounted(() => decks.fetchDecks())
 
@@ -28,10 +29,15 @@ const sortedDecks = computed(() =>
 async function createDeck() {
   const name = newName.value.trim()
   if (!name) return
-  await decks.createDeck(name, newDescription.value.trim() || undefined)
-  newName.value = ''
-  newDescription.value = ''
-  dialogOpen.value = false
+  createError.value = ''
+  try {
+    await decks.createDeck(name, newDescription.value.trim() || undefined)
+    newName.value = ''
+    newDescription.value = ''
+    dialogOpen.value = false
+  } catch {
+    createError.value = 'Failed to create deck. Please try again.'
+  }
 }
 </script>
 
@@ -51,6 +57,7 @@ async function createDeck() {
             <Input v-model="newName" placeholder="Deck name" @keydown.enter="createDeck" />
             <Input v-model="newDescription" placeholder="Description (optional)" @keydown.enter="createDeck" />
           </div>
+          <div v-if="createError" class="text-xs text-destructive">{{ createError }}</div>
           <DialogFooter>
             <Button @click="createDeck">Create</Button>
           </DialogFooter>

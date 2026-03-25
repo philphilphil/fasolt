@@ -35,6 +35,7 @@ const editDescription = ref('')
 
 const deleteOpen = ref(false)
 const deleteCards = ref(false)
+const deleteError = ref('')
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
@@ -77,8 +78,13 @@ function openDelete() {
 
 async function handleDelete() {
   if (!deck.value) return
-  await decks.deleteDeck(deck.value.id, deleteCards.value)
-  router.replace('/decks')
+  deleteError.value = ''
+  try {
+    await decks.deleteDeck(deck.value.id, deleteCards.value)
+    router.replace('/decks')
+  } catch {
+    deleteError.value = 'Failed to delete deck. Please try again.'
+  }
 }
 
 async function removeCard(cardId: string) {
@@ -299,6 +305,7 @@ const table = useVueTable({
             Also delete all {{ deck.cardCount }} cards in this deck
           </label>
         </div>
+        <div v-if="deleteError" class="text-xs text-destructive">{{ deleteError }}</div>
         <DialogFooter class="gap-2">
           <Button variant="outline" size="sm" @click="deleteOpen = false">Cancel</Button>
           <Button variant="destructive" size="sm" @click="handleDelete">Delete</Button>
