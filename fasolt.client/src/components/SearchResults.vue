@@ -43,7 +43,7 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
 
 <template>
   <div
-    class="absolute left-0 top-full mt-1 z-50 w-[500px] max-h-[70vh] overflow-y-auto rounded border border-border/60 bg-popover shadow-lg"
+    class="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-50 w-[500px] max-h-[70vh] overflow-y-auto rounded border border-border/60 bg-popover shadow-lg"
   >
     <div v-if="isLoading" class="px-3 py-6 text-center text-[11px] text-muted-foreground">
       Searching...
