@@ -8,6 +8,7 @@ using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Infrastructure.Services;
+using Microsoft.AspNetCore.DataProtection;
 using FSRS.Core.Extensions;
 using OpenIddict.Validation.AspNetCore;
 
@@ -111,6 +112,14 @@ builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
     options.TokenLifespan = TimeSpan.FromHours(1);
 });
+
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"];
+if (dpKeysPath is not null)
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(dpKeysPath))
+        .SetApplicationName("fasolt");
+}
 
 if (builder.Environment.IsDevelopment())
     builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
@@ -388,6 +397,7 @@ app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapOAuthEndpoints();
 app.MapAdminEndpoints();
+app.MapNotificationEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
 app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
