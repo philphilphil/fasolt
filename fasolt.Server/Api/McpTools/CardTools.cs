@@ -30,7 +30,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Each card can include SVG images for front and/or back. Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
+    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Each card can include SVG images for front and/or back (use a landscape viewBox like '0 0 400 250' for best display). Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
     public async Task<string> CreateCards(
         [Description("Array of cards to create. Each card needs 'front' and 'back' text, plus optional 'sourceFile' and 'sourceHeading'.")] List<BulkCardItem> cards,
         [Description("Default source file name for all cards (individual cards can override)")] string? sourceFile = null,
@@ -117,11 +117,11 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Add an SVG image to a card. LLMs can generate SVG diagrams, charts, chemical structures, math visualizations, etc. The SVG is sanitized server-side for security.")]
+    [McpServerTool, Description("Add an SVG image to a card. LLMs can generate SVG diagrams, charts, chemical structures, math visualizations, etc. The SVG is sanitized server-side for security. Use a landscape viewBox like '0 0 400 250' for best display across web and mobile.")]
     public async Task<string> AddSvgToCard(
         [Description("Card ID")] string cardId,
         [Description("Which side: 'front' or 'back'")] string side,
-        [Description("Raw SVG markup (must start with <svg)")] string svg)
+        [Description("Raw SVG markup (must start with <svg). Use a landscape viewBox (e.g. '0 0 400 250') — avoid square or portrait ratios as they may be clipped on mobile.")] string svg)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 
