@@ -39,7 +39,6 @@ public class TestDb : IAsyncDisposable
             NormalizedUserName = "TEST@FASOLT.TEST",
             Email = "test@fasolt.test",
             NormalizedEmail = "TEST@FASOLT.TEST",
-            DisplayName = "Test User",
             EmailConfirmed = true,
             SecurityStamp = Guid.NewGuid().ToString(),
         });
