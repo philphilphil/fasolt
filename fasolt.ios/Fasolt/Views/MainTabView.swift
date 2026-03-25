@@ -57,7 +57,8 @@ struct MainTabView: View {
             }
 
             SettingsView(
-                viewModel: SettingsViewModel(apiClient: apiClient)
+                viewModel: SettingsViewModel(apiClient: apiClient),
+                notificationViewModel: NotificationSettingsViewModel(apiClient: apiClient)
             )
             .tabItem {
                 Label("Settings", systemImage: "gear")

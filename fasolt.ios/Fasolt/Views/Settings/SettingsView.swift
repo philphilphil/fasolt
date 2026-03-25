@@ -3,10 +3,12 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AuthService.self) private var authService
     @State private var viewModel: SettingsViewModel
+    @State private var notificationViewModel: NotificationSettingsViewModel
     @State private var showSignOutConfirmation = false
 
-    init(viewModel: SettingsViewModel) {
+    init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel) {
         _viewModel = State(initialValue: viewModel)
+        _notificationViewModel = State(initialValue: notificationViewModel)
     }
 
     var body: some View {
@@ -41,6 +43,45 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Notifications") {
+                    if notificationViewModel.isLoading {
+                        HStack {
+                            Text("Loading...")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            ProgressView()
+                        }
+                    } else {
+                        LabeledContent("Permission", value: notificationViewModel.permissionLabel)
+                            .onTapGesture {
+                                if notificationViewModel.isPermissionDenied {
+                                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                }
+                            }
+
+                        if notificationViewModel.hasDeviceToken {
+                            Picker("Check interval", selection: Binding(
+                                get: { notificationViewModel.intervalHours },
+                                set: { newValue in
+                                    Task { await notificationViewModel.updateInterval(newValue) }
+                                }
+                            )) {
+                                ForEach(NotificationSettingsViewModel.allowedIntervals, id: \.self) { hours in
+                                    Text("Every \(hours)h").tag(hours)
+                                }
+                            }
+                        }
+
+                        if let error = notificationViewModel.errorMessage {
+                            Text(error)
+                                .foregroundStyle(.red)
+                                .font(.caption)
+                        }
+                    }
+                }
+
                 Section {
                     Button("Sign Out", role: .destructive) {
                         showSignOutConfirmation = true
@@ -63,6 +104,7 @@ struct SettingsView: View {
             }
             .task {
                 await viewModel.loadUserInfo()
+                await notificationViewModel.load()
             }
         }
     }
