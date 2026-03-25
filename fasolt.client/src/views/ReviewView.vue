@@ -75,6 +75,9 @@ function onDone() {
         />
       </div>
 
+      <!-- Rating error -->
+      <div v-if="review.error" class="mt-3 text-center text-xs text-destructive">{{ review.error }}</div>
+
       <!-- Rating buttons -->
       <div v-if="review.isFlipped" class="mt-5">
         <RatingButtons @rate="onRate" />
@@ -104,5 +107,11 @@ function onDone() {
       :rating-counts="review.sessionStats"
       @done="onDone"
     />
+
+    <!-- Error state -->
+    <div v-else-if="review.error" class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+      <div class="text-sm text-destructive">{{ review.error }}</div>
+      <button class="text-xs text-accent hover:underline" @click="router.push('/dashboard')">Back to dashboard</button>
+    </div>
   </div>
 </template>

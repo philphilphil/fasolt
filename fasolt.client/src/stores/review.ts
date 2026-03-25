@@ -9,6 +9,7 @@ export const useReviewStore = defineStore('review', () => {
   const isFlipped = ref(false)
   const isActive = ref(false)
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   const sessionStats = ref({
     reviewed: 0,
@@ -38,6 +39,7 @@ export const useReviewStore = defineStore('review', () => {
 
   async function startSession(deckId?: string) {
     loading.value = true
+    error.value = null
     try {
       const params = deckId ? `?deckId=${deckId}` : ''
       const cards = await apiFetch<DueCard[]>(`/review/due${params}`)
@@ -46,6 +48,8 @@ export const useReviewStore = defineStore('review', () => {
       isFlipped.value = false
       isActive.value = true
       sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, startTime: Date.now() }
+    } catch {
+      error.value = 'Failed to load review session. Please try again.'
     } finally {
       loading.value = false
     }
@@ -59,19 +63,24 @@ export const useReviewStore = defineStore('review', () => {
     const card = currentCard.value
     if (!card) return
 
-    await apiFetch('/review/rate', {
-      method: 'POST',
-      body: JSON.stringify({ cardId: card.id, rating }),
-    })
+    error.value = null
+    try {
+      await apiFetch('/review/rate', {
+        method: 'POST',
+        body: JSON.stringify({ cardId: card.id, rating }),
+      })
 
-    sessionStats.value.reviewed++
-    sessionStats.value[rating]++
-    if (rating === 'again') {
-      queue.value.push({ ...card })
+      sessionStats.value.reviewed++
+      sessionStats.value[rating]++
+      if (rating === 'again') {
+        queue.value.push({ ...card })
+      }
+
+      currentIndex.value++
+      isFlipped.value = false
+    } catch {
+      error.value = 'Failed to submit rating. Please try again.'
     }
-
-    currentIndex.value++
-    isFlipped.value = false
   }
 
   function endSession() {
@@ -86,7 +95,7 @@ export const useReviewStore = defineStore('review', () => {
   }
 
   return {
-    queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading,
+    queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error,
     progress, sessionStats, sessionTime,
     startSession, flipCard, rate, endSession, fetchStats,
   }
