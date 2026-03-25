@@ -203,9 +203,13 @@ builder.Services.AddScoped<SourceService>();
 builder.Services.AddScoped<OverviewService>();
 
 var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
-if (apnsSettings is not null && !string.IsNullOrEmpty(apnsSettings.KeyId))
+var apnsKeyReady = apnsSettings is not null &&
+    !string.IsNullOrEmpty(apnsSettings.KeyId) &&
+    (!string.IsNullOrEmpty(apnsSettings.KeyBase64) ||
+     (!string.IsNullOrEmpty(apnsSettings.KeyPath) && File.Exists(apnsSettings.KeyPath)));
+if (apnsKeyReady)
 {
-    builder.Services.AddSingleton(apnsSettings);
+    builder.Services.AddSingleton(apnsSettings!);
     builder.Services.AddHttpClient<ApnsService>();
     builder.Services.AddHostedService<NotificationBackgroundService>();
 }
