@@ -133,3 +133,7 @@ Always use agent teams (`TeamCreate`) instead of plain subagents when paralleliz
 - `/api/identity/*` — ASP.NET Core Identity endpoints (register, login, etc.)
 - `POST /api/cards/bulk` — bulk card creation with duplicate detection
 - `GET /api/sources` — source file listing with card counts
+
+## GitHub Operations
+ 
+Use the **GitHub CLI** (`gh`) for GitHub-related tasks (issues, PRs, workflow runs, repo metadata) instead of GitHub MCP tools.
