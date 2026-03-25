@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */; };
+		E1F2A3B4C5D6E7F8A9B0C1D2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C3D4E5F607A8B9C0D1 /* Assets.xcassets */; };
 		0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */; };
 		B3C4D5E6F7081920A1B2C3D4 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */; };
 		0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876CBB32009796B1341C8D59 /* NetworkMonitor.swift */; };
@@ -97,6 +98,7 @@
 		C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListView.swift; sourceTree = "<group>"; };
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
+		F0A1B2C3D4E5F607A8B9C0D1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
 		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
@@ -184,6 +186,7 @@
 		406BF6FA047EF7D1DAB0A476 /* Fasolt */ = {
 			isa = PBXGroup;
 			children = (
+				F0A1B2C3D4E5F607A8B9C0D1 /* Assets.xcassets */,
 				D826424A31F1413445EC6650 /* FasoltApp.swift */,
 				BD321B13FDCABFE8C7BA3698 /* Info.plist */,
 				B1A82847EFBF9036CA088344 /* Models */,
@@ -317,6 +320,7 @@
 			buildConfigurationList = 7583FE033174CCE6AF6B8758 /* Build configuration list for PBXNativeTarget "Fasolt" */;
 			buildPhases = (
 				AF65FE4909FA5CE76E0C3B4E /* Sources */,
+				C2D3E4F5A6B7C8D9E0F1A2B3 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -423,6 +427,17 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C2D3E4F5A6B7C8D9E0F1A2B3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1F2A3B4C5D6E7F8A9B0C1D2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		604265D23E30AE6876FF1A10 /* PBXTargetDependency */ = {
