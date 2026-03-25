@@ -39,7 +39,7 @@ final class SyncService {
             }
 
             wasConnected = isConnected
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: .seconds(30))
         }
     }
 
