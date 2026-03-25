@@ -320,7 +320,12 @@ async function confirmDelete() {
         <DialogHeader>
           <DialogTitle>Delete card</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this card? It will be removed from study.
+            <template v-if="card.decks.length > 0">
+              This card will be permanently deleted and removed from: <strong>{{ card.decks.map(d => d.name).join(', ') }}</strong>.
+            </template>
+            <template v-else>
+              This card will be permanently deleted.
+            </template>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
