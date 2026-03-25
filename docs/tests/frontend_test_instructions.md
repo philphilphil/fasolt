@@ -2,6 +2,8 @@
 
 Test the entire frontend using Playwright MCP. Start the full stack (`./dev.sh`) before testing.
 
+**IMPORTANT: Never skip a test.** Every test in this document must be executed. If a test cannot be run due to missing data (e.g., pagination requires >20 cards), note it as N/A with a reason — do not silently skip it.
+
 **Login credentials:** `dev@fasolt.local` / `Dev1234!`
 
 ---
