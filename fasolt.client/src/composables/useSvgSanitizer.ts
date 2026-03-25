@@ -1,6 +1,6 @@
-import DOMPurify from 'dompurify'
+import DOMPurify, { type Config } from 'dompurify'
 
-const SVG_CONFIG: DOMPurify.Config = {
+const SVG_CONFIG: Config = {
   USE_PROFILES: { svg: true, svgFilters: true },
   ADD_TAGS: [],
   FORBID_TAGS: ['foreignObject', 'script', 'style'],
@@ -12,5 +12,5 @@ const SVG_CONFIG: DOMPurify.Config = {
 // already strips external href values — this is defense-in-depth only.
 
 export function sanitizeSvg(svg: string): string {
-  return DOMPurify.sanitize(svg, SVG_CONFIG)
+  return DOMPurify.sanitize(svg, SVG_CONFIG) as string
 }

@@ -17,6 +17,8 @@ describe('types', () => {
       dueAt: null,
       state: 'new',
       lastReviewedAt: null,
+      frontSvg: null,
+      backSvg: null,
       decks: [],
     }
     expect(card.sourceFile).toBe('notes.md')
@@ -36,6 +38,8 @@ describe('types', () => {
       dueAt: null,
       state: 'new',
       lastReviewedAt: null,
+      frontSvg: null,
+      backSvg: null,
       decks: [],
     }
     expect((card as any)['fileId']).toBeUndefined()
@@ -55,6 +59,8 @@ describe('types', () => {
       dueAt: null,
       state: 'new',
       lastReviewedAt: null,
+      frontSvg: null,
+      backSvg: null,
       decks: [],
     }
     expect((card as any)['cardType']).toBeUndefined()
@@ -68,6 +74,8 @@ describe('types', () => {
       sourceFile: 'notes.md',
       sourceHeading: '## Overview',
       state: 'learning',
+      frontSvg: null,
+      backSvg: null,
     }
     expect(dueCard.sourceFile).toBe('notes.md')
   })
@@ -80,6 +88,8 @@ describe('types', () => {
       sourceFile: null,
       sourceHeading: null,
       state: 'new',
+      frontSvg: null,
+      backSvg: null,
     }
     expect((dueCard as any)['fileId']).toBeUndefined()
   })
@@ -92,6 +102,8 @@ describe('types', () => {
       sourceFile: null,
       sourceHeading: null,
       state: 'new',
+      frontSvg: null,
+      backSvg: null,
     }
     expect((dueCard as any)['cardType']).toBeUndefined()
   })
