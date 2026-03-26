@@ -10,18 +10,14 @@ struct DeckCardRow: View {
                 .font(.body)
                 .lineLimit(2)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 if let sourceFile = card.sourceFile {
                     Label(sourceFile, systemImage: "doc.text")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
                 if let deckNames, !deckNames.isEmpty {
                     Label(deckNames.joined(separator: ", "), systemImage: "rectangle.stack")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
@@ -29,7 +25,6 @@ struct DeckCardRow: View {
 
                 if let dueText = formattedDueDate(card.dueAt) {
                     Text(dueText)
-                        .font(.caption2)
                         .foregroundStyle(isDueOrOverdue(card.dueAt) ? .orange : .secondary)
                 }
 
@@ -40,7 +35,9 @@ struct DeckCardRow: View {
                     .background(stateColor(card.state).opacity(0.15), in: Capsule())
                     .foregroundStyle(stateColor(card.state))
             }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 }
