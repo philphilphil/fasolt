@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RegisterView: View {
     @Environment(AuthService.self) private var authService
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = RegisterViewModel()
     let serverURL: String
 
@@ -96,6 +97,11 @@ struct RegisterView: View {
         }
         .navigationTitle("Create Account")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: authService.registrationSuccess) { _, success in
+            if success {
+                dismiss()
+            }
+        }
     }
 }
 

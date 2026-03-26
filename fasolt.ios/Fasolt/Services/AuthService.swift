@@ -107,9 +107,12 @@ final class AuthService {
         isLoading = false
     }
 
+    var registrationSuccess = false
+
     func register(email: String, password: String, serverURL: String) async {
         isLoading = true
         errorMessage = nil
+        registrationSuccess = false
 
         let previousServerURL = keychain.retrieve("fasolt.serverURL")
         keychain.save(serverURL, forKey: "fasolt.serverURL")
@@ -119,9 +122,8 @@ final class AuthService {
             let endpoint = Endpoint(path: "/api/identity/register", method: .post, body: body)
             try await apiClient.unauthenticatedRequest(endpoint)
 
-            authLogger.info("Registration succeeded, starting auto sign-in")
-            await signIn(serverURL: serverURL)
-            return
+            authLogger.info("Registration succeeded")
+            registrationSuccess = true
         } catch {
             restoreServerURL(previous: previousServerURL)
             if let apiError = error as? APIError {

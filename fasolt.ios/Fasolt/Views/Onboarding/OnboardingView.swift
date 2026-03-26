@@ -4,6 +4,7 @@ struct OnboardingView: View {
     @Environment(AuthService.self) private var authService
     @State private var showServerField = false
     @State private var serverURL = AuthService.defaultServerURL
+    @State private var showRegistrationSuccess = false
     private static let selfHostDefault = "http://localhost:8080"
 
     var body: some View {
@@ -71,6 +72,14 @@ struct OnboardingView: View {
                 }
                 .padding(.horizontal)
 
+                if showRegistrationSuccess {
+                    Text("Account created! Sign in to get started.")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+
                 if let error = authService.errorMessage {
                     Text(error)
                         .font(.caption)
@@ -92,6 +101,12 @@ struct OnboardingView: View {
 
                 Spacer()
                     .frame(height: 40)
+            }
+            .onChange(of: authService.registrationSuccess) { _, success in
+                if success {
+                    showRegistrationSuccess = true
+                    authService.registrationSuccess = false
+                }
             }
         }
     }
