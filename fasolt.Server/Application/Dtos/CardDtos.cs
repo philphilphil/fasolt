@@ -35,3 +35,16 @@ public record UpdateCardResult(UpdateCardStatus Status, CardDto? Card = null)
     public static UpdateCardResult NotFound() => new(UpdateCardStatus.NotFound);
     public static UpdateCardResult Collision() => new(UpdateCardStatus.Collision);
 }
+
+public record BulkUpdateCardItem(
+    string? CardId = null,
+    string? SourceFile = null,
+    string? Front = null,
+    string? NewFront = null,
+    string? NewBack = null,
+    string? NewSourceFile = null,
+    string? NewSourceHeading = null,
+    string? NewFrontSvg = null,
+    string? NewBackSvg = null);
+
+public record BulkUpdateCardResult(string? CardId, string? SourceFile, string? Front, UpdateCardStatus Status, CardDto? Card = null);
