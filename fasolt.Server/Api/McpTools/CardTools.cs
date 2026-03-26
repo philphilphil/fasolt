@@ -57,64 +57,40 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(response, McpJson.Options);
     }
 
-    [McpServerTool, Description("Delete one or more cards by their IDs.")]
+    [McpServerTool, Description("Delete cards by IDs or by source file. Provide cardIds to delete specific cards, or sourceFile to delete all cards from that source.")]
     public async Task<string> DeleteCards(
-        [Description("List of card IDs to delete")] List<string> cardIds)
+        [Description("List of card IDs to delete")] List<string>? cardIds = null,
+        [Description("Delete all cards from this source file")] string? sourceFile = null)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var count = await cardService.DeleteCards(userId, cardIds);
+
+        if (cardIds is null && sourceFile is null)
+            return JsonSerializer.Serialize(new { error = "Provide cardIds or sourceFile" }, McpJson.Options);
+
+        var count = 0;
+        if (cardIds is not null && cardIds.Count > 0)
+            count += await cardService.DeleteCards(userId, cardIds);
+        if (sourceFile is not null)
+            count += await cardService.DeleteCardsBySource(userId, sourceFile);
+
         return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Update an existing card's text or source metadata. Preserves all review/SRS history. Look up by card ID, or by sourceFile + front (case-insensitive).")]
-    public async Task<string> UpdateCard(
-        [Description("Card ID (provide this or sourceFile + front)")] string? cardId = null,
-        [Description("Source file for natural key lookup (with front)")] string? sourceFile = null,
-        [Description("Current front text for natural key lookup (with sourceFile)")] string? front = null,
-        [Description("New front text")] string? newFront = null,
-        [Description("New back text")] string? newBack = null,
-        [Description("New source file")] string? newSourceFile = null,
-        [Description("New source heading")] string? newSourceHeading = null,
-        [Description("New SVG image for front (raw SVG markup). Empty string clears.")] string? newFrontSvg = null,
-        [Description("New SVG image for back (raw SVG markup). Empty string clears.")] string? newBackSvg = null)
+    [McpServerTool, Description("Update one or more existing cards' text or source metadata. Preserves all review/SRS history. Each card can be looked up by cardId, or by sourceFile + front (case-insensitive natural key).")]
+    public async Task<string> UpdateCards(
+        [Description("Array of card updates. Each needs a lookup key (cardId, or sourceFile + front) and at least one field to update (newFront, newBack, newSourceFile, newSourceHeading, newFrontSvg, newBackSvg).")] List<BulkUpdateCardItem> cards)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 
-        if (newFront is null && newBack is null && newSourceFile is null && newSourceHeading is null && newFrontSvg is null && newBackSvg is null)
-            return JsonSerializer.Serialize(new { error = "Provide at least one field to update" }, McpJson.Options);
+        if (cards.Count == 0)
+            return JsonSerializer.Serialize(new { error = "Provide at least one card to update" }, McpJson.Options);
 
-        var req = new UpdateCardFieldsRequest(newFront, newBack, newSourceFile, newSourceHeading, newFrontSvg, newBackSvg);
-
-        UpdateCardResult result;
-        if (cardId is not null)
+        var results = await cardService.BulkUpdateCards(userId, cards);
+        return JsonSerializer.Serialize(new
         {
-            result = await cardService.UpdateCardFields(userId, cardId, req);
-        }
-        else if (sourceFile is not null && front is not null)
-        {
-            result = await cardService.UpdateCardByNaturalKey(userId, sourceFile, front, req);
-        }
-        else
-        {
-            return JsonSerializer.Serialize(new { error = "Provide cardId or both sourceFile and front" }, McpJson.Options);
-        }
-
-        return result.Status switch
-        {
-            UpdateCardStatus.Success => JsonSerializer.Serialize(result.Card, McpJson.Options),
-            UpdateCardStatus.NotFound => JsonSerializer.Serialize(new { error = "Card not found" }, McpJson.Options),
-            UpdateCardStatus.Collision => JsonSerializer.Serialize(new { error = "A card with this front text already exists for this source" }, McpJson.Options),
-            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
-        };
-    }
-
-    [McpServerTool, Description("Delete all cards from a specific source file. Use when a source file has been deleted or needs to be fully re-synced.")]
-    public async Task<string> DeleteCardsBySource(
-        [Description("Exact source file name to match")] string sourceFile)
-    {
-        var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var count = await cardService.DeleteCardsBySource(userId, sourceFile);
-        return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
+            updated = results.Count(r => r.Status == UpdateCardStatus.Success),
+            results
+        }, McpJson.Options);
     }
 
     [McpServerTool, Description("Add an SVG image to a card. LLMs can generate SVG diagrams, charts, chemical structures, math visualizations, etc. The SVG is sanitized server-side for security. Use a landscape viewBox like '0 0 400 250' for best display across web and mobile.")]
