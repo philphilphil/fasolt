@@ -186,8 +186,28 @@ public class DeckService(AppDbContext db)
         await db.SaveChangesAsync();
         return RemoveCardResult.Success;
     }
+
+    public async Task<RemoveCardsResult> RemoveCards(string userId, string deckPublicId, List<string> cardPublicIds)
+    {
+        var deck = await db.Decks
+            .FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
+
+        if (deck is null) return new RemoveCardsResult(false, 0);
+
+        var cardIds = await db.Cards
+            .Where(c => c.UserId == userId && cardPublicIds.Contains(c.PublicId))
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        var removed = await db.DeckCards
+            .Where(dc => dc.DeckId == deck.Id && cardIds.Contains(dc.CardId))
+            .ExecuteDeleteAsync();
+
+        return new RemoveCardsResult(true, removed);
+    }
 }
 
 public record DeleteDeckResult(bool Deleted, int DeletedCardCount);
 public enum AddCardsResult { Success, DeckNotFound, CardsNotFound }
 public enum RemoveCardResult { Success, DeckNotFound, CardNotFound }
+public record RemoveCardsResult(bool DeckFound, int RemovedCount);
