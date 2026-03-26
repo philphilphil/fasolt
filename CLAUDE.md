@@ -165,6 +165,10 @@ Always use agent teams (`TeamCreate`) instead of plain subagents when paralleliz
 - `/api/oauth/*` — OAuth consent flow (OpenIddict)
 - `/api/admin/*` — admin-only endpoints
 
+## Production Infrastructure
+
+Production runs behind **Cloudflare -> Traefik -> app container**. TLS is terminated at Cloudflare/Traefik, not at the .NET app. `TrustAllProxies=true` in `appsettings.Production.json` is intentional — the app is not directly reachable from the internet.
+
 ## GitHub Operations
  
 Use the **GitHub CLI** (`gh`) for GitHub-related tasks (issues, PRs, workflow runs, repo metadata) instead of GitHub MCP tools.
