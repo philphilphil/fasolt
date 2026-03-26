@@ -21,9 +21,9 @@ Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at 
 
 ## How It Works
 
-1. **Write notes** — Obsidian, any editor, plain text. No special format required.
-2. **Your AI creates flashcards** — ask your agent to read a file and push cards to fasolt via MCP
-3. **Study** — review due cards in the browser or iOS app, FSRS schedules reviews at increasing intervals
+1. **Write notes**: Obsidian, any editor, plain text. No special format required.
+2. **Your AI creates flashcards**: ask your agent to read a file and push cards to fasolt via MCP
+3. **Study**: review due cards in the browser or iOS app, FSRS schedules reviews at increasing intervals
 
 ## Features
 
@@ -37,31 +37,16 @@ Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at 
 - Native iOS app with offline support
 - Self-hostable via Docker
 
-## Tech Stack
+## iOS App
 
-| Layer | Tech |
-|-------|------|
-| Backend | .NET 10, ASP.NET Core Minimal API, EF Core + Npgsql |
-| Frontend | Vue 3 + TypeScript + Vite, shadcn-vue, Tailwind CSS 3, Pinia |
-| Database | Postgres 17 |
-| Auth | ASP.NET Core Identity + OpenIddict (OAuth 2.0 for MCP) |
-| MCP | Built into the backend, streamable HTTP transport at `/mcp` |
+Native iOS app (Swift / SwiftUI) for studying on the go. Syncs with the backend, supports offline review with automatic sync when back online, and receives push notifications when cards are due.
 
-## Quick Start
-
-Prerequisites: Docker, .NET 10 SDK, Node.js
-
-```bash
-./dev.sh  # starts Postgres, backend, and frontend
-```
-
-Or run individually:
-
-```bash
-docker compose up -d                    # Postgres on :5432
-dotnet run --project fasolt.Server      # API on :8080
-cd fasolt.client && npm run dev         # UI on :5173
-```
+<p align="center">
+  <img src="docs/media/ios_screenshot_front.png" alt="iOS study question" width="200" />
+  <img src="docs/media/ios_screenshot_back.png" alt="iOS study answer" width="200" />
+  <img src="docs/media/ios_screenshot_dashboard.png" alt="iOS dashboard" width="200" />
+  <img src="docs/media/ios_screenshot_sessionComplete.png" alt="iOS session complete" width="200" />
+</p>
 
 ## MCP
 
@@ -81,16 +66,28 @@ You:   "Create flashcards from my kubernetes-notes.md"
 Agent: reads local file → checks for duplicates → creates cards via MCP → done
 ```
 
-## iOS App
+## Tech Stack
 
-Native iOS app (Swift / SwiftUI) for studying on the go. Syncs with the backend, supports offline review with automatic sync when back online, and receives push notifications when cards are due.
+| Layer | Tech |
+|-------|------|
+| Backend | .NET 10, ASP.NET Core Minimal API, EF Core + Npgsql |
+| Frontend | Vue 3 + TypeScript + Vite, shadcn-vue, Tailwind CSS 3, Pinia |
+| Database | Postgres 17 |
+| Auth | ASP.NET Core Identity + OpenIddict (OAuth 2.0 for MCP) |
+| MCP | Built into the backend, streamable HTTP transport at `/mcp` |
 
-<p align="center">
-  <img src="docs/media/ios_screenshot_front.png" alt="iOS study question" width="200" />
-  <img src="docs/media/ios_screenshot_back.png" alt="iOS study answer" width="200" />
-  <img src="docs/media/ios_screenshot_dashboard.png" alt="iOS dashboard" width="200" />
-  <img src="docs/media/ios_screenshot_sessionComplete.png" alt="iOS session complete" width="200" />
-</p>
+## Quick Start
+
+Prerequisites: Docker, .NET 10 SDK, Node.js
+
+```bash
+./dev.sh                                # starts everything
+
+# or manually:
+docker compose up -d                    # Postgres on :5432
+dotnet run --project fasolt.Server      # API on :8080
+cd fasolt.client && npm run dev         # UI on :5173
+```
 
 ## Project Structure
 
