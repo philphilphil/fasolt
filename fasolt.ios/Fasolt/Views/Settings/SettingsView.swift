@@ -43,6 +43,8 @@ struct SettingsView: View {
                     }
                 }
 
+                McpSetupSection(serverURL: authService.serverURL)
+
                 Section("Notifications") {
                     if notificationViewModel.isLoading {
                         HStack {

@@ -45,6 +45,7 @@
 		DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3794A93C12869786BF3468EE /* OnboardingView.swift */; };
 		DE25E56E67F5F61423E84C00 /* DeckCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9097BB7014F064BF83F77689 /* DeckCardRow.swift */; };
 		DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */; };
+		F2E1D0C9B8A7F6E5D4C3B2A1 /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */; };
 		E50B3F152B8C3621E6E74FCF /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E2E5EDB31357B7ECA46E216 /* AuthService.swift */; };
 		ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E947CBD44E199505935FEF /* OfflineBanner.swift */; };
 		EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */; };
@@ -82,7 +83,7 @@
 		63A881609787DFFE078B49DC /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
 		69E947CBD44E199505935FEF /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
-		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -102,9 +103,10 @@
 		C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListView.swift; sourceTree = "<group>"; };
 		CE0A6615C77BF475BDCC9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = McpSetupSection.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
-		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
@@ -297,6 +299,7 @@
 		FE8B084DED433EFBAE5D318F /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */,
 				CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -351,10 +354,6 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					4F956779CD90F71E3B11F6C2 = {
-						DevelopmentTeam = 6CR38F5CRX;
-						ProvisioningStyle = Automatic;
-					};
-					F6269CF138DC181FCA900973 = {
 						DevelopmentTeam = 6CR38F5CRX;
 						ProvisioningStyle = Automatic;
 					};
@@ -437,6 +436,7 @@
 				ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */,
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
+				F2E1D0C9B8A7F6E5D4C3B2A1 /* McpSetupSection.swift in Sources */,
 				DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */,
 				0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */,
 				0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
@@ -557,11 +557,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Fasolt/Fasolt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6CR38F5CRX;
 				INFOPLIST_FILE = Fasolt/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -573,13 +575,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Fasolt/Fasolt.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Distribution";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6CR38F5CRX;
 				INFOPLIST_FILE = Fasolt/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
