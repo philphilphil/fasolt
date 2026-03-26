@@ -1,3 +1,2 @@
-// Local signing config — copy to local.xcconfig and fill in your team ID
+// Local signing overrides — copy to local.overrides.xcconfig and fill in your team ID
 DEVELOPMENT_TEAM = YOUR_TEAM_ID
-CODE_SIGN_STYLE = Automatic

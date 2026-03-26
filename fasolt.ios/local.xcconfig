@@ -1,0 +1,7 @@
+// Base signing config — committed to git
+// Xcode Cloud uses automatic signing with these defaults.
+// For local overrides (e.g., DEVELOPMENT_TEAM), create local.overrides.xcconfig.
+
+CODE_SIGN_STYLE = Automatic
+
+#include? "local.overrides.xcconfig"
