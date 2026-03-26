@@ -55,6 +55,11 @@ struct DashboardView: View {
             .task {
                 await viewModel.loadStats()
             }
+            .onAppear {
+                if viewModel.totalCards > 0 || viewModel.errorMessage != nil {
+                    Task { await viewModel.loadStats() }
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadStats() }
             }
