@@ -139,25 +139,6 @@ struct OverviewDTO: Decodable, Sendable {
     let totalSources: Int
 }
 
-// MARK: - Search
-
-struct SearchResponse: Decodable, Sendable {
-    let cards: [CardSearchResult]
-    let decks: [DeckSearchResult]
-}
-
-struct CardSearchResult: Decodable, Sendable, Identifiable {
-    let id: String
-    let headline: String
-    let state: String
-}
-
-struct DeckSearchResult: Decodable, Sendable, Identifiable {
-    let id: String
-    let headline: String
-    let cardCount: Int
-}
-
 // MARK: - Pagination
 
 struct PaginatedResponse<T: Decodable & Sendable>: Decodable, Sendable {

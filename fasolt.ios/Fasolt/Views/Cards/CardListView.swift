@@ -27,8 +27,8 @@ struct CardListView: View {
                             Task { await viewModel.loadCards() }
                         }
                     }
-                } else if viewModel.isSearching {
-                    searchResultsList
+                } else if viewModel.isSearching && sortedCards(viewModel.filteredCards).isEmpty {
+                    ContentUnavailableView.search(text: viewModel.searchText)
                 } else {
                     cardsList
                 }
@@ -68,34 +68,9 @@ struct CardListView: View {
         }
     }
 
-    private var searchResultsList: some View {
-        Group {
-            if let results = viewModel.searchResults {
-                if results.isEmpty {
-                    ContentUnavailableView.search(text: viewModel.searchText)
-                } else {
-                    List(results) { result in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(result.headline)
-                                    .lineLimit(2)
-                                Text(result.state.capitalized)
-                                    .font(.caption)
-                                    .foregroundStyle(stateColor(result.state))
-                            }
-                            Spacer()
-                        }
-                    }
-                }
-            } else {
-                ProgressView()
-            }
-        }
-    }
-
     private var cardsList: some View {
         List {
-            ForEach(sortedCards(viewModel.cards)) { card in
+            ForEach(sortedCards(viewModel.filteredCards)) { card in
                 NavigationLink {
                     CardDetailView(
                         card: card,
@@ -107,14 +82,6 @@ struct CardListView: View {
                         deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
                     )
                 }
-            }
-
-            if viewModel.hasMore {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .task {
-                        await viewModel.loadMore()
-                    }
             }
         }
     }
