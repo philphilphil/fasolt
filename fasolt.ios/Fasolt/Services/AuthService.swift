@@ -107,6 +107,73 @@ final class AuthService {
         isLoading = false
     }
 
+    func register(email: String, password: String, serverURL: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        let previousServerURL = keychain.retrieve("fasolt.serverURL")
+        keychain.save(serverURL, forKey: "fasolt.serverURL")
+
+        do {
+            let body = RegisterRequest(email: email, password: password)
+            let endpoint = Endpoint(path: "/api/identity/register", method: .post, body: body)
+            let _: EmptyResponse = try await apiClient.unauthenticatedRequest(endpoint)
+
+            authLogger.info("Registration succeeded, starting auto sign-in")
+            await signIn(serverURL: serverURL)
+            return
+        } catch let error as APIError {
+            if let previousServerURL {
+                keychain.save(previousServerURL, forKey: "fasolt.serverURL")
+            } else {
+                keychain.delete("fasolt.serverURL")
+            }
+            errorMessage = Self.registrationErrorMessage(from: error)
+        } catch {
+            if let previousServerURL {
+                keychain.save(previousServerURL, forKey: "fasolt.serverURL")
+            } else {
+                keychain.delete("fasolt.serverURL")
+            }
+            errorMessage = "Registration failed. Please try again."
+        }
+
+        isLoading = false
+    }
+
+    private static func registrationErrorMessage(from error: APIError) -> String {
+        switch error {
+        case .badRequest(let detail):
+            guard let detail else { return "Registration failed. Please try again." }
+            let lower = detail.lowercased()
+            if lower.contains("duplicate") || lower.contains("already taken") {
+                return "An account with this email already exists."
+            }
+            if lower.contains("too short") || lower.contains("too few") {
+                return "Password must be at least 8 characters."
+            }
+            if lower.contains("uppercase") {
+                return "Password must contain an uppercase letter."
+            }
+            if lower.contains("lowercase") {
+                return "Password must contain a lowercase letter."
+            }
+            if lower.contains("digit") || lower.contains("number") {
+                return "Password must contain a number."
+            }
+            if lower.contains("email") {
+                return "Please enter a valid email address."
+            }
+            return detail
+        case .serverError(_, let detail):
+            return detail ?? "Registration failed. Please try again."
+        case .networkError:
+            return "Could not connect. Check your internet connection."
+        default:
+            return "Registration failed. Please try again."
+        }
+    }
+
     func signOut() async {
         let service = NotificationService(apiClient: apiClient)
         await service.deleteDeviceToken()

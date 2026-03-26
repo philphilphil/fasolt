@@ -34,6 +34,11 @@ struct TokenResponse: Decodable, Sendable {
     }
 }
 
+struct RegisterRequest: Codable, Sendable {
+    let email: String
+    let password: String
+}
+
 // MARK: - Cards
 
 struct CardDTO: Decodable, Sendable, Identifiable {
@@ -169,3 +174,5 @@ struct NotificationSettingsResponse: Decodable, Sendable {
 struct UpdateNotificationSettingsRequest: Encodable, Sendable {
     let intervalHours: Int
 }
+
+struct EmptyResponse: Decodable {}
