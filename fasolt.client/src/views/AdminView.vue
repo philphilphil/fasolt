@@ -122,7 +122,7 @@ function prevPage() {
 async function pushToUser(user: AdminUser) {
   pushingUserId.value = user.id
   try {
-    const result = await apiFetch<{ message: string }>(`/admin/users/${user.id}/push`, { method: 'POST' })
+    await apiFetch<{ message: string }>(`/admin/users/${user.id}/push`, { method: 'POST' })
     errorMessage.value = null
     await fetchLogs()
   } catch (e: any) {
