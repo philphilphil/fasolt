@@ -40,9 +40,8 @@ final class CardRepository {
                 switch error {
                 case .networkError:
                     logger.warning("Network error rating card \(cardId), queueing offline")
-                    break
                 default:
-                    throw error
+                    logger.warning("API error rating card \(cardId): \(error), queueing offline")
                 }
             }
         }

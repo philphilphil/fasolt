@@ -58,7 +58,7 @@ final class SyncService {
 
         logger.info("Flushing \(pending.count) pending reviews")
 
-        for review in pending {
+        flushLoop: for review in pending {
             do {
                 let body = RateCardRequest(cardId: review.cardPublicId, rating: review.rating)
                 let endpoint = Endpoint(path: "/api/review/rate", method: .post, body: body)
@@ -74,7 +74,7 @@ final class SyncService {
                 case .networkError:
                     // Lost connectivity mid-flush — stop, retry later
                     logger.info("Lost connectivity during flush — will retry")
-                    break
+                    break flushLoop
                 default:
                     logger.error("Failed to sync review for \(review.cardPublicId): \(error)")
                 }

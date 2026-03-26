@@ -3,9 +3,9 @@ import os
 
 private let apiLogger = Logger(subsystem: "com.fasolt.app", category: "API")
 
-final class APIClient: @unchecked Sendable {
-    private let session: URLSession
-    private let keychain: KeychainHelper
+actor APIClient {
+    nonisolated let session: URLSession
+    nonisolated let keychain: KeychainHelper
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
@@ -18,7 +18,7 @@ final class APIClient: @unchecked Sendable {
         self.decoder = JSONDecoder()
     }
 
-    var baseURL: String? {
+    nonisolated var baseURL: String? {
         keychain.retrieve("fasolt.serverURL")
     }
 
@@ -89,7 +89,7 @@ final class APIClient: @unchecked Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         if authenticated {
-            try await injectAuth(&request)
+            request = try await injectAuth(request)
         }
 
         if let body = endpoint.body {
@@ -103,7 +103,7 @@ final class APIClient: @unchecked Sendable {
             apiLogger.warning("401 for \(endpoint.path), attempting token refresh")
             if try await refreshTokenCoalesced() {
                 apiLogger.info("Refresh succeeded, retrying \(endpoint.path)")
-                try await injectAuth(&request)
+                request = try await injectAuth(request)
                 let (retryData, retryResponse) = try await performRaw(request)
                 if let retryHttp = retryResponse as? HTTPURLResponse {
                     apiLogger.info("Retry \(endpoint.path): \(retryHttp.statusCode)")
@@ -129,7 +129,8 @@ final class APIClient: @unchecked Sendable {
         }
     }
 
-    private func injectAuth(_ request: inout URLRequest) async throws {
+    private func injectAuth(_ request: URLRequest) async throws -> URLRequest {
+        var request = request
         guard let token = keychain.retrieve("fasolt.accessToken") else {
             throw APIError.unauthorized
         }
@@ -142,7 +143,7 @@ final class APIClient: @unchecked Sendable {
                     throw APIError.unauthorized
                 }
                 request.setValue("Bearer \(newToken)", forHTTPHeaderField: "Authorization")
-                return
+                return request
             } else {
                 throw APIError.unauthorized
             }
@@ -150,6 +151,7 @@ final class APIClient: @unchecked Sendable {
 
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         apiLogger.debug("Token injected (length: \(token.count))")
+        return request
     }
 
     private func refreshTokenCoalesced() async throws -> Bool {
