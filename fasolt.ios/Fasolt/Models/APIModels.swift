@@ -57,6 +57,7 @@ struct CardDTO: Decodable, Sendable, Identifiable {
 struct CardDeckInfoDTO: Decodable, Sendable {
     let id: String
     let name: String
+    let isActive: Bool
 }
 
 // MARK: - Decks

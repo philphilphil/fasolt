@@ -46,6 +46,8 @@ struct CardListView: View {
                                 Text(order.rawValue).tag(order)
                             }
                         }
+
+                        Toggle("Active Only", isOn: $viewModel.hideInactive)
                     } label: {
                         Label("Sort", systemImage: "arrow.up.arrow.down")
                     }

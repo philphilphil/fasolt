@@ -10,6 +10,7 @@ final class CardListViewModel {
     var isLoading = false
     var errorMessage: String?
     var searchText = ""
+    var hideInactive = false
 
     private let apiClient: APIClient
     private static let maxCards = 5000
@@ -19,9 +20,17 @@ final class CardListViewModel {
     }
 
     var filteredCards: [CardDTO] {
+        var result = cards
+
+        if hideInactive {
+            result = result.filter { card in
+                card.decks.isEmpty || card.decks.contains(where: \.isActive)
+            }
+        }
+
         let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return cards }
-        return cards.filter { card in
+        guard !query.isEmpty else { return result }
+        return result.filter { card in
             card.front.localizedCaseInsensitiveContains(query) ||
             card.back.localizedCaseInsensitiveContains(query) ||
             (card.sourceFile?.localizedCaseInsensitiveContains(query) ?? false) ||

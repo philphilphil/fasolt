@@ -137,7 +137,7 @@ public class CardService(AppDbContext db)
             c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back,
             c.State, c.CreatedAt,
             deckId is not null
-                ? [new CardDeckInfoDto(deckId, "")]
+                ? [new CardDeckInfoDto(deckId, "", true)]
                 : [],
             c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
             c.FrontSvg, c.BackSvg)).ToList();
@@ -176,7 +176,7 @@ public class CardService(AppDbContext db)
         var cards = await query
             .Take(take + 1)
             .Select(c => new CardDto(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
+                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsActive)).ToList(),
                 c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
                 c.FrontSvg, c.BackSvg))
             .ToListAsync();
@@ -343,7 +343,7 @@ public class CardService(AppDbContext db)
 
     private static CardDto ToDto(Card c) =>
         new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name)).ToList(),
+            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsActive)).ToList(),
             c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
             c.FrontSvg, c.BackSvg);
 

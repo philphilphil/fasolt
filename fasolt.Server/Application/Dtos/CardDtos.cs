@@ -17,7 +17,7 @@ public record CardDto(
     double? Difficulty = null, int? Step = null,
     DateTimeOffset? LastReviewedAt = null,
     string? FrontSvg = null, string? BackSvg = null);
-public record CardDeckInfoDto(string Id, string Name);
+public record CardDeckInfoDto(string Id, string Name, bool IsActive);
 
 public record UpdateCardFieldsRequest(
     string? NewFront = null,
