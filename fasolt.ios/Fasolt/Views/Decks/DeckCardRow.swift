@@ -11,13 +11,6 @@ struct DeckCardRow: View {
                 .lineLimit(2)
 
             HStack(spacing: 6) {
-                if let sourceFile = card.sourceFile {
-                    HStack(spacing: 2) {
-                        Image(systemName: "doc.text")
-                        Text(sourceFile)
-                    }
-                }
-
                 if let deckNames, !deckNames.isEmpty {
                     HStack(spacing: 2) {
                         Image(systemName: "rectangle.stack")
