@@ -14,13 +14,13 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_USER: spaced
-          POSTGRES_PASSWORD: spaced_dev
+          POSTGRES_USER: fasolt
+          POSTGRES_PASSWORD: fasolt_dev
           POSTGRES_DB: fasolt
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U spaced"
+          --health-cmd "pg_isready -U fasolt"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5

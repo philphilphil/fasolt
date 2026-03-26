@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Image } from 'lucide-vue-next'
 import { formatDateDot } from '@/lib/formatDate'
 
 const router = useRouter()
@@ -45,11 +46,15 @@ const columns = computed<ColumnDef<any>[]>(() => {
         const val = row.getValue('front') as string
         const display = val.length > 80 ? val.slice(0, 80) + '…' : val
         const source = row.original.sourceFile
+        const hasSvg = row.original.frontSvg || row.original.backSvg
         return h('div', { class: 'min-w-0' }, [
-          h(RouterLink, {
-            to: `/cards/${row.original.id}`,
-            class: 'hover:text-accent transition-colors',
-          }, () => display),
+          h('div', { class: 'flex items-center gap-1.5' }, [
+            h(RouterLink, {
+              to: `/cards/${row.original.id}`,
+              class: 'hover:text-accent transition-colors',
+            }, () => display),
+            hasSvg ? h(Image, { class: 'size-3 text-muted-foreground shrink-0' }) : null,
+          ]),
           source
             ? h('div', { class: 'truncate text-[11px] text-muted-foreground mt-0.5' }, source)
             : null,

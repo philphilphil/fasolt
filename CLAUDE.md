@@ -50,11 +50,15 @@ Endpoints use the static extension method pattern (e.g., `MapHealthEndpoints()`)
 ## Repository Structure
 
 ```
-docker-compose.yml          — Postgres container
+docker-compose.yml          — Postgres container (dev)
+docker-compose.prod.yml     — production compose
+Dockerfile                  — production container build
 dev.sh                      — runs everything (docker + backend + frontend)
-fasolt.sln               — .NET solution
-fasolt.Server/           — backend (includes remote MCP server)
-fasolt.client/           — frontend (Vue 3 SPA)
+fasolt.sln                  — .NET solution
+fasolt.Server/              — backend (includes remote MCP server)
+fasolt.client/              — frontend (Vue 3 SPA)
+fasolt.Tests/               — .NET unit/integration tests
+fasolt.ios/                 — iOS app (Swift/Xcode)
 ```
 
 ## Build & Run
@@ -82,10 +86,11 @@ docker compose down          # stop Postgres
 
 ## Connection String
 
-`Host=localhost;Port=5432;Database=fasolt;Username=spaced;Password=spaced_dev`
+`Host=localhost;Port=5432;Database=fasolt;Username=fasolt;Password=fasolt_dev`
 
 ## Testing
 
+- **Unit/Integration Tests**: `dotnet test` runs the `fasolt.Tests/` project (service-level tests, FSRS scheduling, etc.)
 - **UI Tests**: Use Playwright (via MCP) for end-to-end UI testing
 - **IMPORTANT**: Always run Playwright browser tests after implementing a feature. API-level curl tests are not sufficient — the UI must be tested in the browser to catch rendering issues, dialog flows, and navigation problems.
 - Test the full user flow: navigate to the feature, interact with it (create, edit, delete), verify the UI updates correctly.
@@ -150,8 +155,15 @@ Always use agent teams (`TeamCreate`) instead of plain subagents when paralleliz
 
 - `GET /api/health` — health check
 - `/api/identity/*` — ASP.NET Core Identity endpoints (register, login, etc.)
-- `POST /api/cards/bulk` — bulk card creation with duplicate detection
-- `GET /api/sources` — source file listing with card counts
+- `/api/account/*` — account management (delete account, etc.)
+- `/api/cards/*` — card CRUD, bulk creation with duplicate detection
+- `/api/decks/*` — deck CRUD and management
+- `/api/review/*` — spaced repetition review sessions
+- `/api/search/*` — full-text search across cards
+- `/api/sources/*` — source file listing with card counts
+- `/api/notifications/*` — push notification device tokens and settings
+- `/api/oauth/*` — OAuth consent flow (OpenIddict)
+- `/api/admin/*` — admin-only endpoints
 
 ## GitHub Operations
  

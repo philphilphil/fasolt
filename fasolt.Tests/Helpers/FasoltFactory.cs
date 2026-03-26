@@ -16,7 +16,7 @@ public class TestDb : IAsyncDisposable
     public string UserId { get; private set; } = null!;
 
     private string ConnectionString =>
-        $"Host=localhost;Port=5432;Database={_dbName};Username=spaced;Password=spaced_dev";
+        $"Host=localhost;Port=5432;Database={_dbName};Username=fasolt;Password=fasolt_dev";
 
     private DbContextOptions<AppDbContext> Options =>
         new DbContextOptionsBuilder<AppDbContext>()
@@ -49,7 +49,7 @@ public class TestDb : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         await using var conn = new Npgsql.NpgsqlConnection(
-            "Host=localhost;Port=5432;Database=postgres;Username=spaced;Password=spaced_dev");
+            "Host=localhost;Port=5432;Database=postgres;Username=fasolt;Password=fasolt_dev");
         await conn.OpenAsync();
 
         await using (var terminate = conn.CreateCommand())

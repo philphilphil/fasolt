@@ -147,6 +147,22 @@ public static class DevSeedData
         );
 
         // === Admin Cards — Programming Concepts ===
+        const string linkedListSvg = """
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+              <rect x="10" y="30" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+              <text x="40" y="55" text-anchor="middle" font-size="14" fill="currentColor">A</text>
+              <line x1="70" y1="50" x2="110" y2="50" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+              <rect x="110" y="30" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+              <text x="140" y="55" text-anchor="middle" font-size="14" fill="currentColor">B</text>
+              <line x1="170" y1="50" x2="210" y2="50" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+              <rect x="210" y="30" width="60" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+              <text x="240" y="55" text-anchor="middle" font-size="14" fill="currentColor">C</text>
+              <line x1="270" y1="50" x2="310" y2="50" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+              <text x="330" y="55" text-anchor="middle" font-size="14" fill="currentColor">null</text>
+              <defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+            </svg>
+            """;
+
         var linkedList = new Card
         {
             Id = Guid.NewGuid(),
@@ -154,9 +170,27 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is a linked list?",
             Back = "A linear data structure where each element (node) contains a value and a pointer to the next node. Unlike arrays, elements are not stored contiguously in memory.",
+            FrontSvg = linkedListSvg,
             State = "new",
             CreatedAt = now.AddDays(-2),
         };
+
+        const string bigOSvg = """
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="400" height="250">
+              <line x1="50" y1="220" x2="380" y2="220" stroke="currentColor" stroke-width="1.5"/>
+              <line x1="50" y1="220" x2="50" y2="20" stroke="currentColor" stroke-width="1.5"/>
+              <text x="390" y="225" font-size="11" fill="currentColor">n</text>
+              <text x="30" y="15" font-size="11" fill="currentColor">time</text>
+              <line x1="50" y1="200" x2="370" y2="200" stroke="#22c55e" stroke-width="2"/>
+              <text x="372" y="204" font-size="10" fill="#22c55e">O(1)</text>
+              <path d="M 50 200 Q 200 180 370 140" fill="none" stroke="#3b82f6" stroke-width="2"/>
+              <text x="372" y="144" font-size="10" fill="#3b82f6">O(log n)</text>
+              <line x1="50" y1="200" x2="370" y2="60" stroke="#eab308" stroke-width="2"/>
+              <text x="372" y="64" font-size="10" fill="#eab308">O(n)</text>
+              <path d="M 50 200 Q 180 120 300 40" fill="none" stroke="#f97316" stroke-width="2"/>
+              <text x="302" y="36" font-size="10" fill="#f97316">O(n²)</text>
+            </svg>
+            """;
 
         var bigO = new Card
         {
@@ -165,6 +199,7 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is Big O notation?",
             Back = "A mathematical notation that describes the upper bound of an algorithm's time or space complexity as the input size grows. Common complexities: O(1), O(log n), O(n), O(n log n), O(n²).",
+            BackSvg = bigOSvg,
             State = "review",
             Stability = 22.0,
             Difficulty = 5.5,
