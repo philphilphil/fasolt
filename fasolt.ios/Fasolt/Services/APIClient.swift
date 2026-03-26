@@ -70,7 +70,7 @@ actor APIClient {
         request.httpBody = body.data(using: .utf8)
 
         let (data, response) = try await performRaw(request)
-        try validateResponse(response)
+        try validateResponse(response, data: data)
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
@@ -108,7 +108,7 @@ actor APIClient {
                 if let retryHttp = retryResponse as? HTTPURLResponse {
                     apiLogger.info("Retry \(endpoint.path): \(retryHttp.statusCode)")
                 }
-                try validateResponse(retryResponse)
+                try validateResponse(retryResponse, data: retryData)
                 return retryData
             } else {
                 apiLogger.error("Token refresh failed")
@@ -116,7 +116,7 @@ actor APIClient {
             }
         }
 
-        try validateResponse(response)
+        try validateResponse(response, data: data)
         return data
     }
 
@@ -205,11 +205,18 @@ actor APIClient {
         }
     }
 
-    private func validateResponse(_ response: URLResponse) throws {
+    private func validateResponse(_ response: URLResponse, data: Data? = nil) throws {
         guard let httpResponse = response as? HTTPURLResponse else { return }
         guard (200...299).contains(httpResponse.statusCode) else {
-            apiLogger.error("HTTP \(httpResponse.statusCode) for \(httpResponse.url?.path ?? "?")")
-            throw APIError.fromStatus(httpResponse.statusCode)
+            let detail = data.flatMap { Self.extractErrorDetail($0) }
+            apiLogger.error("HTTP \(httpResponse.statusCode) for \(httpResponse.url?.path ?? "?"): \(detail ?? "no detail")")
+            throw APIError.fromStatus(httpResponse.statusCode, detail: detail)
         }
+    }
+
+    private static func extractErrorDetail(_ data: Data) -> String? {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        // Backend uses "message" (ErrorResponseMiddleware) or "detail" (RFC 7807 ProblemDetails)
+        return (json["message"] as? String) ?? (json["detail"] as? String)
     }
 }

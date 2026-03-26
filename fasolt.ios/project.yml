@@ -37,7 +37,7 @@ targets:
     entitlements:
       path: Fasolt/Fasolt.entitlements
       properties:
-        aps-environment: development
+        aps-environment: production
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fasolt.app

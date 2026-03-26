@@ -87,6 +87,13 @@ final class DeckRepository {
         let predicate = #Predicate<CachedDeck> { $0.publicId == detailId }
         guard let deck = try? modelContext.fetch(FetchDescriptor(predicate: predicate)).first else { return }
 
+        let incomingCardIds = Set(detail.cards.map(\.id))
+
+        // Remove cards no longer in this deck
+        for card in deck.cards where !incomingCardIds.contains(card.publicId) {
+            card.decks.removeAll { $0.publicId == deck.publicId }
+        }
+
         for cardDto in detail.cards {
             let cardDtoId = cardDto.id
             let cardPredicate = #Predicate<Card> { $0.publicId == cardDtoId }
@@ -98,11 +105,11 @@ final class DeckRepository {
                 card.sourceFile = cardDto.sourceFile
                 card.sourceHeading = cardDto.sourceHeading
                 card.state = cardDto.state
-                if let dueAt = cardDto.dueAt { card.dueAt = DateFormatters.parseISO8601( dueAt) }
+                card.dueAt = cardDto.dueAt.flatMap { DateFormatters.parseISO8601($0) }
                 card.stability = cardDto.stability
                 card.difficulty = cardDto.difficulty
                 card.step = cardDto.step
-                if let lastReviewed = cardDto.lastReviewedAt { card.lastReviewedAt = DateFormatters.parseISO8601( lastReviewed) }
+                card.lastReviewedAt = cardDto.lastReviewedAt.flatMap { DateFormatters.parseISO8601($0) }
                 card.frontSvg = cardDto.frontSvg
                 card.backSvg = cardDto.backSvg
                 if !card.decks.contains(where: { $0.publicId == deck.publicId }) {

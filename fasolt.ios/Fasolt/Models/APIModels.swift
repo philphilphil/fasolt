@@ -151,7 +151,7 @@ struct PaginatedResponse<T: Decodable & Sendable>: Decodable, Sendable {
 
 struct UserInfoResponse: Decodable, Sendable {
     let email: String
-    let displayName: String?
+    let isAdmin: Bool
 }
 
 // MARK: - Notifications

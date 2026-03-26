@@ -50,6 +50,6 @@ struct APIErrorTests {
     @Test("maps 500 to serverError")
     func serverError() {
         let error = APIError.fromStatus(500)
-        #expect(error == .serverError(500))
+        #expect(error == .serverError(500, nil))
     }
 }

@@ -32,17 +32,21 @@ struct Endpoint: Sendable {
 
 enum APIError: Error, Equatable {
     case invalidURL
+    case badRequest(String?)
     case unauthorized
+    case forbidden
     case notFound
-    case serverError(Int)
+    case serverError(Int, String?)
     case networkError(String)
     case decodingError(String)
 
-    static func fromStatus(_ code: Int) -> APIError {
+    static func fromStatus(_ code: Int, detail: String? = nil) -> APIError {
         switch code {
+        case 400: return .badRequest(detail)
         case 401: return .unauthorized
+        case 403: return .forbidden
         case 404: return .notFound
-        default: return .serverError(code)
+        default: return .serverError(code, detail)
         }
     }
 }

@@ -41,7 +41,8 @@ final class CardRepository {
                 case .networkError:
                     logger.warning("Network error rating card \(cardId), queueing offline")
                 default:
-                    logger.warning("API error rating card \(cardId): \(error), queueing offline")
+                    // Non-transient errors (400, 403, etc.) — don't queue, rethrow
+                    throw error
                 }
             }
         }
