@@ -117,7 +117,7 @@ final class AuthService {
         do {
             let body = RegisterRequest(email: email, password: password)
             let endpoint = Endpoint(path: "/api/identity/register", method: .post, body: body)
-            let _: EmptyResponse = try await apiClient.unauthenticatedRequest(endpoint)
+            try await apiClient.unauthenticatedRequest(endpoint)
 
             authLogger.info("Registration succeeded, starting auto sign-in")
             await signIn(serverURL: serverURL)

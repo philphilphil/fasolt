@@ -53,6 +53,10 @@ actor APIClient {
         }
     }
 
+    func unauthenticatedRequest(_ endpoint: Endpoint) async throws {
+        _ = try await performRequest(endpoint, authenticated: false)
+    }
+
     // MARK: - Form-encoded POST (for OAuth token endpoint)
 
     private static let formURLEncodedAllowed: CharacterSet = {
@@ -222,6 +226,13 @@ actor APIClient {
     private static func extractErrorDetail(_ data: Data) -> String? {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         // Backend uses "message" (ErrorResponseMiddleware) or "detail" (RFC 7807 ProblemDetails)
-        return (json["message"] as? String) ?? (json["detail"] as? String)
+        if let message = json["message"] as? String { return message }
+        if let detail = json["detail"] as? String { return detail }
+        // ASP.NET Identity validation: {"errors": {"DuplicateEmail": ["Email already taken."]}}
+        if let errors = json["errors"] as? [String: [String]],
+           let firstError = errors.values.first?.first {
+            return firstError
+        }
+        return nil
     }
 }
