@@ -26,62 +26,53 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("Add cards to a deck. Cards already in the deck are silently skipped.")]
-    public async Task<string> AddCardsToDeck(
-        [Description("ID of the deck")] string deckId,
-        [Description("List of card IDs to add")] List<string> cardIds)
+    [McpServerTool, Description("Update a deck's name or description.")]
+    public async Task<string> UpdateDeck(
+        [Description("ID of the deck to update")] string deckId,
+        [Description("New deck name (max 100 characters)")] string name,
+        [Description("New deck description (null to clear)")] string? description = null)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var result = await deckService.AddCards(userId, deckId, cardIds);
-        return result switch
-        {
-            AddCardsResult.Success => JsonSerializer.Serialize(new { success = true }, McpJson.Options),
-            AddCardsResult.DeckNotFound => JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options),
-            AddCardsResult.CardsNotFound => JsonSerializer.Serialize(new { error = "One or more cards not found" }, McpJson.Options),
-            _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
-        };
+        var result = await deckService.UpdateDeck(userId, deckId, name, description);
+        if (result is null)
+            return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
+        return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("Remove cards from a deck. The cards themselves are not deleted, only unlinked from the deck.")]
-    public async Task<string> RemoveCardsFromDeck(
-        [Description("ID of the deck")] string deckId,
-        [Description("List of card IDs to remove from the deck")] List<string> cardIds)
-    {
-        var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var removedCount = 0;
-        foreach (var cardId in cardIds)
-        {
-            var result = await deckService.RemoveCard(userId, deckId, cardId);
-            if (result == RemoveCardResult.DeckNotFound)
-                return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
-            if (result == RemoveCardResult.Success)
-                removedCount++;
-        }
-        return JsonSerializer.Serialize(new { success = true, removedCount }, McpJson.Options);
-    }
-
-    [McpServerTool, Description("Move cards from one deck to another. Removes from source deck and adds to target deck.")]
-    public async Task<string> MoveCards(
-        [Description("ID of the deck to move cards from")] string fromDeckId,
-        [Description("ID of the deck to move cards to")] string toDeckId,
-        [Description("List of card IDs to move")] List<string> cardIds)
+    [McpServerTool, Description("Assign cards to a deck, or remove them. Pass a deckId to assign cards to that deck. Pass null as deckId to remove cards from a specific deck (requires fromDeckId).")]
+    public async Task<string> AssignCardsToDeck(
+        [Description("Target deck ID to assign cards to (null to remove cards from fromDeckId)")] string? deckId,
+        [Description("List of card IDs")] List<string> cardIds,
+        [Description("Deck ID to remove cards from (required when deckId is null, optional when moving cards between decks)")] string? fromDeckId = null)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 
-        // Add to target first
-        var addResult = await deckService.AddCards(userId, toDeckId, cardIds);
-        if (addResult == AddCardsResult.DeckNotFound)
-            return JsonSerializer.Serialize(new { error = "Target deck not found" }, McpJson.Options);
-        if (addResult == AddCardsResult.CardsNotFound)
-            return JsonSerializer.Serialize(new { error = "One or more cards not found" }, McpJson.Options);
-
-        // Remove from source
-        foreach (var cardId in cardIds)
+        // Remove from source deck if specified
+        if (fromDeckId is not null)
         {
-            await deckService.RemoveCard(userId, fromDeckId, cardId);
+            var removeResult = await deckService.RemoveCards(userId, fromDeckId, cardIds);
+            if (!removeResult.DeckFound)
+                return JsonSerializer.Serialize(new { error = "Source deck not found" }, McpJson.Options);
         }
 
-        return JsonSerializer.Serialize(new { success = true, movedCount = cardIds.Count }, McpJson.Options);
+        // Add to target deck if specified
+        if (deckId is not null)
+        {
+            var addResult = await deckService.AddCards(userId, deckId, cardIds);
+            return addResult switch
+            {
+                AddCardsResult.Success => JsonSerializer.Serialize(new { success = true }, McpJson.Options),
+                AddCardsResult.DeckNotFound => JsonSerializer.Serialize(new { error = "Target deck not found" }, McpJson.Options),
+                AddCardsResult.CardsNotFound => JsonSerializer.Serialize(new { error = "One or more cards not found" }, McpJson.Options),
+                _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
+            };
+        }
+
+        // deckId is null — this was a remove-only operation
+        if (fromDeckId is null)
+            return JsonSerializer.Serialize(new { error = "Provide deckId to assign, or fromDeckId to remove" }, McpJson.Options);
+
+        return JsonSerializer.Serialize(new { success = true }, McpJson.Options);
     }
 
     [McpServerTool, Description("Delete a deck. Optionally also delete all cards assigned to that deck (useful when recreating a deck from scratch).")]
