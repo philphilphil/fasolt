@@ -94,6 +94,8 @@ struct RegisterView: View {
             Spacer()
             Spacer()
         }
+        .navigationTitle("Create Account")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

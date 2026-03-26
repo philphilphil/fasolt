@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct McpSetupSection: View {
     let serverURL: String
@@ -99,6 +100,7 @@ struct McpSetupSection: View {
     private func copyButton(text: String, id: String) -> some View {
         Button {
             UIPasteboard.general.string = text
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
             withAnimation {
                 copiedItem = id
             }

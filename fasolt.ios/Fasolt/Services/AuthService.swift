@@ -122,20 +122,13 @@ final class AuthService {
             authLogger.info("Registration succeeded, starting auto sign-in")
             await signIn(serverURL: serverURL)
             return
-        } catch let error as APIError {
-            if let previousServerURL {
-                keychain.save(previousServerURL, forKey: "fasolt.serverURL")
-            } else {
-                keychain.delete("fasolt.serverURL")
-            }
-            errorMessage = Self.registrationErrorMessage(from: error)
         } catch {
-            if let previousServerURL {
-                keychain.save(previousServerURL, forKey: "fasolt.serverURL")
+            restoreServerURL(previous: previousServerURL)
+            if let apiError = error as? APIError {
+                errorMessage = Self.registrationErrorMessage(from: apiError)
             } else {
-                keychain.delete("fasolt.serverURL")
+                errorMessage = "Registration failed. Please try again."
             }
-            errorMessage = "Registration failed. Please try again."
         }
 
         isLoading = false
@@ -171,6 +164,14 @@ final class AuthService {
             return "Could not connect. Check your internet connection."
         default:
             return "Registration failed. Please try again."
+        }
+    }
+
+    private func restoreServerURL(previous: String?) {
+        if let previous {
+            keychain.save(previous, forKey: "fasolt.serverURL")
+        } else {
+            keychain.delete("fasolt.serverURL")
         }
     }
 

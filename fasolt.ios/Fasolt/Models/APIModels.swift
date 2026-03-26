@@ -175,4 +175,4 @@ struct UpdateNotificationSettingsRequest: Encodable, Sendable {
     let intervalHours: Int
 }
 
-struct EmptyResponse: Decodable {}
+struct EmptyResponse: Decodable, Sendable {}
