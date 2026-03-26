@@ -13,9 +13,11 @@ struct OnboardingView: View {
                 Spacer()
 
                 VStack(spacing: 8) {
-                    Image(systemName: "rectangle.on.rectangle.angled")
-                        .font(.system(size: 64))
-                        .foregroundStyle(.tint)
+                    Image("FasoltLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                     Text("Fasolt")
                         .font(.largeTitle.bold())
                     Text("Spaced repetition for your notes")
