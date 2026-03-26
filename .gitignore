@@ -25,10 +25,17 @@ Thumbs.db
 
 # Certificates
 /certs/
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
 
 # Environment
 .env
-.env.local
+.env.*
+!.env.example
 .superpowers/
 .worktrees/
 .playwright-mcp/

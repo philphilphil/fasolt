@@ -89,6 +89,11 @@ dotnet run --project fasolt.Server      # API on :8080
 cd fasolt.client && npm run dev         # UI on :5173
 ```
 
+A dev account is created automatically on startup:
+
+- **Email:** `dev@fasolt.local`
+- **Password:** `Dev1234!`
+
 ## Project Structure
 
 ```
