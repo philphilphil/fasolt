@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Infrastructure.Services;
@@ -16,7 +17,6 @@ public class NotificationBackgroundService(
 
         using var timer = new PeriodicTimer(Interval);
 
-        // Run once immediately on startup, then on each tick
         await ProcessNotifications(stoppingToken);
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -25,16 +25,16 @@ public class NotificationBackgroundService(
         }
     }
 
-    private async Task ProcessNotifications(CancellationToken stoppingToken)
+    public async Task ProcessNotifications(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Checking for users with due cards to notify");
+        using var scope = scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var now = DateTimeOffset.UtcNow;
+        var sent = 0;
+        var failed = 0;
 
         try
         {
-            using var scope = scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var now = DateTimeOffset.UtcNow;
-
             var eligibleUsers = await db.DeviceTokens
                 .Include(d => d.User)
                 .Where(d =>
@@ -44,11 +44,25 @@ public class NotificationBackgroundService(
                 {
                     d.UserId,
                     d.Token,
-                    d.User.NotificationIntervalHours,
+                    UserEmail = d.User.Email ?? "",
                 })
                 .ToListAsync(stoppingToken);
 
-            logger.LogInformation("Found {Count} eligible users to check", eligibleUsers.Count);
+            if (eligibleUsers.Count == 0)
+            {
+                var totalTokens = await db.DeviceTokens.CountAsync(stoppingToken);
+                db.Logs.Add(new AppLog
+                {
+                    Type = LogType.Notification,
+                    Message = totalTokens == 0
+                        ? "No devices registered for push"
+                        : $"{totalTokens} device(s) registered, none due for notification yet",
+                    Success = true,
+                    CreatedAt = now,
+                });
+                await db.SaveChangesAsync(stoppingToken);
+                return;
+            }
 
             foreach (var entry in eligibleUsers)
             {
@@ -56,22 +70,55 @@ public class NotificationBackgroundService(
 
                 try
                 {
-                    await ProcessUserNotification(db, entry.UserId, entry.Token, now, stoppingToken);
+                    var didSend = await ProcessUserNotification(db, entry.UserId, entry.UserEmail, entry.Token, now, stoppingToken);
+                    if (didSend) sent++;
                 }
                 catch (Exception ex)
                 {
+                    failed++;
                     logger.LogError(ex, "Failed to process notification for user {UserId}", entry.UserId);
+                    db.Logs.Add(new AppLog
+                    {
+                        Type = LogType.Notification,
+                        Message = $"Error for {entry.UserEmail}",
+                        Detail = ex.Message,
+                        Success = false,
+                        CreatedAt = now,
+                    });
+                    await db.SaveChangesAsync(stoppingToken);
                 }
+            }
+
+            if (sent == 0 && failed == 0)
+            {
+                db.Logs.Add(new AppLog
+                {
+                    Type = LogType.Notification,
+                    Message = $"Checked {eligibleUsers.Count} user(s), no cards due",
+                    Success = true,
+                    CreatedAt = now,
+                });
+                await db.SaveChangesAsync(stoppingToken);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during notification processing cycle");
+            logger.LogError(ex, "Notification cycle failed");
+            db.Logs.Add(new AppLog
+            {
+                Type = LogType.Notification,
+                Message = "Notification cycle failed",
+                Detail = ex.Message,
+                Success = false,
+                CreatedAt = now,
+            });
+            await db.SaveChangesAsync(stoppingToken);
         }
     }
 
-    private async Task ProcessUserNotification(
-        AppDbContext db, string userId, string deviceToken,
+    /// <summary>Returns true if a notification was actually sent.</summary>
+    private async Task<bool> ProcessUserNotification(
+        AppDbContext db, string userId, string userEmail, string deviceToken,
         DateTimeOffset now, CancellationToken stoppingToken)
     {
         var dueCardsByDeck = await db.Cards
@@ -86,37 +133,43 @@ public class NotificationBackgroundService(
         var totalDue = dueCardsByDeck.Sum(g => g.Count);
 
         if (totalDue == 0)
-        {
-            logger.LogDebug("User {UserId} has no due cards, skipping", userId);
-            return;
-        }
+            return false;
 
         var deckBreakdown = string.Join(", ",
             dueCardsByDeck.OrderByDescending(g => g.Count).Select(g => $"{g.Count} in {g.DeckName}"));
         var body = $"You have {totalDue} card{(totalDue == 1 ? "" : "s")} due: {deckBreakdown}";
-        var title = "Cards due";
 
-        var tokenValid = await apnsService.SendNotification(deviceToken, title, body, totalDue);
+        var tokenValid = await apnsService.SendNotification(deviceToken, "Cards due", body, totalDue);
 
         if (!tokenValid)
         {
+            db.Logs.Add(new AppLog
+            {
+                Type = LogType.Notification,
+                Message = $"Invalid token for {userEmail}, removed",
+                Success = false,
+                CreatedAt = now,
+            });
             var token = await db.DeviceTokens.FirstOrDefaultAsync(d => d.UserId == userId, stoppingToken);
             if (token is not null)
-            {
                 db.DeviceTokens.Remove(token);
-                await db.SaveChangesAsync(stoppingToken);
-                logger.LogInformation("Removed invalid device token for user {UserId}", userId);
-            }
-            return;
+            await db.SaveChangesAsync(stoppingToken);
+            return false;
         }
 
         var user = await db.Users.FindAsync([userId], stoppingToken);
         if (user is not null)
-        {
             user.LastNotifiedAt = now;
-            await db.SaveChangesAsync(stoppingToken);
-        }
 
-        logger.LogInformation("Sent notification to user {UserId}: {TotalDue} cards due", userId, totalDue);
+        db.Logs.Add(new AppLog
+        {
+            Type = LogType.Notification,
+            Message = $"Sent to {userEmail}: {totalDue} cards due",
+            Detail = deckBreakdown,
+            Success = true,
+            CreatedAt = now,
+        });
+        await db.SaveChangesAsync(stoppingToken);
+        return true;
     }
 }

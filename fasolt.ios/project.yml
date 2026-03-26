@@ -34,6 +34,10 @@ targets:
           UIColorName: ""
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+    entitlements:
+      path: Fasolt/Fasolt.entitlements
+      properties:
+        aps-environment: development
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fasolt.app

@@ -14,6 +14,7 @@ public class ApnsSettings
     public string BundleId { get; set; } = default!;
     public string? KeyPath { get; set; }
     public string? KeyBase64 { get; set; }
+    public bool UseSandbox { get; set; } = true;
 }
 
 public class ApnsService
@@ -38,8 +39,8 @@ public class ApnsService
         var key = ECDsa.Create();
         if (!string.IsNullOrEmpty(settings.KeyBase64))
         {
-            var keyBytes = Convert.FromBase64String(settings.KeyBase64);
-            key.ImportPkcs8PrivateKey(keyBytes, out _);
+            var pem = Encoding.UTF8.GetString(Convert.FromBase64String(settings.KeyBase64));
+            key.ImportFromPem(pem);
         }
         else if (!string.IsNullOrEmpty(settings.KeyPath))
         {
@@ -92,8 +93,13 @@ public class ApnsService
             }
         };
 
+        var host = _settings.UseSandbox
+            ? "api.sandbox.push.apple.com"
+            : "api.push.apple.com";
         var request = new HttpRequestMessage(HttpMethod.Post,
-            $"https://api.push.apple.com/3/device/{deviceToken}");
+            $"https://{host}/3/device/{deviceToken}");
+        request.Version = new Version(2, 0);
+        request.VersionPolicy = HttpVersionPolicy.RequestVersionExact;
         request.Headers.Authorization = new AuthenticationHeaderValue("bearer", token);
         request.Headers.TryAddWithoutValidation("apns-topic", _settings.BundleId);
         request.Headers.TryAddWithoutValidation("apns-push-type", "alert");
@@ -116,8 +122,8 @@ public class ApnsService
             }
 
             var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning("APNs request failed with {StatusCode}: {Body}",
-                (int)response.StatusCode, responseBody);
+            _logger.LogError("APNs FAILED {StatusCode}: {Body} | KeyId={KeyId} TeamId={TeamId} Topic={Topic}",
+                (int)response.StatusCode, responseBody, _settings.KeyId, _settings.TeamId, _settings.BundleId);
             return true; // Don't delete the token on transient errors
         }
         catch (Exception ex)

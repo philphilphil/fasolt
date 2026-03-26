@@ -12,8 +12,12 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using FSRS.Core.Extensions;
 using OpenIddict.Validation.AspNetCore;
+using dotenv.net;
+
+DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5));
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -211,7 +215,8 @@ if (apnsKeyReady)
 {
     builder.Services.AddSingleton(apnsSettings!);
     builder.Services.AddHttpClient<ApnsService>();
-    builder.Services.AddHostedService<NotificationBackgroundService>();
+    builder.Services.AddSingleton<NotificationBackgroundService>();
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<NotificationBackgroundService>());
 }
 
 builder.Services.AddFSRS(options =>

@@ -8,9 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */; };
-		E1F2A3B4C5D6E7F8A9B0C1D2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C3D4E5F607A8B9C0D1 /* Assets.xcassets */; };
 		0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */; };
-		B3C4D5E6F7081920A1B2C3D4 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */; };
 		0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 876CBB32009796B1341C8D59 /* NetworkMonitor.swift */; };
 		0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */; };
 		1851DEEFAB7935C8224DD05B /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */; };
@@ -18,16 +16,20 @@
 		2E601D9A77CD86714AAB0BFA /* DeckRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B91F8A14874A0AB49630A6AD /* DeckRepository.swift */; };
 		33A03487EA34451FC57B7ED7 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */; };
 		345B1EAE7BFC27DA2F03E0C3 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A881609787DFFE078B49DC /* KeychainHelperTests.swift */; };
+		36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */; };
 		3ACCC3511CF87CD4B822DCB9 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */; };
+		45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */; };
 		49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
 		6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB69B316FF51F7EC607EBD /* StudyView.swift */; };
 		6F1A4C6F09CB0E465B1CA3BD /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82812F20EB20898654E7FABF /* CardView.swift */; };
-		D7E8F9A0B1C2D3E4F5061728 /* SvgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* SvgView.swift */; };
+		7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */; };
 		7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */; };
 		82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D826424A31F1413445EC6650 /* FasoltApp.swift */; };
+		8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */; };
+		8ECAC149086A23E54D5DC1D2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE0A6615C77BF475BDCC9074 /* Assets.xcassets */; };
 		95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */; };
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
 		A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7A52B7D0A14767556278C /* CachedDeck.swift */; };
@@ -66,7 +68,6 @@
 		22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailView.swift; sourceTree = "<group>"; };
 		2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailSheet.swift; sourceTree = "<group>"; };
-		E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		2E2E5EDB31357B7ECA46E216 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		36B52198B8E5A1593EA701B5 /* CardRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardRepository.swift; sourceTree = "<group>"; };
 		3794A93C12869786BF3468EE /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -82,25 +83,29 @@
 		69E947CBD44E199505935FEF /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		82812F20EB20898654E7FABF /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5C /* SvgView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SvgView.swift; sourceTree = "<group>"; };
 		876CBB32009796B1341C8D59 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		9097BB7014F064BF83F77689 /* DeckCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckCardRow.swift; sourceTree = "<group>"; };
+		933F9C08DEBB1C1DE4B0F805 /* Fasolt.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Fasolt.entitlements; sourceTree = "<group>"; };
 		97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListViewModel.swift; sourceTree = "<group>"; };
+		9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		A23AFC0A1B6F81DD76335210 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A5D7A52B7D0A14767556278C /* CachedDeck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedDeck.swift; sourceTree = "<group>"; };
 		B11CE9B38A861E5101458984 /* FasoltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltTests.swift; sourceTree = "<group>"; };
 		B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailViewModel.swift; sourceTree = "<group>"; };
 		B91F8A14874A0AB49630A6AD /* DeckRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckRepository.swift; sourceTree = "<group>"; };
+		BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SvgView.swift; sourceTree = "<group>"; };
 		BD321B13FDCABFE8C7BA3698 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListView.swift; sourceTree = "<group>"; };
+		CE0A6615C77BF475BDCC9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
-		F0A1B2C3D4E5F607A8B9C0D1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
 		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
@@ -155,6 +160,7 @@
 				6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */,
 				B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */,
 				D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */,
+				71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */,
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */,
 			);
@@ -165,9 +171,9 @@
 			isa = PBXGroup;
 			children = (
 				82812F20EB20898654E7FABF /* CardView.swift */,
-				A1B2C3D4E5F60718293A4B5C /* SvgView.swift */,
 				625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */,
 				02DB69B316FF51F7EC607EBD /* StudyView.swift */,
+				BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */,
 			);
 			path = Study;
 			sourceTree = "<group>";
@@ -178,6 +184,7 @@
 				2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */,
 				2E2E5EDB31357B7ECA46E216 /* AuthService.swift */,
 				4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */,
+				9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */,
 				E1F0E793E14821102B85EE20 /* SyncService.swift */,
 			);
 			path = Services;
@@ -186,7 +193,8 @@
 		406BF6FA047EF7D1DAB0A476 /* Fasolt */ = {
 			isa = PBXGroup;
 			children = (
-				F0A1B2C3D4E5F607A8B9C0D1 /* Assets.xcassets */,
+				CE0A6615C77BF475BDCC9074 /* Assets.xcassets */,
+				933F9C08DEBB1C1DE4B0F805 /* Fasolt.entitlements */,
 				D826424A31F1413445EC6650 /* FasoltApp.swift */,
 				BD321B13FDCABFE8C7BA3698 /* Info.plist */,
 				B1A82847EFBF9036CA088344 /* Models */,
@@ -279,7 +287,7 @@
 			isa = PBXGroup;
 			children = (
 				2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */,
-				E5F60718293A4B5C6D7E8F90 /* CardDetailView.swift */,
+				E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */,
 				E2686816B7E21E3DB2171066 /* CardHelpers.swift */,
 				69E947CBD44E199505935FEF /* OfflineBanner.swift */,
 			);
@@ -320,7 +328,7 @@
 			buildConfigurationList = 7583FE033174CCE6AF6B8758 /* Build configuration list for PBXNativeTarget "Fasolt" */;
 			buildPhases = (
 				AF65FE4909FA5CE76E0C3B4E /* Sources */,
-				C2D3E4F5A6B7C8D9E0F1A2B3 /* Resources */,
+				9986799F1221118B2B64C8CC /* Resources */,
 			);
 			buildRules = (
 			);
@@ -372,6 +380,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		9986799F1221118B2B64C8CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8ECAC149086A23E54D5DC1D2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		3B21A16D833E9E63D2786FC3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -394,13 +413,12 @@
 				A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */,
 				D578E86690C15FA330A7530A /* Card.swift in Sources */,
 				0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */,
-				B3C4D5E6F7081920A1B2C3D4 /* CardDetailView.swift in Sources */,
+				7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */,
 				1F108C44139D54CBA1C25505 /* CardHelpers.swift in Sources */,
 				562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */,
 				A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */,
 				D46CA0643A278BBCA919D878 /* CardRepository.swift in Sources */,
 				6F1A4C6F09CB0E465B1CA3BD /* CardView.swift in Sources */,
-				D7E8F9A0B1C2D3E4F5061728 /* SvgView.swift in Sources */,
 				BA0B1FE4CD431148690BDF96 /* DashboardView.swift in Sources */,
 				C1D4D2606441D7F37D080F2E /* DashboardViewModel.swift in Sources */,
 				DE25E56E67F5F61423E84C00 /* DeckCardRow.swift in Sources */,
@@ -414,6 +432,8 @@
 				95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */,
 				58A1B3892608093BF3282922 /* MainTabView.swift in Sources */,
 				0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */,
+				36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */,
+				8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */,
 				ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */,
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
@@ -422,22 +442,12 @@
 				0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
 				6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */,
 				49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */,
+				45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */,
 				A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
-		C2D3E4F5A6B7C8D9E0F1A2B3 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				E1F2A3B4C5D6E7F8A9B0C1D2 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		604265D23E30AE6876FF1A10 /* PBXTargetDependency */ = {
@@ -545,6 +555,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Fasolt/Fasolt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Fasolt/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -561,6 +572,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Fasolt/Fasolt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Fasolt/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

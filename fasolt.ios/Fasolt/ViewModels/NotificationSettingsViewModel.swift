@@ -46,7 +46,7 @@ final class NotificationSettingsViewModel {
             body: UpdateNotificationSettingsRequest(intervalHours: hours)
         )
         do {
-            try await apiClient.request(endpoint) as Void
+            try await apiClient.request(endpoint)
             intervalHours = hours
         } catch {
             errorMessage = "Could not update notification interval."

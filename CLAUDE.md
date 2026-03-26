@@ -96,6 +96,25 @@ docker compose down          # stop Postgres
 
 Feature requirements are tracked as GitHub issues. Use `gh issue list` to see open work and `gh issue view <number>` to read the full spec before implementing. Close issues when done.
 
+## Environment Variables
+
+Local secrets are stored in `.env` (gitignored). The backend loads it automatically via `dotenv.net` on startup. Copy `.env.example` to `.env` and fill in values.
+
+### iOS Push Notifications (APNs)
+
+To enable push notifications in development, add your Apple APNs credentials to `.env`:
+
+```
+Apns__KeyId=YOUR_KEY_ID
+Apns__TeamId=YOUR_TEAM_ID
+Apns__BundleId=com.fasolt.app
+Apns__KeyBase64=<base64-encoded .p8 key>
+```
+
+Generate `KeyBase64` from your `.p8` file: `base64 < AuthKey_XXXX.p8 | tr -d '\n'`
+
+The background notification service only starts when APNs credentials are configured. Without them, everything else works normally.
+
 ## Dev Seed User
 
 In development, a seed user is auto-created on startup:

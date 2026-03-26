@@ -61,8 +61,7 @@ struct SettingsView: View {
                                 }
                             }
 
-                        if notificationViewModel.hasDeviceToken {
-                            Picker("Check interval", selection: Binding(
+                        Picker("Check interval", selection: Binding(
                                 get: { notificationViewModel.intervalHours },
                                 set: { newValue in
                                     Task { await notificationViewModel.updateInterval(newValue) }
@@ -72,7 +71,10 @@ struct SettingsView: View {
                                     Text("Every \(hours)h").tag(hours)
                                 }
                             }
-                        }
+
+                        Label("How often to check for due cards and send a notification.", systemImage: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
 
                         if let error = notificationViewModel.errorMessage {
                             Text(error)

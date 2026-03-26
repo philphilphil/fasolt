@@ -26,7 +26,8 @@ public class AdminService
                 u.Email!,
                 _db.Cards.Count(c => c.UserId == u.Id),
                 _db.Decks.Count(d => d.UserId == u.Id),
-                u.LockoutEnabled && u.LockoutEnd > DateTimeOffset.UtcNow))
+                u.LockoutEnabled && u.LockoutEnd > DateTimeOffset.UtcNow,
+                _db.DeviceTokens.Any(d => d.UserId == u.Id)))
             .ToListAsync();
 
         return new AdminUserListResponse(users, totalCount, page, pageSize);

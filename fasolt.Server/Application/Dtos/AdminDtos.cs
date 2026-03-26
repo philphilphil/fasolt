@@ -5,7 +5,8 @@ public record AdminUserDto(
     string Email,
     int CardCount,
     int DeckCount,
-    bool IsLockedOut);
+    bool IsLockedOut,
+    bool HasPush);
 
 public record AdminUserListResponse(
     List<AdminUserDto> Users,

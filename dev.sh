@@ -5,8 +5,12 @@ cd "$(dirname "$0")"
 # Start Postgres if not running
 docker compose up -d
 
-# Run backend and frontend concurrently
-dotnet run --project fasolt.Server &
+# Run backend (with --watch for hot reload if requested)
+if [ "$1" = "--watch" ]; then
+  DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1 dotnet watch run --project fasolt.Server &
+else
+  dotnet run --project fasolt.Server &
+fi
 BACKEND_PID=$!
 
 cd fasolt.client && npm run dev &

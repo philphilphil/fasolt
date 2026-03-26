@@ -17,6 +17,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
     public DbSet<ConsentGrant> ConsentGrants => Set<ConsentGrant>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<AppLog> Logs => Set<AppLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -87,6 +88,17 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
         builder.Entity<AppUser>(entity =>
         {
             entity.Property(e => e.NotificationIntervalHours).HasDefaultValue(8);
+        });
+
+        builder.Entity<AppLog>(entity =>
+        {
+            entity.ToTable("Logs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Type).HasConversion<string>().HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Message).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.Detail).HasMaxLength(1000);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.Type);
         });
 
     }

@@ -104,6 +104,10 @@ You:   "Create flashcards from my kubernetes-notes.md"
 Agent: reads local file → checks for duplicates → creates cards via MCP → done
 ```
 
+## iOS Push Notifications
+
+The iOS app can receive push notifications via the backend when cards are due for review. To enable this, copy `.env.example` to `.env` and fill in your Apple APNs credentials. Without them, everything else works normally — the notification service simply won't start.
+
 ## Project Structure
 
 ```
