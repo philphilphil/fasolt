@@ -249,6 +249,69 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task BulkUpdateCards_ById_UpdatesMultiple()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var a = await svc.CreateCard(UserId, "BU-A", "Old A", "bulk.md", null);
+        var b = await svc.CreateCard(UserId, "BU-B", "Old B", "bulk.md", null);
+
+        var results = await svc.BulkUpdateCards(UserId,
+        [
+            new BulkUpdateCardItem(CardId: a.Id, NewBack: "New A"),
+            new BulkUpdateCardItem(CardId: b.Id, NewBack: "New B"),
+        ]);
+
+        results.Should().HaveCount(2);
+        results.Should().AllSatisfy(r => r.Status.Should().Be(UpdateCardStatus.Success));
+        results[0].Card!.Back.Should().Be("New A");
+        results[1].Card!.Back.Should().Be("New B");
+    }
+
+    [Fact]
+    public async Task BulkUpdateCards_ByNaturalKey_UpdatesMultiple()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "NK-A", "Old A", "nk.md", null);
+        await svc.CreateCard(UserId, "NK-B", "Old B", "nk.md", null);
+
+        var results = await svc.BulkUpdateCards(UserId,
+        [
+            new BulkUpdateCardItem(SourceFile: "nk.md", Front: "NK-A", NewBack: "Updated A"),
+            new BulkUpdateCardItem(SourceFile: "nk.md", Front: "NK-B", NewBack: "Updated B"),
+        ]);
+
+        results.Should().HaveCount(2);
+        results.Should().AllSatisfy(r => r.Status.Should().Be(UpdateCardStatus.Success));
+        results[0].Card!.Back.Should().Be("Updated A");
+        results[1].Card!.Back.Should().Be("Updated B");
+    }
+
+    [Fact]
+    public async Task BulkUpdateCards_MixedResults()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var card = await svc.CreateCard(UserId, "Exists", "Back", "mix.md", null);
+
+        var results = await svc.BulkUpdateCards(UserId,
+        [
+            new BulkUpdateCardItem(CardId: card.Id, NewBack: "Updated"),
+            new BulkUpdateCardItem(CardId: "nonexistent", NewBack: "Nope"),
+            new BulkUpdateCardItem(SourceFile: null, Front: null, NewBack: "Invalid"),
+        ]);
+
+        results.Should().HaveCount(3);
+        results[0].Status.Should().Be(UpdateCardStatus.Success);
+        results[1].Status.Should().Be(UpdateCardStatus.NotFound);
+        results[2].Status.Should().Be(UpdateCardStatus.NotFound);
+    }
+
+    [Fact]
     public async Task DeleteCardsBySource_DeletesMatchingCards()
     {
         await using var db = _db.CreateDbContext();

@@ -61,6 +61,46 @@ public class DeckServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RemoveCards_BulkRemovesFromDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Bulk Remove Deck", null);
+        var a = await cardSvc.CreateCard(UserId, "RA", "RA", null, null);
+        var b = await cardSvc.CreateCard(UserId, "RB", "RB", null, null);
+        var c = await cardSvc.CreateCard(UserId, "RC", "RC", null, null);
+        await deckSvc.AddCards(UserId, deck.Id, [a.Id, b.Id, c.Id]);
+
+        var result = await deckSvc.RemoveCards(UserId, deck.Id, [a.Id, b.Id]);
+
+        result.DeckFound.Should().BeTrue();
+        result.RemovedCount.Should().Be(2);
+
+        // Card C should still be in the deck
+        var detail = await deckSvc.GetDeck(UserId, deck.Id);
+        detail!.Cards.Should().HaveCount(1);
+        detail.Cards[0].Front.Should().Be("RC");
+
+        // Removed cards should still exist
+        (await cardSvc.GetCard(UserId, a.Id)).Should().NotBeNull();
+        (await cardSvc.GetCard(UserId, b.Id)).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task RemoveCards_DeckNotFound_ReturnsFalse()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var result = await deckSvc.RemoveCards(UserId, "nonexistent", ["card1"]);
+
+        result.DeckFound.Should().BeFalse();
+        result.RemovedCount.Should().Be(0);
+    }
+
+    [Fact]
     public async Task DeleteDeck_WithDeleteCards_RemovesCards()
     {
         await using var db = _db.CreateDbContext();
