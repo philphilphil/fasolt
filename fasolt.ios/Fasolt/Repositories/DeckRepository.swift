@@ -18,37 +18,19 @@ final class DeckRepository {
     }
 
     func fetchDecks() async throws -> [DeckDTO] {
-        do {
-            let endpoint = Endpoint(path: "/api/decks", method: .get)
-            let decks: [DeckDTO] = try await apiClient.request(endpoint)
-            logger.info("Fetched \(decks.count) decks from API")
-            cacheDeckList(decks)
-            return decks
-        } catch let error as APIError {
-            if case .networkError = error {
-                logger.info("Offline — serving decks from cache")
-                return loadCachedDecks()
-            }
-            throw error
-        }
+        let endpoint = Endpoint(path: "/api/decks", method: .get)
+        let decks: [DeckDTO] = try await apiClient.request(endpoint)
+        logger.info("Fetched \(decks.count) decks from API")
+        cacheDeckList(decks)
+        return decks
     }
 
     func fetchDeckDetail(id: String) async throws -> DeckDetailDTO {
-        do {
-            let endpoint = Endpoint(path: "/api/decks/\(id)", method: .get)
-            let detail: DeckDetailDTO = try await apiClient.request(endpoint)
-            logger.info("Fetched deck detail '\(detail.name)' with \(detail.cards.count) cards")
-            cacheDeckDetail(detail)
-            return detail
-        } catch let error as APIError {
-            if case .networkError = error {
-                logger.info("Offline — serving deck detail from cache")
-                if let cached = loadCachedDeckDetail(id: id) {
-                    return cached
-                }
-            }
-            throw error
-        }
+        let endpoint = Endpoint(path: "/api/decks/\(id)", method: .get)
+        let detail: DeckDetailDTO = try await apiClient.request(endpoint)
+        logger.info("Fetched deck detail '\(detail.name)' with \(detail.cards.count) cards")
+        cacheDeckDetail(detail)
+        return detail
     }
 
     // MARK: - Cache Write

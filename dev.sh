@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 
 # Start Postgres if not running
 docker compose up -d
+killall dotnet 2>/dev/null || true
 
 # Run backend (with --watch for hot reload if requested)
 if [ "$1" = "--watch" ]; then
