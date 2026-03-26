@@ -10,33 +10,38 @@ struct DeckCardRow: View {
                 .font(.body)
                 .lineLimit(2)
 
-            if card.sourceFile != nil || (deckNames != nil && !deckNames!.isEmpty) {
-                HStack(spacing: 12) {
-                    if let sourceFile = card.sourceFile {
-                        Label(sourceFile, systemImage: "doc.text")
-                    }
-
-                    if let deckNames, !deckNames.isEmpty {
-                        Label(deckNames.joined(separator: ", "), systemImage: "rectangle.stack")
+            HStack(spacing: 6) {
+                if let sourceFile = card.sourceFile {
+                    HStack(spacing: 2) {
+                        Image(systemName: "doc.text")
+                        Text(sourceFile)
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
 
-            HStack(spacing: 8) {
+                if let deckNames, !deckNames.isEmpty {
+                    HStack(spacing: 2) {
+                        Image(systemName: "rectangle.stack")
+                        Text(deckNames.joined(separator: ", "))
+                    }
+                }
+
+                Spacer()
+
                 if let dueText = formattedDueDate(card.dueAt) {
                     Text(dueText)
                         .foregroundStyle(isDueOrOverdue(card.dueAt) ? .orange : .secondary)
                 }
 
                 Text(card.state)
+                    .font(.caption2.weight(.medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 2)
                     .background(stateColor(card.state).opacity(0.15), in: Capsule())
                     .foregroundStyle(stateColor(card.state))
             }
-            .font(.caption)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
         }
         .padding(.vertical, 2)
     }
