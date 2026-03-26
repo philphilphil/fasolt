@@ -25,15 +25,13 @@ final class DashboardViewModel {
         errorMessage = nil
 
         do {
-            logger.info("loadStats: fetching stats...")
             let statsEndpoint = Endpoint(path: "/api/review/stats", method: .get)
-            let stats: ReviewStatsDTO = try await apiClient.request(statsEndpoint)
-            logger.info("loadStats: stats OK — due=\(stats.dueCount)")
-
-            logger.info("loadStats: fetching overview...")
             let overviewEndpoint = Endpoint(path: "/api/review/overview", method: .get)
-            let overview: OverviewDTO = try await apiClient.request(overviewEndpoint)
-            logger.info("loadStats: overview OK")
+
+            async let statsTask: ReviewStatsDTO = apiClient.request(statsEndpoint)
+            async let overviewTask: OverviewDTO = apiClient.request(overviewEndpoint)
+
+            let (stats, overview) = try await (statsTask, overviewTask)
 
             dueCount = stats.dueCount
             totalCards = stats.totalCards

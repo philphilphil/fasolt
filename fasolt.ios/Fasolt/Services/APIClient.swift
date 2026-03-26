@@ -136,7 +136,7 @@ final class APIClient: @unchecked Sendable {
 
         if let expiryString = keychain.retrieve("fasolt.tokenExpiry"),
            let expiry = DateFormatters.iso8601.date(from: expiryString),
-           expiry <= Date.now {
+           expiry.addingTimeInterval(-30) <= Date.now {
             if try await refreshTokenCoalesced() {
                 guard let newToken = keychain.retrieve("fasolt.accessToken") else {
                     throw APIError.unauthorized
@@ -156,7 +156,10 @@ final class APIClient: @unchecked Sendable {
         if let existing = refreshTask {
             return try await existing.value
         }
-        let task = Task { [self] in try await doRefreshToken() }
+        let task = Task { [weak self] in
+            guard let self else { return false }
+            return try await self.doRefreshToken()
+        }
         refreshTask = task
         do {
             let result = try await task.value
@@ -193,7 +196,9 @@ final class APIClient: @unchecked Sendable {
             keychain.save(DateFormatters.iso8601.string(from: expiry), forKey: "fasolt.tokenExpiry")
             return true
         } catch {
-            keychain.deleteAll()
+            keychain.delete("fasolt.accessToken")
+            keychain.delete("fasolt.refreshToken")
+            keychain.delete("fasolt.tokenExpiry")
             return false
         }
     }

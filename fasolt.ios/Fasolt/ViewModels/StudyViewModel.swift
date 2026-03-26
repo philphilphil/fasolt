@@ -16,6 +16,7 @@ final class StudyViewModel {
     var ratingsCount: [String: Int] = ["again": 0, "hard": 0, "good": 0, "easy": 0]
     var cardsStudied: Int = 0
     var failedRatings: Int = 0
+    private var isRating = false
 
     var notificationService: NotificationService?
 
@@ -69,7 +70,9 @@ final class StudyViewModel {
     }
 
     func rateCard(_ rating: String) async {
-        guard let card = currentCard else { return }
+        guard let card = currentCard, !isRating else { return }
+        isRating = true
+        defer { isRating = false }
         ratingError = nil
         do {
             _ = try await cardRepository.rateCard(cardId: card.id, rating: rating)

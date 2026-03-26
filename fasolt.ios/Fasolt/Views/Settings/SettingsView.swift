@@ -99,7 +99,7 @@ struct SettingsView: View {
             .alert("Sign Out?", isPresented: $showSignOutConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Sign Out", role: .destructive) {
-                    authService.signOut()
+                    Task { await authService.signOut() }
                 }
             } message: {
                 Text("You'll need to sign in again to use Fasolt.")

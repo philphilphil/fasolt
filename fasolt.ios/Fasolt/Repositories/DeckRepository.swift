@@ -83,6 +83,7 @@ final class DeckRepository {
                     deckDescription: dto.description,
                     cardCount: dto.cardCount,
                     dueCount: dto.dueCount,
+                    createdAt: DateFormatters.iso8601.date(from: dto.createdAt) ?? .now,
                     isActive: dto.isActive
                 )
                 modelContext.insert(deck)

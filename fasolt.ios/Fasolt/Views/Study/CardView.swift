@@ -25,11 +25,14 @@ struct CardView: View {
                     .padding(.bottom, 8)
             }
 
-            Text(text)
-                .font(.title3)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 8)
+            ScrollView {
+                Text(text)
+                    .font(.title3)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 8)
+            }
+            .scrollBounceBehavior(.basedOnSize)
 
             Spacer()
 
