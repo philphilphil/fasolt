@@ -40,6 +40,8 @@ final class NotificationSettingsViewModel {
     }
 
     func updateInterval(_ hours: Int) async {
+        isLoading = true
+        errorMessage = nil
         let endpoint = Endpoint(
             path: "/api/notifications/settings",
             method: .put,
@@ -51,6 +53,7 @@ final class NotificationSettingsViewModel {
         } catch {
             errorMessage = "Could not update notification interval."
         }
+        isLoading = false
     }
 
     var permissionLabel: String {

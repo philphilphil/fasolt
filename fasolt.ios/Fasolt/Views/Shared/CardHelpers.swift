@@ -23,24 +23,46 @@ extension DeckCardDTO: CardDisplayable {}
 // MARK: - Shared Date Formatters
 
 enum DateFormatters {
-    nonisolated(unsafe) static let iso8601: ISO8601DateFormatter = {
+    private static let queue = DispatchQueue(label: "com.fasolt.dateFormatting")
+
+    // These formatters are NOT thread-safe, but access is serialized through `queue`.
+    // nonisolated(unsafe) is required for Swift 6 strict concurrency; the DispatchQueue
+    // provides the actual synchronization guarantee.
+    nonisolated(unsafe) private static let _iso8601: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
     }()
 
-    static let mediumDateTime: DateFormatter = {
+    private static let _mediumDateTime: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .short
         return f
     }()
 
-    static let shortDate: DateFormatter = {
+    private static let _shortDate: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "MMM d"
         return f
     }()
+
+    // Thread-safe ISO8601 access
+    static func parseISO8601(_ string: String) -> Date? {
+        queue.sync { _iso8601.date(from: string) }
+    }
+
+    static func formatISO8601(_ date: Date) -> String {
+        queue.sync { _iso8601.string(from: date) }
+    }
+
+    static func formatMediumDateTime(_ date: Date) -> String {
+        queue.sync { _mediumDateTime.string(from: date) }
+    }
+
+    static func formatShortDate(_ date: Date) -> String {
+        queue.sync { _shortDate.string(from: date) }
+    }
 }
 
 // MARK: - Card Helper Functions
@@ -57,12 +79,12 @@ func stateColor(_ state: String) -> Color {
 
 func parseISODate(_ isoString: String?) -> Date? {
     guard let str = isoString else { return nil }
-    return DateFormatters.iso8601.date(from: str)
+    return DateFormatters.parseISO8601(str)
 }
 
 func formatISODate(_ isoString: String?) -> String? {
     guard let date = parseISODate(isoString) else { return nil }
-    return DateFormatters.mediumDateTime.string(from: date)
+    return DateFormatters.formatMediumDateTime(date)
 }
 
 func formattedDueDate(_ isoString: String?) -> String? {
@@ -72,7 +94,7 @@ func formattedDueDate(_ isoString: String?) -> String? {
     if calendar.isDateInTomorrow(date) { return "Due tomorrow" }
     if calendar.isDateInYesterday(date) { return "Overdue" }
     if date < Date.now { return "Overdue" }
-    return "Due \(DateFormatters.shortDate.string(from: date))"
+    return "Due \(DateFormatters.formatShortDate(date))"
 }
 
 func isDueOrOverdue(_ isoString: String?) -> Bool {

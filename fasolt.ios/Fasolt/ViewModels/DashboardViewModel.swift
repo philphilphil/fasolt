@@ -24,23 +24,36 @@ final class DashboardViewModel {
         isLoading = true
         errorMessage = nil
 
-        do {
-            let statsEndpoint = Endpoint(path: "/api/review/stats", method: .get)
-            let overviewEndpoint = Endpoint(path: "/api/review/overview", method: .get)
+        let statsEndpoint = Endpoint(path: "/api/review/stats", method: .get)
+        let overviewEndpoint = Endpoint(path: "/api/review/overview", method: .get)
 
-            async let statsTask: ReviewStatsDTO = apiClient.request(statsEndpoint)
-            async let overviewTask: OverviewDTO = apiClient.request(overviewEndpoint)
+        // Load independently so one failure doesn't block the other
+        async let statsResult: Result<ReviewStatsDTO, Error> = {
+            do { return .success(try await apiClient.request(statsEndpoint)) }
+            catch { return .failure(error) }
+        }()
+        async let overviewResult: Result<OverviewDTO, Error> = {
+            do { return .success(try await apiClient.request(overviewEndpoint)) }
+            catch { return .failure(error) }
+        }()
 
-            let (stats, overview) = try await (statsTask, overviewTask)
+        let (stats, overview) = await (statsResult, overviewResult)
 
-            dueCount = stats.dueCount
-            totalCards = stats.totalCards
-            studiedToday = stats.studiedToday
-            cardsByState = overview.cardsByState
-            totalDecks = overview.totalDecks
-        } catch {
-            logger.error("loadStats error: \(error)")
-            errorMessage = "Could not load stats. Pull to refresh."
+        var failed = false
+        if case .success(let s) = stats {
+            dueCount = s.dueCount
+            totalCards = s.totalCards
+            studiedToday = s.studiedToday
+        } else { failed = true }
+
+        if case .success(let o) = overview {
+            cardsByState = o.cardsByState
+            totalDecks = o.totalDecks
+        } else { failed = true }
+
+        if failed {
+            logger.error("Partial loadStats failure")
+            errorMessage = "Some stats could not be loaded. Pull to refresh."
         }
 
         isLoading = false

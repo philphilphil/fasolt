@@ -3,7 +3,7 @@ import SwiftData
 
 @Model
 final class PendingReview {
-    var cardPublicId: String
+    @Attribute(.unique) var cardPublicId: String
     var rating: String
     var reviewedAt: Date
     var synced: Bool

@@ -7,64 +7,70 @@ struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var syncService: SyncService?
+    @State private var cardRepository: CardRepository?
+    @State private var deckRepository: DeckRepository?
+    @State private var notificationService: NotificationService?
 
     var body: some View {
-        let apiClient = authService.apiClient
+        Group {
+            if let cardRepository, let deckRepository, let notificationService {
+                let studyViewModelFactory: () -> StudyViewModel = {
+                    let vm = StudyViewModel(cardRepository: cardRepository)
+                    vm.notificationService = notificationService
+                    return vm
+                }
 
-        let cardRepository = CardRepository(
-            apiClient: apiClient,
-            networkMonitor: networkMonitor,
-            modelContext: modelContext
-        )
+                TabView {
+                    DashboardView(
+                        viewModel: DashboardViewModel(apiClient: authService.apiClient),
+                        studyViewModelFactory: studyViewModelFactory
+                    )
+                    .tabItem {
+                        Label("Dashboard", systemImage: "chart.bar")
+                    }
 
-        let deckRepository = DeckRepository(
-            apiClient: apiClient,
-            networkMonitor: networkMonitor,
-            modelContext: modelContext
-        )
+                    DeckListView(
+                        viewModel: DeckListViewModel(deckRepository: deckRepository),
+                        deckRepository: deckRepository,
+                        studyViewModelFactory: studyViewModelFactory
+                    )
+                    .tabItem {
+                        Label("Decks", systemImage: "rectangle.stack")
+                    }
 
-        let notificationService = NotificationService(apiClient: apiClient)
+                    CardListView(
+                        viewModel: CardListViewModel(apiClient: authService.apiClient)
+                    )
+                    .tabItem {
+                        Label("Cards", systemImage: "rectangle.on.rectangle")
+                    }
 
-        let studyViewModelFactory: () -> StudyViewModel = {
-            let vm = StudyViewModel(cardRepository: cardRepository)
-            vm.notificationService = notificationService
-            return vm
-        }
-
-        TabView {
-            DashboardView(
-                viewModel: DashboardViewModel(apiClient: apiClient),
-                studyViewModelFactory: studyViewModelFactory
-            )
-            .tabItem {
-                Label("Dashboard", systemImage: "chart.bar")
-            }
-
-            DeckListView(
-                viewModel: DeckListViewModel(deckRepository: deckRepository),
-                deckRepository: deckRepository,
-                studyViewModelFactory: studyViewModelFactory
-            )
-            .tabItem {
-                Label("Decks", systemImage: "rectangle.stack")
-            }
-
-            CardListView(
-                viewModel: CardListViewModel(apiClient: apiClient)
-            )
-            .tabItem {
-                Label("Cards", systemImage: "rectangle.on.rectangle")
-            }
-
-            SettingsView(
-                viewModel: SettingsViewModel(apiClient: apiClient),
-                notificationViewModel: NotificationSettingsViewModel(apiClient: apiClient)
-            )
-            .tabItem {
-                Label("Settings", systemImage: "gear")
+                    SettingsView(
+                        viewModel: SettingsViewModel(apiClient: authService.apiClient),
+                        notificationViewModel: NotificationSettingsViewModel(apiClient: authService.apiClient)
+                    )
+                    .tabItem {
+                        Label("Settings", systemImage: "gear")
+                    }
+                }
+            } else {
+                ProgressView()
             }
         }
         .task {
+            let apiClient = authService.apiClient
+            cardRepository = CardRepository(
+                apiClient: apiClient,
+                networkMonitor: networkMonitor,
+                modelContext: modelContext
+            )
+            deckRepository = DeckRepository(
+                apiClient: apiClient,
+                networkMonitor: networkMonitor,
+                modelContext: modelContext
+            )
+            notificationService = NotificationService(apiClient: apiClient)
+
             let service = SyncService(
                 apiClient: apiClient,
                 networkMonitor: networkMonitor,

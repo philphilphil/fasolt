@@ -74,12 +74,8 @@ final class StudyViewModel {
         isRating = true
         defer { isRating = false }
         ratingError = nil
-        do {
-            _ = try await cardRepository.rateCard(cardId: card.id, rating: rating)
-        } catch {
-            failedRatings += 1
-            ratingError = "Rating may not have been saved."
-        }
+
+        // Advance state immediately (optimistic update) so UI feels responsive
         ratingsCount[rating, default: 0] += 1
         cardsStudied += 1
         currentIndex += 1
@@ -89,6 +85,14 @@ final class StudyViewModel {
             requestNotificationPermissionIfNeeded()
         } else {
             state = .studying
+        }
+
+        // Submit rating to server in background — offline queue handles failures
+        do {
+            _ = try await cardRepository.rateCard(cardId: card.id, rating: rating)
+        } catch {
+            failedRatings += 1
+            ratingError = "Rating may not have been saved."
         }
     }
 

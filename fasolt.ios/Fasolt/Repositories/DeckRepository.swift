@@ -65,14 +65,21 @@ final class DeckRepository {
                     deckDescription: dto.description,
                     cardCount: dto.cardCount,
                     dueCount: dto.dueCount,
-                    createdAt: DateFormatters.iso8601.date(from: dto.createdAt) ?? .now,
+                    createdAt: DateFormatters.parseISO8601(dto.createdAt) ?? {
+                        logger.warning("Failed to parse createdAt '\(dto.createdAt)' for deck \(dto.id)")
+                        return Date.now
+                    }(),
                     isActive: dto.isActive
                 )
                 modelContext.insert(deck)
             }
         }
 
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            logger.error("Failed to save deck list cache: \(error.localizedDescription)")
+        }
     }
 
     private func cacheDeckDetail(_ detail: DeckDetailDTO) {
@@ -91,11 +98,11 @@ final class DeckRepository {
                 card.sourceFile = cardDto.sourceFile
                 card.sourceHeading = cardDto.sourceHeading
                 card.state = cardDto.state
-                if let dueAt = cardDto.dueAt { card.dueAt = DateFormatters.iso8601.date(from: dueAt) }
+                if let dueAt = cardDto.dueAt { card.dueAt = DateFormatters.parseISO8601( dueAt) }
                 card.stability = cardDto.stability
                 card.difficulty = cardDto.difficulty
                 card.step = cardDto.step
-                if let lastReviewed = cardDto.lastReviewedAt { card.lastReviewedAt = DateFormatters.iso8601.date(from: lastReviewed) }
+                if let lastReviewed = cardDto.lastReviewedAt { card.lastReviewedAt = DateFormatters.parseISO8601( lastReviewed) }
                 card.frontSvg = cardDto.frontSvg
                 card.backSvg = cardDto.backSvg
                 if !card.decks.contains(where: { $0.publicId == deck.publicId }) {
@@ -109,11 +116,11 @@ final class DeckRepository {
                     sourceFile: cardDto.sourceFile,
                     sourceHeading: cardDto.sourceHeading,
                     state: cardDto.state,
-                    dueAt: cardDto.dueAt.flatMap { DateFormatters.iso8601.date(from: $0) },
+                    dueAt: cardDto.dueAt.flatMap { DateFormatters.parseISO8601( $0) },
                     stability: cardDto.stability,
                     difficulty: cardDto.difficulty,
                     step: cardDto.step,
-                    lastReviewedAt: cardDto.lastReviewedAt.flatMap { DateFormatters.iso8601.date(from: $0) },
+                    lastReviewedAt: cardDto.lastReviewedAt.flatMap { DateFormatters.parseISO8601( $0) },
                     frontSvg: cardDto.frontSvg,
                     backSvg: cardDto.backSvg
                 )
@@ -122,7 +129,11 @@ final class DeckRepository {
             }
         }
 
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            logger.error("Failed to save deck detail cache: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Cache Read
@@ -137,7 +148,7 @@ final class DeckRepository {
                 description: deck.deckDescription,
                 cardCount: deck.cardCount,
                 dueCount: deck.dueCount,
-                createdAt: DateFormatters.iso8601.string(from: deck.createdAt),
+                createdAt: DateFormatters.formatISO8601( deck.createdAt),
                 isActive: deck.isActive
             )
         }
@@ -154,11 +165,11 @@ final class DeckRepository {
                 sourceFile: card.sourceFile,
                 sourceHeading: card.sourceHeading,
                 state: card.state,
-                dueAt: card.dueAt.map { DateFormatters.iso8601.string(from: $0) },
+                dueAt: card.dueAt.map { DateFormatters.formatISO8601( $0) },
                 stability: card.stability,
                 difficulty: card.difficulty,
                 step: card.step,
-                lastReviewedAt: card.lastReviewedAt.map { DateFormatters.iso8601.string(from: $0) },
+                lastReviewedAt: card.lastReviewedAt.map { DateFormatters.formatISO8601( $0) },
                 frontSvg: card.frontSvg,
                 backSvg: card.backSvg
             )
@@ -186,7 +197,11 @@ final class DeckRepository {
         let predicate = #Predicate<CachedDeck> { $0.publicId == id }
         if let cached = try? modelContext.fetch(FetchDescriptor(predicate: predicate)).first {
             cached.isActive = result.isActive
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                logger.error("Failed to save isActive state: \(error.localizedDescription)")
+            }
         }
 
         return result

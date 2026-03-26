@@ -25,7 +25,7 @@ final class AuthService {
             guard keychain.retrieve("fasolt.accessToken") != nil else { return false }
             // If token is expired, we need a refresh token to recover
             if let expiryString = keychain.retrieve("fasolt.tokenExpiry"),
-               let expiry = DateFormatters.iso8601.date(from: expiryString),
+               let expiry = DateFormatters.parseISO8601( expiryString),
                expiry <= Date.now {
                 return keychain.retrieve("fasolt.refreshToken") != nil
             }
@@ -44,8 +44,8 @@ final class AuthService {
         isLoading = true
         errorMessage = nil
 
-        // Clear any stale auth state before starting fresh
-        keychain.deleteAll()
+        // Save server URL before auth — only clear old tokens after successful exchange
+        let previousServerURL = keychain.retrieve("fasolt.serverURL")
         keychain.save(serverURL, forKey: "fasolt.serverURL")
 
         do {
@@ -74,11 +74,21 @@ final class AuthService {
             isAuthenticated = true
         } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
             authLogger.info("User cancelled sign-in")
-            keychain.delete("fasolt.serverURL")
+            // Restore previous server URL if user cancelled
+            if let previousServerURL {
+                keychain.save(previousServerURL, forKey: "fasolt.serverURL")
+            } else {
+                keychain.delete("fasolt.serverURL")
+            }
             errorMessage = nil
         } catch {
             authLogger.error("Sign-in failed: \(error)")
-            keychain.delete("fasolt.serverURL")
+            // Restore previous server URL on failure
+            if let previousServerURL {
+                keychain.save(previousServerURL, forKey: "fasolt.serverURL")
+            } else {
+                keychain.delete("fasolt.serverURL")
+            }
             errorMessage = "Could not connect. Check your server URL and try again."
         }
 
@@ -180,8 +190,8 @@ final class AuthService {
             keychain.save(refreshToken, forKey: "fasolt.refreshToken")
         }
         let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
-        keychain.save(DateFormatters.iso8601.string(from: expiry), forKey: "fasolt.tokenExpiry")
-        authLogger.info("Token exchanged, expires at \(DateFormatters.iso8601.string(from: expiry))")
+        keychain.save(DateFormatters.formatISO8601( expiry), forKey: "fasolt.tokenExpiry")
+        authLogger.info("Token exchanged, expires at \(DateFormatters.formatISO8601( expiry))")
     }
 
     // MARK: - PKCE Helpers (static for testing)
