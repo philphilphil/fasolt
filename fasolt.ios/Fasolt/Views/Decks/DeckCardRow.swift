@@ -3,6 +3,7 @@ import SwiftUI
 struct DeckCardRow: View {
     let card: any CardDisplayable
     var deckNames: [String]? = nil
+    var showSourceFile = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -11,6 +12,13 @@ struct DeckCardRow: View {
                 .lineLimit(2)
 
             HStack(spacing: 6) {
+                if showSourceFile, let sourceFile = card.sourceFile {
+                    HStack(spacing: 2) {
+                        Image(systemName: "doc.text")
+                        Text(sourceFile)
+                    }
+                }
+
                 if let deckNames, !deckNames.isEmpty {
                     HStack(spacing: 2) {
                         Image(systemName: "rectangle.stack")

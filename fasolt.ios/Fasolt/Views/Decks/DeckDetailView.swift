@@ -70,7 +70,7 @@ struct DeckDetailView: View {
                                     NavigationLink {
                                         CardDetailView(card: card)
                                     } label: {
-                                        DeckCardRow(card: card)
+                                        DeckCardRow(card: card, showSourceFile: true)
                                     }
                                 }
                             }
