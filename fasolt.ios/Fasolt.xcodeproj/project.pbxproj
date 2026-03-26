@@ -478,7 +478,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fasolt.app/Fasolt";
 			};
 			name = Release;
@@ -495,7 +495,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fasolt.app/Fasolt";
 			};
 			name = Debug;
@@ -574,7 +574,7 @@
 				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -595,7 +595,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
