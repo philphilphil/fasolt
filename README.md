@@ -15,26 +15,26 @@
 Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at your markdown files. Study the flashcards it creates.
 
 <p align="center">
-  <img src="docs/screenshots/screenshot.png" alt="Study question" width="400" />
-  <img src="docs/screenshots/screenshot2.png" alt="Study answer" width="400" />
+  <img src="docs/media/web_screenshot_front.png" alt="Study question" width="400" />
+  <img src="docs/media/web_screenshot_back.png" alt="Study answer" width="400" />
 </p>
 
 ## How It Works
 
 1. **Write notes** — Obsidian, any editor, plain text. No special format required.
 2. **Your AI creates flashcards** — ask your agent to read a file and push cards to fasolt via MCP
-3. **Study** — review due cards in the browser, FSRS schedules reviews at increasing intervals
+3. **Study** — review due cards in the browser or iOS app, FSRS schedules reviews at increasing intervals
 
 ## Features
 
-- Remote MCP server for AI agents (Claude Code, Cursor, etc.)
-- REST API for programmatic card creation
 - FSRS spaced repetition with optimized scheduling
-- Source tracking — cards retain provenance (file, heading) as metadata
+- MCP to connect your AI agent to
+- SVG support: agents can generate diagrams, charts, and visualizations directly on cards
+- Source tracking, cards retain context (file, heading) as metadata
 - Decks for organizing cards into focused study sessions
 - Full-text search across cards and decks
 - Dashboard with due counts, totals, and study streaks
-- OAuth 2.0 for MCP clients, cookie auth for the web app
+- Native iOS app with offline support
 - Self-hostable via Docker
 
 ## Tech Stack
@@ -63,50 +63,34 @@ dotnet run --project fasolt.Server      # API on :8080
 cd fasolt.client && npm run dev         # UI on :5173
 ```
 
-## MCP Setup
+## MCP
 
-The MCP server is built into the backend at `/mcp` (streamable HTTP transport). OAuth login is triggered automatically on first connection.
+fasolt exposes a remote [MCP](https://modelcontextprotocol.io/) server that lets AI agents create and manage flashcards on your behalf. Your agent reads your local markdown files, extracts key concepts, and pushes cards to fasolt — you never upload files to the server.
 
-**Claude Code:**
-```bash
-claude mcp add fasolt --transport http http://localhost:8080/mcp
+Add the MCP server URL to your agent of choice (Claude Code, Cursor, Copilot, etc.). Authentication happens via OAuth.
+
+```
+http://localhost:8080/mcp
 ```
 
-**Copilot CLI** — add to `~/.copilot/mcp-config.json`:
-```json
-{
-  "mcpServers": {
-    "fasolt": {
-      "type": "http",
-      "url": "http://localhost:8080/mcp"
-    }
-  }
-}
-```
+The server provides tools for creating, searching, updating, and deleting cards and decks — all discoverable automatically when your agent connects.
 
-### MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `CreateCards` | Create cards with optional source file/heading and deck assignment |
-| `SearchCards` | Search cards by query text (use before creating to detect duplicates) |
-| `ListCards` | List cards with optional source/deck filter and pagination |
-| `ListSources` | List source files with card and due counts |
-| `ListDecks` | List all decks with card and due counts |
-| `CreateDeck` | Create a new deck |
-| `DeleteDeck` | Delete a deck, optionally deleting its cards |
-| `DeleteCards` | Delete one or more cards by their IDs |
-
-### Example
-
+**Example:**
 ```
 You:   "Create flashcards from my kubernetes-notes.md"
 Agent: reads local file → checks for duplicates → creates cards via MCP → done
 ```
 
-## iOS Push Notifications
+## iOS App
 
-The iOS app can receive push notifications via the backend when cards are due for review. To enable this, copy `.env.example` to `.env` and fill in your Apple APNs credentials. Without them, everything else works normally — the notification service simply won't start.
+Native iOS app (Swift / SwiftUI) for studying on the go. Syncs with the backend, supports offline review with automatic sync when back online, and receives push notifications when cards are due.
+
+<p align="center">
+  <img src="docs/media/ios_screenshot_front.png" alt="iOS study question" width="200" />
+  <img src="docs/media/ios_screenshot_back.png" alt="iOS study answer" width="200" />
+  <img src="docs/media/ios_screenshot_dashboard.png" alt="iOS dashboard" width="200" />
+  <img src="docs/media/ios_screenshot_sessionComplete.png" alt="iOS session complete" width="200" />
+</p>
 
 ## Project Structure
 
@@ -117,9 +101,6 @@ fasolt.Server/
   Infrastructure/   — EF Core DbContext, migrations
   Api/              — endpoints, MCP tools, middleware
 fasolt.client/      — Vue 3 SPA
+fasolt.ios/         — native iOS app (SwiftUI)
 fasolt.Tests/       — service-level tests (xUnit + Postgres)
 ```
-
-## License
-
-MIT
