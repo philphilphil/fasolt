@@ -249,6 +249,77 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ListCards_Pagination_CursorReturnsNextPage()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        // Create 5 cards
+        for (var i = 1; i <= 5; i++)
+            await svc.CreateCard(UserId, $"Page {i}", $"Back {i}", "page.md", null);
+
+        var page1 = await svc.ListCards(UserId, sourceFile: null, deckId: null, limit: 2, after: null);
+
+        page1.Items.Should().HaveCount(2);
+        page1.HasMore.Should().BeTrue();
+        page1.NextCursor.Should().NotBeNull();
+
+        var page2 = await svc.ListCards(UserId, sourceFile: null, deckId: null, limit: 2, after: page1.NextCursor);
+
+        page2.Items.Should().HaveCount(2);
+        page2.HasMore.Should().BeTrue();
+
+        // No overlap between pages
+        page2.Items.Should().NotContain(c => page1.Items.Any(p1 => p1.Id == c.Id));
+
+        var page3 = await svc.ListCards(UserId, sourceFile: null, deckId: null, limit: 2, after: page2.NextCursor);
+
+        page3.Items.Should().HaveCount(1);
+        page3.HasMore.Should().BeFalse();
+        page3.NextCursor.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ResetProgress_ClearsSrsState()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var card = await svc.CreateCard(UserId, "Reset Q", "Reset A", null, null);
+
+        // Simulate SRS state
+        var entity = await db.Cards.FindAsync(db.Cards.First(c => c.PublicId == card.Id).Id);
+        entity!.Stability = 5.0;
+        entity.Difficulty = 4.2;
+        entity.Step = 3;
+        entity.State = "review";
+        entity.DueAt = DateTimeOffset.UtcNow;
+        entity.LastReviewedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        var result = await svc.ResetProgress(UserId, card.Id);
+
+        result.Should().NotBeNull();
+        result!.State.Should().Be("new");
+        result.Stability.Should().BeNull();
+        result.Difficulty.Should().BeNull();
+        result.Step.Should().BeNull();
+        result.DueAt.Should().BeNull();
+        result.LastReviewedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ResetProgress_NotFound_ReturnsNull()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var result = await svc.ResetProgress(UserId, "nonexistent");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task BulkUpdateCards_ById_UpdatesMultiple()
     {
         await using var db = _db.CreateDbContext();

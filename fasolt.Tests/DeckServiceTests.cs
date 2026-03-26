@@ -61,6 +61,128 @@ public class DeckServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AddCards_Success()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Add Test", null);
+        var card = await cardSvc.CreateCard(UserId, "AQ", "AA", null, null);
+
+        var result = await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
+
+        result.Should().Be(AddCardsResult.Success);
+        var detail = await deckSvc.GetDeck(UserId, deck.Id);
+        detail!.Cards.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task AddCards_DeckNotFound()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var result = await deckSvc.AddCards(UserId, "nonexistent", ["card1"]);
+
+        result.Should().Be(AddCardsResult.DeckNotFound);
+    }
+
+    [Fact]
+    public async Task AddCards_CardsNotFound()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Add Missing", null);
+        var result = await deckSvc.AddCards(UserId, deck.Id, ["nonexistent"]);
+
+        result.Should().Be(AddCardsResult.CardsNotFound);
+    }
+
+    [Fact]
+    public async Task AddCards_SkipsDuplicates()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Dup Add", null);
+        var card = await cardSvc.CreateCard(UserId, "DupQ", "DupA", null, null);
+        await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
+
+        // Add same card again
+        var result = await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
+
+        result.Should().Be(AddCardsResult.Success);
+        var detail = await deckSvc.GetDeck(UserId, deck.Id);
+        detail!.Cards.Should().HaveCount(1, "duplicate add should be silently skipped");
+    }
+
+    [Fact]
+    public async Task UpdateDeck_RenamesAndUpdatesDescription()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Old Name", "Old desc");
+        var updated = await deckSvc.UpdateDeck(UserId, deck.Id, "New Name", "New desc");
+
+        updated.Should().NotBeNull();
+        updated!.Name.Should().Be("New Name");
+        updated.Description.Should().Be("New desc");
+    }
+
+    [Fact]
+    public async Task UpdateDeck_NotFound_ReturnsNull()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var result = await deckSvc.UpdateDeck(UserId, "nonexistent", "Name", null);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateDeck_ClearsDescription()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Desc Test", "Has description");
+        var updated = await deckSvc.UpdateDeck(UserId, deck.Id, "Desc Test", null);
+
+        updated!.Description.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetActive_DeactivatesDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Active Test", null);
+        deck.IsActive.Should().BeTrue("decks are active by default");
+
+        var result = await deckSvc.SetActive(UserId, deck.Id, false);
+
+        result.Should().NotBeNull();
+        result!.IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetActive_NotFound_ReturnsNull()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+
+        var result = await deckSvc.SetActive(UserId, "nonexistent", true);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task RemoveCards_BulkRemovesFromDeck()
     {
         await using var db = _db.CreateDbContext();
