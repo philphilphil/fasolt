@@ -10,6 +10,7 @@ actor APIClient {
     private let decoder: JSONDecoder
 
     private var refreshTask: Task<Bool, Error>?
+    private var onAuthFailure: (@Sendable () -> Void)?
 
     init(session: URLSession = .shared, keychain: KeychainHelper = KeychainHelper()) {
         self.session = session
@@ -20,6 +21,10 @@ actor APIClient {
 
     nonisolated var baseURL: String? {
         keychain.retrieve("fasolt.serverURL")
+    }
+
+    func setAuthFailureHandler(_ handler: @escaping @Sendable () -> Void) {
+        onAuthFailure = handler
     }
 
     // MARK: - Authenticated requests
@@ -158,9 +163,8 @@ actor APIClient {
         if let existing = refreshTask {
             return try await existing.value
         }
-        let task = Task { [weak self] in
-            guard let self else { return false }
-            return try await self.doRefreshToken()
+        let task = Task {
+            try await self.doRefreshToken()
         }
         refreshTask = task
         do {
@@ -201,6 +205,7 @@ actor APIClient {
             keychain.delete("fasolt.accessToken")
             keychain.delete("fasolt.refreshToken")
             keychain.delete("fasolt.tokenExpiry")
+            onAuthFailure?()
             return false
         }
     }

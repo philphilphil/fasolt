@@ -16,7 +16,7 @@ final class StudyViewModel {
     var ratingsCount: [String: Int] = ["again": 0, "hard": 0, "good": 0, "easy": 0]
     var cardsStudied: Int = 0
     var failedRatings: Int = 0
-    private var isRating = false
+    private(set) var isRating = false
 
     var notificationService: NotificationService?
 

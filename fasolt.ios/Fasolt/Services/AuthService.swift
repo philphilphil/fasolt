@@ -32,6 +32,17 @@ final class AuthService {
             }
             return true
         }()
+
+        // Force logout when token refresh fails so the user isn't stuck on authenticated screens
+        Task { [weak self] in
+            await apiClient.setAuthFailureHandler { [weak self] in
+                Task { @MainActor [weak self] in
+                    guard let self, self.isAuthenticated else { return }
+                    authLogger.warning("Token refresh failed — forcing logout")
+                    self.isAuthenticated = false
+                }
+            }
+        }
     }
 
     // MARK: - Public API

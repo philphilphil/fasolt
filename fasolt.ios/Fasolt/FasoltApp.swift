@@ -50,18 +50,28 @@ struct FasoltApp: App {
                 }
             }
             .onAppear {
-                let service = NotificationService(apiClient: authService.apiClient)
-                notificationService = service
-                appDelegate.onDeviceToken = { tokenData in
-                    Task { await service.registerDeviceToken(tokenData) }
+                if notificationService == nil {
+                    let service = NotificationService(apiClient: authService.apiClient)
+                    notificationService = service
+                    appDelegate.onDeviceToken = { [weak authService] tokenData in
+                        Task {
+                            guard let authService, authService.isAuthenticated else {
+                                appLogger.info("Skipping device token registration — not authenticated")
+                                return
+                            }
+                            await service.registerDeviceToken(tokenData)
+                        }
+                    }
                 }
-                // Re-register for push on every launch if permission was already granted
-                Task {
-                    let settings = await UNUserNotificationCenter.current().notificationSettings()
-                    if settings.authorizationStatus == .authorized {
-                        appLogger.info("Push permission already granted, re-registering")
-                        await MainActor.run {
-                            UIApplication.shared.registerForRemoteNotifications()
+                // Re-register for push on every launch if permission was already granted and user is logged in
+                if authService.isAuthenticated {
+                    Task {
+                        let settings = await UNUserNotificationCenter.current().notificationSettings()
+                        if settings.authorizationStatus == .authorized {
+                            appLogger.info("Push permission already granted, re-registering")
+                            await MainActor.run {
+                                UIApplication.shared.registerForRemoteNotifications()
+                            }
                         }
                     }
                 }

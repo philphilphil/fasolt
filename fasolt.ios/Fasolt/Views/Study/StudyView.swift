@@ -200,5 +200,6 @@ struct StudyView: View {
         }
         .buttonStyle(.bordered)
         .tint(color)
+        .disabled(viewModel.isRating)
     }
 }

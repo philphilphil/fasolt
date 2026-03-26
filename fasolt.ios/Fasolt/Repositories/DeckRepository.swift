@@ -18,19 +18,38 @@ final class DeckRepository {
     }
 
     func fetchDecks() async throws -> [DeckDTO] {
-        let endpoint = Endpoint(path: "/api/decks", method: .get)
-        let decks: [DeckDTO] = try await apiClient.request(endpoint)
-        logger.info("Fetched \(decks.count) decks from API")
-        cacheDeckList(decks)
-        return decks
+        do {
+            let endpoint = Endpoint(path: "/api/decks", method: .get)
+            let decks: [DeckDTO] = try await apiClient.request(endpoint)
+            logger.info("Fetched \(decks.count) decks from API")
+            cacheDeckList(decks)
+            return decks
+        } catch {
+            if !networkMonitor.isConnected {
+                let cached = loadCachedDecks()
+                if !cached.isEmpty {
+                    logger.info("Offline — returning \(cached.count) cached decks")
+                    return cached
+                }
+            }
+            throw error
+        }
     }
 
     func fetchDeckDetail(id: String) async throws -> DeckDetailDTO {
-        let endpoint = Endpoint(path: "/api/decks/\(id)", method: .get)
-        let detail: DeckDetailDTO = try await apiClient.request(endpoint)
-        logger.info("Fetched deck detail '\(detail.name)' with \(detail.cards.count) cards")
-        cacheDeckDetail(detail)
-        return detail
+        do {
+            let endpoint = Endpoint(path: "/api/decks/\(id)", method: .get)
+            let detail: DeckDetailDTO = try await apiClient.request(endpoint)
+            logger.info("Fetched deck detail '\(detail.name)' with \(detail.cards.count) cards")
+            cacheDeckDetail(detail)
+            return detail
+        } catch {
+            if !networkMonitor.isConnected, let cached = loadCachedDeckDetail(id: id) {
+                logger.info("Offline — returning cached detail for deck \(id)")
+                return cached
+            }
+            throw error
+        }
     }
 
     // MARK: - Cache Write

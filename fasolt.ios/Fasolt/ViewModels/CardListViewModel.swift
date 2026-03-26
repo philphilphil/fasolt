@@ -34,6 +34,7 @@ final class CardListViewModel {
     }
 
     func loadCards() async {
+        guard !isLoading else { return }
         isLoading = true
         errorMessage = nil
 

@@ -67,13 +67,17 @@ final class SyncService {
                 logger.info("Synced review for card \(review.cardPublicId)")
             } catch let error as APIError {
                 switch error {
-                case .notFound:
-                    // Card deleted on server — discard silently
+                case .notFound, .badRequest, .forbidden:
+                    // Client error — retrying won't help, discard
                     modelContext.delete(review)
-                    logger.info("Card \(review.cardPublicId) not found on server — discarded")
+                    logger.info("Discarding review for \(review.cardPublicId): \(error)")
                 case .networkError:
                     // Lost connectivity mid-flush — stop, retry later
                     logger.info("Lost connectivity during flush — will retry")
+                    break flushLoop
+                case .serverError:
+                    // Server error — stop flush, retry later
+                    logger.error("Server error syncing \(review.cardPublicId): \(error) — will retry")
                     break flushLoop
                 default:
                     logger.error("Failed to sync review for \(review.cardPublicId): \(error)")
