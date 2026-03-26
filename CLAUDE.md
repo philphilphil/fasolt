@@ -130,16 +130,16 @@ The server exposes a remote MCP endpoint at `/mcp` (streamable HTTP transport). 
 - `CreateCards` — create one or more flashcards, optionally linked to a source file and/or deck
 - `SearchCards` — search existing cards by query text (use before creating to detect duplicates)
 - `ListCards` — list cards, optionally filtered by source file or deck; supports pagination
+- `UpdateCards` — bulk update cards' text or source metadata by ID or natural key (sourceFile + front); preserves SRS history
+- `DeleteCards` — delete cards by IDs or by source file
+- `AddSvgToCard` — add an SVG image to a card's front or back
 - `ListSources` — list all source files that cards were created from, with card and due counts
 - `ListDecks` — list all decks with card counts and due counts
 - `CreateDeck` — create a new deck for organizing flashcards
-- `AddCardsToDeck` — add cards to a deck by card IDs
-- `RemoveCardsFromDeck` — remove cards from a deck (cards are kept, only unlinked)
-- `MoveCards` — move cards from one deck to another
+- `UpdateDeck` — update a deck's name or description
 - `DeleteDeck` — delete a deck, optionally deleting all its cards too
-- `DeleteCards` — delete one or more cards by their IDs
-- `UpdateCard` — update a card's front, back, source file, or source heading (by ID or source+front natural key); preserves SRS history
-- `DeleteCardsBySource` — delete all cards from a specific source file
+- `AssignCardsToDeck` — assign cards to a deck, remove from a deck, or move between decks
+- `SetDeckActive` — activate or deactivate a deck for study
 - `GetOverview` — get account overview: total cards, due cards, cards by state, deck and source counts
 
 ## Agent Teams
