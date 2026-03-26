@@ -43,6 +43,8 @@
 		D8F684C246902C52A7B6CB5C /* DeckDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */; };
 		DAC11D57C3D065BE6BB8294F /* DeckListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */; };
 		DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3794A93C12869786BF3468EE /* OnboardingView.swift */; };
+		AA1122334455667788990011 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1122334455667788990011 /* RegisterView.swift */; };
+		AA2233445566778899001122 /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2233445566778899001122 /* RegisterViewModel.swift */; };
 		DE25E56E67F5F61423E84C00 /* DeckCardRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9097BB7014F064BF83F77689 /* DeckCardRow.swift */; };
 		DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */; };
 		F2E1D0C9B8A7F6E5D4C3B2A1 /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */; };
@@ -72,6 +74,8 @@
 		2E2E5EDB31357B7ECA46E216 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		36B52198B8E5A1593EA701B5 /* CardRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardRepository.swift; sourceTree = "<group>"; };
 		3794A93C12869786BF3468EE /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		BB1122334455667788990011 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
+		BB2233445566778899001122 /* RegisterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterViewModel.swift; sourceTree = "<group>"; };
 		3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		414BE26059C9FAB839CAA164 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
@@ -165,6 +169,7 @@
 				71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */,
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */,
+				BB2233445566778899001122 /* RegisterViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -260,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				3794A93C12869786BF3468EE /* OnboardingView.swift */,
+				BB1122334455667788990011 /* RegisterView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -435,6 +441,8 @@
 				8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */,
 				ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */,
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
+				AA1122334455667788990011 /* RegisterView.swift in Sources */,
+				AA2233445566778899001122 /* RegisterViewModel.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
 				F2E1D0C9B8A7F6E5D4C3B2A1 /* McpSetupSection.swift in Sources */,
 				DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */,
