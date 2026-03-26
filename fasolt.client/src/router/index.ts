@@ -49,6 +49,12 @@ const router = createRouter({
       component: () => import('@/views/AlgorithmView.vue'),
       meta: { public: true },
     },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('@/views/PrivacyPolicyView.vue'),
+      meta: { public: true, landing: true },
+    },
     // App routes (require auth)
     { path: '/study', name: 'study', component: StudyView },
     { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue') },

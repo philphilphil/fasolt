@@ -148,6 +148,12 @@ const { isDark, toggle } = useDarkMode()
           >
             How the algorithm works
           </RouterLink>
+          <RouterLink
+            to="/privacy"
+            class="text-xs text-muted-foreground hover:text-accent"
+          >
+            Privacy
+          </RouterLink>
           <a
             href="https://github.com"
             class="text-xs text-muted-foreground hover:text-accent"

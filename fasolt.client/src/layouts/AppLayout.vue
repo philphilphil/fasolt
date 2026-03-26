@@ -62,8 +62,9 @@ const activeTab = computed(() => {
         <slot />
       </div>
     </main>
-    <footer class="hidden border-t border-border/40 px-5 py-2 text-[10px] text-muted-foreground/50 sm:block">
-      fasolt v{{ version }}
+    <footer class="hidden border-t border-border/40 px-5 py-2 text-[10px] text-muted-foreground/50 sm:flex sm:items-center sm:justify-between">
+      <span>fasolt v{{ version }}</span>
+      <RouterLink to="/privacy" class="hover:text-muted-foreground">Privacy Policy</RouterLink>
     </footer>
     <BottomNav />
   </div>
