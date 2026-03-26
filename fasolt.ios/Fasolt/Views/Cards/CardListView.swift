@@ -27,30 +27,10 @@ struct CardListView: View {
                             Task { await viewModel.loadCards() }
                         }
                     }
+                } else if viewModel.isSearching {
+                    searchResultsList
                 } else {
-                    List {
-                        ForEach(sortedCards(viewModel.filteredCards)) { card in
-                            NavigationLink {
-                                CardDetailView(
-                                    card: card,
-                                    deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
-                                )
-                            } label: {
-                                DeckCardRow(
-                                    card: card,
-                                    deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
-                                )
-                            }
-                        }
-
-                        if viewModel.hasMore && viewModel.searchText.isEmpty {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                                .task {
-                                    await viewModel.loadMore()
-                                }
-                        }
-                    }
+                    cardsList
                 }
             }
             .searchable(text: $viewModel.searchText, prompt: "Search cards")
@@ -84,6 +64,57 @@ struct CardListView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadCards() }
+            }
+        }
+    }
+
+    private var searchResultsList: some View {
+        Group {
+            if let results = viewModel.searchResults {
+                if results.isEmpty {
+                    ContentUnavailableView.search(text: viewModel.searchText)
+                } else {
+                    List(results) { result in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(result.headline)
+                                    .lineLimit(2)
+                                Text(result.state.capitalized)
+                                    .font(.caption)
+                                    .foregroundStyle(stateColor(result.state))
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+            } else {
+                ProgressView()
+            }
+        }
+    }
+
+    private var cardsList: some View {
+        List {
+            ForEach(sortedCards(viewModel.cards)) { card in
+                NavigationLink {
+                    CardDetailView(
+                        card: card,
+                        deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
+                    )
+                } label: {
+                    DeckCardRow(
+                        card: card,
+                        deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
+                    )
+                }
+            }
+
+            if viewModel.hasMore {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .task {
+                        await viewModel.loadMore()
+                    }
             }
         }
     }

@@ -7,13 +7,17 @@ private let logger = Logger(subsystem: "com.fasolt.app", category: "CardList")
 @Observable
 final class CardListViewModel {
     var cards: [CardDTO] = []
+    var searchResults: [CardSearchResult]?
     var isLoading = false
     var errorMessage: String?
     var hasMore = false
-    var searchText = ""
+    var searchText = "" {
+        didSet { searchTextDidChange() }
+    }
 
     private var nextCursor: String?
     private let apiClient: APIClient
+    private var searchTask: Task<Void, Never>?
 
     init(apiClient: APIClient) {
         self.apiClient = apiClient
@@ -59,13 +63,36 @@ final class CardListViewModel {
         }
     }
 
-    var filteredCards: [CardDTO] {
-        if searchText.isEmpty { return cards }
-        let query = searchText.lowercased()
-        return cards.filter {
-            $0.front.lowercased().contains(query) ||
-            $0.back.lowercased().contains(query) ||
-            ($0.sourceFile?.lowercased().contains(query) ?? false)
+    var isSearching: Bool {
+        !searchText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private func searchTextDidChange() {
+        searchTask?.cancel()
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        if query.count < 2 {
+            searchResults = nil
+            return
+        }
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await performSearch(query)
+        }
+    }
+
+    private func performSearch(_ query: String) async {
+        do {
+            let endpoint = Endpoint(path: "/api/search", method: .get, queryItems: [
+                URLQueryItem(name: "q", value: query)
+            ])
+            let response: SearchResponse = try await apiClient.request(endpoint)
+            guard !Task.isCancelled else { return }
+            searchResults = response.cards
+        } catch {
+            guard !Task.isCancelled else { return }
+            logger.error("Search failed: \(error)")
+            searchResults = nil
         }
     }
 }

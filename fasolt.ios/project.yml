@@ -32,6 +32,8 @@ targets:
               - fasolt
         UILaunchScreen:
           UIColorName: ""
+        UIBackgroundModes:
+          - remote-notification
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     entitlements:

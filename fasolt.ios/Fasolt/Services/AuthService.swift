@@ -6,6 +6,7 @@ import os
 
 private let authLogger = Logger(subsystem: "com.fasolt.app", category: "Auth")
 
+@MainActor
 @Observable
 final class AuthService {
     var isAuthenticated = false
@@ -39,7 +40,6 @@ final class AuthService {
         keychain.retrieve("fasolt.serverURL") ?? Self.defaultServerURL
     }
 
-    @MainActor
     func signIn(serverURL: String) async {
         isLoading = true
         errorMessage = nil
@@ -95,7 +95,6 @@ final class AuthService {
         isLoading = false
     }
 
-    @MainActor
     func signOut() async {
         let service = NotificationService(apiClient: apiClient)
         await service.deleteDeviceToken()
@@ -105,7 +104,6 @@ final class AuthService {
 
     // MARK: - Client Registration
 
-    @MainActor
     private func ensureClientRegistered(serverURL: String) async throws -> String {
         if let existingClientId = keychain.retrieve("fasolt.clientId") {
             return existingClientId
@@ -124,7 +122,6 @@ final class AuthService {
 
     // MARK: - ASWebAuthenticationSession
 
-    @MainActor
     private func openAuthSession(
         serverURL: String,
         clientId: String,
@@ -173,7 +170,6 @@ final class AuthService {
 
     // MARK: - Token Exchange
 
-    @MainActor
     private func exchangeCode(_ code: String, clientId: String, codeVerifier: String) async throws {
         let params: [String: String] = [
             "grant_type": "authorization_code",
