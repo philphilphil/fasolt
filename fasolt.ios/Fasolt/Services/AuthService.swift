@@ -15,6 +15,7 @@ final class AuthService {
 
     let keychain: KeychainHelper
     let apiClient: APIClient
+    private var activeAuthSession: ASWebAuthenticationSession?
 
     static let redirectURI = "fasolt://oauth/callback"
     static let defaultServerURL = "https://fasolt.app"
@@ -158,7 +159,8 @@ final class AuthService {
             let session = ASWebAuthenticationSession(
                 url: authURL,
                 callbackURLScheme: "fasolt"
-            ) { url, error in
+            ) { [weak self] url, error in
+                self?.activeAuthSession = nil
                 if let error {
                     continuation.resume(throwing: error)
                 } else if let url {
@@ -169,6 +171,7 @@ final class AuthService {
             }
             session.presentationContextProvider = PresentationContextProvider.shared
             session.prefersEphemeralWebBrowserSession = false
+            self.activeAuthSession = session
             session.start()
         }
 

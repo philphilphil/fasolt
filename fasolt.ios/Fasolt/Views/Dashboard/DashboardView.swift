@@ -62,44 +62,49 @@ struct DashboardView: View {
         }
     }
 
+    @State private var showStudy = false
+
     private var heroCard: some View {
-        NavigationLink {
-            StudyView(viewModel: studyViewModelFactory())
-        } label: {
-            VStack(spacing: 8) {
-                Text("Cards due")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.8))
+        VStack(spacing: 8) {
+            Text("Cards due")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.8))
 
-                Text("\(viewModel.dueCount)")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
+            Text("\(viewModel.dueCount)")
+                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+
+            if viewModel.dueCount > 0 {
+                Text("Study Now")
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white)
-
-                if viewModel.dueCount > 0 {
-                    Text("Study Now")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
-                } else {
-                    Text("All caught up!")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.7))
-                }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
+            } else {
+                Text("All caught up!")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.7))
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 28)
-            .background(
-                LinearGradient(
-                    colors: [.blue, .blue.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 16)
-            )
         }
-        .disabled(viewModel.dueCount == 0)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+        .background(
+            LinearGradient(
+                colors: [.blue, .blue.opacity(0.8)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 16)
+        )
+        .onTapGesture {
+            if viewModel.dueCount > 0 {
+                showStudy = true
+            }
+        }
+        .navigationDestination(isPresented: $showStudy) {
+            StudyView(viewModel: studyViewModelFactory())
+        }
     }
 
     private var statsRow: some View {
