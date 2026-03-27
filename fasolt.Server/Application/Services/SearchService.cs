@@ -11,18 +11,22 @@ public class SearchService(AppDbContext db)
         if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
             return new SearchResponse([], []);
 
-        var pattern = $"%{query.Trim()}%";
+        var escaped = query.Trim()
+            .Replace("\\", "\\\\")
+            .Replace("%", "\\%")
+            .Replace("_", "\\_");
+        var pattern = $"%{escaped}%";
 
         var cards = await db.Cards
             .Where(c => c.UserId == userId &&
-                (EF.Functions.ILike(c.Front, pattern) || EF.Functions.ILike(c.Back, pattern)))
+                (EF.Functions.ILike(c.Front, pattern, "\\") || EF.Functions.ILike(c.Back, pattern, "\\")))
             .OrderByDescending(c => c.CreatedAt)
             .Take(10)
             .Select(c => new CardSearchResult(c.PublicId, c.Front, c.State))
             .ToListAsync();
 
         var decks = await db.Decks
-            .Where(d => d.UserId == userId && EF.Functions.ILike(d.Name, pattern))
+            .Where(d => d.UserId == userId && EF.Functions.ILike(d.Name, pattern, "\\"))
             .OrderBy(d => d.Name)
             .Take(10)
             .Select(d => new DeckSearchResult(

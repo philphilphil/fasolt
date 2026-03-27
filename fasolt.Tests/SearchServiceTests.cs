@@ -54,6 +54,36 @@ public class SearchServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Search_EscapesPercentWildcard()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var searchSvc = new SearchService(db);
+
+        await cardSvc.CreateCard(UserId, "100% correct", "Always right", null, null);
+        await cardSvc.CreateCard(UserId, "Unrelated card", "Nothing here", null, null);
+
+        var result = await searchSvc.Search(UserId, "100%");
+
+        result.Cards.Should().ContainSingle(c => c.Headline.Contains("100%"));
+    }
+
+    [Fact]
+    public async Task Search_EscapesUnderscoreWildcard()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var searchSvc = new SearchService(db);
+
+        await cardSvc.CreateCard(UserId, "snake_case naming", "Use underscores", null, null);
+        await cardSvc.CreateCard(UserId, "snakeXcase naming", "Not underscore", null, null);
+
+        var result = await searchSvc.Search(UserId, "snake_case");
+
+        result.Cards.Should().ContainSingle(c => c.Headline.Contains("snake_case"));
+    }
+
+    [Fact]
     public async Task Search_ResponseHasNoFilesProperty()
     {
         await using var db = _db.CreateDbContext();
