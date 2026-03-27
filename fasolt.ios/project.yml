@@ -16,12 +16,19 @@ settings:
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: 1
 
+packages:
+  Textual:
+    url: https://github.com/gonzalezreal/textual
+    from: "0.3.1"
+
 targets:
   Fasolt:
     type: application
     platform: iOS
     sources:
       - Fasolt
+    dependencies:
+      - package: Textual
     info:
       path: Fasolt/Info.plist
       properties:

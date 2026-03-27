@@ -20,6 +20,8 @@
 		3ACCC3511CF87CD4B822DCB9 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */; };
 		45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */; };
 		49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */; };
+		4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */; };
+		51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
@@ -34,9 +36,8 @@
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
 		A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7A52B7D0A14767556278C /* CachedDeck.swift */; };
 		A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */; };
-		AA1122334455667788990011 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1122334455667788990011 /* RegisterView.swift */; };
-		AA2233445566778899001122 /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2233445566778899001122 /* RegisterViewModel.swift */; };
 		AD02868CF44F8352E6CC10AE /* FasoltTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11CE9B38A861E5101458984 /* FasoltTests.swift */; };
+		B30466C0CB576F92FCA71530 /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 25BF892D18C34BB314589773 /* Textual */; };
 		B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D21FAE1D894BFAE8889953 /* PendingReview.swift */; };
 		BA0B1FE4CD431148690BDF96 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23AFC0A1B6F81DD76335210 /* DashboardView.swift */; };
 		C1D4D2606441D7F37D080F2E /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */; };
@@ -51,7 +52,7 @@
 		ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E947CBD44E199505935FEF /* OfflineBanner.swift */; };
 		EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */; };
 		EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */; };
-		F2E1D0C9B8A7F6E5D4C3B2A1 /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */; };
+		F56F2B954E87BEFB3CF0FB2A /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2389B8A7DEC545C50AA0115F /* RegisterView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 		06D21FAE1D894BFAE8889953 /* PendingReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingReview.swift; sourceTree = "<group>"; };
 		1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViewModel.swift; sourceTree = "<group>"; };
 		22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailView.swift; sourceTree = "<group>"; };
+		2389B8A7DEC545C50AA0115F /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 		2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailSheet.swift; sourceTree = "<group>"; };
 		2E2E5EDB31357B7ECA46E216 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
@@ -85,7 +87,7 @@
 		63A881609787DFFE078B49DC /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
 		69E947CBD44E199505935FEF /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
-		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -93,29 +95,39 @@
 		876CBB32009796B1341C8D59 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		9097BB7014F064BF83F77689 /* DeckCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckCardRow.swift; sourceTree = "<group>"; };
 		933F9C08DEBB1C1DE4B0F805 /* Fasolt.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Fasolt.entitlements; sourceTree = "<group>"; };
+		94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = McpSetupSection.swift; sourceTree = "<group>"; };
 		97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListViewModel.swift; sourceTree = "<group>"; };
 		9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = McpSetupSection.swift; sourceTree = "<group>"; };
 		A23AFC0A1B6F81DD76335210 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		A5D7A52B7D0A14767556278C /* CachedDeck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedDeck.swift; sourceTree = "<group>"; };
 		B11CE9B38A861E5101458984 /* FasoltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltTests.swift; sourceTree = "<group>"; };
 		B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailViewModel.swift; sourceTree = "<group>"; };
 		B91F8A14874A0AB49630A6AD /* DeckRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckRepository.swift; sourceTree = "<group>"; };
-		BB1122334455667788990011 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
-		BB2233445566778899001122 /* RegisterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterViewModel.swift; sourceTree = "<group>"; };
 		BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SvgView.swift; sourceTree = "<group>"; };
 		BD321B13FDCABFE8C7BA3698 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterViewModel.swift; sourceTree = "<group>"; };
 		C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListView.swift; sourceTree = "<group>"; };
 		CE0A6615C77BF475BDCC9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
-		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		720394A00B631784EAC9808D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B30466C0CB576F92FCA71530 /* Textual in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		011A7B9012538B9F24BDA123 /* Cards */ = {
@@ -167,9 +179,9 @@
 				B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */,
 				D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */,
 				71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */,
+				BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */,
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */,
-				BB2233445566778899001122 /* RegisterViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -265,7 +277,7 @@
 			isa = PBXGroup;
 			children = (
 				3794A93C12869786BF3468EE /* OnboardingView.swift */,
-				BB1122334455667788990011 /* RegisterView.swift */,
+				2389B8A7DEC545C50AA0115F /* RegisterView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -305,7 +317,7 @@
 		FE8B084DED433EFBAE5D318F /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				A1B2C3D4E5F6A7B8C9D0E1F2 /* McpSetupSection.swift */,
+				94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */,
 				CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */,
 			);
 			path = Settings;
@@ -338,6 +350,7 @@
 			buildPhases = (
 				AF65FE4909FA5CE76E0C3B4E /* Sources */,
 				9986799F1221118B2B64C8CC /* Resources */,
+				720394A00B631784EAC9808D /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -345,6 +358,7 @@
 			);
 			name = Fasolt;
 			packageProductDependencies = (
+				25BF892D18C34BB314589773 /* Textual */,
 			);
 			productName = Fasolt;
 			productReference = 700093CFB3F3D3AC18143F60 /* Fasolt.app */;
@@ -360,7 +374,9 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					4F956779CD90F71E3B11F6C2 = {
-						DevelopmentTeam = 6CR38F5CRX;
+						ProvisioningStyle = Automatic;
+					};
+					F6269CF138DC181FCA900973 = {
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -374,6 +390,9 @@
 			);
 			mainGroup = BCC27D00218691B0163CCA4A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B5EE2EFD3FAD592DC43F5B79 /* XCRemoteSwiftPackageReference "textual" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6106165ED30C43F972A03B52 /* Products */;
 			projectDirPath = "";
@@ -436,15 +455,15 @@
 				82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */,
 				95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */,
 				58A1B3892608093BF3282922 /* MainTabView.swift in Sources */,
+				51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */,
 				0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */,
 				36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */,
 				8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */,
 				ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */,
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
-				AA1122334455667788990011 /* RegisterView.swift in Sources */,
-				AA2233445566778899001122 /* RegisterViewModel.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
-				F2E1D0C9B8A7F6E5D4C3B2A1 /* McpSetupSection.swift in Sources */,
+				F56F2B954E87BEFB3CF0FB2A /* RegisterView.swift in Sources */,
+				4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */,
 				DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */,
 				0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */,
 				0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
@@ -478,7 +497,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fasolt.app/Fasolt";
 			};
 			name = Release;
@@ -495,7 +514,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app.tests;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fasolt.app/Fasolt";
 			};
 			name = Debug;
@@ -565,16 +584,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Fasolt/Fasolt.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 6CR38F5CRX;
 				INFOPLIST_FILE = Fasolt/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -583,19 +600,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Fasolt/Fasolt.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 6CR38F5CRX;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Fasolt/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -696,6 +709,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B5EE2EFD3FAD592DC43F5B79 /* XCRemoteSwiftPackageReference "textual" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/textual";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		25BF892D18C34BB314589773 /* Textual */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B5EE2EFD3FAD592DC43F5B79 /* XCRemoteSwiftPackageReference "textual" */;
+			productName = Textual;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A24793F9D6FC20C405078A52 /* Project object */;
 }
