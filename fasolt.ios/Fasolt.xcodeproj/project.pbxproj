@@ -89,7 +89,7 @@
 		63A881609787DFFE078B49DC /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
 		69E947CBD44E199505935FEF /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
-		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -115,7 +115,7 @@
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
-		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
@@ -597,6 +597,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -614,6 +615,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
