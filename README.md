@@ -8,7 +8,7 @@
   MCP-first spaced repetition for your markdown notes.<br/>
 </p>
 
-<i>100 % Vibecoded. I wanted todo this project for years but never had the time. Finally started to vibecode it and it quickly shifted goals to just be a frontend and let agents generate the cards.</i>
+<i>100 % Vibecoded. I wanted todo this project for years but was to lazy to continue. Finally started to vibecode it and it quickly shifted goals to just be a frontend and let agents generate the cards.</i>
 
 ---
 
@@ -42,9 +42,9 @@ Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at 
 Native iOS app (Swift / SwiftUI) for studying on the go. Syncs with the backend, supports offline review with automatic sync when back online, and receives push notifications when cards are due.
 
 <p align="center">
+  <img src="docs/media/ios_screenshot_dashboard.png" alt="iOS dashboard" width="200" />
   <img src="docs/media/ios_screenshot_front.png" alt="iOS study question" width="200" />
   <img src="docs/media/ios_screenshot_back.png" alt="iOS study answer" width="200" />
-  <img src="docs/media/ios_screenshot_dashboard.png" alt="iOS dashboard" width="200" />
   <img src="docs/media/ios_screenshot_sessionComplete.png" alt="iOS session complete" width="200" />
 </p>
 
