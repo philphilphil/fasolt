@@ -5,6 +5,7 @@ const md = new MarkdownIt({
   html: false,
   linkify: true,
   typographer: false,
+  breaks: true,
 })
 
 // Override image rendering to show alt-text placeholder
