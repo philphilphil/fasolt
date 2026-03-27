@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -121,25 +122,14 @@ public class NotificationBackgroundService(
         AppDbContext db, string userId, string userEmail, string deviceToken,
         DateTimeOffset now, CancellationToken stoppingToken)
     {
-        var dueCardsByDeck = await db.Cards
-            .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now))
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive))
-            .SelectMany(c => c.DeckCards.DefaultIfEmpty(),
-                (card, deckCard) => new { DeckName = deckCard != null ? deckCard.Deck.Name : null })
-            .GroupBy(x => x.DeckName ?? "Unsorted")
-            .Select(g => new { DeckName = g.Key, Count = g.Count() })
-            .ToListAsync(stoppingToken);
+        var summary = await DueCardQuery.GetDueCardSummary(db, userId, now, stoppingToken);
 
-        var totalDue = dueCardsByDeck.Sum(g => g.Count);
-
-        if (totalDue == 0)
+        if (summary.TotalDue == 0)
             return false;
 
-        var deckBreakdown = string.Join(", ",
-            dueCardsByDeck.OrderByDescending(g => g.Count).Select(g => $"{g.Count} in {g.DeckName}"));
-        var body = $"You have {totalDue} card{(totalDue == 1 ? "" : "s")} due: {deckBreakdown}";
+        var body = $"You have {summary.TotalDue} card{(summary.TotalDue == 1 ? "" : "s")} due: {summary.Breakdown}";
 
-        var tokenValid = await apnsService.SendNotification(deviceToken, "Cards due", body, totalDue);
+        var tokenValid = await apnsService.SendNotification(deviceToken, "Cards due", body, summary.TotalDue);
 
         if (!tokenValid)
         {
@@ -164,8 +154,8 @@ public class NotificationBackgroundService(
         db.Logs.Add(new AppLog
         {
             Type = LogType.Notification,
-            Message = $"Sent to {userEmail}: {totalDue} cards due",
-            Detail = deckBreakdown,
+            Message = $"Sent to {userEmail}: {summary.TotalDue} cards due",
+            Detail = summary.Breakdown,
             Success = true,
             CreatedAt = now,
         });

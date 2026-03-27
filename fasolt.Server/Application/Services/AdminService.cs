@@ -57,27 +57,14 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
 
         var now = DateTimeOffset.UtcNow;
 
-        var dueCardsByDeck = await db.Cards
-            .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now))
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive))
-            .SelectMany(c => c.DeckCards.DefaultIfEmpty(),
-                (card, deckCard) => new { DeckName = deckCard != null ? deckCard.Deck.Name : null })
-            .GroupBy(x => x.DeckName ?? "Unsorted")
-            .Select(g => new { DeckName = g.Key, Count = g.Count() })
-            .ToListAsync();
-
-        var totalDue = dueCardsByDeck.Sum(g => g.Count);
+        var summary = await DueCardQuery.GetDueCardSummary(db, userId, now);
         string body;
-        if (totalDue == 0)
+        if (summary.TotalDue == 0)
             body = "Test notification — no cards currently due";
         else
-        {
-            var breakdown = string.Join(", ",
-                dueCardsByDeck.OrderByDescending(g => g.Count).Select(g => $"{g.Count} in {g.DeckName}"));
-            body = $"You have {totalDue} card{(totalDue == 1 ? "" : "s")} due: {breakdown}";
-        }
+            body = $"You have {summary.TotalDue} card{(summary.TotalDue == 1 ? "" : "s")} due: {summary.Breakdown}";
 
-        var tokenValid = await apnsService.SendNotification(deviceToken.Token, "Cards due", body, totalDue);
+        var tokenValid = await apnsService.SendNotification(deviceToken.Token, "Cards due", body, summary.TotalDue);
 
         db.Logs.Add(new AppLog
         {

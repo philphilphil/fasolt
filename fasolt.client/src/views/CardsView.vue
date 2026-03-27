@@ -22,6 +22,7 @@ const deleteOpen = ref(false)
 const createOpen = ref(false)
 const addToDeckCard = ref<Card | null>(null)
 const addToDeckId = ref('')
+const addToDeckError = ref('')
 
 const filterValue = ref('')
 const sourceFilter = ref('')
@@ -44,13 +45,14 @@ function onCardDeleted() {
 
 async function addCardToDeck() {
   if (!addToDeckCard.value || !addToDeckId.value) return
+  addToDeckError.value = ''
   try {
     await decks.addCards(addToDeckId.value, [addToDeckCard.value.id])
     await cardsStore.fetchCards()
     addToDeckCard.value = null
     addToDeckId.value = ''
   } catch {
-    // silently fail
+    addToDeckError.value = 'Failed to add card to deck. Please try again.'
   }
 }
 
@@ -179,6 +181,7 @@ const filteredCards = computed(() => {
           <option value="">Select a deck</option>
           <option v-for="d in decks.decks" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
+        <div v-if="addToDeckError" class="text-xs text-destructive">{{ addToDeckError }}</div>
         <DialogFooter>
           <Button variant="outline" @click="addToDeckCard = null">Cancel</Button>
           <Button :disabled="!addToDeckId" @click="addCardToDeck">Add</Button>

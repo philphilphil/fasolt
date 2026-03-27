@@ -9,7 +9,9 @@ export function isApiError(error: unknown): error is ApiError {
   return typeof error === 'object' && error !== null && 'status' in error && 'errors' in error
 }
 
-export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+export async function apiFetch(path: string, options?: RequestInit): Promise<void>
+export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T>
+export async function apiFetch<T = void>(path: string, options?: RequestInit): Promise<T | void> {
   const response = await fetch(`${BASE_URL}${path}`, {
     credentials: 'include',
     headers: {
@@ -33,7 +35,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   }
 
   const text = await response.text()
-  if (!text) return undefined as T
+  if (!text) return
 
   return JSON.parse(text)
 }
