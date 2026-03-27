@@ -28,9 +28,10 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.HasKey(e => e.Id);
             entity.Property(e => e.PublicId).HasMaxLength(12).IsRequired();
             entity.HasIndex(e => e.PublicId).IsUnique();
-            entity.Property(e => e.Front).IsRequired();
-            entity.Property(e => e.Back).IsRequired();
+            entity.Property(e => e.Front).HasMaxLength(10_000).IsRequired();
+            entity.Property(e => e.Back).HasMaxLength(50_000).IsRequired();
             entity.Property(e => e.SourceFile).HasMaxLength(255);
+            entity.Property(e => e.SourceHeading).HasMaxLength(255);
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => new { e.UserId, e.SourceFile });
 
