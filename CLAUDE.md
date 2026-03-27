@@ -169,6 +169,10 @@ Always use agent teams (`TeamCreate`) instead of plain subagents when paralleliz
 
 Production runs behind **Cloudflare -> Traefik -> app container**. TLS is terminated at Cloudflare/Traefik, not at the .NET app. `TrustAllProxies=true` in `appsettings.Production.json` is intentional — the app is not directly reachable from the internet.
 
+## Research & Documentation
+
+Use **Context7 MCP** (`resolve-library-id` → `query-docs`) to look up current documentation, API references, and best practices for any library or framework before implementing. Don't rely on training data for library APIs — fetch the docs. This applies to all dependencies: .NET packages, npm packages, Swift frameworks, etc.
+
 ## GitHub Operations
- 
+
 Use the **GitHub CLI** (`gh`) for GitHub-related tasks (issues, PRs, workflow runs, repo metadata) instead of GitHub MCP tools.
