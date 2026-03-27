@@ -3,6 +3,7 @@ import Foundation
 @testable import Fasolt
 
 @Suite("AuthService PKCE")
+@MainActor
 struct AuthServicePKCETests {
 
     @Test("code verifier is 43-128 characters and URL-safe")
