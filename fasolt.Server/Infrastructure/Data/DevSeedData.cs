@@ -312,6 +312,179 @@ public static class DevSeedData
 
         db.Cards.AddRange(moonLanding, speedOfLight, photosynthesis);
 
+        // === Admin Deck — Markdown Tests ===
+        var markdownDeck = new Deck
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Name = "Markdown Tests",
+            Description = "Cards with various markdown elements for testing rendering and stripping",
+            CreatedAt = now,
+            IsActive = true,
+        };
+
+        db.Decks.Add(markdownDeck);
+
+        var mdBold = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "What does **bold** text look like?",
+            Back = "**Bold text** is rendered with a heavier font weight.\n\nYou can also use __double underscores__ for bold.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Bold",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdItalic = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "How do you write *italic* text?",
+            Back = "Use *single asterisks* or _single underscores_ for _italic_ text.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Italic",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdInlineCode = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "What does `inline code` look like in markdown?",
+            Back = "Wrap text in `backticks` to render it as inline code, e.g. `console.log()` or `git status`.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Inline Code",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdCodeBlock = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "## Code Blocks\n\nHow do you write a fenced code block?",
+            Back = "Use triple backticks with an optional language:\n\n```python\ndef hello():\n    print(\"Hello, world!\")\n```\n\nThis enables syntax highlighting.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Code Blocks",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdHeadings = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "# Heading Levels\n\nHow many heading levels does markdown support?",
+            Back = "Six levels:\n\n# Heading 1\n## Heading 2\n### Heading 3\n#### Heading 4\n##### Heading 5\n###### Heading 6",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Headings",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdUnorderedList = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "### Unordered Lists\n\nName three **benefits** of spaced repetition",
+            Back = "- Improved long-term retention\n- Efficient use of study time\n- Reduced cramming before exams\n- Builds on the spacing effect from cognitive psychology",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Unordered Lists",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdOrderedList = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "What are the steps to create a **pull request**?",
+            Back = "1. Create a feature branch\n2. Make your changes and commit\n3. Push the branch to the remote\n4. Open a PR on GitHub\n5. Request reviews and address feedback\n6. Merge when approved",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Ordered Lists",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdLink = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "How do you create a [link](https://example.com) in markdown?",
+            Back = "Use `[text](url)` syntax:\n\n[Fasolt on GitHub](https://github.com/fasolt)\n\nThe text in brackets is displayed, the URL in parentheses is the target.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Links",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdBlockquote = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "How do you write a blockquote?",
+            Back = "> The only way to do great work is to love what you do.\n>\n> — Steve Jobs\n\nPrefix lines with `>` to create a blockquote.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Blockquotes",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdStrikethrough = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "How do you ~~cross out~~ text?",
+            Back = "Wrap text in ~~double tildes~~ to render ~~strikethrough~~ text.",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Strikethrough",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var mdMixed = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "## Mixed **Markdown** with `code`\n\nWhat happens when you _combine_ formats?",
+            Back = "You can **freely** combine:\n\n- **Bold** and *italic* and ~~strikethrough~~\n- `Inline code` within **bold text**\n- Links like [this one](https://example.com) in lists\n\n> Even **blockquotes** can contain *formatted* text and `code`.\n\n```\nAnd code blocks stand alone\n```",
+            SourceFile = "markdown-guide.md",
+            SourceHeading = "Mixed Formatting",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        db.Cards.AddRange(mdBold, mdItalic, mdInlineCode, mdCodeBlock, mdHeadings,
+            mdUnorderedList, mdOrderedList, mdLink, mdBlockquote, mdStrikethrough, mdMixed);
+        db.DeckCards.AddRange(
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdBold.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdItalic.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdInlineCode.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdCodeBlock.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdHeadings.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdUnorderedList.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdOrderedList.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdLink.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdBlockquote.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdStrikethrough.Id },
+            new DeckCard { DeckId = markdownDeck.Id, CardId = mdMixed.Id }
+        );
+
         // === Regular User Data ===
         var mathDeck = new Deck
         {
