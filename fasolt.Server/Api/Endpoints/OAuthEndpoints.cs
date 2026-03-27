@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -232,11 +233,14 @@ public static class OAuthEndpoints
         }).RequireRateLimiting("auth");
 
         // OAuth Login Page (GET)
-        app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context) =>
+        app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
         {
             var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
             var returnUrl = IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
             var error = context.Request.Query["error"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
 
             var errorHtml = error is not null
                 ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
@@ -275,6 +279,7 @@ public static class OAuthEndpoints
                     <div class="divider"></div>
                     {{errorHtml}}
                     <form method="post" action="/oauth/login">
+                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                         <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
                         <div class="field">
                             <label for="email">Email</label>
@@ -297,8 +302,12 @@ public static class OAuthEndpoints
         // OAuth Login Handler (POST)
         app.MapPost("/oauth/login", [AllowAnonymous] async (
             HttpContext context,
-            SignInManager<AppUser> signInManager) =>
+            SignInManager<AppUser> signInManager,
+            IAntiforgery antiforgery) =>
         {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
             var form = await context.Request.ReadFormAsync();
             var email = form["email"].FirstOrDefault() ?? "";
             var password = form["password"].FirstOrDefault() ?? "";
@@ -315,7 +324,8 @@ public static class OAuthEndpoints
         // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
         app.MapGet("/oauth/consent", async (
             HttpContext context,
-            IOpenIddictApplicationManager applicationManager) =>
+            IOpenIddictApplicationManager applicationManager,
+            IAntiforgery antiforgery) =>
         {
             var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
             if (result?.Principal is null)
@@ -326,6 +336,9 @@ public static class OAuthEndpoints
             var clientName = application is not null
                 ? (await applicationManager.GetDisplayNameAsync(application) ?? clientId)
                 : clientId;
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
 
             var clientIdEncoded = System.Web.HttpUtility.HtmlAttributeEncode(clientId);
             var clientNameEncoded = System.Web.HttpUtility.HtmlEncode(clientName);
@@ -377,6 +390,7 @@ public static class OAuthEndpoints
                         </ul>
                     </div>
                     <form method="post" action="/oauth/consent">
+                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                         <input type="hidden" name="client_id" value="{{clientIdEncoded}}" />
                         <button type="submit" name="decision" value="approve" class="btn btn-approve">Authorize</button>
                         <button type="submit" name="decision" value="deny" class="btn btn-deny">Deny</button>
@@ -394,8 +408,12 @@ public static class OAuthEndpoints
             HttpContext context,
             IOpenIddictApplicationManager applicationManager,
             IDataProtectionProvider dataProtection,
-            AppDbContext db) =>
+            AppDbContext db,
+            IAntiforgery antiforgery) =>
         {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
             var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
             if (result?.Principal is null)
                 return Results.Redirect("/oauth/login");

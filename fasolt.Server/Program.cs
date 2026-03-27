@@ -199,6 +199,7 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
+builder.Services.AddAntiforgery();
 builder.Services.AddScoped<CardService>();
 builder.Services.AddScoped<DeckService>();
 builder.Services.AddScoped<SearchService>();
