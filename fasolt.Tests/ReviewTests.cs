@@ -1,5 +1,6 @@
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
+using FSRS.Core.Configurations;
+using FSRS.Core.Services;
 using Fasolt.Server.Application.Services;
 using Fasolt.Tests.Helpers;
 
@@ -18,16 +19,18 @@ public class ReviewTests : IAsyncLifetime
     {
         await using var db = _db.CreateDbContext();
         var cardSvc = new CardService(db);
+        var scheduler = new SchedulerFactory(new SchedulerOptions
+        {
+            DesiredRetention = 0.9, MaximumInterval = 36500, EnableFuzzing = false,
+        }).CreateScheduler();
+        var reviewSvc = new ReviewService(db, scheduler, TimeProvider.System);
 
         var card = await cardSvc.CreateCard(UserId, "Review Q?", "Review A.", "review-source.md", "## Section");
 
-        // New cards have DueAt = null, so they're immediately due
-        var dueCards = await db.Cards
-            .Where(c => c.UserId == UserId && (c.DueAt == null || c.DueAt <= DateTimeOffset.UtcNow))
-            .ToListAsync();
+        var dueCards = await reviewSvc.GetDueCards(UserId);
 
-        dueCards.Should().Contain(c => c.PublicId == card.Id);
-        var target = dueCards.Single(c => c.PublicId == card.Id);
+        dueCards.Should().Contain(c => c.Id == card.Id);
+        var target = dueCards.Single(c => c.Id == card.Id);
         target.SourceFile.Should().Be("review-source.md");
         target.SourceHeading.Should().Be("## Section");
     }
