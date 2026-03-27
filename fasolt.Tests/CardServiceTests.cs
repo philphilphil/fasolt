@@ -411,4 +411,82 @@ public class CardServiceTests : IAsyncLifetime
 
         count.Should().Be(0);
     }
+
+    [Fact]
+    public async Task CreateCard_RejectsOversizedFront()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var longFront = new string('x', CardService.MaxFrontLength + 1);
+
+        var act = () => svc.CreateCard(UserId, longFront, "Back", null, null);
+
+        await act.Should().ThrowAsync<System.ComponentModel.DataAnnotations.ValidationException>()
+            .WithMessage("*Front*maximum*");
+    }
+
+    [Fact]
+    public async Task CreateCard_RejectsOversizedBack()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var longBack = new string('x', CardService.MaxBackLength + 1);
+
+        var act = () => svc.CreateCard(UserId, "Front", longBack, null, null);
+
+        await act.Should().ThrowAsync<System.ComponentModel.DataAnnotations.ValidationException>()
+            .WithMessage("*Back*maximum*");
+    }
+
+    [Fact]
+    public async Task CreateCard_RejectsOversizedSourceHeading()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var longHeading = new string('x', CardService.MaxSourceHeadingLength + 1);
+
+        var act = () => svc.CreateCard(UserId, "Front", "Back", "file.md", longHeading);
+
+        await act.Should().ThrowAsync<System.ComponentModel.DataAnnotations.ValidationException>()
+            .WithMessage("*Source heading*maximum*");
+    }
+
+    [Fact]
+    public async Task CreateCard_AcceptsMaxLengthFields()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var front = new string('x', CardService.MaxFrontLength);
+        var back = new string('x', CardService.MaxBackLength);
+        var heading = new string('x', CardService.MaxSourceHeadingLength);
+
+        var card = await svc.CreateCard(UserId, front, back, "file.md", heading);
+
+        card.Front.Should().HaveLength(CardService.MaxFrontLength);
+        card.Back.Should().HaveLength(CardService.MaxBackLength);
+        card.SourceHeading.Should().HaveLength(CardService.MaxSourceHeadingLength);
+    }
+
+    [Fact]
+    public async Task BulkCreateCards_SkipsOversizedCards()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var cards = new List<BulkCardItem>
+        {
+            new("Normal front", "Normal back"),
+            new(new string('x', CardService.MaxFrontLength + 1), "Back"),
+        };
+
+        var result = await svc.BulkCreateCards(UserId, cards, null, null);
+
+        result.Response!.Created.Should().HaveCount(1);
+        result.Response.Skipped.Should().HaveCount(1);
+        result.Response.Skipped[0].Reason.Should().Contain("Front");
+    }
 }
