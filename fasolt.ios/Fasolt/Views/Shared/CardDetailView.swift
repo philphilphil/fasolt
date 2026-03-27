@@ -1,4 +1,5 @@
 import SwiftUI
+import Textual
 
 struct CardDetailView: View {
     let card: any CardDisplayable
@@ -22,7 +23,7 @@ struct CardDetailView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
-                    Text(card.front)
+                    StructuredText(markdown: card.front)
                         .font(.body)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -44,7 +45,7 @@ struct CardDetailView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
 
-                    Text(card.back)
+                    StructuredText(markdown: card.back)
                         .font(.body)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
