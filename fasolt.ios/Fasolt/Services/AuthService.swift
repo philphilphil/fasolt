@@ -95,6 +95,9 @@ final class AuthService {
             errorMessage = nil
         } catch {
             authLogger.error("Sign-in failed: \(error)")
+            // Clear stored client_id so next attempt re-registers
+            // (handles stale registrations after server DB reset)
+            keychain.delete("fasolt.clientId")
             // Restore previous server URL on failure
             if let previousServerURL {
                 keychain.save(previousServerURL, forKey: "fasolt.serverURL")
@@ -187,10 +190,8 @@ final class AuthService {
     // MARK: - Client Registration
 
     private func ensureClientRegistered(serverURL: String) async throws -> String {
-        if let existingClientId = keychain.retrieve("fasolt.clientId") {
-            return existingClientId
-        }
-
+        // Always re-register — cached client_ids can become stale if the
+        // server DB is reset, and keychain entries survive app deletion.
         let body = ClientRegistrationRequest(
             clientName: "Fasolt iOS",
             redirectUris: [Self.redirectURI]
