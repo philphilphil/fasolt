@@ -205,6 +205,8 @@ builder.Services.AddScoped<SearchService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<SourceService>();
 builder.Services.AddScoped<OverviewService>();
+builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<DeviceTokenService>();
 
 var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
 var apnsKeyReady = apnsSettings is not null &&
