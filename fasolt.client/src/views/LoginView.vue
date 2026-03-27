@@ -46,7 +46,7 @@ async function handleSubmit() {
         </div>
         <div class="flex flex-col gap-1.5">
           <label for="email" class="text-xs font-medium">Email</label>
-          <Input id="email" v-model="email" type="email" required autocomplete="email" />
+          <Input id="email" v-model="email" type="email" required autocomplete="username" />
         </div>
         <div class="flex flex-col gap-1.5">
           <label for="password" class="text-xs font-medium">Password</label>
