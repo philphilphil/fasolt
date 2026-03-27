@@ -7,7 +7,7 @@ struct DeckCardRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(card.front)
+            Text(card.front.stripMarkdown())
                 .font(.body)
                 .lineLimit(2)
 
