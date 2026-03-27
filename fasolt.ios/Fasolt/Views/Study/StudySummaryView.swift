@@ -4,6 +4,7 @@ struct StudySummaryView: View {
     let cardsStudied: Int
     let ratingsCount: [String: Int]
     var failedRatings: Int = 0
+    var skippedCount: Int = 0
     let onDone: () -> Void
 
     var body: some View {
@@ -32,6 +33,10 @@ struct StudySummaryView: View {
                 ratingRow("Hard", count: ratingsCount["hard"] ?? 0, color: .orange)
                 ratingRow("Good", count: ratingsCount["good"] ?? 0, color: .green)
                 ratingRow("Easy", count: ratingsCount["easy"] ?? 0, color: .blue)
+
+                if skippedCount > 0 {
+                    ratingRow("Skipped", count: skippedCount, color: .gray)
+                }
             }
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))

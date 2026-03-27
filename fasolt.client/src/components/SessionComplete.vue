@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 defineProps<{
   totalCards: number
   ratingCounts: { again: number; hard: number; good: number; easy: number }
+  skippedCount?: number
 }>()
 
 defineEmits<{ done: [] }>()
@@ -38,6 +39,9 @@ defineEmits<{ done: [] }>()
         </div>
       </CardContent>
     </Card>
+    <div v-if="skippedCount" class="text-xs text-muted-foreground">
+      {{ skippedCount }} skipped
+    </div>
     <Button @click="$emit('done')">Back to study</Button>
   </div>
 </template>

@@ -17,6 +17,7 @@ export const useReviewStore = defineStore('review', () => {
     hard: 0,
     good: 0,
     easy: 0,
+    skipped: 0,
     startTime: 0,
   })
 
@@ -24,8 +25,8 @@ export const useReviewStore = defineStore('review', () => {
     currentIndex.value < queue.value.length ? queue.value[currentIndex.value] : null
   )
 
-  const isComplete = computed(() => isActive.value && currentCard.value === null && sessionStats.value.reviewed > 0)
-  const noDueCards = computed(() => isActive.value && queue.value.length === 0 && sessionStats.value.reviewed === 0)
+  const isComplete = computed(() => isActive.value && currentCard.value === null && (sessionStats.value.reviewed > 0 || sessionStats.value.skipped > 0))
+  const noDueCards = computed(() => isActive.value && queue.value.length === 0 && sessionStats.value.reviewed === 0 && sessionStats.value.skipped === 0)
 
   const progress = computed(() => {
     if (queue.value.length === 0) return 0
@@ -47,7 +48,7 @@ export const useReviewStore = defineStore('review', () => {
       currentIndex.value = 0
       isFlipped.value = false
       isActive.value = true
-      sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, startTime: Date.now() }
+      sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, skipped: 0, startTime: Date.now() }
     } catch {
       error.value = 'Failed to load review session. Please try again.'
     } finally {
@@ -57,6 +58,13 @@ export const useReviewStore = defineStore('review', () => {
 
   function flipCard() {
     isFlipped.value = true
+  }
+
+  function skip() {
+    if (!currentCard.value) return
+    sessionStats.value.skipped++
+    currentIndex.value++
+    isFlipped.value = false
   }
 
   async function rate(rating: 'again' | 'hard' | 'good' | 'easy') {
@@ -97,6 +105,6 @@ export const useReviewStore = defineStore('review', () => {
   return {
     queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error,
     progress, sessionStats, sessionTime,
-    startSession, flipCard, rate, endSession, fetchStats,
+    startSession, flipCard, skip, rate, endSession, fetchStats,
   }
 })

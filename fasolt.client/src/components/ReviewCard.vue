@@ -2,18 +2,30 @@
 import type { DueCard } from '@/types'
 import { useMarkdown } from '@/composables/useMarkdown'
 import { sanitizeSvg } from '@/composables/useSvgSanitizer'
+import { Pencil } from 'lucide-vue-next'
 
 defineProps<{ card: DueCard; isFlipped: boolean }>()
 defineEmits<{ flip: [] }>()
 
 const { render } = useMarkdown()
+
+function openEdit(cardId: string) {
+  window.open(`/cards/${cardId}?edit=true`, '_blank')
+}
 </script>
 
 <template>
   <div
-    class="flex min-h-[200px] max-h-[60vh] overflow-y-auto cursor-pointer flex-col items-center justify-center rounded border border-border/60 bg-card p-6 sm:p-10 hover:border-accent/20 transition-colors"
+    class="relative flex min-h-[200px] max-h-[60vh] overflow-y-auto cursor-pointer flex-col items-center justify-center rounded border border-border/60 bg-card p-6 sm:p-10 hover:border-accent/20 transition-colors"
     @click="$emit('flip')"
   >
+    <button
+      class="absolute right-3 top-3 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+      @click.stop="openEdit(card.id)"
+      title="Edit card"
+    >
+      <Pencil :size="14" />
+    </button>
     <div class="text-[10px] uppercase tracking-[0.2em] text-accent/70">
       {{ isFlipped ? 'Answer' : 'Question' }}
     </div>

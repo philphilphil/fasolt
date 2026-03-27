@@ -16,6 +16,7 @@ final class StudyViewModel {
     var ratingsCount: [String: Int] = ["again": 0, "hard": 0, "good": 0, "easy": 0]
     var cardsStudied: Int = 0
     var failedRatings: Int = 0
+    var skippedCount: Int = 0
     private(set) var isRating = false
 
     var notificationService: NotificationService?
@@ -55,6 +56,7 @@ final class StudyViewModel {
                 isFlipped = false
                 cardsStudied = 0
                 failedRatings = 0
+                skippedCount = 0
                 ratingsCount = ["again": 0, "hard": 0, "good": 0, "easy": 0]
                 state = .studying
             }
@@ -67,6 +69,20 @@ final class StudyViewModel {
     func flipCard() {
         isFlipped = true
         state = .flipped
+    }
+
+    func skipCard() {
+        skippedCount += 1
+        currentIndex += 1
+        isFlipped = false
+        if currentIndex >= cards.count {
+            state = .summary
+            if cardsStudied > 0 {
+                requestNotificationPermissionIfNeeded()
+            }
+        } else {
+            state = .studying
+        }
     }
 
     func rateCard(_ rating: String) async {

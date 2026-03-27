@@ -24,6 +24,7 @@ struct StudyView: View {
                     cardsStudied: viewModel.cardsStudied,
                     ratingsCount: viewModel.ratingsCount,
                     failedRatings: viewModel.failedRatings,
+                    skippedCount: viewModel.skippedCount,
                     onDone: { dismiss() }
                 )
             }
@@ -33,7 +34,7 @@ struct StudyView: View {
             ToolbarItem(placement: .topBarLeading) {
                 if viewModel.state != .summary {
                     Button {
-                        if viewModel.cardsStudied > 0 && viewModel.state != .summary {
+                        if (viewModel.cardsStudied > 0 || viewModel.skippedCount > 0) && viewModel.state != .summary {
                             showExitConfirmation = true
                         } else {
                             dismiss()
@@ -122,18 +123,25 @@ struct StudyView: View {
             }
 
             if viewModel.isFlipped {
-                ratingButtons
-                    .padding()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            } else {
-                Button {
-                    flipWithHaptic()
-                } label: {
-                    Text("Show Answer")
-                        .frame(maxWidth: .infinity)
+                VStack(spacing: 8) {
+                    ratingButtons
+                    skipButton
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                .padding()
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                VStack(spacing: 8) {
+                    Button {
+                        flipWithHaptic()
+                    } label: {
+                        Text("Show Answer")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+
+                    skipButton
+                }
                 .padding()
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
@@ -168,6 +176,25 @@ struct StudyView: View {
             }
             .frame(height: 4)
         }
+    }
+
+    // MARK: - Skip Button
+
+    private var skipButton: some View {
+        Button {
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+            viewModel.skipCard()
+            if viewModel.state == .summary {
+                let notification = UINotificationFeedbackGenerator()
+                notification.notificationOccurred(.success)
+            }
+        } label: {
+            Text("Skip")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Rating Buttons
