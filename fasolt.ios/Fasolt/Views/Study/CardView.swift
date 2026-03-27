@@ -1,4 +1,5 @@
 import SwiftUI
+import Textual
 
 struct CardView: View {
     let label: String
@@ -26,9 +27,8 @@ struct CardView: View {
             }
 
             ScrollView {
-                Text(text)
+                StructuredText(markdown: text)
                     .font(.title3)
-                    .multilineTextAlignment(.center)
                     .foregroundStyle(.primary)
                     .padding(.horizontal, 8)
             }

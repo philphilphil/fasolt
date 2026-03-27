@@ -53,6 +53,8 @@
 		EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */; };
 		EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */; };
 		F56F2B954E87BEFB3CF0FB2A /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2389B8A7DEC545C50AA0115F /* RegisterView.swift */; };
+		F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */; };
+		FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +95,7 @@
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		82812F20EB20898654E7FABF /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
 		876CBB32009796B1341C8D59 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
+		906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+StripMarkdown.swift"; sourceTree = "<group>"; };
 		9097BB7014F064BF83F77689 /* DeckCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckCardRow.swift; sourceTree = "<group>"; };
 		933F9C08DEBB1C1DE4B0F805 /* Fasolt.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Fasolt.entitlements; sourceTree = "<group>"; };
 		94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = McpSetupSection.swift; sourceTree = "<group>"; };
@@ -106,6 +109,7 @@
 		BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SvgView.swift; sourceTree = "<group>"; };
 		BD321B13FDCABFE8C7BA3698 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterViewModel.swift; sourceTree = "<group>"; };
+		C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripMarkdownTests.swift; sourceTree = "<group>"; };
 		C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListView.swift; sourceTree = "<group>"; };
 		CE0A6615C77BF475BDCC9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -260,6 +264,7 @@
 				FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */,
 				B11CE9B38A861E5101458984 /* FasoltTests.swift */,
 				63A881609787DFFE078B49DC /* KeychainHelperTests.swift */,
+				C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */,
 			);
 			path = FasoltTests;
 			sourceTree = "<group>";
@@ -269,6 +274,7 @@
 			children = (
 				505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */,
 				876CBB32009796B1341C8D59 /* NetworkMonitor.swift */,
+				906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -424,6 +430,7 @@
 				1851DEEFAB7935C8224DD05B /* AuthServiceTests.swift in Sources */,
 				AD02868CF44F8352E6CC10AE /* FasoltTests.swift in Sources */,
 				345B1EAE7BFC27DA2F03E0C3 /* KeychainHelperTests.swift in Sources */,
+				F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -466,6 +473,7 @@
 				4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */,
 				DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */,
 				0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */,
+				FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */,
 				0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
 				6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */,
 				49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */,
@@ -566,7 +574,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -665,7 +673,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
