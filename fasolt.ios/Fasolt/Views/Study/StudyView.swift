@@ -193,6 +193,7 @@ struct StudyView: View {
             Text("Skip")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .frame(minWidth: 44, minHeight: 44)
         }
         .buttonStyle(.plain)
     }
