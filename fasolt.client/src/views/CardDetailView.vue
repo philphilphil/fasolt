@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import { formatDate } from '@/lib/formatDate'
+import { stripMarkdown } from '@/lib/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -41,7 +42,8 @@ const resetSuccess = ref(false)
 
 const truncatedFront = computed(() => {
   if (!card.value) return ''
-  return card.value.front.length > 60 ? card.value.front.slice(0, 60) + '…' : card.value.front
+  const plain = stripMarkdown(card.value.front)
+  return plain.length > 60 ? plain.slice(0, 60) + '…' : plain
 })
 
 onMounted(async () => {

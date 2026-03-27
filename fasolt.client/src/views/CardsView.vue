@@ -12,6 +12,7 @@ import {
 import CardCreateDialog from '@/components/CardCreateDialog.vue'
 import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import CardTable from '@/components/CardTable.vue'
+import { stripMarkdown } from '@/lib/utils'
 
 const route = useRoute()
 const cardsStore = useCardsStore()
@@ -171,7 +172,7 @@ const filteredCards = computed(() => {
         <DialogHeader>
           <DialogTitle>Add to deck</DialogTitle>
           <DialogDescription>
-            Add "{{ addToDeckCard?.front?.slice(0, 40) }}" to a deck.
+            Add "{{ addToDeckCard?.front ? stripMarkdown(addToDeckCard.front).slice(0, 40) : '' }}" to a deck.
           </DialogDescription>
         </DialogHeader>
         <select

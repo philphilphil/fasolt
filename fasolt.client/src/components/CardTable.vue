@@ -9,7 +9,7 @@ import {
   getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table'
-import { valueUpdater } from '@/lib/utils'
+import { valueUpdater, stripMarkdown } from '@/lib/utils'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
@@ -43,7 +43,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       accessorKey: 'front',
       header: 'Front',
       cell: ({ row }) => {
-        const val = row.getValue('front') as string
+        const val = stripMarkdown(row.getValue('front') as string)
         const display = val.length > 80 ? val.slice(0, 80) + '…' : val
         const source = row.original.sourceFile
         const hasSvg = row.original.frontSvg || row.original.backSvg
