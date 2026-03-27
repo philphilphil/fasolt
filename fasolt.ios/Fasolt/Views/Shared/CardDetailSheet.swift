@@ -1,4 +1,5 @@
 import SwiftUI
+import Textual
 
 struct CardDetailSheet: View {
     let card: any CardDisplayable
@@ -19,9 +20,8 @@ struct CardDetailSheet: View {
                             SvgView(svg: svg)
                                 .frame(height: 200)
                         }
-                        Text(card.front)
+                        StructuredText(markdown: card.front)
                             .font(.title3)
-                            .multilineTextAlignment(.center)
                     }
 
                     Divider()
@@ -36,9 +36,8 @@ struct CardDetailSheet: View {
                             SvgView(svg: svg)
                                 .frame(height: 200)
                         }
-                        Text(card.back)
+                        StructuredText(markdown: card.back)
                             .font(.title3)
-                            .multilineTextAlignment(.center)
                     }
 
                     Divider()
