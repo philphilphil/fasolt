@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Fasolt.Server.Api.Endpoints;
+using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Application.Services;
