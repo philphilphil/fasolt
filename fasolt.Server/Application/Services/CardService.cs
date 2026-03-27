@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Domain.Entities;
@@ -8,8 +9,28 @@ namespace Fasolt.Server.Application.Services;
 
 public class CardService(AppDbContext db)
 {
+    public const int MaxFrontLength = 10_000;
+    public const int MaxBackLength = 50_000;
+    public const int MaxSourceHeadingLength = 255;
+
+    public static List<string> ValidateCardFields(string? front, string? back, string? sourceHeading)
+    {
+        var errors = new List<string>();
+        if (front is not null && front.Length > MaxFrontLength)
+            errors.Add($"Front text exceeds maximum length of {MaxFrontLength} characters.");
+        if (back is not null && back.Length > MaxBackLength)
+            errors.Add($"Back text exceeds maximum length of {MaxBackLength} characters.");
+        if (sourceHeading is not null && sourceHeading.Length > MaxSourceHeadingLength)
+            errors.Add($"Source heading exceeds maximum length of {MaxSourceHeadingLength} characters.");
+        return errors;
+    }
+
     public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null)
     {
+        var errors = ValidateCardFields(front, back, sourceHeading);
+        if (errors.Count > 0)
+            throw new ValidationException(string.Join(" ", errors));
+
         var card = new Card
         {
             Id = Guid.NewGuid(),
@@ -97,6 +118,13 @@ public class CardService(AppDbContext db)
             if (!createdKeys.Add((effectiveSourceFile ?? "", trimmedFront)))
             {
                 skipped.Add(new SkippedCardDto(trimmedFront, "Duplicate within batch"));
+                continue;
+            }
+
+            var itemErrors = ValidateCardFields(item.Front, item.Back, item.SourceHeading);
+            if (itemErrors.Count > 0)
+            {
+                skipped.Add(new SkippedCardDto(trimmedFront, string.Join(" ", itemErrors)));
                 continue;
             }
 
@@ -205,6 +233,10 @@ public class CardService(AppDbContext db)
 
         if (card is null) return null;
 
+        var errors = ValidateCardFields(request.Front, request.Back, request.SourceHeading);
+        if (errors.Count > 0)
+            throw new ValidationException(string.Join(" ", errors));
+
         card.Front = request.Front;
         card.Back = request.Back;
         if (request.FrontSvg is not null)
@@ -295,6 +327,10 @@ public class CardService(AppDbContext db)
     {
         var effectiveFront = req.NewFront?.Trim() ?? card.Front;
         var effectiveSourceFile = req.NewSourceFile?.Trim() ?? card.SourceFile;
+
+        var errors = ValidateCardFields(req.NewFront, req.NewBack, req.NewSourceHeading);
+        if (errors.Count > 0)
+            throw new ValidationException(string.Join(" ", errors));
 
         // Check for natural key collision if front or sourceFile is changing
         if (effectiveFront != card.Front || effectiveSourceFile != card.SourceFile)
