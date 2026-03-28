@@ -138,6 +138,13 @@ struct DeckListContent: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showCreateSheet = true
+            } label: {
+                Label("New Deck", systemImage: "plus")
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
             Menu {
                 Picker("Sort", selection: $sortOrder) {
                     ForEach(DeckSortOrder.allCases, id: \.self) { order in
@@ -146,13 +153,6 @@ struct DeckListContent: View {
                 }
             } label: {
                 Label("Sort", systemImage: "arrow.up.arrow.down")
-            }
-        }
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                showCreateSheet = true
-            } label: {
-                Label("New Deck", systemImage: "plus")
             }
         }
     }
