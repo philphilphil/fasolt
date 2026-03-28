@@ -236,7 +236,7 @@ public class NotificationTests : IAsyncLifetime
             .CountAsync(c =>
                 c.UserId == UserId &&
                 (c.DueAt == null || c.DueAt <= now) &&
-                (!c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive)));
+                (!c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended)));
 
         dueCount.Should().Be(1);
     }
@@ -257,7 +257,7 @@ public class NotificationTests : IAsyncLifetime
             .CountAsync(c =>
                 c.UserId == UserId &&
                 (c.DueAt == null || c.DueAt <= now) &&
-                (!c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive)));
+                (!c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended)));
 
         dueCount.Should().Be(0);
     }

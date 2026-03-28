@@ -87,13 +87,13 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
         return JsonSerializer.Serialize(new { deleted = true, deletedCardCount = result.DeletedCardCount }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Set a deck's active state. Inactive decks and their cards are excluded from study/review. Cards in multiple decks remain active if at least one deck is active.")]
-    public async Task<string> SetDeckActive(
+    [McpServerTool, Description("Suspend or unsuspend a deck. Suspended decks and their cards are excluded from study/review. Cards in multiple decks remain active if at least one deck is not suspended.")]
+    public async Task<string> SetDeckSuspended(
         [Description("ID of the deck")] string deckId,
-        [Description("true to activate, false to deactivate")] bool isActive)
+        [Description("true to suspend (exclude from study), false to unsuspend")] bool isSuspended)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var result = await deckService.SetActive(userId, deckId, isActive);
+        var result = await deckService.SetSuspended(userId, deckId, isSuspended);
         if (result is null)
             return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
         return JsonSerializer.Serialize(result, McpJson.Options);

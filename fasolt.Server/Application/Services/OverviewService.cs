@@ -15,7 +15,8 @@ public class OverviewService(AppDbContext db)
         // Study-active cards: no decks OR at least one active deck
         var activeCards = db.Cards
             .Where(c => c.UserId == userId)
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive));
+            .Where(c => !c.IsSuspended)
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
 
         var totalCards = await activeCards.CountAsync();
 

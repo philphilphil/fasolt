@@ -12,7 +12,8 @@ public static class DueCardQuery
     {
         var dueCardsByDeck = await db.Cards
             .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now))
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive))
+            .Where(c => !c.IsSuspended)
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended))
             .SelectMany(c => c.DeckCards.DefaultIfEmpty(),
                 (card, deckCard) => new { DeckName = deckCard != null ? deckCard.Deck.Name : null })
             .GroupBy(x => x.DeckName ?? "Unsorted")

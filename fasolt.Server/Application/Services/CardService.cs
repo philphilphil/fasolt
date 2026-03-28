@@ -165,8 +165,9 @@ public class CardService(AppDbContext db)
             c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back,
             c.State, c.CreatedAt,
             deckId is not null
-                ? [new CardDeckInfoDto(deckId, "", true)]
+                ? [new CardDeckInfoDto(deckId, "", false)]
                 : [],
+            c.IsSuspended,
             c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
             c.FrontSvg, c.BackSvg)).ToList();
 
@@ -204,7 +205,8 @@ public class CardService(AppDbContext db)
         var cards = await query
             .Take(take + 1)
             .Select(c => new CardDto(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsActive)).ToList(),
+                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
+                c.IsSuspended,
                 c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
                 c.FrontSvg, c.BackSvg))
             .ToListAsync();
@@ -406,9 +408,24 @@ public class CardService(AppDbContext db)
         return ToDto(card);
     }
 
+    public async Task<CardDto?> SetSuspended(string userId, string publicId, bool isSuspended)
+    {
+        var card = await db.Cards
+            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
+            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
+
+        if (card is null) return null;
+
+        card.IsSuspended = isSuspended;
+        await db.SaveChangesAsync();
+
+        return ToDto(card);
+    }
+
     private static CardDto ToDto(Card c) =>
         new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
-            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsActive)).ToList(),
+            c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
+            c.IsSuspended,
             c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
             c.FrontSvg, c.BackSvg);
 

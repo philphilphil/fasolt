@@ -11,7 +11,7 @@ public class Deck
     public string Name { get; set; } = default!;
     public string? Description { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsSuspended { get; set; } = false;
     public List<DeckCard> Cards { get; set; } = [];
     public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

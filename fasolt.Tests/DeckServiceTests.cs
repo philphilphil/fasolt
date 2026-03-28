@@ -157,27 +157,27 @@ public class DeckServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SetActive_DeactivatesDeck()
+    public async Task SetSuspended_SuspendsDeck()
     {
         await using var db = _db.CreateDbContext();
         var deckSvc = new DeckService(db);
 
-        var deck = await deckSvc.CreateDeck(UserId, "Active Test", null);
-        deck.IsActive.Should().BeTrue("decks are active by default");
+        var deck = await deckSvc.CreateDeck(UserId, "Suspend Test", null);
+        deck.IsSuspended.Should().BeFalse("decks are not suspended by default");
 
-        var result = await deckSvc.SetActive(UserId, deck.Id, false);
+        var result = await deckSvc.SetSuspended(UserId, deck.Id, true);
 
         result.Should().NotBeNull();
-        result!.IsActive.Should().BeFalse();
+        result!.IsSuspended.Should().BeTrue();
     }
 
     [Fact]
-    public async Task SetActive_NotFound_ReturnsNull()
+    public async Task SetSuspended_NotFound_ReturnsNull()
     {
         await using var db = _db.CreateDbContext();
         var deckSvc = new DeckService(db);
 
-        var result = await deckSvc.SetActive(UserId, "nonexistent", true);
+        var result = await deckSvc.SetSuspended(UserId, "nonexistent", true);
 
         result.Should().BeNull();
     }

@@ -41,13 +41,14 @@ public class ReviewService(AppDbContext db, IScheduler scheduler, TimeProvider t
         var query = db.Cards
             .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now));
 
-        query = query.Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive));
+        query = query.Where(c => !c.IsSuspended);
+        query = query.Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
 
         if (deckId is not null)
         {
             var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
             if (deck is null) return null!; // endpoint returns NotFound
-            if (!deck.IsActive) return [];
+            if (deck.IsSuspended) return [];
             query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deck.Id));
         }
 
@@ -98,7 +99,8 @@ public class ReviewService(AppDbContext db, IScheduler scheduler, TimeProvider t
         var now = timeProvider.GetUtcNow();
         var activeCards = db.Cards
             .Where(c => c.UserId == userId)
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => dc.Deck.IsActive));
+            .Where(c => !c.IsSuspended)
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
 
         var dueCount = await activeCards.CountAsync(c => c.DueAt == null || c.DueAt <= now);
         var totalCards = await activeCards.CountAsync();
