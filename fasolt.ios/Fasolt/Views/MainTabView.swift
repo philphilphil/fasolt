@@ -32,7 +32,8 @@ struct MainTabView: View {
 
                     DeckListView(
                         viewModel: DeckListViewModel(deckRepository: deckRepository),
-                        deckRepository: deckRepository
+                        deckRepository: deckRepository,
+                        cardRepository: cardRepository
                     )
                     .tabItem {
                         Label("Decks", systemImage: "rectangle.stack")

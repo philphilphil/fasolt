@@ -12,6 +12,9 @@ struct DeckDetailView: View {
     @Environment(\.startStudy) private var startStudy
     @State private var viewModel: DeckDetailViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
+    @State private var showEditSheet = false
+    @State private var cardToDelete: DeckCardDTO?
+    @State private var showDeleteCardAlert = false
 
     init(viewModel: DeckDetailViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -57,7 +60,7 @@ struct DeckDetailView: View {
                                 ContentUnavailableView(
                                     "No cards in this deck",
                                     systemImage: "rectangle.on.rectangle.slash",
-                                    description: Text("Add cards via the API or MCP tools")
+                                    description: Text("Add cards via the API, MCP tools, or the Cards tab")
                                 )
                             }
                         } else {
@@ -67,6 +70,29 @@ struct DeckDetailView: View {
                                         CardDetailView(card: card)
                                     } label: {
                                         DeckCardRow(card: card, showSourceFile: true)
+                                    }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            cardToDelete = card
+                                            showDeleteCardAlert = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+
+                                        Button {
+                                            Task {
+                                                try? await viewModel.setCardSuspended(
+                                                    id: card.id,
+                                                    isSuspended: !card.isSuspended
+                                                )
+                                            }
+                                        } label: {
+                                            Label(
+                                                card.isSuspended ? "Unsuspend" : "Suspend",
+                                                systemImage: card.isSuspended ? "play.circle" : "pause.circle"
+                                            )
+                                        }
+                                        .tint(.orange)
                                     }
                                 }
                             }
@@ -104,6 +130,13 @@ struct DeckDetailView: View {
         .offlineBanner()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Sort", selection: $sortOrder) {
                         ForEach(CardSortOrder.allCases, id: \.self) { order in
@@ -124,6 +157,34 @@ struct DeckDetailView: View {
                     )
                 }
             }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            if let detail = viewModel.detail {
+                DeckFormSheet(
+                    mode: .edit(DeckDTO(
+                        id: detail.id,
+                        name: detail.name,
+                        description: detail.description,
+                        cardCount: detail.cardCount,
+                        dueCount: detail.dueCount,
+                        createdAt: "",
+                        isSuspended: detail.isSuspended
+                    ))
+                ) { request in
+                    try await viewModel.updateDeck(UpdateDeckRequest(
+                        name: request.name,
+                        description: request.description
+                    ))
+                }
+            }
+        }
+        .alert("Delete Card", isPresented: $showDeleteCardAlert, presenting: cardToDelete) { card in
+            Button("Delete", role: .destructive) {
+                Task { try? await viewModel.deleteCard(id: card.id) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("This cannot be undone.")
         }
         .refreshable {
             await viewModel.loadDetail()

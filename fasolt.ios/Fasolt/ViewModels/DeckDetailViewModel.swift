@@ -11,11 +11,13 @@ final class DeckDetailViewModel {
     var errorMessage: String?
 
     private let deckRepository: DeckRepository
+    private let cardRepository: CardRepository
     let deckId: String
-    let deckName: String
+    var deckName: String
 
-    init(deckRepository: DeckRepository, deckId: String, deckName: String) {
+    init(deckRepository: DeckRepository, cardRepository: CardRepository, deckId: String, deckName: String) {
         self.deckRepository = deckRepository
+        self.cardRepository = cardRepository
         self.deckId = deckId
         self.deckName = deckName
     }
@@ -46,5 +48,21 @@ final class DeckDetailViewModel {
             logger.error("Failed to toggle deck suspended state: \(error)")
             errorMessage = "Could not update deck status."
         }
+    }
+
+    func deleteCard(id: String) async throws {
+        try await cardRepository.deleteCard(id: id)
+        await loadDetail()
+    }
+
+    func setCardSuspended(id: String, isSuspended: Bool) async throws {
+        try await cardRepository.setSuspended(cardId: id, isSuspended: isSuspended)
+        await loadDetail()
+    }
+
+    func updateDeck(_ request: UpdateDeckRequest) async throws {
+        let updated = try await deckRepository.updateDeck(id: deckId, request)
+        deckName = updated.name
+        await loadDetail()
     }
 }

@@ -14,13 +14,16 @@ struct DeckListView: View {
     @State private var deckToDelete: DeckDTO?
     @State private var showDeleteConfirmation = false
     private let deckRepository: DeckRepository
+    private let cardRepository: CardRepository
 
     init(
         viewModel: DeckListViewModel,
-        deckRepository: DeckRepository
+        deckRepository: DeckRepository,
+        cardRepository: CardRepository
     ) {
         _viewModel = State(initialValue: viewModel)
         self.deckRepository = deckRepository
+        self.cardRepository = cardRepository
     }
 
     var body: some View {
@@ -87,6 +90,7 @@ struct DeckListView: View {
                     DeckDetailView(
                         viewModel: DeckDetailViewModel(
                             deckRepository: deckRepository,
+                            cardRepository: cardRepository,
                             deckId: deck.id,
                             deckName: deck.name
                         )
