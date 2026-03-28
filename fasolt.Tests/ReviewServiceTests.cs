@@ -1,7 +1,5 @@
 using FluentAssertions;
-using FSRS.Core.Configurations;
-using FSRS.Core.Interfaces;
-using FSRS.Core.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
@@ -13,26 +11,14 @@ public class ReviewServiceTests : IAsyncLifetime
 {
     private readonly TestDb _db = new();
     private readonly FakeTimeProvider _time = new(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
-    private readonly IScheduler _scheduler;
 
     private string UserId => _db.UserId;
-
-    public ReviewServiceTests()
-    {
-        var options = new SchedulerOptions
-        {
-            DesiredRetention = 0.9,
-            MaximumInterval = 36500,
-            EnableFuzzing = false,
-        };
-        _scheduler = new SchedulerFactory(options).CreateScheduler();
-    }
 
     public async Task InitializeAsync() => await _db.InitializeAsync();
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
     private ReviewService CreateService(Server.Infrastructure.Data.AppDbContext db)
-        => new(db, _scheduler, _time);
+        => new(db, _time);
 
     private async Task<string> CreateCard(Server.Infrastructure.Data.AppDbContext db, string front, string back)
     {
@@ -306,5 +292,40 @@ public class ReviewServiceTests : IAsyncLifetime
             for (var i = 1; i < lastThree.Count; i++)
                 lastThree[i].Should().BeGreaterThanOrEqualTo(lastThree[i - 1]);
         }
+    }
+
+    [Fact]
+    public async Task RateCard_UsesCustomRetention_WhenSet()
+    {
+        await using var db = _db.CreateDbContext();
+
+        // Set custom retention on user
+        var user = await db.Users.FirstAsync(u => u.Id == UserId);
+        user.DesiredRetention = 0.80;
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var cardId = await CreateCard(db, "Custom Q?", "Custom A.");
+
+        // Rate easy to get into review state with a scheduled interval
+        var result = await svc.RateCard(UserId, new RateCardRequest(cardId, "easy"));
+        result.Should().NotBeNull();
+        result!.DueAt.Should().BeAfter(_time.GetUtcNow());
+
+        // Now rate again with default retention for comparison
+        await using var db2 = _db.CreateDbContext();
+        var user2 = await db2.Users.FirstAsync(u => u.Id == UserId);
+        user2.DesiredRetention = null; // reset to default
+        await db2.SaveChangesAsync();
+
+        await using var db3 = _db.CreateDbContext();
+        var svc2 = CreateService(db3);
+        var cardId2 = await CreateCard(db3, "Default Q?", "Default A.");
+        var result2 = await svc2.RateCard(UserId, new RateCardRequest(cardId2, "easy"));
+
+        // Lower retention (0.80) should produce longer intervals than default (0.9)
+        var interval1 = result.DueAt!.Value - _time.GetUtcNow();
+        var interval2 = result2!.DueAt!.Value - _time.GetUtcNow();
+        interval1.Should().BeGreaterThan(interval2);
     }
 }

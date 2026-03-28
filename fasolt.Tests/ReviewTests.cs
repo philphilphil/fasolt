@@ -1,6 +1,4 @@
 using FluentAssertions;
-using FSRS.Core.Configurations;
-using FSRS.Core.Services;
 using Fasolt.Server.Application.Services;
 using Fasolt.Tests.Helpers;
 
@@ -19,11 +17,7 @@ public class ReviewTests : IAsyncLifetime
     {
         await using var db = _db.CreateDbContext();
         var cardSvc = new CardService(db);
-        var scheduler = new SchedulerFactory(new SchedulerOptions
-        {
-            DesiredRetention = 0.9, MaximumInterval = 36500, EnableFuzzing = false,
-        }).CreateScheduler();
-        var reviewSvc = new ReviewService(db, scheduler, TimeProvider.System);
+        var reviewSvc = new ReviewService(db, TimeProvider.System);
 
         var card = await cardSvc.CreateCard(UserId, "Review Q?", "Review A.", "review-source.md", "## Section");
 

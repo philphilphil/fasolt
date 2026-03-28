@@ -2,13 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using FSRS.Core.Configurations;
 using FSRS.Core.Enums;
 using FSRS.Core.Interfaces;
+using FSRS.Core.Services;
 using FsrsCard = FSRS.Core.Models.Card;
 
 namespace Fasolt.Server.Application.Services;
 
-public class ReviewService(AppDbContext db, IScheduler scheduler, TimeProvider timeProvider)
+public class ReviewService(AppDbContext db, TimeProvider timeProvider)
 {
     private static readonly Dictionary<string, Rating> ValidRatings = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -33,6 +35,18 @@ public class ReviewService(AppDbContext db, IScheduler scheduler, TimeProvider t
         "relearning" => State.Relearning,
         _ => default,
     };
+
+    private async Task<IScheduler> CreateSchedulerForUser(string userId)
+    {
+        var user = await db.Users.FirstAsync(u => u.Id == userId);
+        var options = new SchedulerOptions
+        {
+            DesiredRetention = user.DesiredRetention ?? 0.9,
+            MaximumInterval = user.MaximumInterval ?? 36500,
+            EnableFuzzing = true,
+        };
+        return new SchedulerFactory(options).CreateScheduler();
+    }
 
     public async Task<List<DueCardDto>> GetDueCards(string userId, int limit = 50, string? deckId = null)
     {
@@ -81,6 +95,7 @@ public class ReviewService(AppDbContext db, IScheduler scheduler, TimeProvider t
             };
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
+        var scheduler = await CreateSchedulerForUser(userId);
         var (updated, _) = scheduler.ReviewCard(fsrsCard, fsrsRating, now, null);
 
         card.Stability = updated.Stability;
