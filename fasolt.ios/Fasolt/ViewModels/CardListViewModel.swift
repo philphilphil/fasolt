@@ -10,7 +10,7 @@ final class CardListViewModel {
     var isLoading = false
     var errorMessage: String?
     var searchText = ""
-    var hideInactive = false
+    var showSuspended = true
     var availableDecks: [DeckDTO] = []
 
     private let apiClient: APIClient
@@ -27,10 +27,8 @@ final class CardListViewModel {
     var filteredCards: [CardDTO] {
         var result = cards
 
-        if hideInactive {
-            result = result.filter { card in
-                card.decks.isEmpty || card.decks.contains(where: { !$0.isSuspended })
-            }
+        if !showSuspended {
+            result = result.filter { !$0.isSuspended }
         }
 
         let query = searchText.trimmingCharacters(in: .whitespaces)

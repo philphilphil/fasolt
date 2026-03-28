@@ -66,7 +66,7 @@ struct CardListContent: View {
                         }
                     }
 
-                    Toggle("Active Only", isOn: $viewModel.hideInactive)
+                    Toggle("Show Suspended", isOn: $viewModel.showSuspended)
                 } label: {
                     Label("Sort", systemImage: "arrow.up.arrow.down")
                 }
