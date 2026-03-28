@@ -56,6 +56,7 @@ struct MainTabView: View {
                 }
                 .fullScreenCover(isPresented: $showStudy, onDismiss: {
                     studyDeckId = nil
+                    NotificationCenter.default.post(name: .studySessionEnded, object: nil)
                 }) {
                     NavigationStack {
                         StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId)

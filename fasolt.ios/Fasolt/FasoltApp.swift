@@ -85,4 +85,5 @@ struct FasoltApp: App {
 
 extension Notification.Name {
     static let appDidBecomeActive = Notification.Name("appDidBecomeActive")
+    static let studySessionEnded = Notification.Name("studySessionEnded")
 }

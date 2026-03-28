@@ -65,6 +65,9 @@ struct DashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadStats() }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
+                Task { await viewModel.loadStats() }
+            }
             .offlineBanner()
         }
     }
