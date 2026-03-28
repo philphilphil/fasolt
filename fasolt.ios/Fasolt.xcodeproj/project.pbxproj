@@ -18,34 +18,33 @@
 		345B1EAE7BFC27DA2F03E0C3 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A881609787DFFE078B49DC /* KeychainHelperTests.swift */; };
 		36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */; };
 		3ACCC3511CF87CD4B822DCB9 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */; };
+		3DF96280AD9C48E5AB080D56 /* SchedulingSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */; };
 		45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */; };
 		49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */; };
 		4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */; };
 		51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
-		AA22334455667788990011BB /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB22334455667788990011BB /* CardFormSheet.swift */; };
-		EE11223344556677889900CC /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF11223344556677889900CC /* LibraryView.swift */; };
-		CC44556677889900AABB11DD /* DeckFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD44556677889900AABB11DD /* DeckFormSheet.swift */; };
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
 		6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB69B316FF51F7EC607EBD /* StudyView.swift */; };
-		AA11223344556677889900AB /* StartStudyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB11223344556677889900AB /* StartStudyAction.swift */; };
 		6F1A4C6F09CB0E465B1CA3BD /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82812F20EB20898654E7FABF /* CardView.swift */; };
 		7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */; };
 		7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */; };
 		82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D826424A31F1413445EC6650 /* FasoltApp.swift */; };
 		8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */; };
-		3DF96280AD9C48E5AB080D56 /* SchedulingSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */; };
 		8ECAC149086A23E54D5DC1D2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE0A6615C77BF475BDCC9074 /* Assets.xcassets */; };
 		95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */; };
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
 		A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7A52B7D0A14767556278C /* CachedDeck.swift */; };
 		A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */; };
+		AA11223344556677889900AB /* StartStudyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB11223344556677889900AB /* StartStudyAction.swift */; };
+		AA22334455667788990011BB /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB22334455667788990011BB /* CardFormSheet.swift */; };
 		AD02868CF44F8352E6CC10AE /* FasoltTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11CE9B38A861E5101458984 /* FasoltTests.swift */; };
 		B30466C0CB576F92FCA71530 /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 25BF892D18C34BB314589773 /* Textual */; };
 		B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06D21FAE1D894BFAE8889953 /* PendingReview.swift */; };
 		BA0B1FE4CD431148690BDF96 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A23AFC0A1B6F81DD76335210 /* DashboardView.swift */; };
 		C1D4D2606441D7F37D080F2E /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */; };
+		CC44556677889900AABB11DD /* DeckFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD44556677889900AABB11DD /* DeckFormSheet.swift */; };
 		D46CA0643A278BBCA919D878 /* CardRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B52198B8E5A1593EA701B5 /* CardRepository.swift */; };
 		D578E86690C15FA330A7530A /* Card.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414BE26059C9FAB839CAA164 /* Card.swift */; };
 		D8F684C246902C52A7B6CB5C /* DeckDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */; };
@@ -55,6 +54,7 @@
 		DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */; };
 		E50B3F152B8C3621E6E74FCF /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E2E5EDB31357B7ECA46E216 /* AuthService.swift */; };
 		ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E947CBD44E199505935FEF /* OfflineBanner.swift */; };
+		EE11223344556677889900CC /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF11223344556677889900CC /* LibraryView.swift */; };
 		EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */; };
 		EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */; };
 		F56F2B954E87BEFB3CF0FB2A /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2389B8A7DEC545C50AA0115F /* RegisterView.swift */; };
@@ -74,7 +74,6 @@
 
 /* Begin PBXFileReference section */
 		02DB69B316FF51F7EC607EBD /* StudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyView.swift; sourceTree = "<group>"; };
-		BB11223344556677889900AB /* StartStudyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartStudyAction.swift; sourceTree = "<group>"; };
 		06D21FAE1D894BFAE8889953 /* PendingReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingReview.swift; sourceTree = "<group>"; };
 		1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViewModel.swift; sourceTree = "<group>"; };
 		22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailView.swift; sourceTree = "<group>"; };
@@ -88,11 +87,9 @@
 		3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		414BE26059C9FAB839CAA164 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
 		415F17F4DF4B1095517D8C18 /* CardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListView.swift; sourceTree = "<group>"; };
-		BB22334455667788990011BB /* CardFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardFormSheet.swift; sourceTree = "<group>"; };
-		FF11223344556677889900CC /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
-		DD44556677889900AABB11DD /* DeckFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckFormSheet.swift; sourceTree = "<group>"; };
 		4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulingSettingsViewModel.swift; sourceTree = "<group>"; };
 		5B0A49ADA712CA0F08309A81 /* local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = local.xcconfig; sourceTree = "<group>"; };
 		625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySummaryView.swift; sourceTree = "<group>"; };
 		63A881609787DFFE078B49DC /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
@@ -100,7 +97,6 @@
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
-		56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulingSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		82812F20EB20898654E7FABF /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
@@ -116,6 +112,8 @@
 		B11CE9B38A861E5101458984 /* FasoltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltTests.swift; sourceTree = "<group>"; };
 		B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailViewModel.swift; sourceTree = "<group>"; };
 		B91F8A14874A0AB49630A6AD /* DeckRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckRepository.swift; sourceTree = "<group>"; };
+		BB11223344556677889900AB /* StartStudyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartStudyAction.swift; sourceTree = "<group>"; };
+		BB22334455667788990011BB /* CardFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardFormSheet.swift; sourceTree = "<group>"; };
 		BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SvgView.swift; sourceTree = "<group>"; };
 		BD321B13FDCABFE8C7BA3698 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterViewModel.swift; sourceTree = "<group>"; };
@@ -126,10 +124,12 @@
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
 		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD44556677889900AABB11DD /* DeckFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckFormSheet.swift; sourceTree = "<group>"; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
+		FF11223344556677889900CC /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,14 +186,6 @@
 				C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */,
 			);
 			path = Decks;
-			sourceTree = "<group>";
-		};
-		AA99887766554433221100EE /* Library */ = {
-			isa = PBXGroup;
-			children = (
-				FF11223344556677889900CC /* LibraryView.swift */,
-			);
-			path = Library;
 			sourceTree = "<group>";
 		};
 		1C44CB51B9180258ED582A29 /* ViewModels */ = {
@@ -309,6 +301,14 @@
 				2389B8A7DEC545C50AA0115F /* RegisterView.swift */,
 			);
 			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		AA99887766554433221100EE /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				FF11223344556677889900CC /* LibraryView.swift */,
+			);
+			path = Library;
 			sourceTree = "<group>";
 		};
 		B1A82847EFBF9036CA088344 /* Models */ = {
@@ -502,7 +502,7 @@
 				0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */,
 				FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */,
 				AA11223344556677889900AB /* StartStudyAction.swift in Sources */,
-		0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
+				0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
 				6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */,
 				49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */,
 				45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */,
@@ -625,7 +625,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -643,7 +643,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
