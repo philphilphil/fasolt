@@ -54,7 +54,9 @@ struct MainTabView: View {
                         Label("Settings", systemImage: "gear")
                     }
                 }
-                .fullScreenCover(isPresented: $showStudy) {
+                .fullScreenCover(isPresented: $showStudy, onDismiss: {
+                    studyDeckId = nil
+                }) {
                     NavigationStack {
                         StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId)
                     }
