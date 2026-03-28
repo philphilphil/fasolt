@@ -24,6 +24,7 @@
 		51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
 		AA22334455667788990011BB /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB22334455667788990011BB /* CardFormSheet.swift */; };
+		EE11223344556677889900CC /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF11223344556677889900CC /* LibraryView.swift */; };
 		CC44556677889900AABB11DD /* DeckFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD44556677889900AABB11DD /* DeckFormSheet.swift */; };
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
@@ -88,6 +89,7 @@
 		414BE26059C9FAB839CAA164 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
 		415F17F4DF4B1095517D8C18 /* CardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListView.swift; sourceTree = "<group>"; };
 		BB22334455667788990011BB /* CardFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardFormSheet.swift; sourceTree = "<group>"; };
+		FF11223344556677889900CC /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		DD44556677889900AABB11DD /* DeckFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckFormSheet.swift; sourceTree = "<group>"; };
 		4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
@@ -166,6 +168,7 @@
 				011A7B9012538B9F24BDA123 /* Cards */,
 				02C078EC2CC27F4446A82652 /* Dashboard */,
 				1431B7D69EFF78F28160765D /* Decks */,
+				AA99887766554433221100EE /* Library */,
 				7AF40BD0302978F0FF2A037D /* Onboarding */,
 				FE8B084DED433EFBAE5D318F /* Settings */,
 				F1D58078FC886E6E5A609771 /* Shared */,
@@ -183,6 +186,14 @@
 				C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */,
 			);
 			path = Decks;
+			sourceTree = "<group>";
+		};
+		AA99887766554433221100EE /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				FF11223344556677889900CC /* LibraryView.swift */,
+			);
+			path = Library;
 			sourceTree = "<group>";
 		};
 		1C44CB51B9180258ED582A29 /* ViewModels */ = {
@@ -475,6 +486,7 @@
 				EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */,
 				82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */,
 				95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */,
+				EE11223344556677889900CC /* LibraryView.swift in Sources */,
 				58A1B3892608093BF3282922 /* MainTabView.swift in Sources */,
 				51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */,
 				0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */,

@@ -8,19 +8,10 @@ enum DeckSortOrder: String, CaseIterable {
 
 struct DeckListView: View {
     @State private var viewModel: DeckListViewModel
-    @State private var searchText = ""
-    @State private var sortOrder: DeckSortOrder = .name
-    @State private var showCreateSheet = false
-    @State private var deckToDelete: DeckDTO?
-    @State private var showDeleteConfirmation = false
     private let deckRepository: DeckRepository
     private let cardRepository: CardRepository
 
-    init(
-        viewModel: DeckListViewModel,
-        deckRepository: DeckRepository,
-        cardRepository: CardRepository
-    ) {
+    init(viewModel: DeckListViewModel, deckRepository: DeckRepository, cardRepository: CardRepository) {
         _viewModel = State(initialValue: viewModel)
         self.deckRepository = deckRepository
         self.cardRepository = cardRepository
@@ -28,38 +19,57 @@ struct DeckListView: View {
 
     var body: some View {
         NavigationStack {
-            contentView
-                .searchable(text: $searchText, prompt: "Search decks")
-                .refreshable { await viewModel.loadDecks() }
-                .navigationTitle("Decks")
-                .toolbar { toolbarContent }
-                .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
-                .offlineBanner()
-                .task { if viewModel.decks.isEmpty { await viewModel.loadDecks() } }
-                .onAppear { if !viewModel.decks.isEmpty { Task { await viewModel.loadDecks() } } }
-                .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
-                    Task { await viewModel.loadDecks() }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
-                    Task { await viewModel.loadDecks() }
-                }
-                .sheet(isPresented: $showCreateSheet) {
-                    DeckFormSheet(mode: .create) { request in
-                        try await viewModel.createDeck(request)
-                    }
-                }
-                .alert("Delete Deck", isPresented: $showDeleteConfirmation, presenting: deckToDelete) { deck in
-                    Button("Delete Deck Only", role: .destructive) {
-                        Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: false) }
-                    }
-                    Button("Delete Deck and Cards", role: .destructive) {
-                        Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: true) }
-                    }
-                    Button("Cancel", role: .cancel) {}
-                } message: { deck in
-                    Text("This deck has \(deck.cardCount) cards. What would you like to do?")
-                }
+            DeckListContent(
+                viewModel: viewModel,
+                deckRepository: deckRepository,
+                cardRepository: cardRepository
+            )
         }
+    }
+}
+
+struct DeckListContent: View {
+    var viewModel: DeckListViewModel
+    @State private var searchText = ""
+    @State private var sortOrder: DeckSortOrder = .name
+    @State private var showCreateSheet = false
+    @State private var deckToDelete: DeckDTO?
+    @State private var showDeleteConfirmation = false
+    let deckRepository: DeckRepository
+    let cardRepository: CardRepository
+
+    var body: some View {
+        contentView
+            .searchable(text: $searchText, prompt: "Search decks")
+            .refreshable { await viewModel.loadDecks() }
+            .navigationTitle("Decks")
+            .toolbar { toolbarContent }
+            .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
+            .offlineBanner()
+            .task { if viewModel.decks.isEmpty { await viewModel.loadDecks() } }
+            .onAppear { if !viewModel.decks.isEmpty { Task { await viewModel.loadDecks() } } }
+            .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+                Task { await viewModel.loadDecks() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
+                Task { await viewModel.loadDecks() }
+            }
+            .sheet(isPresented: $showCreateSheet) {
+                DeckFormSheet(mode: .create) { request in
+                    try await viewModel.createDeck(request)
+                }
+            }
+            .alert("Delete Deck", isPresented: $showDeleteConfirmation, presenting: deckToDelete) { deck in
+                Button("Delete Deck Only", role: .destructive) {
+                    Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: false) }
+                }
+                Button("Delete Deck and Cards", role: .destructive) {
+                    Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: true) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { deck in
+                Text("This deck has \(deck.cardCount) cards. What would you like to do?")
+            }
     }
 
     @ViewBuilder
