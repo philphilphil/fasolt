@@ -107,7 +107,8 @@ struct CardFormSheet: View {
             front: front.trimmingCharacters(in: .whitespacesAndNewlines),
             back: back.trimmingCharacters(in: .whitespacesAndNewlines),
             sourceFile: sourceFile.isEmpty ? nil : sourceFile,
-            sourceHeading: sourceHeading.isEmpty ? nil : sourceHeading
+            sourceHeading: sourceHeading.isEmpty ? nil : sourceHeading,
+            deckId: nil
         )
 
         do {

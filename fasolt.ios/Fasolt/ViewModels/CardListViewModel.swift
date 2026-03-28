@@ -84,19 +84,14 @@ final class CardListViewModel {
     }
 
     func createCard(_ request: CreateCardRequest, deckId: String?) async throws {
-        let card = try await cardRepository.createCard(request)
-        if let deckId {
-            _ = try await cardRepository.updateCard(
-                id: card.id,
-                UpdateCardRequest(
-                    front: card.front,
-                    back: card.back,
-                    sourceFile: card.sourceFile,
-                    sourceHeading: card.sourceHeading,
-                    deckIds: [deckId]
-                )
-            )
-        }
+        let finalRequest = CreateCardRequest(
+            front: request.front,
+            back: request.back,
+            sourceFile: request.sourceFile,
+            sourceHeading: request.sourceHeading,
+            deckId: deckId
+        )
+        _ = try await cardRepository.createCard(finalRequest)
         await loadCards()
     }
 

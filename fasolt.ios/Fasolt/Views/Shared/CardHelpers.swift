@@ -103,6 +103,38 @@ func isDueOrOverdue(_ isoString: String?) -> Bool {
     return date <= Date.now
 }
 
+// MARK: - Card Sort Order
+
+enum CardSortOrder: String, CaseIterable {
+    case dueDate = "Due Date"
+    case state = "State"
+    case front = "Front"
+    case sourceFile = "Source"
+}
+
+// MARK: - Shared Sort Function
+
+func sortedCards<T: CardDisplayable & Identifiable>(_ cards: [T], by sortOrder: CardSortOrder) -> [T] {
+    cards.sorted { a, b in
+        switch sortOrder {
+        case .dueDate:
+            let aDate = a.dueAt ?? ""
+            let bDate = b.dueAt ?? ""
+            if aDate.isEmpty && bDate.isEmpty { return a.front < b.front }
+            if aDate.isEmpty { return false }
+            if bDate.isEmpty { return true }
+            return aDate < bDate
+        case .state:
+            let order = ["new": 0, "learning": 1, "relearning": 2, "review": 3]
+            return (order[a.state] ?? 99) < (order[b.state] ?? 99)
+        case .front:
+            return a.front.localizedCaseInsensitiveCompare(b.front) == .orderedAscending
+        case .sourceFile:
+            return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
+        }
+    }
+}
+
 // MARK: - Shared FSRS Grid Item
 
 struct FSRSItem: View {

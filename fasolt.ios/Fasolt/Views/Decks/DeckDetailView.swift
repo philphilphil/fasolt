@@ -1,13 +1,6 @@
 import SwiftUI
 import UIKit
 
-enum CardSortOrder: String, CaseIterable {
-    case dueDate = "Due Date"
-    case state = "State"
-    case front = "Front"
-    case sourceFile = "Source"
-}
-
 struct DeckDetailView: View {
     @Environment(\.startStudy) private var startStudy
     @State private var viewModel: DeckDetailViewModel
@@ -17,6 +10,7 @@ struct DeckDetailView: View {
     @State private var showDeleteCardAlert = false
     @State private var availableDecks: [DeckDTO] = []
     @State private var showCreateCardSheet = false
+    @State private var errorMessage: String?
     private let deckRepository: DeckRepository
 
     init(viewModel: DeckDetailViewModel, deckRepository: DeckRepository) {
@@ -69,7 +63,7 @@ struct DeckDetailView: View {
                             }
                         } else {
                             Section("Cards") {
-                                ForEach(sortedCards(detail.cards), id: \.id) { card in
+                                ForEach(sortedCards(detail.cards, by: sortOrder), id: \.id) { card in
                                     NavigationLink {
                                         CardDetailView(
                                             card: card,
@@ -92,10 +86,14 @@ struct DeckDetailView: View {
 
                                         Button {
                                             Task {
-                                                try? await viewModel.setCardSuspended(
-                                                    id: card.id,
-                                                    isSuspended: !card.isSuspended
-                                                )
+                                                do {
+                                                    try await viewModel.setCardSuspended(
+                                                        id: card.id,
+                                                        isSuspended: !card.isSuspended
+                                                    )
+                                                } catch {
+                                                    errorMessage = "Failed to update card."
+                                                }
                                             }
                                         } label: {
                                             Label(
@@ -203,11 +201,22 @@ struct DeckDetailView: View {
         }
         .alert("Delete Card", isPresented: $showDeleteCardAlert, presenting: cardToDelete) { card in
             Button("Delete", role: .destructive) {
-                Task { try? await viewModel.deleteCard(id: card.id) }
+                Task {
+                    do {
+                        try await viewModel.deleteCard(id: card.id)
+                    } catch {
+                        errorMessage = "Failed to delete card."
+                    }
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
             Text("This cannot be undone.")
+        }
+        .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
         }
         .refreshable {
             await viewModel.loadDetail()
@@ -216,7 +225,9 @@ struct DeckDetailView: View {
             if viewModel.detail == nil {
                 await viewModel.loadDetail()
             }
-            do { availableDecks = try await deckRepository.fetchDecks() } catch {}
+            do { availableDecks = try await deckRepository.fetchDecks() } catch {
+                // Non-critical: deck picker in card edit will be empty
+            }
         }
         .onAppear {
             if viewModel.detail != nil {
@@ -225,24 +236,4 @@ struct DeckDetailView: View {
         }
     }
 
-    private func sortedCards(_ cards: [DeckCardDTO]) -> [DeckCardDTO] {
-        cards.sorted { a, b in
-            switch sortOrder {
-            case .dueDate:
-                let aDate = a.dueAt ?? ""
-                let bDate = b.dueAt ?? ""
-                if aDate.isEmpty && bDate.isEmpty { return a.front < b.front }
-                if aDate.isEmpty { return false }
-                if bDate.isEmpty { return true }
-                return aDate < bDate
-            case .state:
-                let order = ["new": 0, "learning": 1, "relearning": 2, "review": 3]
-                return (order[a.state] ?? 99) < (order[b.state] ?? 99)
-            case .front:
-                return a.front.localizedCaseInsensitiveCompare(b.front) == .orderedAscending
-            case .sourceFile:
-                return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
-            }
-        }
-    }
 }

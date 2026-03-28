@@ -20,6 +20,7 @@ struct CardListContent: View {
     @State private var showCreateSheet = false
     @State private var cardToDelete: CardDTO?
     @State private var showDeleteAlert = false
+    @State private var errorMessage: String?
 
     var body: some View {
         Group {
@@ -39,7 +40,7 @@ struct CardListContent: View {
                         Task { await viewModel.loadCards() }
                     }
                 }
-            } else if viewModel.isSearching && sortedCards(viewModel.filteredCards).isEmpty {
+            } else if viewModel.isSearching && sortedCards(viewModel.filteredCards, by: sortOrder).isEmpty {
                 ContentUnavailableView.search(text: viewModel.searchText)
             } else {
                 cardsList
@@ -94,17 +95,28 @@ struct CardListContent: View {
         }
         .alert("Delete Card", isPresented: $showDeleteAlert, presenting: cardToDelete) { card in
             Button("Delete", role: .destructive) {
-                Task { try? await viewModel.deleteCard(id: card.id) }
+                Task {
+                    do {
+                        try await viewModel.deleteCard(id: card.id)
+                    } catch {
+                        errorMessage = "Failed to delete card."
+                    }
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: { _ in
             Text("This cannot be undone.")
         }
+        .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
     }
 
     private var cardsList: some View {
         List {
-            ForEach(sortedCards(viewModel.filteredCards)) { card in
+            ForEach(sortedCards(viewModel.filteredCards, by: sortOrder)) { card in
                 NavigationLink {
                     CardDetailView(
                         card: card,
@@ -131,10 +143,14 @@ struct CardListContent: View {
 
                     Button {
                         Task {
-                            try? await viewModel.setSuspended(
-                                cardId: card.id,
-                                isSuspended: !card.isSuspended
-                            )
+                            do {
+                                try await viewModel.setSuspended(
+                                    cardId: card.id,
+                                    isSuspended: !card.isSuspended
+                                )
+                            } catch {
+                                errorMessage = "Failed to update card."
+                            }
                         }
                     } label: {
                         Label(
@@ -148,24 +164,4 @@ struct CardListContent: View {
         }
     }
 
-    private func sortedCards(_ cards: [CardDTO]) -> [CardDTO] {
-        cards.sorted { a, b in
-            switch sortOrder {
-            case .dueDate:
-                let aDate = a.dueAt ?? ""
-                let bDate = b.dueAt ?? ""
-                if aDate.isEmpty && bDate.isEmpty { return a.front < b.front }
-                if aDate.isEmpty { return false }
-                if bDate.isEmpty { return true }
-                return aDate < bDate
-            case .state:
-                let order = ["new": 0, "learning": 1, "relearning": 2, "review": 3]
-                return (order[a.state] ?? 99) < (order[b.state] ?? 99)
-            case .front:
-                return a.front.localizedCaseInsensitiveCompare(b.front) == .orderedAscending
-            case .sourceFile:
-                return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
-            }
-        }
-    }
 }

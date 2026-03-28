@@ -35,6 +35,7 @@ struct DeckListContent: View {
     @State private var showCreateSheet = false
     @State private var deckToDelete: DeckDTO?
     @State private var showDeleteConfirmation = false
+    @State private var errorMessage: String?
     let deckRepository: DeckRepository
     let cardRepository: CardRepository
 
@@ -61,14 +62,31 @@ struct DeckListContent: View {
             }
             .alert("Delete Deck", isPresented: $showDeleteConfirmation, presenting: deckToDelete) { deck in
                 Button("Delete Deck Only", role: .destructive) {
-                    Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: false) }
+                    Task {
+                        do {
+                            try await viewModel.deleteDeck(id: deck.id, deleteCards: false)
+                        } catch {
+                            errorMessage = "Failed to delete deck."
+                        }
+                    }
                 }
                 Button("Delete Deck and Cards", role: .destructive) {
-                    Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: true) }
+                    Task {
+                        do {
+                            try await viewModel.deleteDeck(id: deck.id, deleteCards: true)
+                        } catch {
+                            errorMessage = "Failed to delete deck."
+                        }
+                    }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: { deck in
                 Text("This deck has \(deck.cardCount) cards. What would you like to do?")
+            }
+            .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+                Button("OK") { errorMessage = nil }
+            } message: {
+                Text(errorMessage ?? "")
             }
     }
 
@@ -118,10 +136,14 @@ struct DeckListContent: View {
                     }
                     Button {
                         Task {
-                            try? await viewModel.setSuspended(
-                                id: deck.id,
-                                isSuspended: !deck.isSuspended
-                            )
+                            do {
+                                try await viewModel.setSuspended(
+                                    id: deck.id,
+                                    isSuspended: !deck.isSuspended
+                                )
+                            } catch {
+                                errorMessage = "Failed to update deck."
+                            }
                         }
                     } label: {
                         Label(

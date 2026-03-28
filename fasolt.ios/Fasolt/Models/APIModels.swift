@@ -198,6 +198,7 @@ struct CreateCardRequest: Encodable, Sendable {
     let back: String
     let sourceFile: String?
     let sourceHeading: String?
+    let deckId: String?
 }
 
 struct UpdateCardRequest: Encodable, Sendable {
