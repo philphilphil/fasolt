@@ -146,6 +146,91 @@ describe('cards store', () => {
     expect(store.cards).not.toBe(originalArray)
   })
 
+  it('fetchCards populates store and sets loading state', async () => {
+    const card = {
+      id: 'c1', sourceFile: null, sourceHeading: null,
+      front: 'Q', back: 'A', frontSvg: null, backSvg: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      stability: null, difficulty: null, step: null, dueAt: null,
+      state: 'new' as const, lastReviewedAt: null,
+      isSuspended: false, decks: [],
+    }
+    mockApiFetch.mockResolvedValueOnce({ items: [card], hasMore: false, nextCursor: null })
+
+    const store = useCardsStore()
+    expect(store.cards).toHaveLength(0)
+
+    await store.fetchCards()
+    expect(store.cards).toHaveLength(1)
+    expect(store.cards[0].id).toBe('c1')
+    expect(store.loading).toBe(false)
+  })
+
+  it('updateCard updates the card in the store array', async () => {
+    const card = {
+      id: 'c1', sourceFile: null, sourceHeading: null,
+      front: 'Q', back: 'A', frontSvg: null, backSvg: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      stability: null, difficulty: null, step: null, dueAt: null,
+      state: 'new' as const, lastReviewedAt: null,
+      isSuspended: false, decks: [],
+    }
+    const updatedCard = { ...card, front: 'Updated Q', back: 'Updated A' }
+
+    const store = useCardsStore()
+    mockApiFetch.mockResolvedValueOnce({ items: [card], hasMore: false, nextCursor: null })
+    await store.fetchCards()
+
+    mockApiFetch.mockResolvedValueOnce(updatedCard)
+    await store.updateCard('c1', { front: 'Updated Q', back: 'Updated A' })
+    expect(store.cards[0].front).toBe('Updated Q')
+  })
+
+  it('deleteCard removes the card from the store array', async () => {
+    const card = {
+      id: 'c1', sourceFile: null, sourceHeading: null,
+      front: 'Q', back: 'A', frontSvg: null, backSvg: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      stability: null, difficulty: null, step: null, dueAt: null,
+      state: 'new' as const, lastReviewedAt: null,
+      isSuspended: false, decks: [],
+    }
+
+    const store = useCardsStore()
+    mockApiFetch.mockResolvedValueOnce({ items: [card], hasMore: false, nextCursor: null })
+    await store.fetchCards()
+    expect(store.cards).toHaveLength(1)
+
+    mockApiFetch.mockResolvedValueOnce(undefined)
+    await store.deleteCard('c1')
+    expect(store.cards).toHaveLength(0)
+  })
+
+  it('resetProgress updates the card in the store array', async () => {
+    const card = {
+      id: 'c1', sourceFile: null, sourceHeading: null,
+      front: 'Q', back: 'A', frontSvg: null, backSvg: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      stability: 5.0, difficulty: 3.0, step: 2, dueAt: '2024-06-01T00:00:00Z',
+      state: 'review' as const, lastReviewedAt: '2024-03-01T00:00:00Z',
+      isSuspended: false, decks: [],
+    }
+    const resetCard = {
+      ...card, stability: null, difficulty: null, step: null,
+      dueAt: null, state: 'new' as const, lastReviewedAt: null,
+    }
+
+    const store = useCardsStore()
+    mockApiFetch.mockResolvedValueOnce({ items: [card], hasMore: false, nextCursor: null })
+    await store.fetchCards()
+    expect(store.cards[0].state).toBe('review')
+
+    mockApiFetch.mockResolvedValueOnce(resetCard)
+    await store.resetProgress('c1')
+    expect(store.cards[0].state).toBe('new')
+    expect(store.cards[0].stability).toBeNull()
+  })
+
   it('extractContent method does NOT exist on cards store', () => {
     const store = useCardsStore()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
