@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Tests.Helpers;
 
@@ -33,10 +32,12 @@ public class SearchServiceTests : IAsyncLifetime
         var searchSvc = new SearchService(db);
 
         await cardSvc.CreateCard(UserId, "Photosynthesis question", "It makes food from light.", null, null);
+        await cardSvc.CreateCard(UserId, "Unrelated card", "Nothing about plants.", null, null);
 
         var result = await searchSvc.Search(UserId, "Photosynthesis");
 
-        result.Cards.Should().Contain(c => c.Headline.Contains("Photosynthesis"));
+        result.Cards.Should().ContainSingle();
+        result.Cards[0].Headline.Should().Contain("Photosynthesis");
     }
 
     [Fact]
@@ -47,10 +48,12 @@ public class SearchServiceTests : IAsyncLifetime
         var searchSvc = new SearchService(db);
 
         await deckSvc.CreateDeck(UserId, "Biology Fundamentals", "Core biology concepts");
+        await deckSvc.CreateDeck(UserId, "Mathematics", "Numbers and proofs");
 
         var result = await searchSvc.Search(UserId, "Biology");
 
-        result.Decks.Should().Contain(d => d.Headline.Contains("Biology"));
+        result.Decks.Should().ContainSingle();
+        result.Decks[0].Headline.Should().Contain("Biology");
     }
 
     [Fact]
@@ -83,16 +86,4 @@ public class SearchServiceTests : IAsyncLifetime
         result.Cards.Should().ContainSingle(c => c.Headline.Contains("snake_case"));
     }
 
-    [Fact]
-    public async Task Search_ResponseHasNoFilesProperty()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new SearchService(db);
-
-        var result = await svc.Search(UserId, "x");
-
-        // SearchResponse only has Cards and Decks — verify via reflection
-        var props = result.GetType().GetProperties().Select(p => p.Name).ToList();
-        props.Should().NotContain("Files");
-    }
 }
