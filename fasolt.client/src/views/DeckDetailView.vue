@@ -80,10 +80,10 @@ async function removeCard(cardId: string) {
   await refresh()
 }
 
-async function toggleActive() {
+async function toggleSuspended() {
   if (!deck.value) return
-  const updated = await decks.setActive(deck.value.id, !deck.value.isActive)
-  deck.value = { ...deck.value, isActive: updated.isActive }
+  await decks.setSuspended(deck.value.id, !deck.value.isSuspended)
+  deck.value = await decks.getDeckDetail(deck.value.id)
 }
 
 async function onCardDeleted() {
@@ -120,15 +120,15 @@ const stateCounts = computed(() => {
       </div>
       <div class="flex items-center gap-2">
         <Button
-          v-if="deck.dueCount > 0 && deck.isActive"
+          v-if="deck.dueCount > 0 && !deck.isSuspended"
           size="sm"
           class="text-xs"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
         </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="toggleActive">
-          {{ deck.isActive ? 'Deactivate' : 'Activate' }}
+        <Button variant="outline" size="sm" class="text-xs" @click="toggleSuspended">
+          {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
         </Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
@@ -136,8 +136,8 @@ const stateCounts = computed(() => {
     </div>
 
     <!-- Inactive banner -->
-    <div v-if="!deck.isActive" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
-      This deck is inactive. Cards are excluded from study.
+    <div v-if="deck.isSuspended" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
+      This deck is suspended. Cards are excluded from study.
     </div>
 
     <!-- Stat bar -->

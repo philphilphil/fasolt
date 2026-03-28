@@ -28,6 +28,7 @@ onMounted(async () => {
     '3': () => { if (review.isFlipped) review.rate('good') },
     '4': () => { if (review.isFlipped) review.rate('easy') },
     's': () => { if (!review.isComplete) review.skip() },
+    'x': () => { if (!review.isComplete) review.suspend() },
     'Escape': () => { review.endSession(); router.push('/study') },
   })
 })
@@ -60,6 +61,7 @@ function onDone() {
           <span class="flex items-center gap-1"><KbdHint keys="space" /> flip</span>
           <span class="flex items-center gap-1"><KbdHint keys="1-4" /> rate</span>
           <span class="flex items-center gap-1"><KbdHint keys="s" /> skip</span>
+          <span class="flex items-center gap-1"><KbdHint keys="x" /> suspend</span>
         </div>
       </div>
 
@@ -83,15 +85,17 @@ function onDone() {
       <!-- Rating buttons -->
       <div v-if="review.isFlipped" class="mt-5">
         <RatingButtons @rate="onRate" />
-        <div class="mt-3 text-center">
+        <div class="mt-3 flex justify-center gap-3">
           <button class="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors" @click="review.skip()">Skip</button>
+          <button class="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors" @click="review.suspend()">Suspend</button>
         </div>
       </div>
 
       <div v-else class="mt-5 text-center text-xs text-muted-foreground">
         Click the card or press <KbdHint keys="space" /> to reveal the answer
-        <div class="mt-2">
+        <div class="mt-2 flex justify-center gap-3">
           <button class="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors" @click="review.skip()">Skip</button>
+          <button class="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors" @click="review.suspend()">Suspend</button>
         </div>
       </div>
     </template>

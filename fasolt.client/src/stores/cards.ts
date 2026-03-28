@@ -67,5 +67,15 @@ export const useCardsStore = defineStore('cards', () => {
     return result
   }
 
-  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, resetProgress }
+  async function setSuspended(id: string, isSuspended: boolean): Promise<Card> {
+    const result = await apiFetch<Card>(`/cards/${id}/suspended`, {
+      method: 'PUT',
+      body: JSON.stringify({ isSuspended }),
+    })
+    const idx = cards.value.findIndex(c => c.id === id)
+    if (idx !== -1) cards.value[idx] = result
+    return result
+  }
+
+  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, resetProgress, setSuspended }
 })

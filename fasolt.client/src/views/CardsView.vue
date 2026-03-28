@@ -28,7 +28,7 @@ const addToDeckError = ref('')
 const filterValue = ref('')
 const sourceFilter = ref('')
 const stateFilter = ref('')
-const activeOnly = ref(true)
+const hideSuspended = ref(true)
 const deckFilter = ref('')
 
 onMounted(async () => {
@@ -42,6 +42,10 @@ onMounted(async () => {
 function onCardDeleted() {
   deleteTarget.value = null
   deleteOpen.value = false
+}
+
+async function onSuspend(card: Card) {
+  await cardsStore.setSuspended(card.id, !card.isSuspended)
 }
 
 async function addCardToDeck() {
@@ -60,15 +64,9 @@ async function addCardToDeck() {
 const filteredCards = computed(() => {
   let result = cardsStore.cards
 
-  // Active filter: hide cards belonging only to inactive decks
-  if (activeOnly.value) {
-    result = result.filter(card => {
-      if (card.decks.length === 0) return true
-      return card.decks.some(d => {
-        const deck = decks.decks.find(dd => dd.id === d.id)
-        return deck ? deck.isActive : true
-      })
-    })
+  // Hide suspended cards (card-level suspension)
+  if (hideSuspended.value) {
+    result = result.filter(card => !card.isSuspended)
   }
 
   // Deck filter
@@ -137,8 +135,8 @@ const filteredCards = computed(() => {
         <option v-for="d in decks.decks" :key="d.id" :value="d.id">{{ d.name }}</option>
       </select>
       <label class="flex items-center gap-1.5 text-xs cursor-pointer">
-        <input type="checkbox" v-model="activeOnly" class="rounded border-border" />
-        Active
+        <input type="checkbox" v-model="hideSuspended" class="rounded border-border" />
+        Hide suspended
       </label>
     </div>
 
@@ -149,6 +147,7 @@ const filteredCards = computed(() => {
       show-pagination
       @delete="(card) => { deleteTarget = card; deleteOpen = true }"
       @add-to-deck="(card) => addToDeckCard = card"
+      @suspend="onSuspend"
     >
       <template #empty>No cards yet. Create one or use the MCP agent to generate cards from your notes.</template>
     </CardTable>

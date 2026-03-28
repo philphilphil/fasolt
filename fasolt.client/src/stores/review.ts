@@ -18,6 +18,7 @@ export const useReviewStore = defineStore('review', () => {
     good: 0,
     easy: 0,
     skipped: 0,
+    suspended: 0,
     startTime: 0,
   })
 
@@ -48,7 +49,7 @@ export const useReviewStore = defineStore('review', () => {
       currentIndex.value = 0
       isFlipped.value = false
       isActive.value = true
-      sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, skipped: 0, startTime: Date.now() }
+      sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, skipped: 0, suspended: 0, startTime: Date.now() }
     } catch {
       error.value = 'Failed to load review session. Please try again.'
     } finally {
@@ -91,6 +92,22 @@ export const useReviewStore = defineStore('review', () => {
     }
   }
 
+  async function suspend() {
+    const card = currentCard.value
+    if (!card) return
+    try {
+      await apiFetch(`/cards/${card.id}/suspended`, {
+        method: 'PUT',
+        body: JSON.stringify({ isSuspended: true }),
+      })
+    } catch {
+      // best-effort — card still skipped even if API fails
+    }
+    sessionStats.value.suspended++
+    currentIndex.value++
+    isFlipped.value = false
+  }
+
   function endSession() {
     isActive.value = false
     queue.value = []
@@ -105,6 +122,6 @@ export const useReviewStore = defineStore('review', () => {
   return {
     queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error,
     progress, sessionStats, sessionTime,
-    startSession, flipCard, skip, rate, endSession, fetchStats,
+    startSession, flipCard, skip, suspend, rate, endSession, fetchStats,
   }
 })

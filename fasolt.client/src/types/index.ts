@@ -13,7 +13,8 @@ export interface Card {
   dueAt: string | null
   state: 'new' | 'learning' | 'review' | 'relearning'
   lastReviewedAt: string | null
-  decks: { id: string; name: string }[]
+  isSuspended: boolean
+  decks: { id: string; name: string; isSuspended: boolean }[]
 }
 
 export interface Stat {
@@ -31,7 +32,7 @@ export interface Deck {
   cardCount: number
   dueCount: number
   createdAt: string
-  isActive: boolean
+  isSuspended: boolean
 }
 
 export interface DeckDetail extends Deck {
@@ -46,6 +47,7 @@ export interface DeckCard {
   sourceHeading: string | null
   state: string
   dueAt: string | null
+  isSuspended: boolean
   frontSvg: string | null
   backSvg: string | null
 }

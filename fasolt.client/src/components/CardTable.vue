@@ -35,6 +35,7 @@ const emit = defineEmits<{
   delete: [card: any]
   remove: [card: any]
   addToDeck: [card: any]
+  suspend: [card: any]
 }>()
 
 const columns = computed<ColumnDef<any>[]>(() => {
@@ -99,7 +100,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
     id: 'actions',
     enableSorting: false,
     enableHiding: false,
-    meta: { className: 'w-[90px]' },
+    meta: { className: 'w-[160px]' },
     cell: ({ row }) => {
       const card = row.original
       const buttons = [
@@ -110,6 +111,9 @@ const columns = computed<ColumnDef<any>[]>(() => {
           h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => emit('remove', card) }, () => 'Remove'),
         )
       }
+      buttons.push(
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => emit('suspend', card) }, () => card.isSuspended ? 'Unsuspend' : 'Suspend'),
+      )
       buttons.push(
         h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => emit('delete', card) }, () => '×'),
       )
@@ -164,7 +168,7 @@ const table = useVueTable({
       </TableHeader>
       <TableBody>
         <template v-if="table.getRowModel().rows?.length">
-          <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="text-xs hover:bg-accent/5">
+          <TableRow v-for="row in table.getRowModel().rows" :key="row.id" :class="['text-xs hover:bg-accent/5', row.original.isSuspended && 'opacity-50']">
             <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" :class="(cell.column.columnDef.meta as any)?.className">
               <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
             </TableCell>

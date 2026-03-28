@@ -21,8 +21,8 @@ onMounted(() => decks.fetchDecks())
 
 const sortedDecks = computed(() =>
   [...decks.decks].sort((a, b) => {
-    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1
-    return 0
+    if (a.isSuspended !== b.isSuspended) return a.isSuspended ? 1 : -1
+    return a.name.localeCompare(b.name)
   })
 )
 
@@ -72,7 +72,7 @@ async function createDeck() {
         v-for="deck in sortedDecks"
         :key="deck.id"
         class="cursor-pointer border-border/60 hover:border-accent/30 transition-colors"
-        :class="{ 'opacity-50': !deck.isActive }"
+        :class="{ 'opacity-50': deck.isSuspended }"
         @click="router.push(`/decks/${deck.id}`)"
       >
         <CardContent class="p-4">
@@ -85,7 +85,7 @@ async function createDeck() {
               <span v-if="deck.dueCount > 0" class="text-xs text-warning whitespace-nowrap">
                 {{ deck.dueCount }} due
               </span>
-              <Badge v-if="!deck.isActive" variant="outline" class="text-[10px] ml-2">Inactive</Badge>
+              <Badge v-if="deck.isSuspended" variant="outline" class="text-[10px] ml-2">Suspended</Badge>
             </div>
           </div>
           <div class="mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground">

@@ -9,7 +9,7 @@ const router = useRouter()
 const reviewStore = useReviewStore()
 const decksStore = useDecksStore()
 
-const activeDecks = computed(() => decksStore.decks.filter(d => d.isActive))
+const activeDecks = computed(() => decksStore.decks.filter(d => !d.isSuspended))
 
 const dueCount = ref(0)
 const totalCards = ref(0)
