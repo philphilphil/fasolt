@@ -60,6 +60,11 @@ final class DeckDetailViewModel {
         await loadDetail()
     }
 
+    func updateCard(id: String, _ request: UpdateCardRequest) async throws {
+        _ = try await cardRepository.updateCard(id: id, request)
+        await loadDetail()
+    }
+
     func updateDeck(_ request: UpdateDeckRequest) async throws {
         let updated = try await deckRepository.updateDeck(id: deckId, request)
         deckName = updated.name

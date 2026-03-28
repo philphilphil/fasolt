@@ -93,7 +93,8 @@ struct DeckListView: View {
                             cardRepository: cardRepository,
                             deckId: deck.id,
                             deckName: deck.name
-                        )
+                        ),
+                        deckRepository: deckRepository
                     )
                 } label: {
                     deckRow(deck)

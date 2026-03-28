@@ -4,6 +4,10 @@ import Textual
 struct CardDetailView: View {
     let card: any CardDisplayable
     var deckNames: [String]?
+    var availableDecks: [DeckDTO] = []
+    var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
+
+    @State private var showEditSheet = false
 
     var body: some View {
         ScrollView {
@@ -113,5 +117,37 @@ struct CardDetailView: View {
         }
         .navigationTitle("Card")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if onSaveEdit != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            CardFormSheet(
+                mode: .edit(
+                    front: card.front,
+                    back: card.back,
+                    sourceFile: card.sourceFile,
+                    sourceHeading: card.sourceHeading,
+                    deckId: nil
+                ),
+                decks: availableDecks
+            ) { request, deckId in
+                let updateRequest = UpdateCardRequest(
+                    front: request.front,
+                    back: request.back,
+                    sourceFile: request.sourceFile,
+                    sourceHeading: request.sourceHeading,
+                    deckIds: deckId.map { [$0] }
+                )
+                try await onSaveEdit?(updateRequest)
+            }
+        }
     }
 }

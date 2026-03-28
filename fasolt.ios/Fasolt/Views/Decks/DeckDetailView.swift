@@ -15,9 +15,12 @@ struct DeckDetailView: View {
     @State private var showEditSheet = false
     @State private var cardToDelete: DeckCardDTO?
     @State private var showDeleteCardAlert = false
+    @State private var availableDecks: [DeckDTO] = []
+    private let deckRepository: DeckRepository
 
-    init(viewModel: DeckDetailViewModel) {
+    init(viewModel: DeckDetailViewModel, deckRepository: DeckRepository) {
         _viewModel = State(initialValue: viewModel)
+        self.deckRepository = deckRepository
     }
 
     var body: some View {
@@ -67,7 +70,13 @@ struct DeckDetailView: View {
                             Section("Cards") {
                                 ForEach(sortedCards(detail.cards), id: \.id) { card in
                                     NavigationLink {
-                                        CardDetailView(card: card)
+                                        CardDetailView(
+                                            card: card,
+                                            availableDecks: availableDecks,
+                                            onSaveEdit: { request in
+                                                try await viewModel.updateCard(id: card.id, request)
+                                            }
+                                        )
                                     } label: {
                                         DeckCardRow(card: card, showSourceFile: true)
                                     }
@@ -193,6 +202,7 @@ struct DeckDetailView: View {
             if viewModel.detail == nil {
                 await viewModel.loadDetail()
             }
+            do { availableDecks = try await deckRepository.fetchDecks() } catch {}
         }
         .onAppear {
             if viewModel.detail != nil {
