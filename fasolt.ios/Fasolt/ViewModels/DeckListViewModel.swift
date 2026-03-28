@@ -30,4 +30,19 @@ final class DeckListViewModel {
 
         isLoading = false
     }
+
+    func createDeck(_ request: CreateDeckRequest) async throws {
+        _ = try await deckRepository.createDeck(request)
+        await loadDecks()
+    }
+
+    func deleteDeck(id: String, deleteCards: Bool) async throws {
+        try await deckRepository.deleteDeck(id: id, deleteCards: deleteCards)
+        await loadDecks()
+    }
+
+    func setSuspended(id: String, isSuspended: Bool) async throws {
+        _ = try await deckRepository.setSuspended(id: id, isSuspended: isSuspended)
+        await loadDecks()
+    }
 }

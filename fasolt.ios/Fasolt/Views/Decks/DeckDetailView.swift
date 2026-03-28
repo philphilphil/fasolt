@@ -1,20 +1,21 @@
 import SwiftUI
 import UIKit
 
-enum CardSortOrder: String, CaseIterable {
-    case dueDate = "Due Date"
-    case state = "State"
-    case front = "Front"
-    case sourceFile = "Source"
-}
-
 struct DeckDetailView: View {
     @Environment(\.startStudy) private var startStudy
     @State private var viewModel: DeckDetailViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
+    @State private var showEditSheet = false
+    @State private var cardToDelete: DeckCardDTO?
+    @State private var showDeleteCardAlert = false
+    @State private var availableDecks: [DeckDTO] = []
+    @State private var showCreateCardSheet = false
+    @State private var errorMessage: String?
+    private let deckRepository: DeckRepository
 
-    init(viewModel: DeckDetailViewModel) {
+    init(viewModel: DeckDetailViewModel, deckRepository: DeckRepository) {
         _viewModel = State(initialValue: viewModel)
+        self.deckRepository = deckRepository
     }
 
     var body: some View {
@@ -57,16 +58,50 @@ struct DeckDetailView: View {
                                 ContentUnavailableView(
                                     "No cards in this deck",
                                     systemImage: "rectangle.on.rectangle.slash",
-                                    description: Text("Add cards via the API or MCP tools")
+                                    description: Text("Tap + to add a card to this deck")
                                 )
                             }
                         } else {
                             Section("Cards") {
-                                ForEach(sortedCards(detail.cards), id: \.id) { card in
+                                ForEach(sortedCards(detail.cards, by: sortOrder), id: \.id) { card in
                                     NavigationLink {
-                                        CardDetailView(card: card)
+                                        CardDetailView(
+                                            card: card,
+                                            currentDeckId: viewModel.deckId,
+                                            availableDecks: availableDecks,
+                                            onSaveEdit: { request in
+                                                try await viewModel.updateCard(id: card.id, request)
+                                            }
+                                        )
                                     } label: {
                                         DeckCardRow(card: card, showSourceFile: true)
+                                    }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        Button(role: .destructive) {
+                                            cardToDelete = card
+                                            showDeleteCardAlert = true
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+
+                                        Button {
+                                            Task {
+                                                do {
+                                                    try await viewModel.setCardSuspended(
+                                                        id: card.id,
+                                                        isSuspended: !card.isSuspended
+                                                    )
+                                                } catch {
+                                                    errorMessage = "Failed to update card."
+                                                }
+                                            }
+                                        } label: {
+                                            Label(
+                                                card.isSuspended ? "Unsuspend" : "Suspend",
+                                                systemImage: card.isSuspended ? "play.circle" : "pause.circle"
+                                            )
+                                        }
+                                        .tint(.orange)
                                     }
                                 }
                             }
@@ -104,6 +139,20 @@ struct DeckDetailView: View {
         .offlineBanner()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showCreateCardSheet = true
+                } label: {
+                    Label("New Card", systemImage: "plus")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Sort", selection: $sortOrder) {
                         ForEach(CardSortOrder.allCases, id: \.self) { order in
@@ -125,12 +174,59 @@ struct DeckDetailView: View {
                 }
             }
         }
+        .sheet(isPresented: $showEditSheet) {
+            if let detail = viewModel.detail {
+                DeckFormSheet(
+                    mode: .edit(DeckDTO(
+                        id: detail.id,
+                        name: detail.name,
+                        description: detail.description,
+                        cardCount: detail.cardCount,
+                        dueCount: detail.dueCount,
+                        createdAt: "",
+                        isSuspended: detail.isSuspended
+                    ))
+                ) { request in
+                    try await viewModel.updateDeck(UpdateDeckRequest(
+                        name: request.name,
+                        description: request.description
+                    ))
+                }
+            }
+        }
+        .sheet(isPresented: $showCreateCardSheet) {
+            CardFormSheet(mode: .create, decks: []) { request, _ in
+                try await viewModel.createCard(request)
+            }
+        }
+        .alert("Delete Card", isPresented: $showDeleteCardAlert, presenting: cardToDelete) { card in
+            Button("Delete", role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.deleteCard(id: card.id)
+                    } catch {
+                        errorMessage = "Failed to delete card."
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("This cannot be undone.")
+        }
+        .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
         .refreshable {
             await viewModel.loadDetail()
         }
         .task {
             if viewModel.detail == nil {
                 await viewModel.loadDetail()
+            }
+            do { availableDecks = try await deckRepository.fetchDecks() } catch {
+                // Non-critical: deck picker in card edit will be empty
             }
         }
         .onAppear {
@@ -140,24 +236,4 @@ struct DeckDetailView: View {
         }
     }
 
-    private func sortedCards(_ cards: [DeckCardDTO]) -> [DeckCardDTO] {
-        cards.sorted { a, b in
-            switch sortOrder {
-            case .dueDate:
-                let aDate = a.dueAt ?? ""
-                let bDate = b.dueAt ?? ""
-                if aDate.isEmpty && bDate.isEmpty { return a.front < b.front }
-                if aDate.isEmpty { return false }
-                if bDate.isEmpty { return true }
-                return aDate < bDate
-            case .state:
-                let order = ["new": 0, "learning": 1, "relearning": 2, "review": 3]
-                return (order[a.state] ?? 99) < (order[b.state] ?? 99)
-            case .front:
-                return a.front.localizedCaseInsensitiveCompare(b.front) == .orderedAscending
-            case .sourceFile:
-                return (a.sourceFile ?? "").localizedCaseInsensitiveCompare(b.sourceFile ?? "") == .orderedAscending
-            }
-        }
-    }
 }

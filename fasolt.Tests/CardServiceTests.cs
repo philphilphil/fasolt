@@ -29,6 +29,30 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CreateCard_WithDeckId_AssignsCardToDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Target Deck", null);
+        var card = await cardSvc.CreateCard(UserId, "Q?", "A.", null, null, deckId: deck.Id);
+
+        card.Decks.Should().ContainSingle(d => d.Id == deck.Id);
+    }
+
+    [Fact]
+    public async Task CreateCard_WithInvalidDeckId_Throws()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var act = () => svc.CreateCard(UserId, "Q?", "A.", null, null, deckId: "nonexistent");
+
+        await act.Should().ThrowAsync<KeyNotFoundException>();
+    }
+
+    [Fact]
     public async Task CreateCard_WithoutSourceFile()
     {
         await using var db = _db.CreateDbContext();

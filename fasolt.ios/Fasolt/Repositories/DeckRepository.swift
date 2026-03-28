@@ -233,4 +233,28 @@ final class DeckRepository {
 
         return result
     }
+
+    func createDeck(_ request: CreateDeckRequest) async throws -> DeckDTO {
+        let endpoint = Endpoint(path: "/api/decks", method: .post, body: request)
+        let deck: DeckDTO = try await apiClient.request(endpoint)
+        logger.info("Created deck \(deck.id)")
+        return deck
+    }
+
+    func updateDeck(id: String, _ request: UpdateDeckRequest) async throws -> DeckDTO {
+        let endpoint = Endpoint(path: "/api/decks/\(id)", method: .put, body: request)
+        let deck: DeckDTO = try await apiClient.request(endpoint)
+        logger.info("Updated deck \(deck.id)")
+        return deck
+    }
+
+    func deleteDeck(id: String, deleteCards: Bool) async throws {
+        var queryItems: [URLQueryItem]? = nil
+        if deleteCards {
+            queryItems = [URLQueryItem(name: "deleteCards", value: "true")]
+        }
+        let endpoint = Endpoint(path: "/api/decks/\(id)", method: .delete, queryItems: queryItems)
+        try await apiClient.request(endpoint)
+        logger.info("Deleted deck \(id) (deleteCards: \(deleteCards))")
+    }
 }

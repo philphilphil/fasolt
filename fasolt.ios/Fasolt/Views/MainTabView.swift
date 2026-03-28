@@ -27,22 +27,21 @@ struct MainTabView: View {
                         viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository)
                     )
                     .tabItem {
-                        Label("Dashboard", systemImage: "chart.bar")
+                        Label("Study", systemImage: "book.fill")
                     }
 
-                    DeckListView(
-                        viewModel: DeckListViewModel(deckRepository: deckRepository),
-                        deckRepository: deckRepository
+                    LibraryView(
+                        deckListViewModel: DeckListViewModel(deckRepository: deckRepository),
+                        cardListViewModel: CardListViewModel(
+                            apiClient: authService.apiClient,
+                            cardRepository: cardRepository,
+                            deckRepository: deckRepository
+                        ),
+                        deckRepository: deckRepository,
+                        cardRepository: cardRepository
                     )
                     .tabItem {
-                        Label("Decks", systemImage: "rectangle.stack")
-                    }
-
-                    CardListView(
-                        viewModel: CardListViewModel(apiClient: authService.apiClient)
-                    )
-                    .tabItem {
-                        Label("Cards", systemImage: "rectangle.on.rectangle")
+                        Label("Library", systemImage: "books.vertical.fill")
                     }
 
                     SettingsView(
