@@ -50,7 +50,8 @@ struct CardView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(24)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 24)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)

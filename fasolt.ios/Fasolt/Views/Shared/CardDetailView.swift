@@ -52,6 +52,16 @@ struct CardDetailView: View {
 
                 Divider()
 
+                if card.isSuspended {
+                    HStack(spacing: 6) {
+                        Image(systemName: "pause.circle.fill")
+                        Text("Suspended")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 // Scheduling
                 VStack(spacing: 8) {
                     Text("Scheduling")

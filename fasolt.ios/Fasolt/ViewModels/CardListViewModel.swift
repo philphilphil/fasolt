@@ -24,7 +24,7 @@ final class CardListViewModel {
 
         if hideInactive {
             result = result.filter { card in
-                card.decks.isEmpty || card.decks.contains(where: \.isActive)
+                card.decks.isEmpty || card.decks.contains(where: { !$0.isSuspended })
             }
         }
 

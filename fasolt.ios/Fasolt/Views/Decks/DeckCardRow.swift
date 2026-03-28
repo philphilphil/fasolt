@@ -33,6 +33,15 @@ struct DeckCardRow: View {
                         .foregroundStyle(isDueOrOverdue(card.dueAt) ? .orange : .secondary)
                 }
 
+                if card.isSuspended {
+                    Text("Suspended")
+                        .font(.caption2.weight(.medium))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(.secondary.opacity(0.15), in: Capsule())
+                        .foregroundStyle(.secondary)
+                }
+
                 Text(card.state)
                     .font(.caption2.weight(.medium))
                     .padding(.horizontal, 8)
@@ -45,5 +54,6 @@ struct DeckCardRow: View {
             .lineLimit(1)
         }
         .padding(.vertical, 2)
+        .opacity(card.isSuspended ? 0.5 : 1)
     }
 }

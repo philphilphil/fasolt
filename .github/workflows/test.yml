@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  backend-test:
     runs-on: ubuntu-latest
 
     services:
@@ -41,3 +41,28 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build -v normal
+
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: fasolt.client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: fasolt.client
+
+      - name: Type check
+        run: npx vue-tsc --noEmit
+        working-directory: fasolt.client
+
+      - name: Test
+        run: npx vitest run
+        working-directory: fasolt.client

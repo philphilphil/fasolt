@@ -13,6 +13,7 @@ protocol CardDisplayable {
     var difficulty: Double? { get }
     var step: Int? { get }
     var lastReviewedAt: String? { get }
+    var isSuspended: Bool { get }
     var frontSvg: String? { get }
     var backSvg: String? { get }
 }

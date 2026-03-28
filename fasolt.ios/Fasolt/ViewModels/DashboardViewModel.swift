@@ -11,13 +11,16 @@ final class DashboardViewModel {
     var studiedToday: Int = 0
     var cardsByState: [String: Int] = [:]
     var totalDecks: Int = 0
+    var decks: [DeckDTO] = []
     var isLoading = false
     var errorMessage: String?
 
     private let apiClient: APIClient
+    private let deckRepository: DeckRepository
 
-    init(apiClient: APIClient) {
+    init(apiClient: APIClient, deckRepository: DeckRepository) {
         self.apiClient = apiClient
+        self.deckRepository = deckRepository
     }
 
     func loadStats() async {
@@ -36,8 +39,12 @@ final class DashboardViewModel {
             do { return .success(try await apiClient.request(overviewEndpoint)) }
             catch { return .failure(error) }
         }()
+        async let decksResult: Result<[DeckDTO], Error> = {
+            do { return .success(try await deckRepository.fetchDecks()) }
+            catch { return .failure(error) }
+        }()
 
-        let (stats, overview) = await (statsResult, overviewResult)
+        let (stats, overview, decksFetched) = await (statsResult, overviewResult, decksResult)
 
         var failed = false
         if case .success(let s) = stats {
@@ -49,6 +56,10 @@ final class DashboardViewModel {
         if case .success(let o) = overview {
             cardsByState = o.cardsByState
             totalDecks = o.totalDecks
+        } else { failed = true }
+
+        if case .success(let d) = decksFetched {
+            decks = d
         } else { failed = true }
 
         if failed {

@@ -18,6 +18,9 @@ struct DashboardView: View {
                     if viewModel.totalCards > 0 {
                         stateBar
                     }
+                    if !dueDecks.isEmpty {
+                        deckSection
+                    }
                 }
                 .padding()
             }
@@ -63,11 +66,20 @@ struct DashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadStats() }
             }
+            .navigationDestination(isPresented: $showDeckStudy) {
+                StudyView(viewModel: studyViewModelFactory(), deckId: selectedDeckId)
+            }
             .offlineBanner()
         }
     }
 
     @State private var showStudy = false
+    @State private var selectedDeckId: String?
+    @State private var showDeckStudy = false
+
+    private var dueDecks: [DeckDTO] {
+        viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }
+    }
 
     private var heroCard: some View {
         VStack(spacing: 8) {
@@ -130,6 +142,44 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var deckSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Study by deck")
+                .font(.caption2)
+                .textCase(.uppercase)
+                .tracking(1)
+                .foregroundStyle(.secondary)
+
+            ForEach(dueDecks, id: \.id) { deck in
+                Button {
+                    selectedDeckId = deck.id
+                    showDeckStudy = true
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(deck.name)
+                                .font(.subheadline.weight(.medium))
+                            Text("\(deck.cardCount) cards")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text("\(deck.dueCount) due")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(.orange.opacity(0.1), in: Capsule())
+                    }
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
