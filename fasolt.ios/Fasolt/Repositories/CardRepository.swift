@@ -28,6 +28,14 @@ final class CardRepository {
         return cards
     }
 
+    func suspendCard(cardId: String) async throws {
+        struct SuspendBody: Encodable { let isSuspended = true }
+        struct SuspendResponse: Decodable { let id: String }
+        let endpoint = Endpoint(path: "/api/cards/\(cardId)/suspended", method: .put, body: SuspendBody())
+        let _ = try await apiClient.request(endpoint) as SuspendResponse
+        logger.info("Suspended card \(cardId)")
+    }
+
     func rateCard(cardId: String, rating: String) async throws -> RateCardResponse? {
         if networkMonitor.isConnected {
             do {

@@ -17,6 +17,7 @@ final class StudyViewModel {
     var cardsStudied: Int = 0
     var failedRatings: Int = 0
     var skippedCount: Int = 0
+    var suspendedCount: Int = 0
     private(set) var isRating = false
 
     var notificationService: NotificationService?
@@ -57,6 +58,7 @@ final class StudyViewModel {
                 cardsStudied = 0
                 failedRatings = 0
                 skippedCount = 0
+                suspendedCount = 0
                 ratingsCount = ["again": 0, "hard": 0, "good": 0, "easy": 0]
                 state = .studying
             }
@@ -73,6 +75,26 @@ final class StudyViewModel {
 
     func skipCard() {
         skippedCount += 1
+        currentIndex += 1
+        isFlipped = false
+        if currentIndex >= cards.count {
+            state = .summary
+            if cardsStudied > 0 {
+                requestNotificationPermissionIfNeeded()
+            }
+        } else {
+            state = .studying
+        }
+    }
+
+    func suspendCard() async {
+        guard let card = currentCard else { return }
+        do {
+            try await cardRepository.suspendCard(cardId: card.id)
+        } catch {
+            // best-effort — still skip the card
+        }
+        suspendedCount += 1
         currentIndex += 1
         isFlipped = false
         if currentIndex >= cards.count {
