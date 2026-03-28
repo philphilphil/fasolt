@@ -10,6 +10,9 @@ struct DeckListView: View {
     @State private var viewModel: DeckListViewModel
     @State private var searchText = ""
     @State private var sortOrder: DeckSortOrder = .name
+    @State private var showCreateSheet = false
+    @State private var deckToDelete: DeckDTO?
+    @State private var showDeleteConfirmation = false
     private let deckRepository: DeckRepository
 
     init(
@@ -22,78 +25,119 @@ struct DeckListView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.decks.isEmpty && !viewModel.isLoading && viewModel.errorMessage == nil {
-                    ContentUnavailableView(
-                        "No decks yet",
-                        systemImage: "rectangle.stack",
-                        description: Text("Create decks via the API or MCP tools")
-                    )
-                } else if let error = viewModel.errorMessage, viewModel.decks.isEmpty {
-                    ContentUnavailableView {
-                        Label("Could not load", systemImage: "wifi.slash")
-                    } description: {
-                        Text(error)
-                    } actions: {
-                        Button("Retry") {
-                            Task { await viewModel.loadDecks() }
-                        }
-                    }
-                } else {
-                    List(sortedDecks(filteredDecks), id: \.id) { deck in
-                        NavigationLink {
-                            DeckDetailView(
-                                viewModel: DeckDetailViewModel(
-                                    deckRepository: deckRepository,
-                                    deckId: deck.id,
-                                    deckName: deck.name
-                                )
-                            )
-                        } label: {
-                            deckRow(deck)
-                        }
-                    }
-                }
-            }
-            .searchable(text: $searchText, prompt: "Search decks")
-            .refreshable {
-                await viewModel.loadDecks()
-            }
-            .navigationTitle("Decks")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Picker("Sort", selection: $sortOrder) {
-                            ForEach(DeckSortOrder.allCases, id: \.self) { order in
-                                Text(order.rawValue).tag(order)
-                            }
-                        }
-                    } label: {
-                        Label("Sort", systemImage: "arrow.up.arrow.down")
-                    }
-                }
-            }
-            .overlay {
-                if viewModel.isLoading && viewModel.decks.isEmpty {
-                    ProgressView()
-                }
-            }
-            .offlineBanner()
-            .task {
-                if viewModel.decks.isEmpty {
-                    await viewModel.loadDecks()
-                }
-            }
-            .onAppear {
-                if !viewModel.decks.isEmpty {
+            contentView
+                .searchable(text: $searchText, prompt: "Search decks")
+                .refreshable { await viewModel.loadDecks() }
+                .navigationTitle("Decks")
+                .toolbar { toolbarContent }
+                .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
+                .offlineBanner()
+                .task { if viewModel.decks.isEmpty { await viewModel.loadDecks() } }
+                .onAppear { if !viewModel.decks.isEmpty { Task { await viewModel.loadDecks() } } }
+                .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                     Task { await viewModel.loadDecks() }
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
+                    Task { await viewModel.loadDecks() }
+                }
+                .sheet(isPresented: $showCreateSheet) {
+                    DeckFormSheet(mode: .create) { request in
+                        try await viewModel.createDeck(request)
+                    }
+                }
+                .alert("Delete Deck", isPresented: $showDeleteConfirmation, presenting: deckToDelete) { deck in
+                    Button("Delete Deck Only", role: .destructive) {
+                        Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: false) }
+                    }
+                    Button("Delete Deck and Cards", role: .destructive) {
+                        Task { try? await viewModel.deleteDeck(id: deck.id, deleteCards: true) }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: { deck in
+                    Text("This deck has \(deck.cardCount) cards. What would you like to do?")
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var contentView: some View {
+        if viewModel.decks.isEmpty && !viewModel.isLoading && viewModel.errorMessage == nil {
+            ContentUnavailableView(
+                "No decks yet",
+                systemImage: "rectangle.stack",
+                description: Text("Tap + to create a deck")
+            )
+        } else if let error = viewModel.errorMessage, viewModel.decks.isEmpty {
+            ContentUnavailableView {
+                Label("Could not load", systemImage: "wifi.slash")
+            } description: {
+                Text(error)
+            } actions: {
+                Button("Retry") { Task { await viewModel.loadDecks() } }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
-                Task { await viewModel.loadDecks() }
+        } else {
+            deckList
+        }
+    }
+
+    private var deckList: some View {
+        List {
+            ForEach(sortedDecks(filteredDecks), id: \.id) { deck in
+                NavigationLink {
+                    DeckDetailView(
+                        viewModel: DeckDetailViewModel(
+                            deckRepository: deckRepository,
+                            deckId: deck.id,
+                            deckName: deck.name
+                        )
+                    )
+                } label: {
+                    deckRow(deck)
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        deckToDelete = deck
+                        showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    Button {
+                        Task {
+                            try? await viewModel.setSuspended(
+                                id: deck.id,
+                                isSuspended: !deck.isSuspended
+                            )
+                        }
+                    } label: {
+                        Label(
+                            deck.isSuspended ? "Unsuspend" : "Suspend",
+                            systemImage: deck.isSuspended ? "play.circle" : "pause.circle"
+                        )
+                    }
+                    .tint(.orange)
+                }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
-                Task { await viewModel.loadDecks() }
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+                Picker("Sort", selection: $sortOrder) {
+                    ForEach(DeckSortOrder.allCases, id: \.self) { order in
+                        Text(order.rawValue).tag(order)
+                    }
+                }
+            } label: {
+                Label("Sort", systemImage: "arrow.up.arrow.down")
+            }
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showCreateSheet = true
+            } label: {
+                Label("New Deck", systemImage: "plus")
             }
         }
     }

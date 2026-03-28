@@ -23,6 +23,8 @@
 		4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */; };
 		51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
+		AA22334455667788990011BB /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB22334455667788990011BB /* CardFormSheet.swift */; };
+		CC44556677889900AABB11DD /* DeckFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD44556677889900AABB11DD /* DeckFormSheet.swift */; };
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
 		6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB69B316FF51F7EC607EBD /* StudyView.swift */; };
@@ -85,6 +87,8 @@
 		3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClientTests.swift; sourceTree = "<group>"; };
 		414BE26059C9FAB839CAA164 /* Card.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Card.swift; sourceTree = "<group>"; };
 		415F17F4DF4B1095517D8C18 /* CardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListView.swift; sourceTree = "<group>"; };
+		BB22334455667788990011BB /* CardFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardFormSheet.swift; sourceTree = "<group>"; };
+		DD44556677889900AABB11DD /* DeckFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckFormSheet.swift; sourceTree = "<group>"; };
 		4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		5B0A49ADA712CA0F08309A81 /* local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = local.xcconfig; sourceTree = "<group>"; };
@@ -141,6 +145,7 @@
 		011A7B9012538B9F24BDA123 /* Cards */ = {
 			isa = PBXGroup;
 			children = (
+				BB22334455667788990011BB /* CardFormSheet.swift */,
 				415F17F4DF4B1095517D8C18 /* CardListView.swift */,
 			);
 			path = Cards;
@@ -174,6 +179,7 @@
 			children = (
 				9097BB7014F064BF83F77689 /* DeckCardRow.swift */,
 				22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */,
+				DD44556677889900AABB11DD /* DeckFormSheet.swift */,
 				C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */,
 			);
 			path = Decks;
@@ -452,6 +458,7 @@
 				0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */,
 				7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */,
 				1F108C44139D54CBA1C25505 /* CardHelpers.swift in Sources */,
+				AA22334455667788990011BB /* CardFormSheet.swift in Sources */,
 				562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */,
 				A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */,
 				D46CA0643A278BBCA919D878 /* CardRepository.swift in Sources */,
@@ -461,6 +468,7 @@
 				DE25E56E67F5F61423E84C00 /* DeckCardRow.swift in Sources */,
 				7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */,
 				D8F684C246902C52A7B6CB5C /* DeckDetailViewModel.swift in Sources */,
+				CC44556677889900AABB11DD /* DeckFormSheet.swift in Sources */,
 				5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */,
 				DAC11D57C3D065BE6BB8294F /* DeckListViewModel.swift in Sources */,
 				2E601D9A77CD86714AAB0BFA /* DeckRepository.swift in Sources */,
