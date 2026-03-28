@@ -26,6 +26,7 @@
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
 		6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB69B316FF51F7EC607EBD /* StudyView.swift */; };
+		AA11223344556677889900AB /* StartStudyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB11223344556677889900AB /* StartStudyAction.swift */; };
 		6F1A4C6F09CB0E465B1CA3BD /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82812F20EB20898654E7FABF /* CardView.swift */; };
 		7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */; };
 		7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */; };
@@ -70,6 +71,7 @@
 
 /* Begin PBXFileReference section */
 		02DB69B316FF51F7EC607EBD /* StudyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyView.swift; sourceTree = "<group>"; };
+		BB11223344556677889900AB /* StartStudyAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartStudyAction.swift; sourceTree = "<group>"; };
 		06D21FAE1D894BFAE8889953 /* PendingReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingReview.swift; sourceTree = "<group>"; };
 		1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViewModel.swift; sourceTree = "<group>"; };
 		22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailView.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 			isa = PBXGroup;
 			children = (
 				82812F20EB20898654E7FABF /* CardView.swift */,
+				BB11223344556677889900AB /* StartStudyAction.swift */,
 				625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */,
 				02DB69B316FF51F7EC607EBD /* StudyView.swift */,
 				BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */,
@@ -478,7 +481,8 @@
 				DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */,
 				0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */,
 				FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */,
-				0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
+				AA11223344556677889900AB /* StartStudyAction.swift in Sources */,
+		0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */,
 				6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */,
 				49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */,
 				45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */,

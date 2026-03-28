@@ -11,16 +11,13 @@ struct DeckListView: View {
     @State private var searchText = ""
     @State private var sortOrder: DeckSortOrder = .name
     private let deckRepository: DeckRepository
-    private let studyViewModelFactory: () -> StudyViewModel
 
     init(
         viewModel: DeckListViewModel,
-        deckRepository: DeckRepository,
-        studyViewModelFactory: @escaping () -> StudyViewModel
+        deckRepository: DeckRepository
     ) {
         _viewModel = State(initialValue: viewModel)
         self.deckRepository = deckRepository
-        self.studyViewModelFactory = studyViewModelFactory
     }
 
     var body: some View {
@@ -50,8 +47,7 @@ struct DeckListView: View {
                                     deckRepository: deckRepository,
                                     deckId: deck.id,
                                     deckName: deck.name
-                                ),
-                                studyViewModelFactory: studyViewModelFactory
+                                )
                             )
                         } label: {
                             deckRow(deck)
@@ -94,6 +90,9 @@ struct DeckListView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
+                Task { await viewModel.loadDecks() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
                 Task { await viewModel.loadDecks() }
             }
         }

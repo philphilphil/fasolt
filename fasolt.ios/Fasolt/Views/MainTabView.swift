@@ -10,6 +10,8 @@ struct MainTabView: View {
     @State private var cardRepository: CardRepository?
     @State private var deckRepository: DeckRepository?
     @State private var notificationService: NotificationService?
+    @State private var showStudy = false
+    @State private var studyDeckId: String?
 
     var body: some View {
         Group {
@@ -22,8 +24,7 @@ struct MainTabView: View {
 
                 TabView {
                     DashboardView(
-                        viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository),
-                        studyViewModelFactory: studyViewModelFactory
+                        viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository)
                     )
                     .tabItem {
                         Label("Dashboard", systemImage: "chart.bar")
@@ -31,8 +32,7 @@ struct MainTabView: View {
 
                     DeckListView(
                         viewModel: DeckListViewModel(deckRepository: deckRepository),
-                        deckRepository: deckRepository,
-                        studyViewModelFactory: studyViewModelFactory
+                        deckRepository: deckRepository
                     )
                     .tabItem {
                         Label("Decks", systemImage: "rectangle.stack")
@@ -54,6 +54,18 @@ struct MainTabView: View {
                         Label("Settings", systemImage: "gear")
                     }
                 }
+                .fullScreenCover(isPresented: $showStudy, onDismiss: {
+                    studyDeckId = nil
+                    NotificationCenter.default.post(name: .studySessionEnded, object: nil)
+                }) {
+                    NavigationStack {
+                        StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId)
+                    }
+                }
+                .environment(\.startStudy, StartStudyAction { deckId in
+                    studyDeckId = deckId
+                    showStudy = true
+                })
             } else {
                 ProgressView()
             }
