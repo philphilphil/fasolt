@@ -90,7 +90,7 @@ final class StudyViewModel {
     func suspendCard() async {
         guard let card = currentCard else { return }
         do {
-            try await cardRepository.suspendCard(cardId: card.id)
+            try await cardRepository.setSuspended(cardId: card.id, isSuspended: true)
         } catch {
             // best-effort — still skip the card
         }
