@@ -178,3 +178,15 @@ struct UpdateNotificationSettingsRequest: Encodable, Sendable {
 }
 
 struct EmptyResponse: Decodable, Sendable {}
+
+// MARK: - Scheduling Settings
+
+struct SchedulingSettingsResponse: Decodable, Sendable {
+    let desiredRetention: Double
+    let maximumInterval: Int
+}
+
+struct UpdateSchedulingSettingsRequest: Encodable, Sendable {
+    let desiredRetention: Double
+    let maximumInterval: Int
+}

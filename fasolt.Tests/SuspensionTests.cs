@@ -1,6 +1,4 @@
 using FluentAssertions;
-using FSRS.Core.Configurations;
-using FSRS.Core.Services;
 using Microsoft.Extensions.Time.Testing;
 using Fasolt.Server.Application.Services;
 using Fasolt.Tests.Helpers;
@@ -18,11 +16,7 @@ public class SuspensionTests : IAsyncLifetime
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
     private ReviewService CreateReviewService(Server.Infrastructure.Data.AppDbContext db)
-    {
-        var options = new SchedulerOptions { DesiredRetention = 0.9, MaximumInterval = 36500, EnableFuzzing = false };
-        var scheduler = new SchedulerFactory(options).CreateScheduler();
-        return new ReviewService(db, scheduler, _time);
-    }
+        => new(db, _time);
 
     // --- GetDueCards excludes suspended cards ---
 

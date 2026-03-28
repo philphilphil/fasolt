@@ -89,6 +89,8 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
         builder.Entity<AppUser>(entity =>
         {
             entity.Property(e => e.NotificationIntervalHours).HasDefaultValue(8);
+            entity.Property(e => e.DesiredRetention).HasDefaultValue(null);
+            entity.Property(e => e.MaximumInterval).HasDefaultValue(null);
         });
 
         builder.Entity<AppLog>(entity =>
