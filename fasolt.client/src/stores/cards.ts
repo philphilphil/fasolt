@@ -46,8 +46,7 @@ export const useCardsStore = defineStore('cards', () => {
       method: 'PUT',
       body: JSON.stringify(data),
     })
-    const idx = cards.value.findIndex(c => c.id === id)
-    if (idx !== -1) cards.value[idx] = result
+    cards.value = cards.value.map(c => c.id === id ? result : c)
     return result
   }
 
@@ -62,8 +61,7 @@ export const useCardsStore = defineStore('cards', () => {
 
   async function resetProgress(id: string): Promise<Card> {
     const result = await apiFetch<Card>(`/cards/${id}/reset`, { method: 'POST' })
-    const idx = cards.value.findIndex(c => c.id === id)
-    if (idx !== -1) cards.value[idx] = result
+    cards.value = cards.value.map(c => c.id === id ? result : c)
     return result
   }
 
@@ -72,8 +70,7 @@ export const useCardsStore = defineStore('cards', () => {
       method: 'PUT',
       body: JSON.stringify({ isSuspended }),
     })
-    const idx = cards.value.findIndex(c => c.id === id)
-    if (idx !== -1) cards.value[idx] = result
+    cards.value = cards.value.map(c => c.id === id ? result : c)
     return result
   }
 
