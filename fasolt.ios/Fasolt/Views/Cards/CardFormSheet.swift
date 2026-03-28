@@ -64,11 +64,13 @@ struct CardFormSheet: View {
                     TextField("Heading", text: $sourceHeading)
                 }
 
-                Section("Deck (Optional)") {
-                    Picker("Deck", selection: $selectedDeckId) {
-                        Text("None").tag(String?.none)
-                        ForEach(decks, id: \.id) { deck in
-                            Text(deck.name).tag(Optional(deck.id))
+                if !decks.isEmpty {
+                    Section("Deck (Optional)") {
+                        Picker("Deck", selection: $selectedDeckId) {
+                            Text("None").tag(String?.none)
+                            ForEach(decks, id: \.id) { deck in
+                                Text(deck.name).tag(Optional(deck.id))
+                            }
                         }
                     }
                 }

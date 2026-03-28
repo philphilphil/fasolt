@@ -197,7 +197,7 @@ struct DeckDetailView: View {
             }
         }
         .sheet(isPresented: $showCreateCardSheet) {
-            CardFormSheet(mode: .create, decks: availableDecks) { request, _ in
+            CardFormSheet(mode: .create, decks: []) { request, _ in
                 try await viewModel.createCard(request)
             }
         }
