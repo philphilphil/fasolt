@@ -1,12 +1,11 @@
 import SwiftUI
 
 struct DashboardView: View {
+    @Environment(\.startStudy) private var startStudy
     @State private var viewModel: DashboardViewModel
-    private let studyViewModelFactory: () -> StudyViewModel
 
-    init(viewModel: DashboardViewModel, studyViewModelFactory: @escaping () -> StudyViewModel) {
+    init(viewModel: DashboardViewModel) {
         _viewModel = State(initialValue: viewModel)
-        self.studyViewModelFactory = studyViewModelFactory
     }
 
     var body: some View {
@@ -66,16 +65,9 @@ struct DashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadStats() }
             }
-            .navigationDestination(isPresented: $showDeckStudy) {
-                StudyView(viewModel: studyViewModelFactory(), deckId: selectedDeckId)
-            }
             .offlineBanner()
         }
     }
-
-    @State private var showStudy = false
-    @State private var selectedDeckId: String?
-    @State private var showDeckStudy = false
 
     private var dueDecks: [DeckDTO] {
         viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }
@@ -116,11 +108,8 @@ struct DashboardView: View {
         )
         .onTapGesture {
             if viewModel.dueCount > 0 {
-                showStudy = true
+                startStudy()
             }
-        }
-        .navigationDestination(isPresented: $showStudy) {
-            StudyView(viewModel: studyViewModelFactory())
         }
     }
 
@@ -155,8 +144,7 @@ struct DashboardView: View {
 
             ForEach(dueDecks, id: \.id) { deck in
                 Button {
-                    selectedDeckId = deck.id
-                    showDeckStudy = true
+                    startStudy(deckId: deck.id)
                 } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {

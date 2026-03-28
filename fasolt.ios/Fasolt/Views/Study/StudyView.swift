@@ -29,23 +29,8 @@ struct StudyView: View {
                 )
             }
         }
-        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                if viewModel.state != .summary {
-                    Button {
-                        if (viewModel.cardsStudied > 0 || viewModel.skippedCount > 0) && viewModel.state != .summary {
-                            viewModel.state = .summary
-                        } else {
-                            dismiss()
-                        }
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
                 if viewModel.state == .studying || viewModel.state == .flipped {
                     HStack(spacing: 16) {
                         Button {
@@ -75,6 +60,20 @@ struct StudyView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
+                    }
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                if viewModel.state != .summary {
+                    Button {
+                        if (viewModel.cardsStudied > 0 || viewModel.skippedCount > 0) && viewModel.state != .summary {
+                            viewModel.state = .summary
+                        } else {
+                            dismiss()
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundStyle(.secondary)
                     }
                 }
             }

@@ -9,16 +9,12 @@ enum CardSortOrder: String, CaseIterable {
 }
 
 struct DeckDetailView: View {
+    @Environment(\.startStudy) private var startStudy
     @State private var viewModel: DeckDetailViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
-    private let studyViewModelFactory: () -> StudyViewModel
 
-    init(
-        viewModel: DeckDetailViewModel,
-        studyViewModelFactory: @escaping () -> StudyViewModel
-    ) {
+    init(viewModel: DeckDetailViewModel) {
         _viewModel = State(initialValue: viewModel)
-        self.studyViewModelFactory = studyViewModelFactory
     }
 
     var body: some View {
@@ -78,8 +74,8 @@ struct DeckDetailView: View {
                     }
 
                     if detail.dueCount > 0 && !detail.isSuspended {
-                        NavigationLink {
-                            StudyView(viewModel: studyViewModelFactory(), deckId: viewModel.deckId)
+                        Button {
+                            startStudy(deckId: viewModel.deckId)
                         } label: {
                             Text("Study This Deck")
                                 .font(.headline)
