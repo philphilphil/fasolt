@@ -25,11 +25,20 @@ public class CardService(AppDbContext db)
         return errors;
     }
 
-    public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null)
+    public async Task<(CardDto? Card, bool DeckNotFound)> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null, string? deckId = null)
     {
         var errors = ValidateCardFields(front, back, sourceHeading);
         if (errors.Count > 0)
             throw new ValidationException(string.Join(" ", errors));
+
+        // Validate deckId if provided
+        Guid? deckGuid = null;
+        if (deckId is not null)
+        {
+            var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
+            if (deck is null) return (null, true);
+            deckGuid = deck.Id;
+        }
 
         var card = new Card
         {
@@ -46,9 +55,22 @@ public class CardService(AppDbContext db)
         };
 
         db.Cards.Add(card);
+
+        if (deckGuid.HasValue)
+        {
+            db.DeckCards.Add(new DeckCard
+            {
+                DeckId = deckGuid.Value,
+                CardId = card.Id,
+            });
+        }
+
         await db.SaveChangesAsync();
 
-        return ToDto(card);
+        // Reload DeckCards so ToDto reflects the assigned deck
+        await db.Entry(card).Collection(c => c.DeckCards).Query().Include(dc => dc.Deck).LoadAsync();
+
+        return (ToDto(card), false);
     }
 
     public async Task<BulkCreateResult> BulkCreateCards(string userId, List<BulkCardItem> cards, string? sourceFile, string? deckId)
