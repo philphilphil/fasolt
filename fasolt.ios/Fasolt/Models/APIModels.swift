@@ -190,3 +190,36 @@ struct UpdateSchedulingSettingsRequest: Encodable, Sendable {
     let desiredRetention: Double
     let maximumInterval: Int
 }
+
+// MARK: - Card Requests
+
+struct CreateCardRequest: Encodable, Sendable {
+    let front: String
+    let back: String
+    let sourceFile: String?
+    let sourceHeading: String?
+}
+
+struct UpdateCardRequest: Encodable, Sendable {
+    let front: String
+    let back: String
+    let sourceFile: String?
+    let sourceHeading: String?
+    let deckIds: [String]?
+}
+
+struct SetSuspendedRequest: Encodable, Sendable {
+    let isSuspended: Bool
+}
+
+// MARK: - Deck Requests
+
+struct CreateDeckRequest: Encodable, Sendable {
+    let name: String
+    let description: String?
+}
+
+struct UpdateDeckRequest: Encodable, Sendable {
+    let name: String
+    let description: String?
+}
