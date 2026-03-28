@@ -38,7 +38,7 @@ public class DeckService(AppDbContext db)
                 d.Name,
                 d.Description,
                 d.Cards.Count,
-                d.Cards.Count(dc => dc.Card.DueAt == null || dc.Card.DueAt <= now),
+                d.Cards.Count(dc => !dc.Card.IsSuspended && (dc.Card.DueAt == null || dc.Card.DueAt <= now)),
                 d.CreatedAt,
                 d.IsSuspended))
             .ToListAsync();
@@ -59,7 +59,7 @@ public class DeckService(AppDbContext db)
             .Select(dc => new DeckCardDto(dc.Card.PublicId, dc.Card.Front, dc.Card.Back, dc.Card.SourceFile, dc.Card.SourceHeading, dc.Card.State, dc.Card.DueAt, dc.Card.IsSuspended, dc.Card.Stability, dc.Card.Difficulty, dc.Card.Step, dc.Card.LastReviewedAt, dc.Card.FrontSvg, dc.Card.BackSvg))
             .ToListAsync();
 
-        var dueCount = cards.Count(c => c.DueAt == null || c.DueAt <= now);
+        var dueCount = cards.Count(c => !c.IsSuspended && (c.DueAt == null || c.DueAt <= now));
 
         return new DeckDetailDto(deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards, deck.IsSuspended);
     }
@@ -78,7 +78,7 @@ public class DeckService(AppDbContext db)
         var now = DateTimeOffset.UtcNow;
         var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
         var dueCount = await db.DeckCards.CountAsync(dc =>
-            dc.DeckId == deck.Id && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
+            dc.DeckId == deck.Id && !dc.Card.IsSuspended && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
 
         return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt, deck.IsSuspended);
     }
@@ -96,7 +96,7 @@ public class DeckService(AppDbContext db)
         var now = DateTimeOffset.UtcNow;
         var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
         var dueCount = await db.DeckCards.CountAsync(dc =>
-            dc.DeckId == deck.Id && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
+            dc.DeckId == deck.Id && !dc.Card.IsSuspended && (dc.Card.DueAt == null || dc.Card.DueAt <= now));
 
         return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt, deck.IsSuspended);
     }

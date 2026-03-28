@@ -14,7 +14,7 @@ public class SourceService(AppDbContext db)
             .SqlQueryRaw<SourceItemDto>("""
                 SELECT "SourceFile",
                        COUNT(*)::int AS "CardCount",
-                       COUNT(*) FILTER (WHERE "DueAt" IS NOT NULL AND "DueAt" <= {0})::int AS "DueCount"
+                       COUNT(*) FILTER (WHERE "IsSuspended" = false AND "DueAt" IS NOT NULL AND "DueAt" <= {0})::int AS "DueCount"
                 FROM "Cards"
                 WHERE "UserId" = {1}
                   AND "SourceFile" IS NOT NULL
