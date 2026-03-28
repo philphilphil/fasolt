@@ -55,6 +55,7 @@ struct CardDTO: Decodable, Sendable, Identifiable {
     let lastReviewedAt: String?
     let createdAt: String
     let decks: [CardDeckInfoDTO]
+    let isSuspended: Bool
     let frontSvg: String?
     let backSvg: String?
 }
@@ -62,7 +63,7 @@ struct CardDTO: Decodable, Sendable, Identifiable {
 struct CardDeckInfoDTO: Decodable, Sendable {
     let id: String
     let name: String
-    let isActive: Bool
+    let isSuspended: Bool
 }
 
 // MARK: - Decks
@@ -74,7 +75,7 @@ struct DeckDTO: Decodable, Sendable {
     let cardCount: Int
     let dueCount: Int
     let createdAt: String
-    let isActive: Bool
+    let isSuspended: Bool
 }
 
 struct DeckDetailDTO: Decodable, Sendable {
@@ -83,7 +84,7 @@ struct DeckDetailDTO: Decodable, Sendable {
     let description: String?
     let cardCount: Int
     let dueCount: Int
-    let isActive: Bool
+    let isSuspended: Bool
     let cards: [DeckCardDTO]
 }
 
@@ -95,6 +96,7 @@ struct DeckCardDTO: Decodable, Sendable, Identifiable {
     let sourceHeading: String?
     let state: String
     let dueAt: String?
+    let isSuspended: Bool
     let stability: Double?
     let difficulty: Double?
     let step: Int?

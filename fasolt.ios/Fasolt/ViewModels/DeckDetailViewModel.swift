@@ -35,15 +35,15 @@ final class DeckDetailViewModel {
         isLoading = false
     }
 
-    func toggleActive() async {
+    func toggleSuspended() async {
         guard let current = detail else { return }
-        let newState = !current.isActive
+        let newState = !current.isSuspended
 
         do {
-            _ = try await deckRepository.setActive(id: deckId, isActive: newState)
+            _ = try await deckRepository.setSuspended(id: deckId, isSuspended: newState)
             await loadDetail() // Reload to get fresh data
         } catch {
-            logger.error("Failed to toggle deck active state: \(error)")
+            logger.error("Failed to toggle deck suspended state: \(error)")
             errorMessage = "Could not update deck status."
         }
     }

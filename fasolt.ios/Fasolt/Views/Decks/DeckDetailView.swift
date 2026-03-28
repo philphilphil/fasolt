@@ -47,8 +47,8 @@ struct DeckDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
 
-                            if !detail.isActive {
-                                Text("This deck is inactive. Cards are excluded from study.")
+                            if detail.isSuspended {
+                                Text("This deck is suspended. Cards are excluded from study.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -77,7 +77,7 @@ struct DeckDetailView: View {
                         }
                     }
 
-                    if detail.dueCount > 0 && detail.isActive {
+                    if detail.dueCount > 0 && !detail.isSuspended {
                         NavigationLink {
                             StudyView(viewModel: studyViewModelFactory(), deckId: viewModel.deckId)
                         } label: {
@@ -120,11 +120,11 @@ struct DeckDetailView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    Task { await viewModel.toggleActive() }
+                    Task { await viewModel.toggleSuspended() }
                 } label: {
                     Label(
-                        viewModel.detail?.isActive == true ? "Deactivate" : "Activate",
-                        systemImage: viewModel.detail?.isActive == true ? "pause.circle" : "play.circle"
+                        viewModel.detail?.isSuspended == true ? "Unsuspend" : "Suspend",
+                        systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
                     )
                 }
             }

@@ -78,7 +78,7 @@ struct DashboardView: View {
     @State private var showDeckStudy = false
 
     private var dueDecks: [DeckDTO] {
-        viewModel.decks.filter { $0.isActive && $0.dueCount > 0 }
+        viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }
     }
 
     private var heroCard: some View {

@@ -102,7 +102,7 @@ struct DeckListView: View {
     private func sortedDecks(_ decks: [DeckDTO]) -> [DeckDTO] {
         decks.sorted { a, b in
             // Inactive decks always go to the bottom
-            if a.isActive != b.isActive { return a.isActive ? true : false }
+            if a.isSuspended != b.isSuspended { return !a.isSuspended ? true : false }
             switch sortOrder {
             case .name:
                 return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
@@ -129,8 +129,8 @@ struct DeckListView: View {
                 HStack(spacing: 6) {
                     Text(deck.name)
                         .font(.body.weight(.medium))
-                    if !deck.isActive {
-                        Text("Inactive")
+                    if deck.isSuspended {
+                        Text("Suspended")
                             .font(.caption2.weight(.medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -170,6 +170,6 @@ struct DeckListView: View {
             }
         }
         .padding(.vertical, 4)
-        .opacity(deck.isActive ? 1 : 0.5)
+        .opacity(deck.isSuspended ? 0.5 : 1)
     }
 }

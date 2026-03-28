@@ -76,7 +76,7 @@ final class DeckRepository {
                 deck.deckDescription = dto.description
                 deck.cardCount = dto.cardCount
                 deck.dueCount = dto.dueCount
-                deck.isActive = dto.isActive
+                deck.isSuspended = dto.isSuspended
             } else {
                 let deck = CachedDeck(
                     publicId: dto.id,
@@ -88,7 +88,7 @@ final class DeckRepository {
                         logger.warning("Failed to parse createdAt '\(dto.createdAt)' for deck \(dto.id)")
                         return Date.now
                     }(),
-                    isActive: dto.isActive
+                    isSuspended: dto.isSuspended
                 )
                 modelContext.insert(deck)
             }
@@ -175,7 +175,7 @@ final class DeckRepository {
                 cardCount: deck.cardCount,
                 dueCount: deck.dueCount,
                 createdAt: DateFormatters.formatISO8601( deck.createdAt),
-                isActive: deck.isActive
+                isSuspended: deck.isSuspended
             )
         }
     }
@@ -192,6 +192,7 @@ final class DeckRepository {
                 sourceHeading: card.sourceHeading,
                 state: card.state,
                 dueAt: card.dueAt.map { DateFormatters.formatISO8601( $0) },
+                isSuspended: false,
                 stability: card.stability,
                 difficulty: card.difficulty,
                 step: card.step,
@@ -206,27 +207,27 @@ final class DeckRepository {
             description: deck.deckDescription,
             cardCount: deck.cardCount,
             dueCount: deck.dueCount,
-            isActive: deck.isActive,
+            isSuspended: deck.isSuspended,
             cards: cards
         )
     }
 
-    func setActive(id: String, isActive: Bool) async throws -> DeckDTO {
+    func setSuspended(id: String, isSuspended: Bool) async throws -> DeckDTO {
         let endpoint = Endpoint(
-            path: "/api/decks/\(id)/active",
+            path: "/api/decks/\(id)/suspended",
             method: .put,
-            body: ["isActive": isActive]
+            body: ["isSuspended": isSuspended]
         )
         let result: DeckDTO = try await apiClient.request(endpoint)
 
         // Update cache
         let predicate = #Predicate<CachedDeck> { $0.publicId == id }
         if let cached = try? modelContext.fetch(FetchDescriptor(predicate: predicate)).first {
-            cached.isActive = result.isActive
+            cached.isSuspended = result.isSuspended
             do {
                 try modelContext.save()
             } catch {
-                logger.error("Failed to save isActive state: \(error.localizedDescription)")
+                logger.error("Failed to save isSuspended state: \(error.localizedDescription)")
             }
         }
 
