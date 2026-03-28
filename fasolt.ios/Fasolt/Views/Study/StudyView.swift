@@ -4,7 +4,6 @@ import UIKit
 struct StudyView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: StudyViewModel
-    @State private var showExitConfirmation = false
     private let deckId: String?
 
     init(viewModel: StudyViewModel, deckId: String? = nil) {
@@ -36,7 +35,7 @@ struct StudyView: View {
                 if viewModel.state != .summary {
                     Button {
                         if (viewModel.cardsStudied > 0 || viewModel.skippedCount > 0) && viewModel.state != .summary {
-                            showExitConfirmation = true
+                            viewModel.state = .summary
                         } else {
                             dismiss()
                         }
@@ -79,12 +78,6 @@ struct StudyView: View {
                     }
                 }
             }
-        }
-        .alert("End Session?", isPresented: $showExitConfirmation) {
-            Button("Keep Studying", role: .cancel) {}
-            Button("End", role: .destructive) { dismiss() }
-        } message: {
-            Text("You've studied \(viewModel.cardsStudied) of \(viewModel.totalCards) cards.")
         }
         .task {
             if viewModel.state == .idle {
