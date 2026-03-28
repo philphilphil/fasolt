@@ -3,6 +3,9 @@ import SwiftUI
 struct CardListView: View {
     @State private var viewModel: CardListViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
+    @State private var showCreateSheet = false
+    @State private var cardToDelete: CardDTO?
+    @State private var showDeleteAlert = false
 
     init(viewModel: CardListViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -15,7 +18,7 @@ struct CardListView: View {
                     ContentUnavailableView(
                         "No cards yet",
                         systemImage: "rectangle.on.rectangle",
-                        description: Text("Create cards via the API or MCP tools")
+                        description: Text("Tap + to create a card")
                     )
                 } else if let error = viewModel.errorMessage, viewModel.cards.isEmpty {
                     ContentUnavailableView {
@@ -40,6 +43,13 @@ struct CardListView: View {
             .navigationTitle("Cards")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCreateSheet = true
+                    } label: {
+                        Label("New Card", systemImage: "plus")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Picker("Sort", selection: $sortOrder) {
                             ForEach(CardSortOrder.allCases, id: \.self) { order in
@@ -63,9 +73,23 @@ struct CardListView: View {
                 if viewModel.cards.isEmpty {
                     await viewModel.loadCards()
                 }
+                await viewModel.loadDecks()
             }
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadCards() }
+            }
+            .sheet(isPresented: $showCreateSheet) {
+                CardFormSheet(mode: .create, decks: viewModel.availableDecks) { request, deckId in
+                    try await viewModel.createCard(request, deckId: deckId)
+                }
+            }
+            .alert("Delete Card", isPresented: $showDeleteAlert, presenting: cardToDelete) { card in
+                Button("Delete", role: .destructive) {
+                    Task { try? await viewModel.deleteCard(id: card.id) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { _ in
+                Text("This cannot be undone.")
             }
         }
     }
@@ -83,6 +107,29 @@ struct CardListView: View {
                         card: card,
                         deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
                     )
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        cardToDelete = card
+                        showDeleteAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+
+                    Button {
+                        Task {
+                            try? await viewModel.setSuspended(
+                                cardId: card.id,
+                                isSuspended: !card.isSuspended
+                            )
+                        }
+                    } label: {
+                        Label(
+                            card.isSuspended ? "Unsuspend" : "Suspend",
+                            systemImage: card.isSuspended ? "play.circle" : "pause.circle"
+                        )
+                    }
+                    .tint(.orange)
                 }
             }
         }

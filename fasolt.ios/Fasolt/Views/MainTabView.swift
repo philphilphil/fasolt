@@ -40,7 +40,11 @@ struct MainTabView: View {
                     }
 
                     CardListView(
-                        viewModel: CardListViewModel(apiClient: authService.apiClient)
+                        viewModel: CardListViewModel(
+                            apiClient: authService.apiClient,
+                            cardRepository: cardRepository,
+                            deckRepository: deckRepository
+                        )
                     )
                     .tabItem {
                         Label("Cards", systemImage: "rectangle.on.rectangle")
