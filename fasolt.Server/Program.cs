@@ -208,6 +208,7 @@ builder.Services.AddScoped<SourceService>();
 builder.Services.AddScoped<OverviewService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<DeviceTokenService>();
+builder.Services.AddScoped<SchedulingSettingsService>();
 
 var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
 var apnsKeyReady = apnsSettings is not null &&
@@ -415,6 +416,7 @@ app.MapSourceEndpoints();
 app.MapOAuthEndpoints();
 app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
+app.MapSchedulingSettingsEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
 app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
