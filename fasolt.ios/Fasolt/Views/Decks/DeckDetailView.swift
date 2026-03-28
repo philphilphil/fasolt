@@ -16,6 +16,7 @@ struct DeckDetailView: View {
     @State private var cardToDelete: DeckCardDTO?
     @State private var showDeleteCardAlert = false
     @State private var availableDecks: [DeckDTO] = []
+    @State private var showCreateCardSheet = false
     private let deckRepository: DeckRepository
 
     init(viewModel: DeckDetailViewModel, deckRepository: DeckRepository) {
@@ -63,7 +64,7 @@ struct DeckDetailView: View {
                                 ContentUnavailableView(
                                     "No cards in this deck",
                                     systemImage: "rectangle.on.rectangle.slash",
-                                    description: Text("Add cards via the API, MCP tools, or the Cards tab")
+                                    description: Text("Tap + to add a card to this deck")
                                 )
                             }
                         } else {
@@ -141,6 +142,13 @@ struct DeckDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    showCreateCardSheet = true
+                } label: {
+                    Label("New Card", systemImage: "plus")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
                     showEditSheet = true
                 } label: {
                     Label("Edit", systemImage: "pencil")
@@ -186,6 +194,11 @@ struct DeckDetailView: View {
                         description: request.description
                     ))
                 }
+            }
+        }
+        .sheet(isPresented: $showCreateCardSheet) {
+            CardFormSheet(mode: .create, decks: availableDecks) { request, _ in
+                try await viewModel.createCard(request)
             }
         }
         .alert("Delete Card", isPresented: $showDeleteCardAlert, presenting: cardToDelete) { card in

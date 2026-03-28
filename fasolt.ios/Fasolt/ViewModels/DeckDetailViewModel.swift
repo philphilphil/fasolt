@@ -65,6 +65,21 @@ final class DeckDetailViewModel {
         await loadDetail()
     }
 
+    func createCard(_ request: CreateCardRequest) async throws {
+        let card = try await cardRepository.createCard(request)
+        _ = try await cardRepository.updateCard(
+            id: card.id,
+            UpdateCardRequest(
+                front: card.front,
+                back: card.back,
+                sourceFile: card.sourceFile,
+                sourceHeading: card.sourceHeading,
+                deckIds: [deckId]
+            )
+        )
+        await loadDetail()
+    }
+
     func updateDeck(_ request: UpdateDeckRequest) async throws {
         let updated = try await deckRepository.updateDeck(id: deckId, request)
         deckName = updated.name
