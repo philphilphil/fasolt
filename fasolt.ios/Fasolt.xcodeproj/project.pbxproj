@@ -31,6 +31,7 @@
 		7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */; };
 		82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D826424A31F1413445EC6650 /* FasoltApp.swift */; };
 		8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */; };
+		3DF96280AD9C48E5AB080D56 /* SchedulingSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */; };
 		8ECAC149086A23E54D5DC1D2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE0A6615C77BF475BDCC9074 /* Assets.xcassets */; };
 		95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */; };
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
@@ -91,6 +92,7 @@
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
+		56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulingSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		82812F20EB20898654E7FABF /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
@@ -183,6 +185,7 @@
 				B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */,
 				D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */,
 				71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */,
+				56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */,
 				BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */,
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */,
@@ -466,6 +469,7 @@
 				0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */,
 				36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */,
 				8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */,
+				3DF96280AD9C48E5AB080D56 /* SchedulingSettingsViewModel.swift in Sources */,
 				ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */,
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
