@@ -21,16 +21,16 @@ describe('cards store', () => {
     const store = useCardsStore()
     await store.fetchCards()
 
-    expect(mockApiFetch).toHaveBeenCalledWith('/cards')
+    expect(mockApiFetch).toHaveBeenCalledWith('/cards?limit=200')
   })
 
-  it('fetchCards with sourceFile filter calls /cards?sourceFile=xxx', async () => {
+  it('fetchCards with sourceFile filter includes it as query param', async () => {
     mockApiFetch.mockResolvedValueOnce({ items: [], hasMore: false, nextCursor: null })
 
     const store = useCardsStore()
     await store.fetchCards('notes.md')
 
-    expect(mockApiFetch).toHaveBeenCalledWith('/cards?sourceFile=notes.md')
+    expect(mockApiFetch).toHaveBeenCalledWith('/cards?limit=200&sourceFile=notes.md')
   })
 
   it('fetchCards with sourceFile containing special chars encodes them', async () => {
@@ -40,7 +40,7 @@ describe('cards store', () => {
     await store.fetchCards('my notes/cap theorem.md')
 
     const call = mockApiFetch.mock.calls[0][0] as string
-    expect(call).toContain('/cards?sourceFile=')
+    expect(call).toContain('/cards?limit=200&sourceFile=')
     expect(call).not.toContain(' ')
   })
 
@@ -94,6 +94,56 @@ describe('cards store', () => {
 
     const body = JSON.parse((mockApiFetch.mock.calls[0][1] as RequestInit).body as string)
     expect(body).not.toHaveProperty('fileId')
+  })
+
+  it('setSuspended updates the card in the store array', async () => {
+    const card = {
+      id: 'c1', sourceFile: null, sourceHeading: null,
+      front: 'Q', back: 'A', frontSvg: null, backSvg: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      stability: null, difficulty: null, step: null, dueAt: null,
+      state: 'new' as const, lastReviewedAt: null,
+      isSuspended: false, decks: [],
+    }
+    const suspendedCard = { ...card, isSuspended: true }
+
+    const store = useCardsStore()
+    // Seed the store with one card
+    mockApiFetch.mockResolvedValueOnce({ items: [card], hasMore: false, nextCursor: null })
+    await store.fetchCards()
+    expect(store.cards[0].isSuspended).toBe(false)
+
+    // Suspend it
+    mockApiFetch.mockResolvedValueOnce(suspendedCard)
+    await store.setSuspended('c1', true)
+    expect(store.cards[0].isSuspended).toBe(true)
+
+    // Unsuspend it
+    mockApiFetch.mockResolvedValueOnce({ ...card, isSuspended: false })
+    await store.setSuspended('c1', false)
+    expect(store.cards[0].isSuspended).toBe(false)
+  })
+
+  it('setSuspended replaces the array reference (not in-place mutation)', async () => {
+    const card = {
+      id: 'c1', sourceFile: null, sourceHeading: null,
+      front: 'Q', back: 'A', frontSvg: null, backSvg: null,
+      createdAt: '2024-01-01T00:00:00Z',
+      stability: null, difficulty: null, step: null, dueAt: null,
+      state: 'new' as const, lastReviewedAt: null,
+      isSuspended: false, decks: [],
+    }
+
+    const store = useCardsStore()
+    mockApiFetch.mockResolvedValueOnce({ items: [card], hasMore: false, nextCursor: null })
+    await store.fetchCards()
+    const originalArray = store.cards
+
+    mockApiFetch.mockResolvedValueOnce({ ...card, isSuspended: true })
+    await store.setSuspended('c1', true)
+
+    // Must be a new array reference so Vue computed properties re-evaluate
+    expect(store.cards).not.toBe(originalArray)
   })
 
   it('extractContent method does NOT exist on cards store', () => {
