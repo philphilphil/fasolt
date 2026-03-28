@@ -25,7 +25,7 @@ public class CardService(AppDbContext db)
         return errors;
     }
 
-    public async Task<(CardDto? Card, bool DeckNotFound)> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null, string? deckId = null)
+    public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null, string? deckId = null)
     {
         var errors = ValidateCardFields(front, back, sourceHeading);
         if (errors.Count > 0)
@@ -36,7 +36,8 @@ public class CardService(AppDbContext db)
         if (deckId is not null)
         {
             var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
-            if (deck is null) return (null, true);
+            if (deck is null)
+                throw new KeyNotFoundException("Deck not found or does not belong to you");
             deckGuid = deck.Id;
         }
 
@@ -70,7 +71,7 @@ public class CardService(AppDbContext db)
         // Reload DeckCards so ToDto reflects the assigned deck
         await db.Entry(card).Collection(c => c.DeckCards).Query().Include(dc => dc.Deck).LoadAsync();
 
-        return (ToDto(card), false);
+        return ToDto(card);
     }
 
     public async Task<BulkCreateResult> BulkCreateCards(string userId, List<BulkCardItem> cards, string? sourceFile, string? deckId)

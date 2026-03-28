@@ -37,12 +37,15 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var (dto, deckNotFound) = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.SourceHeading, request.FrontSvg, request.BackSvg, request.DeckId);
-
-        if (deckNotFound)
-            return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
-
-        return Results.Created($"/api/cards/{dto!.Id}", dto);
+        try
+        {
+            var dto = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.SourceHeading, request.FrontSvg, request.BackSvg, request.DeckId);
+            return Results.Created($"/api/cards/{dto.Id}", dto);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return Results.BadRequest(new { error = "validation_error", message = ex.Message });
+        }
     }
 
     private static async Task<IResult> List(
