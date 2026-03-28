@@ -109,6 +109,7 @@ struct CardListContent: View {
                     CardDetailView(
                         card: card,
                         deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name),
+                        currentDeckId: card.decks.first?.id,
                         availableDecks: viewModel.availableDecks,
                         onSaveEdit: { request in
                             try await viewModel.updateCard(id: card.id, request)

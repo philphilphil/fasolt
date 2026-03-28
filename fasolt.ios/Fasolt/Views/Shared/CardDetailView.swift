@@ -4,6 +4,7 @@ import Textual
 struct CardDetailView: View {
     let card: any CardDisplayable
     var deckNames: [String]?
+    var currentDeckId: String?
     var availableDecks: [DeckDTO] = []
     var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
 
@@ -135,7 +136,7 @@ struct CardDetailView: View {
                     back: card.back,
                     sourceFile: card.sourceFile,
                     sourceHeading: card.sourceHeading,
-                    deckId: nil
+                    deckId: currentDeckId
                 ),
                 decks: availableDecks
             ) { request, deckId in

@@ -72,6 +72,7 @@ struct DeckDetailView: View {
                                     NavigationLink {
                                         CardDetailView(
                                             card: card,
+                                            currentDeckId: viewModel.deckId,
                                             availableDecks: availableDecks,
                                             onSaveEdit: { request in
                                                 try await viewModel.updateCard(id: card.id, request)
