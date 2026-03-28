@@ -29,19 +29,19 @@ function openEdit(cardId: string) {
     <div class="text-[10px] uppercase tracking-[0.2em] text-accent/70">
       {{ isFlipped ? 'Answer' : 'Question' }}
     </div>
-    <div v-if="card.frontSvg" class="mt-4 flex w-full max-w-lg justify-center">
+    <div v-if="card.frontSvg" class="mt-4 flex w-full max-w-2xl justify-center">
       <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.frontSvg)" />
     </div>
     <div
-      class="mt-4 w-full max-w-lg text-center"
+      class="mt-4 w-full max-w-2xl text-center"
       :class="isFlipped ? 'text-muted-foreground' : 'text-foreground'"
     >
       <div class="prose dark:prose-invert max-w-none" v-html="render(card.front)" />
     </div>
-    <div v-if="isFlipped && card.backSvg" class="mt-4 flex w-full max-w-lg justify-center">
+    <div v-if="isFlipped && card.backSvg" class="mt-4 flex w-full max-w-2xl justify-center">
       <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.backSvg)" />
     </div>
-    <div v-if="isFlipped" class="mt-5 w-full max-w-lg text-center">
+    <div v-if="isFlipped" class="mt-5 w-full max-w-2xl text-center">
       <div class="prose dark:prose-invert max-w-none" v-html="render(card.back)" />
     </div>
     <div v-if="card.sourceHeading" class="mt-4 text-[11px] text-muted-foreground/60">

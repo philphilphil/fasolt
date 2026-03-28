@@ -29,7 +29,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[480px] space-y-6 py-8">
+  <div class="mx-auto max-w-2xl space-y-6 py-8">
     <!-- Due count -->
     <div class="text-center">
       <div class="text-[56px] font-extrabold leading-none tracking-tighter">{{ dueCount }}</div>
