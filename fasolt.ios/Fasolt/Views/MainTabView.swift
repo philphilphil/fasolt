@@ -22,7 +22,7 @@ struct MainTabView: View {
 
                 TabView {
                     DashboardView(
-                        viewModel: DashboardViewModel(apiClient: authService.apiClient),
+                        viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository),
                         studyViewModelFactory: studyViewModelFactory
                     )
                     .tabItem {
