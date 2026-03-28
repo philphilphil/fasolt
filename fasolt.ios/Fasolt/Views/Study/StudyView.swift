@@ -25,6 +25,7 @@ struct StudyView: View {
                     ratingsCount: viewModel.ratingsCount,
                     failedRatings: viewModel.failedRatings,
                     skippedCount: viewModel.skippedCount,
+                    suspendedCount: viewModel.suspendedCount,
                     onDone: { dismiss() }
                 )
             }
@@ -47,18 +48,34 @@ struct StudyView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if viewModel.state == .studying || viewModel.state == .flipped {
-                    Button {
-                        let generator = UIImpactFeedbackGenerator(style: .light)
-                        generator.impactOccurred()
-                        viewModel.skipCard()
-                        if viewModel.state == .summary {
-                            let notification = UINotificationFeedbackGenerator()
-                            notification.notificationOccurred(.success)
+                    HStack(spacing: 16) {
+                        Button {
+                            let generator = UIImpactFeedbackGenerator(style: .light)
+                            generator.impactOccurred()
+                            Task {
+                                await viewModel.suspendCard()
+                                if viewModel.state == .summary {
+                                    let notification = UINotificationFeedbackGenerator()
+                                    notification.notificationOccurred(.success)
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "pause.circle")
+                                .foregroundStyle(.secondary)
                         }
-                    } label: {
-                        Text("Skip")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Button {
+                            let generator = UIImpactFeedbackGenerator(style: .light)
+                            generator.impactOccurred()
+                            viewModel.skipCard()
+                            if viewModel.state == .summary {
+                                let notification = UINotificationFeedbackGenerator()
+                                notification.notificationOccurred(.success)
+                            }
+                        } label: {
+                            Text("Skip")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

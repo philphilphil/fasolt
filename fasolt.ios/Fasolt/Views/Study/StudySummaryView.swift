@@ -5,6 +5,7 @@ struct StudySummaryView: View {
     let ratingsCount: [String: Int]
     var failedRatings: Int = 0
     var skippedCount: Int = 0
+    var suspendedCount: Int = 0
     let onDone: () -> Void
 
     var body: some View {
@@ -36,6 +37,10 @@ struct StudySummaryView: View {
 
                 if skippedCount > 0 {
                     ratingRow("Skipped", count: skippedCount, color: .gray)
+                }
+
+                if suspendedCount > 0 {
+                    ratingRow("Suspended", count: suspendedCount, color: .gray)
                 }
             }
             .padding()

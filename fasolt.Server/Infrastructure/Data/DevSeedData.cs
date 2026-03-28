@@ -56,7 +56,6 @@ public static class DevSeedData
             Name = "European Capitals",
             Description = "Capitals of European countries",
             CreatedAt = now,
-            IsActive = true,
         };
 
         var programmingDeck = new Deck
@@ -67,7 +66,6 @@ public static class DevSeedData
             Name = "Programming Concepts",
             Description = "Core computer science concepts",
             CreatedAt = now,
-            IsActive = true,
         };
 
         var archivedDeck = new Deck
@@ -78,7 +76,7 @@ public static class DevSeedData
             Name = "Archived Deck",
             Description = "An inactive deck for testing",
             CreatedAt = now,
-            IsActive = false,
+            IsSuspended = true,
         };
 
         db.Decks.AddRange(capitalsDeck, programmingDeck, archivedDeck);
@@ -321,7 +319,6 @@ public static class DevSeedData
             Name = "Markdown Tests",
             Description = "Cards with various markdown elements for testing rendering and stripping",
             CreatedAt = now,
-            IsActive = true,
         };
 
         db.Decks.Add(markdownDeck);
@@ -494,7 +491,6 @@ public static class DevSeedData
             Name = "Math Basics",
             Description = "Fundamental math concepts",
             CreatedAt = now,
-            IsActive = true,
         };
 
         db.Decks.Add(mathDeck);

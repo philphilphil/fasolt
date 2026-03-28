@@ -13,11 +13,14 @@ public record CardDto(
     string Id, string? SourceFile, string? SourceHeading,
     string Front, string Back, string State,
     DateTimeOffset CreatedAt, List<CardDeckInfoDto> Decks,
+    bool IsSuspended = false,
     DateTimeOffset? DueAt = null, double? Stability = null,
     double? Difficulty = null, int? Step = null,
     DateTimeOffset? LastReviewedAt = null,
     string? FrontSvg = null, string? BackSvg = null);
-public record CardDeckInfoDto(string Id, string Name, bool IsActive);
+public record CardDeckInfoDto(string Id, string Name, bool IsSuspended);
+
+public record SetCardSuspendedRequest(bool IsSuspended);
 
 public record UpdateCardFieldsRequest(
     string? NewFront = null,

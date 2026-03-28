@@ -117,4 +117,16 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
             _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
         };
     }
+
+    [McpServerTool, Description("Suspend or unsuspend a card. Suspended cards are excluded from study/review but retain their SRS history. Use this when a user wants to temporarily stop seeing a card.")]
+    public async Task<string> SuspendCard(
+        [Description("Card ID")] string cardId,
+        [Description("true to suspend (exclude from study), false to unsuspend")] bool isSuspended)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+        var result = await cardService.SetSuspended(userId, cardId, isSuspended);
+        if (result is null)
+            return JsonSerializer.Serialize(new { error = "Card not found" }, McpJson.Options);
+        return JsonSerializer.Serialize(result, McpJson.Options);
+    }
 }

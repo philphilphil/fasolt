@@ -56,15 +56,15 @@ export const useDecksStore = defineStore('decks', () => {
     await apiFetch(`/decks/${deckId}/cards/${cardId}`, { method: 'DELETE' })
   }
 
-  async function setActive(id: string, isActive: boolean): Promise<Deck> {
-    const result = await apiFetch<Deck>(`/decks/${id}/active`, {
+  async function setSuspended(id: string, isSuspended: boolean): Promise<Deck> {
+    const result = await apiFetch<Deck>(`/decks/${id}/suspended`, {
       method: 'PUT',
-      body: JSON.stringify({ isActive }),
+      body: JSON.stringify({ isSuspended }),
     })
     const idx = decks.value.findIndex(d => d.id === id)
     if (idx !== -1) decks.value[idx] = result
     return result
   }
 
-  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, setActive }
+  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, setSuspended }
 })

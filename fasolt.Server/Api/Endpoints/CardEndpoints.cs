@@ -19,6 +19,7 @@ public static class CardEndpoints
         group.MapPut("/{id}", Update);
         group.MapDelete("/{id}", Delete);
         group.MapPost("/{id}/reset", ResetProgress);
+        group.MapPut("/{id}/suspended", SetSuspended);
     }
 
     private static async Task<IResult> Create(
@@ -112,6 +113,20 @@ public static class CardEndpoints
         if (user is null) return Results.Unauthorized();
 
         var dto = await cardService.ResetProgress(user.Id, id);
+        return dto is null ? Results.NotFound() : Results.Ok(dto);
+    }
+
+    private static async Task<IResult> SetSuspended(
+        string id,
+        SetCardSuspendedRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        CardService cardService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var dto = await cardService.SetSuspended(user.Id, id, request.IsSuspended);
         return dto is null ? Results.NotFound() : Results.Ok(dto);
     }
 

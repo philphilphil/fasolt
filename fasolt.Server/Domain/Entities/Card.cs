@@ -22,6 +22,7 @@ public class Card
     public DateTimeOffset? DueAt { get; set; }
     public string State { get; set; } = "new";
     public DateTimeOffset? LastReviewedAt { get; set; }
+    public bool IsSuspended { get; set; } = false;
     public List<DeckCard> DeckCards { get; set; } = [];
     public NpgsqlTsVector SearchVector { get; set; } = null!;
 }
