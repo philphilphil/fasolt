@@ -44,7 +44,7 @@ final class CardRepository {
 
     func deleteCard(id: String) async throws {
         let endpoint = Endpoint(path: "/api/cards/\(id)", method: .delete)
-        let _ = try await apiClient.request(endpoint) as EmptyResponse
+        try await apiClient.request(endpoint)
         logger.info("Deleted card \(id)")
     }
 

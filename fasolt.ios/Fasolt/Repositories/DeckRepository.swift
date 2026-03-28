@@ -254,7 +254,7 @@ final class DeckRepository {
             queryItems = [URLQueryItem(name: "deleteCards", value: "true")]
         }
         let endpoint = Endpoint(path: "/api/decks/\(id)", method: .delete, queryItems: queryItems)
-        let _ = try await apiClient.request(endpoint) as EmptyResponse
+        try await apiClient.request(endpoint)
         logger.info("Deleted deck \(id) (deleteCards: \(deleteCards))")
     }
 }
