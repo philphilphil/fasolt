@@ -66,6 +66,9 @@ struct DashboardView: View {
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadStats() }
             }
+            .navigationDestination(isPresented: $showDeckStudy) {
+                StudyView(viewModel: studyViewModelFactory(), deckId: selectedDeckId)
+            }
             .offlineBanner()
         }
     }
@@ -178,9 +181,6 @@ struct DashboardView: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-        .navigationDestination(isPresented: $showDeckStudy) {
-            StudyView(viewModel: studyViewModelFactory(), deckId: selectedDeckId)
-        }
     }
 
     private var stateBar: some View {
