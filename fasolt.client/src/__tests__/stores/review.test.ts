@@ -12,7 +12,7 @@ const mockApiFetch = vi.mocked(apiFetch)
 describe('review store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('starts a session by fetching due cards', async () => {
@@ -70,5 +70,63 @@ describe('review store', () => {
 
     expect(store.isComplete).toBe(true)
     expect(store.isActive).toBe(true)
+  })
+
+  it('startSession with no due cards sets noDueCards', async () => {
+    mockApiFetch.mockResolvedValueOnce([])
+
+    const store = useReviewStore()
+    await store.startSession()
+
+    expect(store.isActive).toBe(true)
+    expect(store.noDueCards).toBe(true)
+    expect(store.currentCard).toBeNull()
+  })
+
+  it('startSession sets error on API failure', async () => {
+    mockApiFetch.mockRejectedValueOnce(new Error('Network error'))
+
+    const store = useReviewStore()
+    await store.startSession()
+
+    expect(store.error).toBe('Failed to load review session. Please try again.')
+    expect(store.loading).toBe(false)
+  })
+
+  it('rate sends correct API request', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new', frontSvg: null, backSvg: null },
+    ])
+
+    const store = useReviewStore()
+    await store.startSession()
+    vi.resetAllMocks()
+
+    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1' })
+    store.flipCard()
+    await store.rate('hard')
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/review/rate', {
+      method: 'POST',
+      body: JSON.stringify({ cardId: 'c1', rating: 'hard' }),
+    })
+    expect(store.sessionStats.hard).toBe(1)
+    expect(store.sessionStats.reviewed).toBe(1)
+  })
+
+  it('rate again re-enqueues the card', async () => {
+    mockApiFetch.mockResolvedValueOnce([
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new', frontSvg: null, backSvg: null },
+    ])
+
+    const store = useReviewStore()
+    await store.startSession()
+
+    mockApiFetch.mockResolvedValueOnce({ cardId: 'c1' })
+    store.flipCard()
+    await store.rate('again')
+
+    expect(store.queue).toHaveLength(2)
+    expect(store.sessionStats.again).toBe(1)
   })
 })
