@@ -97,6 +97,10 @@ docker compose down          # stop Postgres
 - Start the full stack before testing (`./dev.sh` or manually start backend + frontend).
 - If the backend was rebuilt, restart it before testing — stale processes will return 404s on new endpoints.
 
+## Pull Requests
+
+After completing any significant change (multi-step features, refactors, etc.), always create a PR on a feature branch. Don't leave work on main without a PR. Include a summary, test plan, and link to the relevant issue.
+
 ## Requirements
 
 Feature requirements are tracked as GitHub issues. Use `gh issue list` to see open work and `gh issue view <number>` to read the full spec before implementing. Close issues when done.
