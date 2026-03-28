@@ -328,4 +328,30 @@ public class ReviewServiceTests : IAsyncLifetime
         var interval2 = result2!.DueAt!.Value - _time.GetUtcNow();
         interval1.Should().BeGreaterThan(interval2);
     }
+
+    [Fact]
+    public async Task RateCard_RespectsMaximumInterval_WhenSet()
+    {
+        await using var db = _db.CreateDbContext();
+
+        // Set a short maximum interval
+        var user = await db.Users.FirstAsync(u => u.Id == UserId);
+        user.MaximumInterval = 30; // 30 days max
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var cardId = await CreateCard(db, "MaxInt Q?", "MaxInt A.");
+
+        // Rate easy to get into review, then build up stability with good reviews
+        var result = await svc.RateCard(UserId, new RateCardRequest(cardId, "easy"));
+        for (var i = 0; i < 5; i++)
+        {
+            _time.SetUtcNow(result!.DueAt!.Value.AddMinutes(1));
+            result = await svc.RateCard(UserId, new RateCardRequest(cardId, "good"));
+        }
+
+        // Even after many good reviews, interval should never exceed 30 days
+        var interval = result!.DueAt!.Value - _time.GetUtcNow();
+        interval.TotalDays.Should().BeLessThanOrEqualTo(30);
+    }
 }
