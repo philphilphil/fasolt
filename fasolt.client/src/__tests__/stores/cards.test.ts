@@ -14,6 +14,7 @@ function makeCard(overrides: Partial<{
   state: 'new' | 'learning' | 'review' | 'relearning';
   stability: number | null; difficulty: number | null;
   step: number | null; dueAt: string | null; lastReviewedAt: string | null;
+  sourceFile: string | null; sourceHeading: string | null;
 }> = {}) {
   return {
     id: 'c1', sourceFile: null, sourceHeading: null,
