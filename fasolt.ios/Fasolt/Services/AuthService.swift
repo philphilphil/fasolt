@@ -18,6 +18,7 @@ final class AuthService {
     private var activeAuthSession: ASWebAuthenticationSession?
 
     static let redirectURI = "fasolt://oauth/callback"
+    static let firstPartyClientId = "fasolt-ios"
     static let defaultServerURL = "https://fasolt.app"
 
     init(keychain: KeychainHelper = KeychainHelper(), apiClient: APIClient = APIClient()) {
@@ -62,8 +63,8 @@ final class AuthService {
 
         do {
             authLogger.info("Starting sign-in to \(serverURL)")
-            let clientId = try await ensureClientRegistered(serverURL: serverURL)
-            authLogger.info("Client registered: \(clientId)")
+            let clientId = Self.firstPartyClientId
+            authLogger.info("Using first-party client: \(clientId)")
 
             let codeVerifier = Self.generateCodeVerifier()
             let codeChallenge = Self.generateCodeChallenge(from: codeVerifier)
@@ -95,9 +96,6 @@ final class AuthService {
             errorMessage = nil
         } catch {
             authLogger.error("Sign-in failed: \(error)")
-            // Clear stored client_id so next attempt re-registers
-            // (handles stale registrations after server DB reset)
-            keychain.delete("fasolt.clientId")
             // Restore previous server URL on failure
             if let previousServerURL {
                 keychain.save(previousServerURL, forKey: "fasolt.serverURL")
@@ -185,22 +183,6 @@ final class AuthService {
         await service.deleteDeviceToken()
         keychain.deleteAll()
         isAuthenticated = false
-    }
-
-    // MARK: - Client Registration
-
-    private func ensureClientRegistered(serverURL: String) async throws -> String {
-        // Always re-register — cached client_ids can become stale if the
-        // server DB is reset, and keychain entries survive app deletion.
-        let body = ClientRegistrationRequest(
-            clientName: "Fasolt iOS",
-            redirectUris: [Self.redirectURI]
-        )
-        let endpoint = Endpoint(path: "/oauth/register", method: .post, body: body)
-        let response: ClientRegistrationResponse = try await apiClient.unauthenticatedRequest(endpoint)
-
-        keychain.save(response.clientId, forKey: "fasolt.clientId")
-        return response.clientId
     }
 
     // MARK: - ASWebAuthenticationSession

@@ -3,6 +3,7 @@ namespace Fasolt.Server.Application.Dtos;
 public record AdminUserDto(
     string Id,
     string Email,
+    string? DisplayName,
     int CardCount,
     int DeckCount,
     bool IsLockedOut,

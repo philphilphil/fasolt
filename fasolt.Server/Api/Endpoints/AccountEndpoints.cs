@@ -37,7 +37,8 @@ public static class AccountEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.ExternalProvider));
+        var displayName = user.ExternalProvider is not null ? user.UserName : null;
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.ExternalProvider, displayName));
     }
 
     private static async Task<IResult> ChangeEmail(
@@ -79,7 +80,7 @@ public static class AccountEndpoints
         user.UserName = request.NewEmail;
         await userManager.UpdateAsync(user);
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.ExternalProvider));
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.ExternalProvider, null));
     }
 
     private static async Task<IResult> ChangePassword(
@@ -162,13 +163,13 @@ public static class AccountEndpoints
         if (!IsLocalUrl(returnUrl))
             returnUrl = "/";
 
-        var email = result.Principal.FindFirstValue(ClaimTypes.Email);
         var gitHubId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        var gitHubUsername = result.Principal.FindFirstValue(ClaimTypes.Name);
 
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(gitHubId))
+        if (string.IsNullOrEmpty(gitHubId) || string.IsNullOrEmpty(gitHubUsername))
         {
             await context.SignOutAsync(IdentityConstants.ExternalScheme);
-            return Results.Redirect("/login?error=github_no_email");
+            return Results.Redirect("/login?error=github_auth_failed");
         }
 
         // Look up by GitHub provider ID first
@@ -177,19 +178,14 @@ public static class AccountEndpoints
 
         if (user is null)
         {
-            // Check if email is already taken by a password-based account
-            var existingUser = await userManager.FindByEmailAsync(email);
-            if (existingUser is not null)
-            {
-                await context.SignOutAsync(IdentityConstants.ExternalScheme);
-                return Results.Redirect($"/login?error=email_exists");
-            }
+            // Synthetic email to satisfy Identity's unique email requirement
+            var syntheticEmail = $"{gitHubId}+{gitHubUsername}@users.noreply.github.com";
 
             // Create new account
             user = new AppUser
             {
-                UserName = email,
-                Email = email,
+                UserName = gitHubUsername,
+                Email = syntheticEmail,
                 EmailConfirmed = true,
                 ExternalProvider = "GitHub",
                 ExternalProviderId = gitHubId,

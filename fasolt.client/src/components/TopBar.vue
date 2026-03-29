@@ -35,12 +35,12 @@ const {
   close,
 } = useSearch()
 
+const userLabel = computed(() => auth.user?.displayName || auth.user?.email || '')
+
 const userInitial = computed(() => {
-  if (auth.user?.email) return auth.user.email[0].toUpperCase()
+  if (userLabel.value) return userLabel.value[0].toUpperCase()
   return '?'
 })
-
-const userLabel = computed(() => auth.user?.email || '')
 
 function focusSearch() {
   const el = searchInputRef.value?.$el as HTMLInputElement | undefined

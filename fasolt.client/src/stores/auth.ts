@@ -6,6 +6,7 @@ interface User {
   email: string
   isAdmin: boolean
   externalProvider: string | null
+  displayName: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
