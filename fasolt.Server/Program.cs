@@ -122,11 +122,7 @@ builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("fasolt");
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
-}
-else if (!string.IsNullOrEmpty(builder.Configuration["Plunk:ApiKey"]))
+if (!string.IsNullOrEmpty(builder.Configuration["Plunk:ApiKey"]))
 {
     builder.Services.AddHttpClient<IEmailSender<AppUser>, PlunkEmailSender>((sp, client) =>
     {
