@@ -219,6 +219,7 @@ builder.Services.AddScoped<OverviewService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<DeviceTokenService>();
 builder.Services.AddScoped<SchedulingSettingsService>();
+builder.Services.AddScoped<DeckSnapshotService>();
 
 var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
 var apnsKeyReady = apnsSettings is not null &&
