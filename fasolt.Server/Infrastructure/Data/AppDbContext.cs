@@ -17,6 +17,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
     public DbSet<ConsentGrant> ConsentGrants => Set<ConsentGrant>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+    public DbSet<DeckSnapshot> DeckSnapshots => Set<DeckSnapshot>();
     public DbSet<AppLog> Logs => Set<AppLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -60,6 +61,19 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
                     """to_tsvector('english', coalesce("Name",'') || ' ' || coalesce("Description",''))""",
                     stored: true);
             entity.HasIndex(e => e.SearchVector).HasMethod("gin");
+        });
+
+        builder.Entity<DeckSnapshot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PublicId).HasMaxLength(12).IsRequired();
+            entity.HasIndex(e => e.PublicId).IsUnique();
+            entity.Property(e => e.Data).HasColumnType("jsonb").IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.DeckId, e.CreatedAt });
+            entity.HasOne(e => e.Deck).WithMany().HasForeignKey(e => e.DeckId)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<DeckCard>(entity =>

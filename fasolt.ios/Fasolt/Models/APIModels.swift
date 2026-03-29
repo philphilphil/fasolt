@@ -224,3 +224,17 @@ struct UpdateDeckRequest: Encodable, Sendable {
     let name: String
     let description: String?
 }
+
+// MARK: - Snapshots
+
+struct DeckSnapshotDTO: Decodable, Sendable, Identifiable {
+    let id: String
+    let deckName: String?
+    let cardCount: Int
+    let createdAt: String
+}
+
+struct SnapshotCreateResultDTO: Decodable, Sendable {
+    let created: Int
+    let skipped: Int
+}

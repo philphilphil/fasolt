@@ -1,0 +1,112 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+import { useSnapshotsStore } from '@/stores/snapshots'
+import { useDecksStore } from '@/stores/decks'
+import type { DeckDetail } from '@/types'
+import { Button } from '@/components/ui/button'
+
+const route = useRoute()
+const router = useRouter()
+const snapshotsStore = useSnapshotsStore()
+const decksStore = useDecksStore()
+
+const deckId = route.params.id as string
+const deck = ref<DeckDetail | null>(null)
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const [d] = await Promise.all([
+      decksStore.getDeckDetail(deckId),
+      snapshotsStore.fetchByDeck(deckId),
+    ])
+    deck.value = d
+  } catch {
+    router.replace('/decks')
+  } finally {
+    loading.value = false
+  }
+})
+
+async function handleDelete(snapshotId: string) {
+  if (!confirm('Delete this snapshot? This cannot be undone.')) return
+  await snapshotsStore.deleteSnapshot(snapshotId)
+  await snapshotsStore.fetchByDeck(deckId)
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    + ' at '
+    + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+</script>
+
+<template>
+  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
+
+  <div v-else class="space-y-6">
+    <!-- Breadcrumb -->
+    <div class="text-[11px] text-muted-foreground">
+      <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
+      <span class="mx-1.5">/</span>
+      <RouterLink :to="`/decks/${deckId}`" class="hover:text-foreground transition-colors">{{ deck?.name }}</RouterLink>
+      <span class="mx-1.5">/</span>
+      <span class="text-foreground">Snapshots</span>
+    </div>
+
+    <!-- Header -->
+    <div class="flex items-start justify-between">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">Snapshots</h1>
+        <p class="text-sm text-muted-foreground mt-1">Restore {{ deck?.name }} to a previous state</p>
+      </div>
+      <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deckId}`)">
+        Back to deck
+      </Button>
+    </div>
+
+    <!-- Snapshots list -->
+    <div v-if="snapshotsStore.snapshots.length > 0" class="flex flex-col gap-2">
+      <div
+        v-for="snapshot in snapshotsStore.snapshots"
+        :key="snapshot.id"
+        class="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
+      >
+        <div>
+          <div class="text-[13px] font-semibold">{{ formatDate(snapshot.createdAt) }}</div>
+          <div class="text-[11px] text-muted-foreground">
+            {{ snapshot.cardCount }} cards
+            <span class="mx-1">·</span>
+            <span v-if="snapshot.contentChanges === 0" class="text-muted-foreground">no content differences</span>
+            <span v-else-if="snapshot.contentChanges != null" class="text-amber-500">{{ snapshot.contentChanges }} content difference{{ snapshot.contentChanges !== 1 ? 's' : '' }}</span>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            class="text-xs"
+            @click="router.push(`/decks/${deckId}/snapshots/${snapshot.id}/restore`)"
+          >
+            Restore
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-xs text-muted-foreground hover:text-destructive"
+            @click="handleDelete(snapshot.id)"
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-else class="py-12 text-center text-xs text-muted-foreground">
+      No snapshots yet. Create one in Settings.
+    </div>
+  </div>
+</template>

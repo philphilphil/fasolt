@@ -4,9 +4,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
+import { useSnapshotsStore } from '@/stores/snapshots'
 import { apiFetch, isApiError } from '@/api/client'
 
 const auth = useAuthStore()
+const snapshotsStore = useSnapshotsStore()
+const snapshotting = ref(false)
+const snapshotSuccess = ref(false)
+const snapshotError = ref('')
+const snapshotCreated = ref(0)
+const snapshotSkipped = ref(0)
+
+async function createSnapshot() {
+  snapshotting.value = true
+  snapshotSuccess.value = false
+  snapshotError.value = ''
+  try {
+    const result = await snapshotsStore.createAll()
+    snapshotCreated.value = result.created
+    snapshotSkipped.value = result.skipped
+    snapshotSuccess.value = true
+  } catch {
+    snapshotError.value = 'Failed to create snapshot. Please try again.'
+  } finally {
+    snapshotting.value = false
+  }
+}
 
 const desiredRetention = ref(0.9)
 const maximumInterval = ref(36500)
@@ -108,6 +131,32 @@ async function savePassword() {
 <template>
   <div class="flex flex-col gap-6">
     <h1 class="text-lg font-bold tracking-tight">Settings</h1>
+
+    <Card class="border-border/60">
+      <CardHeader>
+        <CardTitle class="text-sm">Snapshots</CardTitle>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <p class="text-xs text-muted-foreground">
+          Create a backup of all your decks. Snapshots capture every card's content so you can restore it later if something goes wrong. The last 10 snapshots per deck are kept automatically. Study progress is not affected by restoring — only card content (front, back, images, source) is reverted.
+        </p>
+        <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
+          <template v-if="snapshotCreated > 0 && snapshotSkipped === 0">
+            Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}.
+          </template>
+          <template v-else-if="snapshotCreated > 0 && snapshotSkipped > 0">
+            Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}. {{ snapshotSkipped }} unchanged, skipped.
+          </template>
+          <template v-else>
+            All decks unchanged — no snapshots needed.
+          </template>
+        </div>
+        <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ snapshotError }}</div>
+        <Button size="sm" class="self-start text-xs" :disabled="snapshotting" @click="createSnapshot">
+          {{ snapshotting ? 'Creating...' : 'Create snapshot' }}
+        </Button>
+      </CardContent>
+    </Card>
 
     <Card class="border-border/60">
       <CardHeader>
