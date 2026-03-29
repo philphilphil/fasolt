@@ -18,6 +18,7 @@ public static class SnapshotEndpoints
         group.MapGet("/snapshots/{id}", GetById);
         group.MapGet("/snapshots/{id}/diff", GetDiff);
         group.MapPost("/snapshots/{id}/restore", Restore);
+        group.MapDelete("/snapshots/{id}", Delete);
     }
 
     private static async Task<IResult> CreateAll(
@@ -95,5 +96,18 @@ public static class SnapshotEndpoints
 
         var success = await snapshotService.Restore(user.Id, id, request);
         return success ? Results.Ok() : Results.NotFound();
+    }
+
+    private static async Task<IResult> Delete(
+        string id,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        DeckSnapshotService snapshotService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var success = await snapshotService.Delete(user.Id, id);
+        return success ? Results.NoContent() : Results.NotFound();
     }
 }

@@ -227,6 +227,17 @@ public class DeckSnapshotService(AppDbContext db)
         return true;
     }
 
+    public async Task<bool> Delete(string userId, string snapshotPublicId)
+    {
+        var snapshot = await db.DeckSnapshots
+            .FirstOrDefaultAsync(s => s.PublicId == snapshotPublicId && s.UserId == userId);
+        if (snapshot is null) return false;
+
+        db.DeckSnapshots.Remove(snapshot);
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     private static void ApplySnapshotToCard(Card card, SnapshotCardData sc)
     {
         card.Front = sc.Front;

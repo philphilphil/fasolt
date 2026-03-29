@@ -29,6 +29,12 @@ onMounted(async () => {
   }
 })
 
+async function handleDelete(snapshotId: string) {
+  if (!confirm('Delete this snapshot? This cannot be undone.')) return
+  await snapshotsStore.deleteSnapshot(snapshotId)
+  await snapshotsStore.fetchByDeck(deckId)
+}
+
 function formatDate(iso: string) {
   const d = new Date(iso)
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
@@ -72,14 +78,24 @@ function formatDate(iso: string) {
           <div class="text-[13px] font-semibold">{{ formatDate(snapshot.createdAt) }}</div>
           <div class="text-[11px] text-muted-foreground">{{ snapshot.cardCount }} cards at time of snapshot</div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          class="text-xs"
-          @click="router.push(`/decks/${deckId}/snapshots/${snapshot.id}/restore`)"
-        >
-          Restore
-        </Button>
+        <div class="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            class="text-xs"
+            @click="router.push(`/decks/${deckId}/snapshots/${snapshot.id}/restore`)"
+          >
+            Restore
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="text-xs text-muted-foreground hover:text-destructive"
+            @click="handleDelete(snapshot.id)"
+          >
+            Delete
+          </Button>
+        </div>
       </div>
     </div>
 

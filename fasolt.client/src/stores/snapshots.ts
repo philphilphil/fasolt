@@ -31,5 +31,9 @@ export const useSnapshotsStore = defineStore('snapshots', () => {
     })
   }
 
-  return { snapshots, loading, createAll, fetchByDeck, getDiff, restore }
+  async function deleteSnapshot(snapshotId: string) {
+    await apiFetch(`/snapshots/${snapshotId}`, { method: 'DELETE' })
+  }
+
+  return { snapshots, loading, createAll, fetchByDeck, getDiff, restore, deleteSnapshot }
 })
