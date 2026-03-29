@@ -42,6 +42,21 @@ builder.Services
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
+var gitHubClientId = builder.Configuration["GitHub:ClientId"];
+var gitHubClientSecret = builder.Configuration["GitHub:ClientSecret"];
+
+if (!string.IsNullOrEmpty(gitHubClientId) && !string.IsNullOrEmpty(gitHubClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGitHub(options =>
+        {
+            options.ClientId = gitHubClientId;
+            options.ClientSecret = gitHubClientSecret;
+            options.CallbackPath = "/signin-github";
+            options.Scope.Add("user:email");
+        });
+}
+
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {
