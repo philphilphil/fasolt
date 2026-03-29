@@ -203,7 +203,7 @@ const stateCounts = computed(() => {
         <DialogHeader>
           <DialogTitle>Delete deck</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete "{{ deck.name }}"?
+            Are you sure you want to delete "{{ deck.name }}"? Snapshots for this deck will no longer be accessible.
           </DialogDescription>
         </DialogHeader>
         <div class="flex items-center gap-2">
