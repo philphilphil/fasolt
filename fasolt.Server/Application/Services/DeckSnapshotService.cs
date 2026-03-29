@@ -122,12 +122,9 @@ public class DeckSnapshotService(AppDbContext db)
 
         var currentById = currentCards.ToDictionary(c => c.Id);
         var snapshotById = data.Cards.ToDictionary(c => c.CardId);
-        var currentFrontBack = new HashSet<(string, string)>(
-            currentCards.Select(c => (c.Front, c.Back)));
 
         var deleted = data.Cards
-            .Where(sc => !currentById.ContainsKey(sc.CardId)
-                && !currentFrontBack.Contains((sc.Front, sc.Back)))
+            .Where(sc => !currentById.ContainsKey(sc.CardId))
             .Select(sc => new DiffDeletedCard(sc.CardId, sc.Front, sc.Back, sc.SourceFile, sc.Stability, sc.DueAt))
             .ToList();
 
@@ -183,16 +180,11 @@ public class DeckSnapshotService(AppDbContext db)
             }
             else
             {
-                // Skip if a card with identical content already exists in the deck (previously restored)
-                var alreadyExists = await db.DeckCards
-                    .Where(dc => dc.DeckId == deckId)
-                    .AnyAsync(dc => dc.Card.Front == sc.Front && dc.Card.Back == sc.Back);
-                if (alreadyExists) continue;
-
+                // Recreate card with original ID so snapshot references stay valid
                 var newCard = new Card
                 {
-                    Id = Guid.NewGuid(),
-                    PublicId = NanoIdGenerator.New(),
+                    Id = sc.CardId,
+                    PublicId = sc.PublicId,
                     UserId = userId,
                     Front = sc.Front,
                     Back = sc.Back,
@@ -210,7 +202,7 @@ public class DeckSnapshotService(AppDbContext db)
                     IsSuspended = sc.IsSuspended,
                 };
                 db.Cards.Add(newCard);
-                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = newCard.Id });
+                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = sc.CardId });
             }
         }
 
