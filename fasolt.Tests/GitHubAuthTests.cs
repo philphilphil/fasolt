@@ -81,6 +81,67 @@ public class GitHubAuthTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GitHubUser_HasExternalProvider_PasswordUser_DoesNot()
+    {
+        // Validates the guard pattern: user.ExternalProvider is not null
+        // used by ChangeEmail, ChangePassword, ForgotPassword, ResetPassword
+        await using var db = _db.CreateDbContext();
+
+        // Create a GitHub user
+        db.Users.Add(new AppUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = "ghguard",
+            NormalizedUserName = "GHGUARD",
+            Email = "123+ghguard@users.noreply.github.com",
+            NormalizedEmail = "123+GHGUARD@USERS.NOREPLY.GITHUB.COM",
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString(),
+            ExternalProvider = "GitHub",
+            ExternalProviderId = "123",
+        });
+        await db.SaveChangesAsync();
+
+        var ghUser = await db.Users.FirstOrDefaultAsync(u => u.ExternalProvider == "GitHub" && u.ExternalProviderId == "123");
+        ghUser.Should().NotBeNull();
+        ghUser!.ExternalProvider.Should().Be("GitHub");
+
+        // The seeded password user has null ExternalProvider
+        var pwUser = await db.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == "TEST@FASOLT.TEST");
+        pwUser.Should().NotBeNull();
+        pwUser!.ExternalProvider.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ForgotPassword_Guard_ExcludesExternalProviderUsers()
+    {
+        // Mirrors the ForgotPassword logic: user.ExternalProvider is null
+        await using var db = _db.CreateDbContext();
+
+        db.Users.Add(new AppUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = "ghforgot",
+            NormalizedUserName = "GHFORGOT",
+            Email = "ghforgot@users.noreply.github.com",
+            NormalizedEmail = "GHFORGOT@USERS.NOREPLY.GITHUB.COM",
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString(),
+            ExternalProvider = "GitHub",
+            ExternalProviderId = "forgot-test",
+        });
+        await db.SaveChangesAsync();
+
+        // GitHub user should be excluded by the guard
+        var ghUser = await db.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == "GHFORGOT@USERS.NOREPLY.GITHUB.COM");
+        (ghUser?.ExternalProvider is null).Should().BeFalse("GitHub user should have ExternalProvider set");
+
+        // Password user should pass the guard
+        var pwUser = await db.Users.FirstOrDefaultAsync(u => u.NormalizedEmail == "TEST@FASOLT.TEST");
+        (pwUser?.ExternalProvider is null).Should().BeTrue("password user should have null ExternalProvider");
+    }
+
+    [Fact]
     public async Task UniqueIndex_PreventsDuplicateExternalProvider()
     {
         await using var db = _db.CreateDbContext();

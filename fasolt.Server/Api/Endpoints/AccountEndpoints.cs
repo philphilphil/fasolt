@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Api.Endpoints;
@@ -49,6 +50,11 @@ public static class AccountEndpoints
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
+        if (user.ExternalProvider is not null)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Email changes are not available for externally linked accounts."]
+            });
         if (!await userManager.CheckPasswordAsync(user, request.CurrentPassword))
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
@@ -90,6 +96,11 @@ public static class AccountEndpoints
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
+        if (user.ExternalProvider is not null)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Password changes are not available for externally linked accounts."]
+            });
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
             return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
@@ -139,7 +150,7 @@ public static class AccountEndpoints
 
         var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
         // Validate returnUrl is local to prevent open redirect
-        if (!IsLocalUrl(returnUrl))
+        if (!UrlHelpers.IsLocalUrl(returnUrl))
             returnUrl = "/";
 
         var properties = new AuthenticationProperties
@@ -160,7 +171,7 @@ public static class AccountEndpoints
             return Results.Redirect("/login?error=github_auth_failed");
 
         var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-        if (!IsLocalUrl(returnUrl))
+        if (!UrlHelpers.IsLocalUrl(returnUrl))
             returnUrl = "/";
 
         var gitHubId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -200,15 +211,10 @@ public static class AccountEndpoints
         }
 
         // Sign in with the application cookie
-        await signInManager.SignInAsync(user, isPersistent: false);
+        await signInManager.SignInAsync(user, isPersistent: true);
         await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
         return Results.Redirect(returnUrl);
     }
 
-    private static bool IsLocalUrl(string url) =>
-        !string.IsNullOrEmpty(url) &&
-        url.StartsWith('/') &&
-        !url.StartsWith("//") &&
-        !url.StartsWith("/\\");
 }

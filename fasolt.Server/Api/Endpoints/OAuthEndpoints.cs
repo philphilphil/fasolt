@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -17,13 +18,6 @@ namespace Fasolt.Server.Api.Endpoints;
 
 public static class OAuthEndpoints
 {
-
-
-    private static bool IsLocalUrl(string url) =>
-        !string.IsNullOrEmpty(url) &&
-        url.StartsWith('/') &&
-        !url.StartsWith("//") &&
-        !url.StartsWith("/\\");
 
     private static bool IsAllowedRedirectUri(string uri, string[] allowedPatterns)
     {
@@ -239,7 +233,7 @@ public static class OAuthEndpoints
         app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery, IConfiguration configuration) =>
         {
             var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-            var returnUrl = IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
             var error = context.Request.Query["error"].FirstOrDefault();
 
             var tokens = antiforgery.GetAndStoreTokens(context);
@@ -334,7 +328,7 @@ public static class OAuthEndpoints
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
-                return Results.Redirect(IsLocalUrl(returnUrl) ? returnUrl : "/");
+                return Results.Redirect(UrlHelpers.IsLocalUrl(returnUrl) ? returnUrl : "/");
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
