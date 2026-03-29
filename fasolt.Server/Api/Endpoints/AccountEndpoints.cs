@@ -46,7 +46,7 @@ public static class AccountEndpoints
         var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
         await emailSender.SendConfirmationLinkAsync(user, user.Email, confirmLink);
 
-        await signInManager.SignInAsync(user, isPersistent: false);
+        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
         return Results.Ok();
     }
 
@@ -55,12 +55,17 @@ public static class AccountEndpoints
         SignInManager<AppUser> signInManager)
     {
         var result = await signInManager.PasswordSignInAsync(
-            request.Email, request.Password, request.RememberMe, lockoutOnFailure: true);
+            request.Email, request.Password, isPersistent: false, lockoutOnFailure: true);
 
         if (result.IsLockedOut)
             return Results.Problem("Account locked. Try again later.", statusCode: 429);
         if (!result.Succeeded)
             return Results.Problem("Invalid email or password.", statusCode: 401);
+
+        // Re-sign-in with email_confirmed claim in cookie
+        var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
+        if (user is not null)
+            await SignInWithEmailClaimAsync(signInManager, user, request.RememberMe);
 
         return Results.Ok();
     }
@@ -211,7 +216,8 @@ public static class AccountEndpoints
 
     private static async Task<IResult> ConfirmEmail(
         ConfirmEmailRequest request,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager)
     {
         var user = await userManager.FindByIdAsync(request.UserId);
         if (user is null)
@@ -227,7 +233,20 @@ public static class AccountEndpoints
                 [""] = ["Invalid or expired confirmation link."]
             });
 
+        // Refresh cookie so email_confirmed claim is updated
+        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+
         return Results.Ok();
+    }
+
+    private static async Task SignInWithEmailClaimAsync(
+        SignInManager<AppUser> signInManager, AppUser user, bool isPersistent)
+    {
+        var claims = new List<Claim>
+        {
+            new("email_confirmed", user.EmailConfirmed.ToString().ToLower())
+        };
+        await signInManager.SignInWithClaimsAsync(user, isPersistent, claims);
     }
 
     private static IResult GitHubLogin(HttpContext context, IConfiguration configuration)
