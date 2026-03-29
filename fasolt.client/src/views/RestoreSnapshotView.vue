@@ -22,8 +22,7 @@ const loading = ref(true)
 const restoring = ref(false)
 const error = ref('')
 
-const selectedDeleted = ref<string[]>([])
-const selectedModified = ref<string[]>([])
+const selected = ref<Record<string, boolean>>({})
 
 onMounted(async () => {
   try {
@@ -33,7 +32,11 @@ onMounted(async () => {
     ])
     deck.value = d
     diff.value = diffResult
-    selectedDeleted.value = diffResult.deleted.map(c => c.cardId)
+    // Deleted cards checked by default
+    const init: Record<string, boolean> = {}
+    for (const c of diffResult.deleted) init[c.cardId] = true
+    for (const c of diffResult.modified) init[c.cardId] = false
+    selected.value = init
   } catch {
     error.value = 'Failed to load snapshot diff.'
   } finally {
@@ -41,44 +44,33 @@ onMounted(async () => {
   }
 })
 
-const selectedCount = computed(() => selectedDeleted.value.length + selectedModified.value.length)
+const selectedDeletedIds = computed(() => diff.value?.deleted.filter(c => selected.value[c.cardId]).map(c => c.cardId) ?? [])
+const selectedModifiedIds = computed(() => diff.value?.modified.filter(c => selected.value[c.cardId]).map(c => c.cardId) ?? [])
+const selectedCount = computed(() => selectedDeletedIds.value.length + selectedModifiedIds.value.length)
 
 const isEmpty = computed(() => {
   if (!diff.value) return true
   return diff.value.deleted.length === 0 && diff.value.modified.length === 0 && diff.value.added.length === 0
 })
 
-function toggleDeleted(cardId: string, checked: boolean) {
-  if (checked) {
-    selectedDeleted.value = [...selectedDeleted.value, cardId]
-  } else {
-    selectedDeleted.value = selectedDeleted.value.filter(id => id !== cardId)
-  }
+function toggle(cardId: string, checked: boolean) {
+  selected.value = { ...selected.value, [cardId]: checked }
 }
 
-function toggleModified(cardId: string, checked: boolean) {
-  if (checked) {
-    selectedModified.value = [...selectedModified.value, cardId]
-  } else {
-    selectedModified.value = selectedModified.value.filter(id => id !== cardId)
-  }
-}
+const selectableIds = computed(() => {
+  if (!diff.value) return []
+  return [...diff.value.deleted.map(c => c.cardId), ...diff.value.modified.map(c => c.cardId)]
+})
 
 const allSelected = computed(() => {
-  if (!diff.value) return false
-  return selectedDeleted.value.length === diff.value.deleted.length
-    && selectedModified.value.length === diff.value.modified.length
+  return selectableIds.value.length > 0 && selectableIds.value.every(id => selected.value[id])
 })
 
 function toggleAll() {
-  if (!diff.value) return
-  if (allSelected.value) {
-    selectedDeleted.value = []
-    selectedModified.value = []
-  } else {
-    selectedDeleted.value = diff.value.deleted.map(c => c.cardId)
-    selectedModified.value = diff.value.modified.map(c => c.cardId)
-  }
+  const newVal = !allSelected.value
+  const next = { ...selected.value }
+  for (const id of selectableIds.value) next[id] = newVal
+  selected.value = next
 }
 
 async function handleRestore() {
@@ -87,8 +79,8 @@ async function handleRestore() {
   try {
     await snapshotsStore.restore(
       snapshotId,
-      selectedDeleted.value,
-      selectedModified.value,
+      selectedDeletedIds.value,
+      selectedModifiedIds.value,
     )
     router.push(`/decks/${deckId}`)
   } catch {
@@ -161,9 +153,9 @@ function formatDue(iso: string | null) {
             class="flex items-start gap-3 rounded-lg border border-border px-4 py-3"
           >
             <Checkbox
-              :checked="selectedDeleted.includes(card.cardId)"
+              :model-value="!!selected[card.cardId]"
               class="mt-0.5"
-              @update:checked="toggleDeleted(card.cardId, $event as boolean)"
+              @update:model-value="toggle(card.cardId, !!$event)"
             />
             <div class="min-w-0 flex-1">
               <div class="text-sm font-medium">{{ card.front }}</div>
@@ -191,9 +183,9 @@ function formatDue(iso: string | null) {
             class="flex items-start gap-3 rounded-lg border border-border px-4 py-3"
           >
             <Checkbox
-              :checked="selectedModified.includes(card.cardId)"
+              :model-value="!!selected[card.cardId]"
               class="mt-0.5"
-              @update:checked="toggleModified(card.cardId, $event as boolean)"
+              @update:model-value="toggle(card.cardId, !!$event)"
             />
             <div class="min-w-0 flex-1">
               <div v-if="card.hasContentChanges" class="text-sm space-y-1">
