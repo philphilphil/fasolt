@@ -180,7 +180,11 @@ public class DeckSnapshotService(AppDbContext db)
                     || sc.SourceFile != cur.SourceFile || sc.SourceHeading != cur.SourceHeading;
                 if (!contentChanged) return null;
                 return new DiffModifiedCard(
-                    sc.CardId, sc.Front, cur.Front, sc.Back, cur.Back);
+                    sc.CardId, sc.Front, cur.Front, sc.Back, cur.Back,
+                    sc.FrontSvg != cur.FrontSvg ? sc.FrontSvg : null,
+                    sc.FrontSvg != cur.FrontSvg ? cur.FrontSvg : null,
+                    sc.BackSvg != cur.BackSvg ? sc.BackSvg : null,
+                    sc.BackSvg != cur.BackSvg ? cur.BackSvg : null);
             })
             .Where(m => m is not null)
             .Cast<DiffModifiedCard>()

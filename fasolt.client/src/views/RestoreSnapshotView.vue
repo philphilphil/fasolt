@@ -21,6 +21,7 @@ const diff = ref<SnapshotDiff | null>(null)
 const loading = ref(true)
 const restoring = ref(false)
 const error = ref('')
+const svgPreview = ref('')
 
 const selected = ref<Record<string, boolean>>({})
 
@@ -188,7 +189,7 @@ function formatDue(iso: string | null) {
               class="mt-0.5"
               @update:model-value="toggle(card.cardId, !!$event)"
             />
-            <div class="min-w-0 flex-1">
+            <div class="min-w-0 flex-1 space-y-1">
               <div class="text-sm space-y-1">
                 <div v-if="card.front !== card.currentFront">
                   <span class="text-xs text-muted-foreground">front: </span>
@@ -199,6 +200,31 @@ function formatDue(iso: string | null) {
                   <span class="text-xs text-muted-foreground">back: </span>
                   <span class="line-through text-muted-foreground">{{ card.back }}</span>
                   <span class="ml-1.5">{{ card.currentBack }}</span>
+                </div>
+              </div>
+              <div v-if="card.snapshotFrontSvg !== null || card.snapshotBackSvg !== null" class="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <span v-if="card.snapshotFrontSvg !== null" class="text-amber-500">front image changed</span>
+                <span v-if="card.snapshotBackSvg !== null" class="text-amber-500">back image changed</span>
+                <button
+                  type="button"
+                  class="text-[11px] underline hover:text-foreground transition-colors"
+                  @click="svgPreview = svgPreview === card.cardId ? '' : card.cardId"
+                >
+                  {{ svgPreview === card.cardId ? 'hide' : 'view' }}
+                </button>
+              </div>
+              <div v-if="svgPreview === card.cardId" class="grid grid-cols-2 gap-3 mt-2 rounded border border-border p-3 bg-muted/30">
+                <div v-if="card.snapshotFrontSvg !== null">
+                  <div class="text-[10px] text-muted-foreground mb-1">front image — snapshot</div>
+                  <div class="bg-background rounded p-2" v-html="card.snapshotFrontSvg"></div>
+                  <div class="text-[10px] text-muted-foreground mb-1 mt-2">front image — current</div>
+                  <div class="bg-background rounded p-2" v-html="card.currentFrontSvg || '(none)'"></div>
+                </div>
+                <div v-if="card.snapshotBackSvg !== null">
+                  <div class="text-[10px] text-muted-foreground mb-1">back image — snapshot</div>
+                  <div class="bg-background rounded p-2" v-html="card.snapshotBackSvg"></div>
+                  <div class="text-[10px] text-muted-foreground mb-1 mt-2">back image — current</div>
+                  <div class="bg-background rounded p-2" v-html="card.currentBackSvg || '(none)'"></div>
                 </div>
               </div>
             </div>

@@ -105,6 +105,10 @@ export interface DiffModifiedCard {
   currentFront: string
   back: string
   currentBack: string
+  snapshotFrontSvg: string | null
+  currentFrontSvg: string | null
+  snapshotBackSvg: string | null
+  currentBackSvg: string | null
 }
 
 export interface DiffAddedCard {
