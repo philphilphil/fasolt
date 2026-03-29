@@ -80,6 +80,7 @@ async function saveSchedulingSettings() {
 const newEmail = ref('')
 const emailCurrentPassword = ref('')
 const emailSuccess = ref(false)
+const emailSuccessMessage = ref('')
 const emailError = ref('')
 
 const currentPassword = ref('')
@@ -115,6 +116,7 @@ onMounted(async () => {
       })
       await auth.fetchUser()
       newEmail.value = auth.user?.email || ''
+      emailSuccessMessage.value = 'Email updated.'
       emailSuccess.value = true
     } catch (e) {
       if (isApiError(e) && e.errors) {
@@ -132,6 +134,7 @@ async function saveEmail() {
   try {
     await auth.changeEmail(newEmail.value, emailCurrentPassword.value)
     emailCurrentPassword.value = ''
+    emailSuccessMessage.value = 'Verification email sent. Check your inbox to confirm the change.'
     emailSuccess.value = true
   } catch (e) {
     if (isApiError(e) && e.errors) {
@@ -273,7 +276,7 @@ async function savePassword() {
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
-            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Email updated.</div>
+            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">{{ emailSuccessMessage }}</div>
             <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ emailError }}</div>
             <div class="flex flex-col gap-1.5">
               <label for="new-email" class="text-xs font-medium">New email</label>
