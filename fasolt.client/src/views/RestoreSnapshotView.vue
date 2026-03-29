@@ -60,6 +60,23 @@ function toggleModified(cardId: string, checked: boolean) {
   selectedModified.value = s
 }
 
+const allSelected = computed(() => {
+  if (!diff.value) return false
+  return selectedDeleted.value.size === diff.value.deleted.length
+    && selectedModified.value.size === diff.value.modified.length
+})
+
+function toggleAll() {
+  if (!diff.value) return
+  if (allSelected.value) {
+    selectedDeleted.value = new Set()
+    selectedModified.value = new Set()
+  } else {
+    selectedDeleted.value = new Set(diff.value.deleted.map(c => c.cardId))
+    selectedModified.value = new Set(diff.value.modified.map(c => c.cardId))
+  }
+}
+
 async function handleRestore() {
   restoring.value = true
   error.value = ''
@@ -221,6 +238,9 @@ function formatDue(iso: string | null) {
 
     <!-- Sticky footer -->
     <div v-if="diff && !isEmpty" class="sticky bottom-0 bg-background border-t border-border -mx-4 px-4 py-3 flex items-center gap-3">
+      <Button variant="ghost" size="sm" class="text-xs" @click="toggleAll">
+        {{ allSelected ? 'Deselect all' : 'Select all' }}
+      </Button>
       <div class="flex-1 text-xs text-muted-foreground">
         {{ selectedCount }} card{{ selectedCount !== 1 ? 's' : '' }} selected
       </div>
