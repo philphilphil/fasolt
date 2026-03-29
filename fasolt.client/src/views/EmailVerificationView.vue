@@ -21,6 +21,10 @@ onUnmounted(() => {
 })
 
 async function handleResend() {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
   resending.value = true
   try {
     await auth.resendVerification()
