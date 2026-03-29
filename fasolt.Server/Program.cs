@@ -428,6 +428,7 @@ app.MapOAuthEndpoints();
 app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
 app.MapSchedulingSettingsEndpoints();
+app.MapSnapshotEndpoints();
 app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
 
 app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
