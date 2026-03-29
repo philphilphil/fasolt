@@ -123,7 +123,21 @@ builder.Services.AddDataProtection()
     .SetApplicationName("fasolt");
 
 if (builder.Environment.IsDevelopment())
+{
     builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
+}
+else if (!string.IsNullOrEmpty(builder.Configuration["Plunk:ApiKey"]))
+{
+    builder.Services.AddHttpClient<IEmailSender<AppUser>, PlunkEmailSender>((sp, client) =>
+    {
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", builder.Configuration["Plunk:ApiKey"]);
+    });
+}
+else
+{
+    builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
+}
 
 builder.Services.AddAuthorization(options =>
 {
