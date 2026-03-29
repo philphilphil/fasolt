@@ -43,7 +43,7 @@ final class SnapshotViewModel {
             let endpoint = Endpoint(path: "/api/snapshots", method: .post)
             let result: SnapshotCreateResultDTO = try await apiClient.request(endpoint)
             createSuccessCount = result.created
-            logger.info("Created snapshots for \(result.count) decks")
+            logger.info("Created snapshots for \(result.created) decks, \(result.skipped) skipped")
             await loadSnapshots()
         } catch {
             logger.error("Failed to create snapshot: \(error)")
