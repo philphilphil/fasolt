@@ -17,6 +17,15 @@ struct DashboardView: View {
                     if viewModel.totalCards > 0 {
                         stateBar
                     }
+                    if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
+                        ContentUnavailableView(
+                            "No cards yet",
+                            systemImage: "rectangle.on.rectangle",
+                            description: Text("Create cards via MCP (or the UI) to get started")
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 32)
+                    }
                     if !dueDecks.isEmpty {
                         deckSection
                     }
@@ -43,15 +52,6 @@ struct DashboardView: View {
                             Task { await viewModel.loadStats() }
                         }
                     }
-                }
-            }
-            .overlay {
-                if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
-                    ContentUnavailableView(
-                        "No cards yet",
-                        systemImage: "rectangle.on.rectangle",
-                        description: Text("Create cards via the API or MCP tools to get started")
-                    )
                 }
             }
             .task {

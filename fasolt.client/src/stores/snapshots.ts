@@ -11,6 +11,15 @@ export const useSnapshotsStore = defineStore('snapshots', () => {
     return apiFetch<{ created: number; skipped: number }>('/snapshots', { method: 'POST' })
   }
 
+  async function fetchRecent() {
+    loading.value = true
+    try {
+      snapshots.value = await apiFetch<DeckSnapshot[]>('/snapshots/recent')
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function fetchByDeck(deckId: string) {
     loading.value = true
     try {
@@ -35,5 +44,5 @@ export const useSnapshotsStore = defineStore('snapshots', () => {
     await apiFetch(`/snapshots/${snapshotId}`, { method: 'DELETE' })
   }
 
-  return { snapshots, loading, createAll, fetchByDeck, getDiff, restore, deleteSnapshot }
+  return { snapshots, loading, createAll, fetchRecent, fetchByDeck, getDiff, restore, deleteSnapshot }
 })
