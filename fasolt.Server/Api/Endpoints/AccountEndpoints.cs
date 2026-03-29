@@ -66,7 +66,7 @@ public static class AccountEndpoints
 
         var token = await userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
         var baseUrl = configuration["App:BaseUrl"]!;
-        var confirmLink = $"{baseUrl}/settings?action=confirm-email&token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.NewEmail)}";
+        var confirmLink = $"{baseUrl}/confirm-email-change?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.NewEmail)}";
         await emailSender.SendConfirmationLinkAsync(user, request.NewEmail, confirmLink);
 
         return Results.Ok(new { message = "Verification email sent to the new address." });

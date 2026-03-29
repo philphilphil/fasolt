@@ -43,6 +43,11 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/confirm-email-change',
+      name: 'confirm-email-change',
+      component: () => import('@/views/ConfirmEmailChangeView.vue'),
+    },
+    {
       path: '/oauth/consent',
       name: 'oauth-consent',
       component: () => import('@/views/OAuthConsentView.vue'),

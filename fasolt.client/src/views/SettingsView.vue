@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { useSnapshotsStore } from '@/stores/snapshots'
 import { apiFetch, isApiError } from '@/api/client'
-
-const route = useRoute()
 
 const auth = useAuthStore()
 const snapshotsStore = useSnapshotsStore()
@@ -80,7 +77,6 @@ async function saveSchedulingSettings() {
 const newEmail = ref('')
 const emailCurrentPassword = ref('')
 const emailSuccess = ref(false)
-const emailSuccessMessage = ref('')
 const emailError = ref('')
 
 const currentPassword = ref('')
@@ -99,33 +95,10 @@ const totalCardsBacked = computed(() =>
   snapshotsStore.snapshots.reduce((sum, s) => sum + s.cardCount, 0)
 )
 
-onMounted(async () => {
+onMounted(() => {
   newEmail.value = auth.user?.email || ''
   loadSchedulingSettings()
   snapshotsStore.fetchRecent()
-
-  // Handle email change confirmation from link
-  if (route.query.action === 'confirm-email' && route.query.token && route.query.email) {
-    try {
-      await apiFetch('/account/confirm-email-change', {
-        method: 'POST',
-        body: JSON.stringify({
-          newEmail: route.query.email,
-          token: route.query.token,
-        }),
-      })
-      await auth.fetchUser()
-      newEmail.value = auth.user?.email || ''
-      emailSuccessMessage.value = 'Email updated.'
-      emailSuccess.value = true
-    } catch (e) {
-      if (isApiError(e) && e.errors) {
-        emailError.value = Object.values(e.errors).flat().join(' ')
-      } else {
-        emailError.value = 'Invalid or expired confirmation link.'
-      }
-    }
-  }
 })
 
 async function saveEmail() {
@@ -134,7 +107,6 @@ async function saveEmail() {
   try {
     await auth.changeEmail(newEmail.value, emailCurrentPassword.value)
     emailCurrentPassword.value = ''
-    emailSuccessMessage.value = 'Verification email sent. Check your inbox to confirm the change.'
     emailSuccess.value = true
   } catch (e) {
     if (isApiError(e) && e.errors) {
@@ -276,7 +248,7 @@ async function savePassword() {
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
-            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">{{ emailSuccessMessage }}</div>
+            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Verification email sent. Check your inbox to confirm the change.</div>
             <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ emailError }}</div>
             <div class="flex flex-col gap-1.5">
               <label for="new-email" class="text-xs font-medium">New email</label>
