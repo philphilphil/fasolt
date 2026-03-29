@@ -458,7 +458,6 @@ app.Use(async (context, next) =>
 });
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<EmailVerificationMiddleware>();
 app.UseRateLimiter();
 app.UseMiddleware<ErrorResponseMiddleware>();
 
