@@ -831,6 +831,119 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
     #endregion
 
+    #region Restore — Deduplication
+
+    [Fact]
+    public async Task Restore_TrulyDeletedCard_DoesNotCreateDuplicateOnSecondRestore()
+    {
+        var (deckId, cardIds) = await SeedDeck("Restore NoDup", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        string snapshotPublicId;
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var snapshots = await svc.ListByDeck(UserId, deckId);
+            snapshotPublicId = snapshots[0].Id;
+        }
+
+        // Truly delete the card
+        await using (var db = _db.CreateDbContext())
+        {
+            var cardSvc = new CardService(db);
+            await cardSvc.DeleteCards(UserId, [cardIds[0]]);
+        }
+
+        // First restore — should create a new card
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var diff = await svc.ComputeDiff(UserId, snapshotPublicId);
+            diff!.Deleted.Should().HaveCount(1);
+            await svc.Restore(UserId, snapshotPublicId,
+                new RestoreRequest(diff.Deleted.Select(d => d.CardId).ToList(), []));
+        }
+
+        // Verify card is in deck
+        await using (var db = _db.CreateDbContext())
+        {
+            var deckSvc = new DeckService(db);
+            var detail = await deckSvc.GetDeck(UserId, deckId);
+            detail!.Cards.Should().HaveCount(1);
+        }
+
+        // Second restore — diff should NOT show the card as deleted (already restored)
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var diff = await svc.ComputeDiff(UserId, snapshotPublicId);
+            diff!.Deleted.Should().BeEmpty("card was already restored with matching content");
+        }
+    }
+
+    [Fact]
+    public async Task Restore_TrulyDeletedCard_SkipsIfContentAlreadyInDeck()
+    {
+        var (deckId, cardIds) = await SeedDeck("Restore SkipDup", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        string snapshotPublicId;
+        Guid originalCardId;
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var snapshots = await svc.ListByDeck(UserId, deckId);
+            snapshotPublicId = snapshots[0].Id;
+        }
+
+        // Truly delete the card
+        await using (var db = _db.CreateDbContext())
+        {
+            var cardSvc = new CardService(db);
+            await cardSvc.DeleteCards(UserId, [cardIds[0]]);
+        }
+
+        // Get the original card ID from diff
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var diff = await svc.ComputeDiff(UserId, snapshotPublicId);
+            originalCardId = diff!.Deleted[0].CardId;
+
+            // First restore
+            await svc.Restore(UserId, snapshotPublicId,
+                new RestoreRequest([originalCardId], []));
+        }
+
+        // Force a second restore with the same card ID — should not create a duplicate
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.Restore(UserId, snapshotPublicId,
+                new RestoreRequest([originalCardId], []));
+        }
+
+        // Should still have exactly 1 card, not 2
+        await using (var db = _db.CreateDbContext())
+        {
+            var deckSvc = new DeckService(db);
+            var detail = await deckSvc.GetDeck(UserId, deckId);
+            detail!.Cards.Should().HaveCount(1, "second restore should not create a duplicate");
+        }
+    }
+
+    #endregion
+
     #region Restore — Integration
 
     [Fact]
