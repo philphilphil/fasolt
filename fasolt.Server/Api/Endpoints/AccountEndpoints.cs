@@ -75,6 +75,11 @@ public static class AccountEndpoints
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
+        if (user.ExternalProvider is not null)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Email changes are not available for externally linked accounts."]
+            });
 
         var result = await userManager.ChangeEmailAsync(user, request.NewEmail, request.Token);
         if (!result.Succeeded)
@@ -208,6 +213,13 @@ public static class AccountEndpoints
                 await context.SignOutAsync(IdentityConstants.ExternalScheme);
                 return Results.Redirect("/login?error=account_creation_failed");
             }
+        }
+
+        // Update username if changed on GitHub
+        if (user.UserName != gitHubUsername)
+        {
+            user.UserName = gitHubUsername;
+            await userManager.UpdateAsync(user);
         }
 
         // Sign in with the application cookie
