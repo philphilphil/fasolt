@@ -11,17 +11,19 @@ const auth = useAuthStore()
 const snapshotsStore = useSnapshotsStore()
 const snapshotting = ref(false)
 const snapshotSuccess = ref(false)
+const snapshotError = ref('')
 const snapshotCount = ref(0)
 
 async function createSnapshot() {
   snapshotting.value = true
   snapshotSuccess.value = false
+  snapshotError.value = ''
   try {
     const result = await snapshotsStore.createAll()
     snapshotCount.value = result.count
     snapshotSuccess.value = true
   } catch {
-    // silent
+    snapshotError.value = 'Failed to create snapshot. Please try again.'
   } finally {
     snapshotting.value = false
   }
@@ -139,6 +141,7 @@ async function savePassword() {
         <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
           Snapshot created for {{ snapshotCount }} deck{{ snapshotCount !== 1 ? 's' : '' }}.
         </div>
+        <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ snapshotError }}</div>
         <Button size="sm" class="self-start text-xs" :disabled="snapshotting" @click="createSnapshot">
           {{ snapshotting ? 'Creating...' : 'Create snapshot' }}
         </Button>
