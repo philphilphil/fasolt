@@ -581,6 +581,219 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         diff!.Deleted.Should().HaveCount(1);
     }
 
+    [Fact]
+    public async Task Diff_SvgAdded_AppearsInModified()
+    {
+        var (deckId, _) = await SeedDeck("Diff SvgAdd", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Add SVG to front (was null in snapshot)
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.FrontSvg = "<svg><circle r='10'/></svg>";
+            await db.SaveChangesAsync();
+        }
+
+        await using var diffDb = _db.CreateDbContext();
+        var diffSvc = new DeckSnapshotService(diffDb);
+        var snapshots = await diffSvc.ListByDeck(UserId, deckId);
+        var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
+
+        diff!.Modified.Should().HaveCount(1);
+        var mod = diff.Modified[0];
+        mod.Front.Should().Be(mod.CurrentFront, "text didn't change");
+        mod.Back.Should().Be(mod.CurrentBack, "text didn't change");
+        mod.SnapshotFrontSvg.Should().BeNull("snapshot had no SVG");
+        mod.CurrentFrontSvg.Should().NotBeNull("current card has SVG");
+    }
+
+    [Fact]
+    public async Task Diff_SvgRemoved_AppearsInModified()
+    {
+        var (deckId, _) = await SeedDeck("Diff SvgRem", 1);
+
+        // Set SVG before snapshot
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.FrontSvg = "<svg><rect width='10' height='10'/></svg>";
+            await db.SaveChangesAsync();
+
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Remove SVG
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.FrontSvg = null;
+            await db.SaveChangesAsync();
+        }
+
+        await using var diffDb = _db.CreateDbContext();
+        var diffSvc = new DeckSnapshotService(diffDb);
+        var snapshots = await diffSvc.ListByDeck(UserId, deckId);
+        var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
+
+        diff!.Modified.Should().HaveCount(1);
+        var mod = diff.Modified[0];
+        mod.SnapshotFrontSvg.Should().NotBeNull("snapshot had SVG");
+        mod.CurrentFrontSvg.Should().BeNull("current card has no SVG");
+    }
+
+    [Fact]
+    public async Task Diff_SvgOnlyChange_TextUnchangedInResponse()
+    {
+        var (deckId, _) = await SeedDeck("Diff SvgOnly", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.BackSvg = "<svg><circle r='5'/></svg>";
+            await db.SaveChangesAsync();
+
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Change only SVG content
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.BackSvg = "<svg><circle r='20'/></svg>";
+            await db.SaveChangesAsync();
+        }
+
+        await using var diffDb = _db.CreateDbContext();
+        var diffSvc = new DeckSnapshotService(diffDb);
+        var snapshots = await diffSvc.ListByDeck(UserId, deckId);
+        var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
+
+        diff!.Modified.Should().HaveCount(1);
+        var mod = diff.Modified[0];
+        mod.Front.Should().Be(mod.CurrentFront, "front text unchanged");
+        mod.Back.Should().Be(mod.CurrentBack, "back text unchanged");
+        mod.SnapshotBackSvg.Should().Contain("r='5'");
+        mod.CurrentBackSvg.Should().Contain("r='20'");
+        mod.SnapshotFrontSvg.Should().BeNull("front SVG didn't change");
+        mod.CurrentFrontSvg.Should().BeNull("front SVG didn't change");
+    }
+
+    [Fact]
+    public async Task Diff_SourceOnlyChange_NotInModifiedBucket()
+    {
+        var (deckId, _) = await SeedDeck("Diff SourceOnly", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Change only sourceFile and sourceHeading
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.SourceFile = "new-source.md";
+            card.SourceHeading = "## New Heading";
+            await db.SaveChangesAsync();
+        }
+
+        await using var diffDb = _db.CreateDbContext();
+        var diffSvc = new DeckSnapshotService(diffDb);
+        var snapshots = await diffSvc.ListByDeck(UserId, deckId);
+        var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
+
+        diff!.Modified.Should().BeEmpty("source metadata changes should be ignored");
+    }
+
+    [Fact]
+    public async Task Restore_SvgOnlyChange_RestoresSvg()
+    {
+        var (deckId, _) = await SeedDeck("Restore Svg", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.FrontSvg = "<svg><circle r='10'/></svg>";
+            await db.SaveChangesAsync();
+
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Remove SVG
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.FrontSvg = null;
+            await db.SaveChangesAsync();
+        }
+
+        // Restore
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var snapshots = await svc.ListByDeck(UserId, deckId);
+            var diff = await svc.ComputeDiff(UserId, snapshots[0].Id);
+            diff!.Modified.Should().HaveCount(1);
+
+            await svc.Restore(UserId, snapshots[0].Id,
+                new RestoreRequest([], diff.Modified.Select(m => m.CardId).ToList()));
+        }
+
+        await using var checkDb = _db.CreateDbContext();
+        var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        restored.FrontSvg.Should().Be("<svg><circle r='10'/></svg>");
+    }
+
+    [Fact]
+    public async Task Restore_ContentReverted_FsrsPreserved()
+    {
+        var (deckId, _) = await SeedDeck("Restore NoFsrs", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Change both content and FSRS
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.Front = "Changed front";
+            card.Stability = 42.0;
+            card.State = "review";
+            card.DueAt = DateTimeOffset.Parse("2026-05-01T00:00:00Z");
+            await db.SaveChangesAsync();
+        }
+
+        // Restore
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var snapshots = await svc.ListByDeck(UserId, deckId);
+            var diff = await svc.ComputeDiff(UserId, snapshots[0].Id);
+            await svc.Restore(UserId, snapshots[0].Id,
+                new RestoreRequest([], diff!.Modified.Select(m => m.CardId).ToList()));
+        }
+
+        await using var checkDb = _db.CreateDbContext();
+        var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        restored.Front.Should().Be("Restore NoFsrs Q0", "content should be reverted");
+        restored.Stability.Should().Be(42.0, "FSRS should NOT be reverted");
+        restored.State.Should().Be("review", "FSRS should NOT be reverted");
+        restored.DueAt.Should().NotBeNull("FSRS should NOT be reverted");
+    }
+
     #endregion
 
     #region Restore — Deleted cards
