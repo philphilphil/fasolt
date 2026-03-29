@@ -22,8 +22,8 @@ const loading = ref(true)
 const restoring = ref(false)
 const error = ref('')
 
-const selectedDeleted = ref<Set<string>>(new Set())
-const selectedModified = ref<Set<string>>(new Set())
+const selectedDeleted = ref<string[]>([])
+const selectedModified = ref<string[]>([])
 
 onMounted(async () => {
   try {
@@ -33,7 +33,7 @@ onMounted(async () => {
     ])
     deck.value = d
     diff.value = diffResult
-    selectedDeleted.value = new Set(diffResult.deleted.map(c => c.cardId))
+    selectedDeleted.value = diffResult.deleted.map(c => c.cardId)
   } catch {
     error.value = 'Failed to load snapshot diff.'
   } finally {
@@ -41,7 +41,7 @@ onMounted(async () => {
   }
 })
 
-const selectedCount = computed(() => selectedDeleted.value.size + selectedModified.value.size)
+const selectedCount = computed(() => selectedDeleted.value.length + selectedModified.value.length)
 
 const isEmpty = computed(() => {
   if (!diff.value) return true
@@ -49,31 +49,35 @@ const isEmpty = computed(() => {
 })
 
 function toggleDeleted(cardId: string, checked: boolean) {
-  const s = new Set(selectedDeleted.value)
-  if (checked) s.add(cardId); else s.delete(cardId)
-  selectedDeleted.value = s
+  if (checked) {
+    selectedDeleted.value = [...selectedDeleted.value, cardId]
+  } else {
+    selectedDeleted.value = selectedDeleted.value.filter(id => id !== cardId)
+  }
 }
 
 function toggleModified(cardId: string, checked: boolean) {
-  const s = new Set(selectedModified.value)
-  if (checked) s.add(cardId); else s.delete(cardId)
-  selectedModified.value = s
+  if (checked) {
+    selectedModified.value = [...selectedModified.value, cardId]
+  } else {
+    selectedModified.value = selectedModified.value.filter(id => id !== cardId)
+  }
 }
 
 const allSelected = computed(() => {
   if (!diff.value) return false
-  return selectedDeleted.value.size === diff.value.deleted.length
-    && selectedModified.value.size === diff.value.modified.length
+  return selectedDeleted.value.length === diff.value.deleted.length
+    && selectedModified.value.length === diff.value.modified.length
 })
 
 function toggleAll() {
   if (!diff.value) return
   if (allSelected.value) {
-    selectedDeleted.value = new Set()
-    selectedModified.value = new Set()
+    selectedDeleted.value = []
+    selectedModified.value = []
   } else {
-    selectedDeleted.value = new Set(diff.value.deleted.map(c => c.cardId))
-    selectedModified.value = new Set(diff.value.modified.map(c => c.cardId))
+    selectedDeleted.value = diff.value.deleted.map(c => c.cardId)
+    selectedModified.value = diff.value.modified.map(c => c.cardId)
   }
 }
 
@@ -83,8 +87,8 @@ async function handleRestore() {
   try {
     await snapshotsStore.restore(
       snapshotId,
-      [...selectedDeleted.value],
-      [...selectedModified.value],
+      selectedDeleted.value,
+      selectedModified.value,
     )
     router.push(`/decks/${deckId}`)
   } catch {
@@ -157,7 +161,7 @@ function formatDue(iso: string | null) {
             class="flex items-start gap-3 rounded-lg border border-border px-4 py-3"
           >
             <Checkbox
-              :checked="selectedDeleted.has(card.cardId)"
+              :checked="selectedDeleted.includes(card.cardId)"
               class="mt-0.5"
               @update:checked="toggleDeleted(card.cardId, $event as boolean)"
             />
@@ -187,7 +191,7 @@ function formatDue(iso: string | null) {
             class="flex items-start gap-3 rounded-lg border border-border px-4 py-3"
           >
             <Checkbox
-              :checked="selectedModified.has(card.cardId)"
+              :checked="selectedModified.includes(card.cardId)"
               class="mt-0.5"
               @update:checked="toggleModified(card.cardId, $event as boolean)"
             />
