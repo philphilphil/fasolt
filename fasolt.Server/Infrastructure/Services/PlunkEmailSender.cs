@@ -93,7 +93,12 @@ public class PlunkEmailSender : IEmailSender<AppUser>
 
         var query = QueryHelpers.ParseQuery(decoded[(queryStart + 1)..]);
         if (query.TryGetValue("userId", out var userId) && query.TryGetValue("code", out var code))
-            return $"{_baseUrl}/confirm-email?userId={Uri.EscapeDataString(userId!)}&token={Uri.EscapeDataString(code!)}";
+        {
+            // Identity base64url-encodes the token; decode it back to the raw token
+            // so it matches what our ConfirmEmail endpoint (and ResendVerification) expects
+            var rawToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code!));
+            return $"{_baseUrl}/confirm-email?userId={Uri.EscapeDataString(userId!)}&token={Uri.EscapeDataString(rawToken)}";
+        }
 
         return confirmationLink;
     }
