@@ -36,7 +36,7 @@ public class PlunkEmailSender : IEmailSender<AppUser>
         var body = $"""
             <p>You requested a password reset for your Fasolt account.</p>
             <p><a href="{resetLink}">Reset your password</a></p>
-            <p>This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+            <p>This link expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
             """;
 
         return SendAsync(email, "Reset your Fasolt password", body);
@@ -47,7 +47,7 @@ public class PlunkEmailSender : IEmailSender<AppUser>
         var body = $"""
             <p>You requested a password reset for your Fasolt account.</p>
             <p>Your reset code is: <strong>{resetCode}</strong></p>
-            <p>This code expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+            <p>This code expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
             """;
 
         return SendAsync(email, "Your Fasolt password reset code", body);

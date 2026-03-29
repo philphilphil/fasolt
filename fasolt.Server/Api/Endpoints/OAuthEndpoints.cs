@@ -110,13 +110,21 @@ public static class OAuthEndpoints
         }).RequireRateLimiting("auth-strict");
 
         // Authorization Endpoint
-        app.MapGet("/oauth/authorize", async (HttpContext context, AppDbContext db, IDataProtectionProvider dataProtection) =>
+        app.MapGet("/oauth/authorize", async (HttpContext context, AppDbContext db, IDataProtectionProvider dataProtection, UserManager<AppUser> userManager) =>
         {
             var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
             if (result?.Principal is null)
             {
                 var returnUrl = context.Request.QueryString.Value;
                 return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
+            }
+
+            // Block unverified users from authorizing OAuth clients
+            var authUserId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var appUser = await userManager.FindByIdAsync(authUserId);
+            if (appUser is not null && !appUser.EmailConfirmed)
+            {
+                return Results.Redirect("/verify-email");
             }
 
             var user = result.Principal;

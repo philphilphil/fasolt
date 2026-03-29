@@ -1,6 +1,6 @@
 namespace Fasolt.Server.Application.Dtos;
 
-public record UserInfoResponse(string Email, bool IsAdmin, string? ExternalProvider = null, string? DisplayName = null);
+public record UserInfoResponse(string Email, bool IsAdmin, bool EmailConfirmed, string? ExternalProvider = null, string? DisplayName = null);
 
 public record ChangeEmailRequest(string NewEmail, string CurrentPassword);
 
@@ -11,3 +11,5 @@ public record ForgotPasswordRequest(string Email);
 public record ResetPasswordRequest(string Email, string Token, string NewPassword);
 
 public record ConfirmEmailChangeRequest(string NewEmail, string Token);
+
+public record ConfirmEmailRequest(string UserId, string Token);

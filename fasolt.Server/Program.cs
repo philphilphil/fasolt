@@ -135,7 +135,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
-    options.TokenLifespan = TimeSpan.FromHours(1);
+    options.TokenLifespan = TimeSpan.FromHours(24);
 });
 
 builder.Services.AddDataProtection()
@@ -458,6 +458,7 @@ app.Use(async (context, next) =>
 });
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<EmailVerificationMiddleware>();
 app.UseRateLimiter();
 app.UseMiddleware<ErrorResponseMiddleware>();
 

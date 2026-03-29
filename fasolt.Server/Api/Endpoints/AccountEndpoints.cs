@@ -21,6 +21,8 @@ public static class AccountEndpoints
         group.MapPut("/password", ChangePassword).RequireAuthorization();
         group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
         group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
+        group.MapPost("/resend-verification", ResendVerification).RequireAuthorization().RequireRateLimiting("auth");
+        group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
     }
@@ -39,14 +41,15 @@ public static class AccountEndpoints
         if (user is null) return Results.Unauthorized();
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
         var displayName = user.ExternalProvider is not null ? user.UserName : null;
-        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.ExternalProvider, displayName));
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, displayName));
     }
 
     private static async Task<IResult> ChangeEmail(
         ChangeEmailRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
-        IEmailSender<AppUser> emailSender)
+        IEmailSender<AppUser> emailSender,
+        IConfiguration configuration)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -62,7 +65,8 @@ public static class AccountEndpoints
             });
 
         var token = await userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
-        var confirmLink = $"/settings?action=confirm-email&token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.NewEmail)}";
+        var baseUrl = configuration["App:BaseUrl"]!;
+        var confirmLink = $"{baseUrl}/settings?action=confirm-email&token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.NewEmail)}";
         await emailSender.SendConfirmationLinkAsync(user, request.NewEmail, confirmLink);
 
         return Results.Ok(new { message = "Verification email sent to the new address." });
@@ -91,7 +95,7 @@ public static class AccountEndpoints
         user.UserName = request.NewEmail;
         await userManager.UpdateAsync(user);
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.ExternalProvider, null));
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, null));
     }
 
     private static async Task<IResult> ChangePassword(
@@ -115,13 +119,15 @@ public static class AccountEndpoints
     private static async Task<IResult> ForgotPassword(
         ForgotPasswordRequest request,
         UserManager<AppUser> userManager,
-        IEmailSender<AppUser> emailSender)
+        IEmailSender<AppUser> emailSender,
+        IConfiguration configuration)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is not null && user.ExternalProvider is null)
+        if (user is not null && user.ExternalProvider is null && user.EmailConfirmed)
         {
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
-            var resetLink = $"/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(token)}";
+            var baseUrl = configuration["App:BaseUrl"]!;
+            var resetLink = $"{baseUrl}/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(token)}";
             await emailSender.SendPasswordResetLinkAsync(user, request.Email, resetLink);
         }
         // Always return OK to prevent email enumeration
@@ -144,6 +150,45 @@ public static class AccountEndpoints
             {
                 [""] = ["Invalid or expired reset link."]
             });
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> ResendVerification(
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        IEmailSender<AppUser> emailSender,
+        IConfiguration configuration)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (user.EmailConfirmed) return Results.Ok();
+
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var baseUrl = configuration["App:BaseUrl"]!;
+        var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
+        await emailSender.SendConfirmationLinkAsync(user, user.Email!, confirmLink);
+
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> ConfirmEmail(
+        ConfirmEmailRequest request,
+        UserManager<AppUser> userManager)
+    {
+        var user = await userManager.FindByIdAsync(request.UserId);
+        if (user is null)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Invalid or expired confirmation link."]
+            });
+
+        var result = await userManager.ConfirmEmailAsync(user, request.Token);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = ["Invalid or expired confirmation link."]
+            });
+
         return Results.Ok();
     }
 
