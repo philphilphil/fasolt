@@ -25,10 +25,12 @@ const props = withDefaults(defineProps<{
   showDecks?: boolean
   showPagination?: boolean
   pageSize?: number
+  deckContext?: { id: string; name: string } | null
 }>(), {
   showDecks: false,
   showPagination: false,
   pageSize: 20,
+  deckContext: null,
 })
 
 const emit = defineEmits<{
@@ -48,10 +50,13 @@ const columns = computed<ColumnDef<any>[]>(() => {
         const display = val.length > 80 ? val.slice(0, 80) + '…' : val
         const source = row.original.sourceFile
         const hasSvg = row.original.frontSvg || row.original.backSvg
+        const cardLink = props.deckContext
+          ? `/cards/${row.original.id}?deckId=${props.deckContext.id}&deckName=${encodeURIComponent(props.deckContext.name)}`
+          : `/cards/${row.original.id}`
         return h('div', { class: 'min-w-0' }, [
           h('div', { class: 'flex items-center gap-1.5' }, [
             h(RouterLink, {
-              to: `/cards/${row.original.id}`,
+              to: cardLink,
               class: 'hover:text-accent transition-colors',
             }, () => display),
             hasSvg ? h(Image, { class: 'size-3 text-muted-foreground shrink-0' }) : null,
@@ -104,7 +109,12 @@ const columns = computed<ColumnDef<any>[]>(() => {
     cell: ({ row }) => {
       const card = row.original
       const buttons = [
-        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => router.push(`/cards/${card.id}?edit=true`) }, () => 'Edit'),
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => {
+          const editLink = props.deckContext
+            ? `/cards/${card.id}?edit=true&deckId=${props.deckContext.id}&deckName=${encodeURIComponent(props.deckContext.name)}`
+            : `/cards/${card.id}?edit=true`
+          router.push(editLink)
+        } }, () => 'Edit'),
       ]
       if (!props.showDecks) {
         buttons.push(

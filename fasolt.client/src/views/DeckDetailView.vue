@@ -170,6 +170,7 @@ const stateCounts = computed(() => {
       <CardTable
         v-if="deck.cards.length > 0"
         :cards="deck.cards"
+        :deck-context="{ id: deck.id, name: deck.name }"
         @delete="(card) => { deleteCardTarget = card; deleteCardOpen = true }"
         @remove="(card) => removeCard(card.id)"
       >
