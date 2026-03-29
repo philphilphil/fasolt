@@ -74,3 +74,43 @@ export interface SourceItem {
   cardCount: number
   dueCount: number
 }
+
+export interface DeckSnapshot {
+  id: string
+  deckName: string | null
+  cardCount: number
+  createdAt: string
+}
+
+export interface SnapshotDiff {
+  deleted: DiffDeletedCard[]
+  modified: DiffModifiedCard[]
+  added: DiffAddedCard[]
+}
+
+export interface DiffDeletedCard {
+  cardId: string
+  front: string
+  back: string
+  sourceFile: string | null
+  stability: number | null
+  dueAt: string | null
+}
+
+export interface DiffModifiedCard {
+  cardId: string
+  front: string
+  currentFront: string
+  back: string
+  currentBack: string
+  snapshotStability: number | null
+  currentStability: number | null
+  hasContentChanges: boolean
+  hasFsrsChanges: boolean
+}
+
+export interface DiffAddedCard {
+  cardId: string
+  front: string
+  back: string
+}
