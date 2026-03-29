@@ -106,7 +106,7 @@ function formatDate(iso: string) {
 
     <!-- Empty state -->
     <div v-else class="py-12 text-center text-xs text-muted-foreground">
-      No snapshots yet. Snapshots are created automatically or via the study page.
+      No snapshots yet. Create one in Settings.
     </div>
   </div>
 </template>
