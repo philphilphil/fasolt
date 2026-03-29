@@ -65,7 +65,7 @@ public class PlunkEmailSender : IEmailSender<AppUser>
 
         var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync("https://api.useplunk.com/v1/send", content);
+        var response = await _httpClient.PostAsync("https://next-api.useplunk.com/v1/send", content);
 
         if (!response.IsSuccessStatusCode)
         {
