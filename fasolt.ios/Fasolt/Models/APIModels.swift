@@ -2,24 +2,6 @@ import Foundation
 
 // MARK: - Auth
 
-struct ClientRegistrationRequest: Encodable, Sendable {
-    let clientName: String
-    let redirectUris: [String]
-
-    enum CodingKeys: String, CodingKey {
-        case clientName = "client_name"
-        case redirectUris = "redirect_uris"
-    }
-}
-
-struct ClientRegistrationResponse: Decodable, Sendable {
-    let clientId: String
-
-    enum CodingKeys: String, CodingKey {
-        case clientId = "client_id"
-    }
-}
-
 struct TokenResponse: Decodable, Sendable {
     let accessToken: String
     let refreshToken: String?
@@ -160,6 +142,8 @@ struct PaginatedResponse<T: Decodable & Sendable>: Decodable, Sendable {
 struct UserInfoResponse: Decodable, Sendable {
     let email: String
     let isAdmin: Bool
+    let externalProvider: String?
+    let displayName: String?
 }
 
 // MARK: - Notifications

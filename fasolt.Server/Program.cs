@@ -11,6 +11,7 @@ using Fasolt.Server.Infrastructure.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using FSRS.Core.Extensions;
+using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using dotenv.net;
 
@@ -41,6 +42,25 @@ builder.Services
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
+
+var gitHubClientId = builder.Configuration["GitHub:ClientId"];
+var gitHubClientSecret = builder.Configuration["GitHub:ClientSecret"];
+
+if (!string.IsNullOrEmpty(gitHubClientId) && !string.IsNullOrEmpty(gitHubClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGitHub(options =>
+        {
+            options.ClientId = gitHubClientId;
+            options.ClientSecret = gitHubClientSecret;
+            options.CallbackPath = "/signin-github";
+            options.SignInScheme = IdentityConstants.ExternalScheme;
+            options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+            options.CorrelationCookie.SecurePolicy = builder.Environment.IsDevelopment()
+                ? CookieSecurePolicy.SameAsRequest
+                : CookieSecurePolicy.Always;
+        });
+}
 
 builder.Services.AddOpenIddict()
     .AddCore(options =>
@@ -100,7 +120,7 @@ builder.Services.AddOpenIddict()
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
         ? CookieSecurePolicy.SameAsRequest
         : CookieSecurePolicy.Always;
@@ -263,6 +283,30 @@ if (!app.Environment.IsEnvironment("Testing"))
     if (!await roleManager.RoleExistsAsync("Admin"))
     {
         await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+
+    // Seed first-party iOS OAuth client
+    var appManager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+    const string iosClientId = "fasolt-ios";
+    var existing = await appManager.FindByClientIdAsync(iosClientId);
+    if (existing is null)
+    {
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = iosClientId,
+            DisplayName = "Fasolt iOS",
+            ClientType = OpenIddictConstants.ClientTypes.Public,
+            ApplicationType = OpenIddictConstants.ApplicationTypes.Native,
+            ConsentType = OpenIddictConstants.ConsentTypes.Systematic,
+        };
+        descriptor.RedirectUris.Add(new Uri("fasolt://oauth/callback"));
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess);
+        await appManager.CreateAsync(descriptor);
     }
 }
 

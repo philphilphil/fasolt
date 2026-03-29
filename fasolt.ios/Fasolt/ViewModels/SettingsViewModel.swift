@@ -7,6 +7,8 @@ private let logger = Logger(subsystem: "com.fasolt.app", category: "Settings")
 @Observable
 final class SettingsViewModel {
     var email: String?
+    var displayName: String?
+    var externalProvider: String?
     var serverURL: String?
     var isLoading = false
     var errorMessage: String?
@@ -27,11 +29,15 @@ final class SettingsViewModel {
             let endpoint = Endpoint(path: "/api/account/me", method: .get)
             let userInfo: UserInfoResponse = try await apiClient.request(endpoint)
             email = userInfo.email
-            logger.info("Loaded user info: \(userInfo.email)")
+            displayName = userInfo.displayName
+            externalProvider = userInfo.externalProvider
+            logger.info("Loaded user info: \(userInfo.displayName ?? userInfo.email)")
         } catch {
             logger.error("Failed to load user info: \(error)")
             errorMessage = "Could not load account info."
             email = nil
+            displayName = nil
+            externalProvider = nil
         }
 
         isLoading = false

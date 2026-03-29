@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -17,13 +18,6 @@ namespace Fasolt.Server.Api.Endpoints;
 
 public static class OAuthEndpoints
 {
-
-
-    private static bool IsLocalUrl(string url) =>
-        !string.IsNullOrEmpty(url) &&
-        url.StartsWith('/') &&
-        !url.StartsWith("//") &&
-        !url.StartsWith("/\\");
 
     private static bool IsAllowedRedirectUri(string uri, string[] allowedPatterns)
     {
@@ -133,10 +127,13 @@ public static class OAuthEndpoints
             var openIddictRequest = context.GetOpenIddictServerRequest();
             var clientId = openIddictRequest?.ClientId;
 
+            // First-party clients auto-consent silently
+            var firstPartyClientIds = new HashSet<string> { "fasolt-ios" };
+
             if (clientId is not null)
             {
-                var hasConsent = await db.ConsentGrants
-                    .AnyAsync(g => g.UserId == userId && g.ClientId == clientId);
+                var hasConsent = firstPartyClientIds.Contains(clientId)
+                    || await db.ConsentGrants.AnyAsync(g => g.UserId == userId && g.ClientId == clientId);
 
                 if (!hasConsent)
                 {
@@ -233,10 +230,10 @@ public static class OAuthEndpoints
         }).RequireRateLimiting("auth");
 
         // OAuth Login Page (GET)
-        app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery, IConfiguration configuration) =>
         {
             var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-            var returnUrl = IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
             var error = context.Request.Query["error"].FirstOrDefault();
 
             var tokens = antiforgery.GetAndStoreTokens(context);
@@ -246,6 +243,16 @@ public static class OAuthEndpoints
                 ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
                 : "";
             var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
+
+            var gitHubEnabled = !string.IsNullOrEmpty(configuration["GitHub:ClientId"]);
+            var gitHubReturnUrl = Uri.EscapeDataString(returnUrl);
+            var gitHubHtml = gitHubEnabled ? $$"""
+                <a href="/api/account/github-login?returnUrl={{gitHubReturnUrl}}" class="btn-github">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    Sign in with GitHub
+                </a>
+                <div class="or-divider"><span>or</span></div>
+            """ : "";
 
             var html = $$"""
             <!DOCTYPE html>
@@ -270,6 +277,11 @@ public static class OAuthEndpoints
                     button:active { background: #09090b; }
                     .error { color: #dc2626; font-size: 0.8125rem; margin-bottom: 12px; padding: 8px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; }
                     .footer { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #a1a1aa; }
+                    .or-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #a1a1aa; font-size: 0.75rem; }
+                    .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+                    .btn-github { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: #24292f; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background 0.15s; }
+                    .btn-github:hover { background: #32383f; }
+                    .btn-github:active { background: #1b1f23; }
                 </style>
             </head>
             <body>
@@ -278,6 +290,7 @@ public static class OAuthEndpoints
                     <p class="subtitle">Sign in to connect your AI client</p>
                     <div class="divider"></div>
                     {{errorHtml}}
+                    {{gitHubHtml}}
                     <form method="post" action="/oauth/login">
                         <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                         <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
@@ -315,7 +328,7 @@ public static class OAuthEndpoints
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
-                return Results.Redirect(IsLocalUrl(returnUrl) ? returnUrl : "/");
+                return Results.Redirect(UrlHelpers.IsLocalUrl(returnUrl) ? returnUrl : "/");
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");

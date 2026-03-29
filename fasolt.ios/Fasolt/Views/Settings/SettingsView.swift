@@ -73,35 +73,6 @@ struct SettingsView: View {
 
     private var settingsContent: some View {
         List {
-            Section("Account") {
-                if viewModel.isLoading {
-                    HStack {
-                        Text("Loading...")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        ProgressView()
-                    }
-                } else if let error = viewModel.errorMessage {
-                    HStack {
-                        Label(error, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Button("Retry") {
-                            Task { await viewModel.loadUserInfo() }
-                        }
-                        .font(.subheadline)
-                    }
-                } else {
-                    if let email = viewModel.email {
-                        LabeledContent("Email", value: email)
-                    }
-                    if let serverURL = viewModel.serverURL {
-                        LabeledContent("Server", value: serverURL)
-                            .lineLimit(1)
-                    }
-                }
-            }
-
             McpSetupSection(serverURL: authService.serverURL)
 
             Section("Notifications") {
@@ -203,14 +174,46 @@ struct SettingsView: View {
                 }
             }
 
+            Section("About") {
+                LabeledContent("Version", value: viewModel.appVersion)
+            }
+
+            Section("Account") {
+                if viewModel.isLoading {
+                    HStack {
+                        Text("Loading...")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ProgressView()
+                    }
+                } else if let error = viewModel.errorMessage {
+                    HStack {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Retry") {
+                            Task { await viewModel.loadUserInfo() }
+                        }
+                        .font(.subheadline)
+                    }
+                } else {
+                    if let displayName = viewModel.displayName {
+                        LabeledContent("Signed in as", value: displayName)
+                    } else if let email = viewModel.email {
+                        LabeledContent("Email", value: email)
+                    }
+                    LabeledContent("Account type", value: viewModel.externalProvider ?? "Email & password")
+                    if let serverURL = viewModel.serverURL {
+                        LabeledContent("Server", value: serverURL)
+                            .lineLimit(1)
+                    }
+                }
+            }
+
             Section {
                 Button("Sign Out", role: .destructive) {
                     showSignOutConfirmation = true
                 }
-            }
-
-            Section("About") {
-                LabeledContent("Version", value: viewModel.appVersion)
             }
         }
     }

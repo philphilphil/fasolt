@@ -187,8 +187,8 @@ onMounted(() => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Display Name</TableHead>
+            <TableHead>User</TableHead>
+            <TableHead>Provider</TableHead>
             <TableHead class="text-right">Cards</TableHead>
             <TableHead class="text-right">Decks</TableHead>
             <TableHead>Push</TableHead>
@@ -208,8 +208,11 @@ onMounted(() => {
             </TableCell>
           </TableRow>
           <TableRow v-for="u in users" :key="u.id">
-            <TableCell class="font-medium">{{ u.email }}</TableCell>
-            <TableCell>{{ u.displayName ?? '—' }}</TableCell>
+            <TableCell class="font-medium">{{ u.displayName || u.email }}</TableCell>
+            <TableCell>
+              <Badge v-if="u.displayName" variant="secondary">GitHub</Badge>
+              <span v-else class="text-xs text-muted-foreground">Email</span>
+            </TableCell>
             <TableCell class="text-right">{{ u.cardCount }}</TableCell>
             <TableCell class="text-right">{{ u.deckCount }}</TableCell>
             <TableCell>
@@ -317,7 +320,7 @@ onMounted(() => {
         <DialogHeader>
           <DialogTitle>Lock user account?</DialogTitle>
           <DialogDescription>
-            This will prevent {{ lockTargetUser?.email }} from logging in. You can unlock them later.
+            This will prevent {{ lockTargetUser?.displayName || lockTargetUser?.email }} from logging in. You can unlock them later.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter class="gap-2">

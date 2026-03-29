@@ -5,6 +5,8 @@ import { apiFetch } from '@/api/client'
 interface User {
   email: string
   isAdmin: boolean
+  externalProvider: string | null
+  displayName: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -12,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoading = ref(true)
   const isAuthenticated = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.isAdmin ?? false)
+  const isExternalAccount = computed(() => user.value?.externalProvider != null)
 
   async function fetchUser() {
     try {
@@ -88,6 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading,
     isAuthenticated,
     isAdmin,
+    isExternalAccount,
     fetchUser,
     register,
     login,

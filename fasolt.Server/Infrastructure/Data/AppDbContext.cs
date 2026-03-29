@@ -105,6 +105,11 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.Property(e => e.NotificationIntervalHours).HasDefaultValue(8);
             entity.Property(e => e.DesiredRetention).HasDefaultValue(null);
             entity.Property(e => e.MaximumInterval).HasDefaultValue(null);
+            entity.Property(e => e.ExternalProvider).HasMaxLength(50);
+            entity.Property(e => e.ExternalProviderId).HasMaxLength(255);
+            entity.HasIndex(e => new { e.ExternalProvider, e.ExternalProviderId })
+                .IsUnique()
+                .HasFilter("\"ExternalProvider\" IS NOT NULL");
         });
 
         builder.Entity<AppLog>(entity =>

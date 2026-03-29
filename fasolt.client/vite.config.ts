@@ -22,7 +22,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': {
+        target: 'http://localhost:8080',
+        headers: { 'X-Forwarded-Host': 'localhost:5173', 'X-Forwarded-Proto': 'http' },
+      },
+      '/signin-github': {
+        target: 'http://localhost:8080',
+        headers: { 'X-Forwarded-Host': 'localhost:5173', 'X-Forwarded-Proto': 'http' },
+      },
       '/mcp': {
         target: 'http://localhost:8080',
         rewrite: undefined,
