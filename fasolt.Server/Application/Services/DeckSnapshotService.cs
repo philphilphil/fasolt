@@ -109,7 +109,7 @@ public class DeckSnapshotService(AppDbContext db)
                 continue;
             }
             if (sc.Front != cur.Front || sc.Back != cur.Back
-                || sc.FrontSvg != cur.FrontSvg || sc.BackSvg != cur.BackSvg)
+                || !SvgEqual(sc.FrontSvg, cur.FrontSvg) || !SvgEqual(sc.BackSvg, cur.BackSvg))
                 count++; // content changed
         }
         // Cards in deck but not in snapshot = added
@@ -175,15 +175,17 @@ public class DeckSnapshotService(AppDbContext db)
             .Select(sc =>
             {
                 var cur = currentById[sc.CardId];
+                var frontSvgChanged = !SvgEqual(sc.FrontSvg, cur.FrontSvg);
+                var backSvgChanged = !SvgEqual(sc.BackSvg, cur.BackSvg);
                 var contentChanged = sc.Front != cur.Front || sc.Back != cur.Back
-                    || sc.FrontSvg != cur.FrontSvg || sc.BackSvg != cur.BackSvg;
+                    || frontSvgChanged || backSvgChanged;
                 if (!contentChanged) return null;
                 return new DiffModifiedCard(
                     sc.CardId, sc.Front, cur.Front, sc.Back, cur.Back,
-                    sc.FrontSvg != cur.FrontSvg ? sc.FrontSvg : null,
-                    sc.FrontSvg != cur.FrontSvg ? cur.FrontSvg : null,
-                    sc.BackSvg != cur.BackSvg ? sc.BackSvg : null,
-                    sc.BackSvg != cur.BackSvg ? cur.BackSvg : null);
+                    frontSvgChanged ? sc.FrontSvg : null,
+                    frontSvgChanged ? cur.FrontSvg : null,
+                    backSvgChanged ? sc.BackSvg : null,
+                    backSvgChanged ? cur.BackSvg : null);
             })
             .Where(m => m is not null)
             .Cast<DiffModifiedCard>()
@@ -270,6 +272,21 @@ public class DeckSnapshotService(AppDbContext db)
         db.DeckSnapshots.Remove(snapshot);
         await db.SaveChangesAsync();
         return true;
+    }
+
+    private static bool SvgEqual(string? a, string? b)
+    {
+        if (a == b) return true;
+        if (a is null || b is null) return false;
+        // Normalize whitespace differences from SVG sanitizer reformatting
+        return NormalizeSvg(a) == NormalizeSvg(b);
+    }
+
+    private static string NormalizeSvg(string svg)
+    {
+        // Collapse whitespace runs to single space, normalize self-closing tag spacing
+        var normalized = System.Text.RegularExpressions.Regex.Replace(svg.Trim(), @"\s+", " ");
+        return normalized.Replace(" />", "/>");
     }
 
     private static void ApplySnapshotContentToCard(Card card, SnapshotCardData sc)
