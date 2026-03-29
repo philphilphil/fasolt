@@ -47,7 +47,8 @@ struct MainTabView: View {
                     SettingsView(
                         viewModel: SettingsViewModel(apiClient: authService.apiClient),
                         notificationViewModel: NotificationSettingsViewModel(apiClient: authService.apiClient),
-                        schedulingViewModel: SchedulingSettingsViewModel(apiClient: authService.apiClient)
+                        schedulingViewModel: SchedulingSettingsViewModel(apiClient: authService.apiClient),
+                        snapshotViewModel: SnapshotViewModel(apiClient: authService.apiClient)
                     )
                     .tabItem {
                         Label("Settings", systemImage: "gear")

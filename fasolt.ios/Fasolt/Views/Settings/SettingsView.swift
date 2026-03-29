@@ -5,12 +5,15 @@ struct SettingsView: View {
     @State private var viewModel: SettingsViewModel
     @State private var notificationViewModel: NotificationSettingsViewModel
     @State private var schedulingViewModel: SchedulingSettingsViewModel
+    @State private var snapshotViewModel: SnapshotViewModel
     @State private var showSignOutConfirmation = false
+    @State private var showSnapshotSuccess = false
 
-    init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel) {
+    init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel, snapshotViewModel: SnapshotViewModel) {
         _viewModel = State(initialValue: viewModel)
         _notificationViewModel = State(initialValue: notificationViewModel)
         _schedulingViewModel = State(initialValue: schedulingViewModel)
+        _snapshotViewModel = State(initialValue: snapshotViewModel)
     }
 
     var body: some View {
@@ -147,6 +150,61 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button {
+                        Task {
+                            await snapshotViewModel.createSnapshot()
+                            if snapshotViewModel.createSuccessCount != nil {
+                                showSnapshotSuccess = true
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Text("Create Snapshot")
+                            Spacer()
+                            if snapshotViewModel.isCreating {
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(snapshotViewModel.isCreating)
+
+                    if let error = snapshotViewModel.errorMessage {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+
+                    if snapshotViewModel.isLoading && snapshotViewModel.snapshots.isEmpty {
+                        HStack {
+                            Text("Loading...")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            ProgressView()
+                        }
+                    } else {
+                        ForEach(snapshotViewModel.snapshots) { snapshot in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(snapshot.deckName ?? "Unknown deck")
+                                        .font(.body)
+                                    Text(formatSnapshotDate(snapshot.createdAt))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Text("\(snapshot.cardCount) cards")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Snapshots")
+                } footer: {
+                    Text("To restore a snapshot, visit the web app.")
+                }
+
+                Section {
                     Button("Sign Out", role: .destructive) {
                         showSignOutConfirmation = true
                     }
@@ -166,11 +224,27 @@ struct SettingsView: View {
             } message: {
                 Text("You'll need to sign in again to use Fasolt.")
             }
+            .alert("Snapshot Created", isPresented: $showSnapshotSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Created snapshots for \(snapshotViewModel.createSuccessCount ?? 0) deck(s).")
+            }
             .task {
                 await viewModel.loadUserInfo()
                 await notificationViewModel.load()
                 await schedulingViewModel.load()
+                await snapshotViewModel.loadSnapshots()
             }
         }
+    }
+
+    private func formatSnapshotDate(_ isoString: String) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = formatter.date(from: isoString) else { return isoString }
+        let display = DateFormatter()
+        display.dateStyle = .medium
+        display.timeStyle = .short
+        return display.string(from: date)
     }
 }
