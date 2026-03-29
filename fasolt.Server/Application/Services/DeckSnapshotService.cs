@@ -278,15 +278,17 @@ public class DeckSnapshotService(AppDbContext db)
     {
         if (a == b) return true;
         if (a is null || b is null) return false;
-        // Normalize whitespace differences from SVG sanitizer reformatting
-        return NormalizeSvg(a) == NormalizeSvg(b);
-    }
-
-    private static string NormalizeSvg(string svg)
-    {
-        // Collapse whitespace runs to single space, normalize self-closing tag spacing
-        var normalized = System.Text.RegularExpressions.Regex.Replace(svg.Trim(), @"\s+", " ");
-        return normalized.Replace(" />", "/>");
+        try
+        {
+            // Parse and re-serialize to canonical form for comparison
+            var docA = System.Xml.Linq.XDocument.Parse(a);
+            var docB = System.Xml.Linq.XDocument.Parse(b);
+            return docA.ToString() == docB.ToString();
+        }
+        catch
+        {
+            return a == b;
+        }
     }
 
     private static void ApplySnapshotContentToCard(Card card, SnapshotCardData sc)
