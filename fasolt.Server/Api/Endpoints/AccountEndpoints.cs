@@ -325,7 +325,7 @@ public static class AccountEndpoints
         }
 
         // Sign in with the application cookie
-        await signInManager.SignInAsync(user, isPersistent: true);
+        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: true);
         await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
         return Results.Redirect(returnUrl);
