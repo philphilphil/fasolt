@@ -168,6 +168,7 @@ public static class OAuthEndpoints
             identity.SetClaim(Claims.Subject, userId);
             identity.SetClaim(ClaimTypes.NameIdentifier, userId);
             identity.SetClaim(Claims.Name, userName);
+            identity.SetClaim("email_confirmed", "true"); // Verified above — unverified users are redirected
             identity.SetScopes(Scopes.OfflineAccess);
 
             identity.SetDestinations(static claim => claim.Type switch
@@ -175,6 +176,7 @@ public static class OAuthEndpoints
                 ClaimTypes.NameIdentifier => [Destinations.AccessToken],
                 Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
                 Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                "email_confirmed" => [Destinations.AccessToken],
                 _ => [Destinations.AccessToken],
             });
 
@@ -223,6 +225,7 @@ public static class OAuthEndpoints
                 identity.SetClaim(Claims.Subject, userId);
                 identity.SetClaim(ClaimTypes.NameIdentifier, userId);
                 identity.SetClaim(Claims.Name, user.UserName);
+                identity.SetClaim("email_confirmed", "true"); // Verified above — unverified users are rejected
                 identity.SetScopes(principal.GetScopes());
 
                 identity.SetDestinations(static claim => claim.Type switch
@@ -230,6 +233,7 @@ public static class OAuthEndpoints
                     ClaimTypes.NameIdentifier => [Destinations.AccessToken],
                     Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
                     Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                    "email_confirmed" => [Destinations.AccessToken],
                     _ => [Destinations.AccessToken],
                 });
 

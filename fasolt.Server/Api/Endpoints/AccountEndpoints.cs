@@ -118,7 +118,8 @@ public static class AccountEndpoints
     private static async Task<IResult> ConfirmEmailChange(
         ConfirmEmailChangeRequest request,
         ClaimsPrincipal principal,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager)
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -137,6 +138,10 @@ public static class AccountEndpoints
 
         user.UserName = request.NewEmail;
         await userManager.UpdateAsync(user);
+
+        // Refresh cookie — ChangeEmailAsync invalidates SecurityStamp
+        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
         return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, null));
     }

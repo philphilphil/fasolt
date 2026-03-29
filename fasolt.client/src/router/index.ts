@@ -46,6 +46,7 @@ const router = createRouter({
       path: '/confirm-email-change',
       name: 'confirm-email-change',
       component: () => import('@/views/ConfirmEmailChangeView.vue'),
+      meta: { skipVerificationCheck: true },
     },
     {
       path: '/oauth/consent',
