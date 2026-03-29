@@ -14,6 +14,8 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/api/account");
 
+        group.MapPost("/register", Register).RequireRateLimiting("auth");
+        group.MapPost("/login", Login).RequireRateLimiting("auth");
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
         group.MapPut("/email", ChangeEmail).RequireAuthorization();
@@ -25,6 +27,42 @@ public static class AccountEndpoints
         group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
+    }
+
+    private static async Task<IResult> Register(
+        RegisterRequest request,
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        IEmailSender<AppUser> emailSender,
+        IConfiguration configuration)
+    {
+        var user = new AppUser { UserName = request.Email, Email = request.Email };
+        var result = await userManager.CreateAsync(user, request.Password);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
+
+        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
+        var baseUrl = configuration["App:BaseUrl"]!;
+        var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
+        await emailSender.SendConfirmationLinkAsync(user, user.Email, confirmLink);
+
+        await signInManager.SignInAsync(user, isPersistent: false);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> Login(
+        LoginRequest request,
+        SignInManager<AppUser> signInManager)
+    {
+        var result = await signInManager.PasswordSignInAsync(
+            request.Email, request.Password, request.RememberMe, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+            return Results.Problem("Account locked. Try again later.", statusCode: 429);
+        if (!result.Succeeded)
+            return Results.Problem("Invalid email or password.", statusCode: 401);
+
+        return Results.Ok();
     }
 
     private static async Task<IResult> Logout(SignInManager<AppUser> signInManager)

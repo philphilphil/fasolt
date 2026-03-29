@@ -474,7 +474,7 @@ app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
 app.MapSchedulingSettingsEndpoints();
 app.MapSnapshotEndpoints();
-app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
+// Identity's MapIdentityApi removed — all auth endpoints are in AccountEndpoints
 
 app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
 

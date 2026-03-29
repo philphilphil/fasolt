@@ -29,21 +29,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(email: string, password: string) {
-    await apiFetch('/identity/register', {
+    await apiFetch('/account/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
-    await login(email, password, false)
+    await fetchUser()
   }
 
   async function login(email: string, password: string, rememberMe: boolean) {
-    const params = new URLSearchParams({
-      useCookies: 'true',
-      useSessionCookies: rememberMe ? 'false' : 'true',
-    })
-    await apiFetch(`/identity/login?${params}`, {
+    await apiFetch('/account/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberMe }),
     })
     await fetchUser()
   }

@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.WebUtilities;
 using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Infrastructure.Services;
@@ -11,19 +10,16 @@ public class PlunkEmailSender : IEmailSender<AppUser>
     private readonly HttpClient _httpClient;
     private readonly ILogger<PlunkEmailSender> _logger;
     private readonly string _fromEmail;
-    private readonly string _baseUrl;
 
     public PlunkEmailSender(HttpClient httpClient, ILogger<PlunkEmailSender> logger, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _logger = logger;
         _fromEmail = configuration["Plunk:FromEmail"] ?? "noreply@fasolt.app";
-        _baseUrl = configuration["App:BaseUrl"]!;
     }
 
     public Task SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink)
     {
-        confirmationLink = RewriteConfirmationLink(confirmationLink);
         var body = $"""
             <p>Welcome to Fasolt!</p>
             <p>Please confirm your email address by clicking the link below:</p>
@@ -78,28 +74,5 @@ public class PlunkEmailSender : IEmailSender<AppUser>
         }
 
         _logger.LogInformation("Email sent to {Email}: {Subject}", to, subject);
-    }
-
-    private string RewriteConfirmationLink(string confirmationLink)
-    {
-        if (!confirmationLink.Contains("/api/identity/confirmEmail", StringComparison.OrdinalIgnoreCase))
-            return confirmationLink;
-
-        // Identity HTML-encodes the URL (& → &amp;) before passing it here, so decode first
-        var decoded = System.Net.WebUtility.HtmlDecode(confirmationLink);
-
-        var queryStart = decoded.IndexOf('?');
-        if (queryStart < 0) return confirmationLink;
-
-        var query = QueryHelpers.ParseQuery(decoded[(queryStart + 1)..]);
-        if (query.TryGetValue("userId", out var userId) && query.TryGetValue("code", out var code))
-        {
-            // Identity base64url-encodes the token; decode it back to the raw token
-            // so it matches what our ConfirmEmail endpoint (and ResendVerification) expects
-            var rawToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code!));
-            return $"{_baseUrl}/confirm-email?userId={Uri.EscapeDataString(userId!)}&token={Uri.EscapeDataString(rawToken)}";
-        }
-
-        return confirmationLink;
     }
 }
