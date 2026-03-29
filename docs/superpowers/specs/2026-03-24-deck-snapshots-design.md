@@ -16,7 +16,7 @@ A "Snapshot All" action creates individual per-deck snapshots in one operation. 
 |-------|------|-------|
 | Id | Guid | PK |
 | PublicId | string | 12-char unique identifier |
-| DeckId | Guid | FK → Deck (no cascade delete) |
+| DeckId | Guid? | FK → Deck (SetNull on delete — snapshots survive) |
 | UserId | string | FK → AppUser (stored directly for orphan survival) |
 | Version | int | Schema version for backwards compatibility, starts at 1 |
 | CardCount | int | Denormalized for list display |
