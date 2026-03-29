@@ -67,11 +67,25 @@ public class DeckSnapshotService(AppDbContext db)
         var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
         if (deck is null) return [];
 
-        return await db.DeckSnapshots
+        // Fetch current deck cards once for content diff counts
+        var currentCards = await db.DeckCards
+            .Where(dc => dc.DeckId == deck.Id)
+            .Include(dc => dc.Card)
+            .Select(dc => dc.Card)
+            .ToListAsync();
+        var currentById = currentCards.ToDictionary(c => c.Id);
+
+        var snapshots = await db.DeckSnapshots
             .Where(s => s.DeckId == deck.Id && s.UserId == userId)
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new SnapshotListDto(s.PublicId, s.Deck != null ? s.Deck.Name : null, s.CardCount, s.CreatedAt))
             .ToListAsync();
+
+        return snapshots.Select(s =>
+        {
+            var data = JsonSerializer.Deserialize<SnapshotData>(s.Data, JsonOptions)!;
+            var changes = CountContentChanges(data, currentById);
+            return new SnapshotListDto(s.PublicId, deck.Name, s.CardCount, s.CreatedAt, changes);
+        }).ToList();
     }
 
     public async Task<List<SnapshotListDto>> ListRecent(string userId, int limit = 50)
@@ -80,8 +94,28 @@ public class DeckSnapshotService(AppDbContext db)
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.CreatedAt)
             .Take(limit)
-            .Select(s => new SnapshotListDto(s.PublicId, s.Deck != null ? s.Deck.Name : null, s.CardCount, s.CreatedAt))
+            .Select(s => new SnapshotListDto(s.PublicId, s.Deck != null ? s.Deck.Name : null, s.CardCount, s.CreatedAt, null))
             .ToListAsync();
+    }
+
+    private static int CountContentChanges(SnapshotData data, Dictionary<Guid, Card> currentById)
+    {
+        var count = 0;
+        foreach (var sc in data.Cards)
+        {
+            if (!currentById.TryGetValue(sc.CardId, out var cur))
+            {
+                count++; // deleted or unassigned
+                continue;
+            }
+            if (sc.Front != cur.Front || sc.Back != cur.Back
+                || sc.FrontSvg != cur.FrontSvg || sc.BackSvg != cur.BackSvg)
+                count++; // content changed
+        }
+        // Cards in deck but not in snapshot = added
+        var snapshotIds = new HashSet<Guid>(data.Cards.Select(c => c.CardId));
+        count += currentById.Keys.Count(id => !snapshotIds.Contains(id));
+        return count;
     }
 
     public async Task<object?> GetById(string userId, string snapshotPublicId)

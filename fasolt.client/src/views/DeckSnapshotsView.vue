@@ -76,7 +76,12 @@ function formatDate(iso: string) {
       >
         <div>
           <div class="text-[13px] font-semibold">{{ formatDate(snapshot.createdAt) }}</div>
-          <div class="text-[11px] text-muted-foreground">{{ snapshot.cardCount }} cards at time of snapshot</div>
+          <div class="text-[11px] text-muted-foreground">
+            {{ snapshot.cardCount }} cards
+            <span class="mx-1">·</span>
+            <span v-if="snapshot.contentChanges === 0" class="text-muted-foreground">no content differences</span>
+            <span v-else-if="snapshot.contentChanges != null" class="text-amber-500">{{ snapshot.contentChanges }} content difference{{ snapshot.contentChanges !== 1 ? 's' : '' }}</span>
+          </div>
         </div>
         <div class="flex gap-2">
           <Button

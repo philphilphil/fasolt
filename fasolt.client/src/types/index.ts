@@ -80,6 +80,7 @@ export interface DeckSnapshot {
   deckName: string | null
   cardCount: number
   createdAt: string
+  contentChanges: number | null
 }
 
 export interface SnapshotDiff {

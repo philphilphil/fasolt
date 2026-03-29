@@ -22,7 +22,7 @@ public record SnapshotCardData(
     bool IsSuspended);
 
 // API response for listing
-public record SnapshotListDto(string Id, string? DeckName, int CardCount, DateTimeOffset CreatedAt);
+public record SnapshotListDto(string Id, string? DeckName, int CardCount, DateTimeOffset CreatedAt, int? ContentChanges);
 
 // API response for diff
 public record SnapshotDiffDto(
