@@ -34,8 +34,6 @@ export const useAuthStore = defineStore('auth', () => {
       body: JSON.stringify({ email, password }),
     })
     await login(email, password, false)
-    // Send verification email after registration
-    await apiFetch('/account/resend-verification', { method: 'POST' })
   }
 
   async function login(email: string, password: string, rememberMe: boolean) {
