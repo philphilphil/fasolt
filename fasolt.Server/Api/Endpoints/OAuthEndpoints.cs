@@ -344,7 +344,12 @@ public static class OAuthEndpoints
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
+            {
+                var user = await signInManager.UserManager.FindByEmailAsync(email);
+                if (user is not null)
+                    await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
                 return Results.Redirect(UrlHelpers.IsLocalUrl(returnUrl) ? returnUrl : "/");
+            }
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");

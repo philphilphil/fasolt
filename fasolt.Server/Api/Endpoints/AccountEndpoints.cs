@@ -242,7 +242,7 @@ public static class AccountEndpoints
         return Results.Ok();
     }
 
-    private static async Task SignInWithEmailClaimAsync(
+    internal static async Task SignInWithEmailClaimAsync(
         SignInManager<AppUser> signInManager, AppUser user, bool isPersistent)
     {
         var claims = new List<Claim>
