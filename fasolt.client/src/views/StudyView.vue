@@ -3,17 +3,33 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
+import { useSnapshotsStore } from '@/stores/snapshots'
 import { Button } from '@/components/ui/button'
+import { Camera } from 'lucide-vue-next'
 
 const router = useRouter()
 const reviewStore = useReviewStore()
 const decksStore = useDecksStore()
+const snapshotsStore = useSnapshotsStore()
 
 const activeDecks = computed(() => decksStore.decks.filter(d => !d.isSuspended))
 
 const dueCount = ref(0)
 const totalCards = ref(0)
 const studiedToday = ref(0)
+const snapshotting = ref(false)
+
+async function createSnapshot() {
+  snapshotting.value = true
+  try {
+    const result = await snapshotsStore.createAll()
+    window.alert(`Snapshot created for ${result.count} deck${result.count !== 1 ? 's' : ''}.`)
+  } catch {
+    window.alert('Failed to create snapshot. Please try again.')
+  } finally {
+    snapshotting.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -48,6 +64,13 @@ onMounted(async () => {
     <div class="flex justify-center gap-7 text-sm text-muted-foreground">
       <div><span class="font-bold text-foreground">{{ totalCards }}</span> total</div>
       <div><span class="font-bold text-foreground">{{ studiedToday }}</span> today</div>
+    </div>
+
+    <!-- Snapshot action -->
+    <div class="text-center">
+      <Button variant="outline" size="sm" class="text-xs" :disabled="snapshotting" @click="createSnapshot">
+        <Camera class="h-3.5 w-3.5 mr-1" />{{ snapshotting ? 'Creating...' : 'Create snapshot' }}
+      </Button>
     </div>
 
     <div class="border-t border-border" />

@@ -9,6 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
+import { History } from 'lucide-vue-next'
 import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import CardTable from '@/components/CardTable.vue'
 
@@ -126,6 +127,9 @@ const stateCounts = computed(() => {
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
+        </Button>
+        <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deck.id}/snapshots`)">
+          <History class="h-3.5 w-3.5 mr-1" />Snapshots
         </Button>
         <Button variant="outline" size="sm" class="text-xs" @click="toggleSuspended">
           {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
