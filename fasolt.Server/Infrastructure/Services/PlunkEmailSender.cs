@@ -85,10 +85,13 @@ public class PlunkEmailSender : IEmailSender<AppUser>
         if (!confirmationLink.Contains("/api/identity/confirmEmail", StringComparison.OrdinalIgnoreCase))
             return confirmationLink;
 
-        var queryStart = confirmationLink.IndexOf('?');
+        // Identity HTML-encodes the URL (& → &amp;) before passing it here, so decode first
+        var decoded = System.Net.WebUtility.HtmlDecode(confirmationLink);
+
+        var queryStart = decoded.IndexOf('?');
         if (queryStart < 0) return confirmationLink;
 
-        var query = QueryHelpers.ParseQuery(confirmationLink[(queryStart + 1)..]);
+        var query = QueryHelpers.ParseQuery(decoded[(queryStart + 1)..]);
         if (query.TryGetValue("userId", out var userId) && query.TryGetValue("code", out var code))
             return $"{_baseUrl}/confirm-email?userId={Uri.EscapeDataString(userId!)}&token={Uri.EscapeDataString(code!)}";
 
