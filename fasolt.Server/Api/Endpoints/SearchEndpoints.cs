@@ -9,7 +9,7 @@ public static class SearchEndpoints
 {
     public static void MapSearchEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/search").RequireAuthorization().RequireRateLimiting("api");
+        var group = app.MapGroup("/api/search").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
         group.MapGet("/", Search);
     }
 

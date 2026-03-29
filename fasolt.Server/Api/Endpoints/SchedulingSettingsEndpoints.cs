@@ -10,7 +10,7 @@ public static class SchedulingSettingsEndpoints
 {
     public static void MapSchedulingSettingsEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/settings/scheduling").RequireAuthorization().RequireRateLimiting("api");
+        var group = app.MapGroup("/api/settings/scheduling").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
         group.MapGet("/", GetSettings);
         group.MapPut("/", UpdateSettings);

@@ -493,7 +493,7 @@ app.MapSchedulingSettingsEndpoints();
 app.MapSnapshotEndpoints();
 // Identity's MapIdentityApi removed — all auth endpoints are in AccountEndpoints
 
-app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
+app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");
