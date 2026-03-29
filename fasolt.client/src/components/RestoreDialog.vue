@@ -46,7 +46,7 @@ watch(() => props.open, async (isOpen) => {
   } finally {
     loadingDiff.value = false
   }
-})
+}, { immediate: true })
 
 const selectedCount = computed(() => selectedDeleted.value.size + selectedModified.value.size)
 
