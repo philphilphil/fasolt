@@ -53,8 +53,8 @@ onMounted(async () => {
       </div>
       <div v-else-if="error" class="flex flex-col items-center gap-4">
         <p class="text-center text-xs text-destructive">{{ error }}</p>
-        <Button variant="outline" class="w-full" @click="router.push('/verify-email')">
-          Request a new link
+        <Button variant="outline" class="w-full" @click="router.push('/login')">
+          Log in to request a new link
         </Button>
       </div>
       <div v-else class="flex flex-col items-center gap-2">

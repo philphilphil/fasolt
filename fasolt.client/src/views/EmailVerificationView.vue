@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
@@ -12,6 +12,13 @@ const resending = ref(false)
 const resent = ref(false)
 const cooldown = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
+
+onUnmounted(() => {
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
+})
 
 async function handleResend() {
   resending.value = true
