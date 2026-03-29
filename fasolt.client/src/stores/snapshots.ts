@@ -7,8 +7,8 @@ export const useSnapshotsStore = defineStore('snapshots', () => {
   const snapshots = ref<DeckSnapshot[]>([])
   const loading = ref(false)
 
-  async function createAll(): Promise<{ count: number }> {
-    return apiFetch<{ count: number }>('/snapshots', { method: 'POST' })
+  async function createAll(): Promise<{ created: number; skipped: number }> {
+    return apiFetch<{ created: number; skipped: number }>('/snapshots', { method: 'POST' })
   }
 
   async function fetchByDeck(deckId: string) {

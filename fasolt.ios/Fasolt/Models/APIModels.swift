@@ -235,5 +235,6 @@ struct DeckSnapshotDTO: Decodable, Sendable, Identifiable {
 }
 
 struct SnapshotCreateResultDTO: Decodable, Sendable {
-    let count: Int
+    let created: Int
+    let skipped: Int
 }

@@ -61,9 +61,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new DeckSnapshotService(db);
 
-        var count = await svc.CreateAll(UserId);
+        var result = await svc.CreateAll(UserId);
 
-        count.Should().Be(2);
+        result.Created.Should().Be(2);
     }
 
     [Fact]
@@ -75,9 +75,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new DeckSnapshotService(db);
 
-        var count = await svc.CreateAll(UserId);
+        var result = await svc.CreateAll(UserId);
 
-        count.Should().Be(1, "empty deck should be skipped");
+        result.Created.Should().Be(1, "empty deck should be skipped");
     }
 
     [Fact]
@@ -90,9 +90,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new DeckSnapshotService(db);
 
-        var count = await svc.CreateAll(UserId);
+        var result = await svc.CreateAll(UserId);
 
-        count.Should().Be(3);
+        result.Created.Should().Be(3);
     }
 
     [Fact]
@@ -252,16 +252,18 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var svc = new DeckSnapshotService(db);
-            var count = await svc.CreateAll(UserId);
-            count.Should().Be(1, "first snapshot always created");
+            var result = await svc.CreateAll(UserId);
+            result.Created.Should().Be(1, "first snapshot always created");
+            result.Skipped.Should().Be(0);
         }
 
         // Second call without changes
         await using (var db = _db.CreateDbContext())
         {
             var svc = new DeckSnapshotService(db);
-            var count = await svc.CreateAll(UserId);
-            count.Should().Be(0, "no content changes since last snapshot");
+            var result = await svc.CreateAll(UserId);
+            result.Created.Should().Be(0, "no content changes since last snapshot");
+            result.Skipped.Should().Be(1, "one deck was unchanged");
         }
 
         await using var checkDb = _db.CreateDbContext();

@@ -47,4 +47,4 @@ public record DiffAddedCard(Guid CardId, string Front, string Back);
 public record RestoreRequest(List<Guid> RestoreDeletedCardIds, List<Guid> RevertModifiedCardIds);
 
 // Create response
-public record SnapshotCreateResult(int Count);
+public record SnapshotCreateResult(int Created, int Skipped);

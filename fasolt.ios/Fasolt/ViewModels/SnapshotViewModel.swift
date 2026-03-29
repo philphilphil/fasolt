@@ -42,7 +42,7 @@ final class SnapshotViewModel {
         do {
             let endpoint = Endpoint(path: "/api/snapshots", method: .post)
             let result: SnapshotCreateResultDTO = try await apiClient.request(endpoint)
-            createSuccessCount = result.count
+            createSuccessCount = result.created
             logger.info("Created snapshots for \(result.count) decks")
             await loadSnapshots()
         } catch {

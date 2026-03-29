@@ -51,10 +51,14 @@ struct SettingsView: View {
             } message: {
                 Text("You'll need to sign in again to use Fasolt.")
             }
-            .alert("Snapshot Created", isPresented: $showSnapshotSuccess) {
+            .alert("Snapshot", isPresented: $showSnapshotSuccess) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text("Created snapshots for \(snapshotViewModel.createSuccessCount ?? 0) deck(s).")
+                if let count = snapshotViewModel.createSuccessCount, count > 0 {
+                    Text("Created snapshots for \(count) deck(s).")
+                } else {
+                    Text("All decks unchanged — no snapshots created.")
+                }
             }
             .task {
                 await viewModel.loadUserInfo()

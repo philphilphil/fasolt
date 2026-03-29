@@ -29,8 +29,8 @@ public static class SnapshotEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var count = await snapshotService.CreateAll(user.Id);
-        return Results.Ok(new SnapshotCreateResult(count));
+        var result = await snapshotService.CreateAll(user.Id);
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> ListRecent(

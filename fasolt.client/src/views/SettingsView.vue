@@ -12,7 +12,8 @@ const snapshotsStore = useSnapshotsStore()
 const snapshotting = ref(false)
 const snapshotSuccess = ref(false)
 const snapshotError = ref('')
-const snapshotCount = ref(0)
+const snapshotCreated = ref(0)
+const snapshotSkipped = ref(0)
 
 async function createSnapshot() {
   snapshotting.value = true
@@ -20,7 +21,8 @@ async function createSnapshot() {
   snapshotError.value = ''
   try {
     const result = await snapshotsStore.createAll()
-    snapshotCount.value = result.count
+    snapshotCreated.value = result.created
+    snapshotSkipped.value = result.skipped
     snapshotSuccess.value = true
   } catch {
     snapshotError.value = 'Failed to create snapshot. Please try again.'
@@ -139,7 +141,15 @@ async function savePassword() {
           Create a backup of all your decks. Snapshots capture every card's content so you can restore it later if something goes wrong. The last 10 snapshots per deck are kept automatically. Study progress is not affected by restoring — only card content (front, back, images, source) is reverted.
         </p>
         <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
-          Snapshot created for {{ snapshotCount }} deck{{ snapshotCount !== 1 ? 's' : '' }}.
+          <template v-if="snapshotCreated > 0 && snapshotSkipped === 0">
+            Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}.
+          </template>
+          <template v-else-if="snapshotCreated > 0 && snapshotSkipped > 0">
+            Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}. {{ snapshotSkipped }} unchanged, skipped.
+          </template>
+          <template v-else>
+            All decks unchanged — no snapshots needed.
+          </template>
         </div>
         <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ snapshotError }}</div>
         <Button size="sm" class="self-start text-xs" :disabled="snapshotting" @click="createSnapshot">

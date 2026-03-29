@@ -8,12 +8,12 @@ namespace Fasolt.Server.Api.McpTools;
 [McpServerToolType]
 public class SnapshotTools(DeckSnapshotService snapshotService, IHttpContextAccessor httpContextAccessor)
 {
-    [McpServerTool, Description("Create snapshots of all decks as backups. Captures full card state including content and FSRS data. Keeps last 10 snapshots per deck.")]
+    [McpServerTool, Description("Create snapshots of all decks as backups. Only creates a snapshot if card content changed since the last one. Keeps last 10 snapshots per deck. Returns how many were created vs skipped. Users can restore snapshots at https://fasolt.app.")]
     public async Task<string> CreateSnapshot()
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var count = await snapshotService.CreateAll(userId);
-        return JsonSerializer.Serialize(new { snapshotsCreated = count }, McpJson.Options);
+        var result = await snapshotService.CreateAll(userId);
+        return JsonSerializer.Serialize(new { result.Created, result.Skipped }, McpJson.Options);
     }
 
     [McpServerTool, Description("List deck snapshots. Without deckId, lists the 50 most recent across all decks.")]
