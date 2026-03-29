@@ -40,6 +40,16 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         return (deck.Id, cardIds);
     }
 
+    // Helper: modify all cards to force content differences for the next snapshot
+    private async Task TouchCard(int iteration)
+    {
+        await using var db = _db.CreateDbContext();
+        var cards = db.Cards.Where(c => c.UserId == UserId).ToList();
+        foreach (var card in cards)
+            card.Front = $"v{iteration}: {card.Front}";
+        await db.SaveChangesAsync();
+    }
+
     #region Create
 
     [Fact]
@@ -176,6 +186,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         for (var i = 0; i < 11; i++)
         {
+            await TouchCard(i);
             await using var db = _db.CreateDbContext();
             var svc = new DeckSnapshotService(db);
             await svc.CreateAll(UserId);
@@ -192,9 +203,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await SeedDeck("Deck X", 1);
         await SeedDeck("Deck Y", 1);
 
-        // Create 11 snapshots
         for (var i = 0; i < 11; i++)
         {
+            await TouchCard(i);
             await using var db = _db.CreateDbContext();
             var svc = new DeckSnapshotService(db);
             await svc.CreateAll(UserId);
@@ -220,9 +231,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await SeedDeck("Heavy", 1);
         await SeedDeck("Light", 1);
 
-        // Create 11 snapshots for both
         for (var i = 0; i < 11; i++)
         {
+            await TouchCard(i);
             await using var db = _db.CreateDbContext();
             var svc = new DeckSnapshotService(db);
             await svc.CreateAll(UserId);
@@ -231,6 +242,30 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using var checkDb = _db.CreateDbContext();
         var total = checkDb.DeckSnapshots.Count(s => s.UserId == UserId);
         total.Should().Be(20, "10 per deck x 2 decks");
+    }
+
+    [Fact]
+    public async Task CreateAll_SkipsWhenNoContentChanges()
+    {
+        await SeedDeck("No Change", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var count = await svc.CreateAll(UserId);
+            count.Should().Be(1, "first snapshot always created");
+        }
+
+        // Second call without changes
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var count = await svc.CreateAll(UserId);
+            count.Should().Be(0, "no content changes since last snapshot");
+        }
+
+        await using var checkDb = _db.CreateDbContext();
+        checkDb.DeckSnapshots.Count(s => s.UserId == UserId).Should().Be(1);
     }
 
     #endregion
@@ -247,6 +282,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var svc = new DeckSnapshotService(db);
             await svc.CreateAll(UserId);
         }
+        await TouchCard(0);
         await Task.Delay(50);
         await using (var db = _db.CreateDbContext())
         {

@@ -28,6 +28,18 @@ public class DeckSnapshotService(AppDbContext db)
             var cards = deck.Cards.Select(dc => dc.Card).ToList();
             if (cards.Count == 0) continue; // skip empty decks
 
+            // Skip if no content changes since last snapshot
+            var lastSnapshot = await db.DeckSnapshots
+                .Where(s => s.DeckId == deck.Id && s.UserId == userId)
+                .OrderByDescending(s => s.CreatedAt)
+                .FirstOrDefaultAsync();
+            if (lastSnapshot is not null)
+            {
+                var lastData = JsonSerializer.Deserialize<SnapshotData>(lastSnapshot.Data, JsonOptions)!;
+                var currentById = cards.ToDictionary(c => c.Id);
+                if (CountContentChanges(lastData, currentById) == 0) continue;
+            }
+
             var data = new SnapshotData(
                 deck.Name,
                 deck.Description,
