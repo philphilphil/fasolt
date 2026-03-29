@@ -136,7 +136,7 @@ async function savePassword() {
       </CardHeader>
       <CardContent class="flex flex-col gap-3">
         <p class="text-xs text-muted-foreground">
-          Create a backup of all your decks. Snapshots capture every card's content and study progress so you can restore them later if something goes wrong. The last 10 snapshots per deck are kept automatically.
+          Create a backup of all your decks. Snapshots capture every card's content so you can restore it later if something goes wrong. The last 10 snapshots per deck are kept automatically. Study progress is not affected by restoring — only card content (front, back, images, source) is reverted.
         </p>
         <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
           Snapshot created for {{ snapshotCount }} deck{{ snapshotCount !== 1 ? 's' : '' }}.

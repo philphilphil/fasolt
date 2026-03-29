@@ -105,10 +105,6 @@ export interface DiffModifiedCard {
   currentFront: string
   back: string
   currentBack: string
-  snapshotStability: number | null
-  currentStability: number | null
-  hasContentChanges: boolean
-  hasFsrsChanges: boolean
 }
 
 export interface DiffAddedCard {

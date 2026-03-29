@@ -189,7 +189,7 @@ function formatDue(iso: string | null) {
               @update:model-value="toggle(card.cardId, !!$event)"
             />
             <div class="min-w-0 flex-1">
-              <div v-if="card.hasContentChanges" class="text-sm space-y-1">
+              <div class="text-sm space-y-1">
                 <div v-if="card.front !== card.currentFront">
                   <span class="text-xs text-muted-foreground">front: </span>
                   <span class="line-through text-muted-foreground">{{ card.front }}</span>
@@ -200,10 +200,6 @@ function formatDue(iso: string | null) {
                   <span class="line-through text-muted-foreground">{{ card.back }}</span>
                   <span class="ml-1.5">{{ card.currentBack }}</span>
                 </div>
-              </div>
-              <div v-else class="text-sm font-medium">{{ card.currentFront }}</div>
-              <div v-if="card.hasFsrsChanges" class="flex gap-4 mt-1 text-[11px] text-muted-foreground">
-                <span>stability: {{ formatStability(card.snapshotStability) }} → {{ formatStability(card.currentStability) }}</span>
               </div>
             </div>
           </div>

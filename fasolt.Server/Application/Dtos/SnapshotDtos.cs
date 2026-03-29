@@ -37,9 +37,7 @@ public record DiffDeletedCard(
 public record DiffModifiedCard(
     Guid CardId,
     string Front, string CurrentFront,
-    string Back, string CurrentBack,
-    double? SnapshotStability, double? CurrentStability,
-    bool HasContentChanges, bool HasFsrsChanges);
+    string Back, string CurrentBack);
 
 public record DiffAddedCard(Guid CardId, string Front, string Back);
 

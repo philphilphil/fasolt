@@ -385,7 +385,6 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         diff!.Modified.Should().HaveCount(1);
         var mod = diff.Modified[0];
-        mod.HasContentChanges.Should().BeTrue();
         mod.Front.Should().Be(mod.CurrentFront, "front was not changed — snapshot and current should match");
         mod.Back.Should().NotBe(mod.CurrentBack, "back was changed — snapshot and current should differ");
         mod.Back.Should().Be("Diff BackOnly A0");
@@ -418,14 +417,13 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         diff!.Modified.Should().HaveCount(1);
         var mod = diff.Modified[0];
-        mod.HasContentChanges.Should().BeTrue();
         mod.Front.Should().Be("Diff FrontOnly Q0");
         mod.CurrentFront.Should().Be("Changed front");
         mod.Back.Should().Be(mod.CurrentBack, "back was not changed — snapshot and current should match");
     }
 
     [Fact]
-    public async Task Diff_FsrsOnlyChange_HasFsrsChangesTrue()
+    public async Task Diff_FsrsOnlyChange_NotInModifiedBucket()
     {
         var (deckId, _) = await SeedDeck("Diff FSRS", 1);
 
@@ -435,6 +433,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             await svc.CreateAll(UserId);
         }
 
+        // Only change FSRS state, no content
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
@@ -449,13 +448,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var snapshots = await diffSvc.ListByDeck(UserId, deckId);
         var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
 
-        diff!.Modified.Should().HaveCount(1);
-        diff.Modified[0].HasFsrsChanges.Should().BeTrue();
-        diff.Modified[0].HasContentChanges.Should().BeFalse();
+        diff!.Modified.Should().BeEmpty("FSRS-only changes should be ignored");
     }
 
     [Fact]
-    public async Task Diff_BothContentAndFsrsChanges_BothFlagsTrue()
+    public async Task Diff_ContentAndFsrsChanges_OnlyContentShown()
     {
         var (deckId, cardIds) = await SeedDeck("Diff Both", 1);
 
@@ -479,8 +476,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
 
         diff!.Modified.Should().HaveCount(1);
-        diff.Modified[0].HasContentChanges.Should().BeTrue();
-        diff.Modified[0].HasFsrsChanges.Should().BeTrue();
+        diff.Modified[0].Front.Should().Be("Diff Both Q0");
+        diff.Modified[0].CurrentFront.Should().Be("Changed front");
     }
 
     [Fact]
@@ -753,9 +750,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
         restored.Front.Should().Be("Restore Revert Q0");
-        restored.Stability.Should().Be(10.0);
-        restored.State.Should().Be("review");
-        restored.IsSuspended.Should().BeTrue();
+        restored.Back.Should().Be("Restore Revert A0");
+        // FSRS state should NOT be reverted — only content is restored
+        restored.Stability.Should().Be(99.0, "FSRS state should be preserved");
+        restored.State.Should().Be("learning", "FSRS state should be preserved");
     }
 
     #endregion

@@ -178,12 +178,9 @@ public class DeckSnapshotService(AppDbContext db)
                 var contentChanged = sc.Front != cur.Front || sc.Back != cur.Back
                     || sc.FrontSvg != cur.FrontSvg || sc.BackSvg != cur.BackSvg
                     || sc.SourceFile != cur.SourceFile || sc.SourceHeading != cur.SourceHeading;
-                var fsrsChanged = sc.Stability != cur.Stability || sc.Difficulty != cur.Difficulty
-                    || sc.Step != cur.Step || sc.DueAt != cur.DueAt || sc.State != cur.State;
-                if (!contentChanged && !fsrsChanged) return null;
+                if (!contentChanged) return null;
                 return new DiffModifiedCard(
-                    sc.CardId, sc.Front, cur.Front, sc.Back, cur.Back,
-                    sc.Stability, cur.Stability, contentChanged, fsrsChanged);
+                    sc.CardId, sc.Front, cur.Front, sc.Back, cur.Back);
             })
             .Where(m => m is not null)
             .Cast<DiffModifiedCard>()
@@ -254,7 +251,7 @@ public class DeckSnapshotService(AppDbContext db)
             if (!snapshotById.TryGetValue(cardId, out var sc)) continue;
             var card = await db.Cards.FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
             if (card is not null)
-                ApplySnapshotToCard(card, sc);
+                ApplySnapshotContentToCard(card, sc);
         }
 
         await db.SaveChangesAsync();
@@ -272,7 +269,7 @@ public class DeckSnapshotService(AppDbContext db)
         return true;
     }
 
-    private static void ApplySnapshotToCard(Card card, SnapshotCardData sc)
+    private static void ApplySnapshotContentToCard(Card card, SnapshotCardData sc)
     {
         card.Front = sc.Front;
         card.Back = sc.Back;
@@ -280,14 +277,6 @@ public class DeckSnapshotService(AppDbContext db)
         card.BackSvg = sc.BackSvg;
         card.SourceFile = sc.SourceFile;
         card.SourceHeading = sc.SourceHeading;
-        card.CreatedAt = sc.CreatedAt;
-        card.Stability = sc.Stability;
-        card.Difficulty = sc.Difficulty;
-        card.Step = sc.Step;
-        card.DueAt = sc.DueAt;
-        card.State = sc.State;
-        card.LastReviewedAt = sc.LastReviewedAt;
-        card.IsSuspended = sc.IsSuspended;
     }
 
     private async Task EnforceRetention(string userId)

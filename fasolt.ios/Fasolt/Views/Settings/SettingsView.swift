@@ -216,7 +216,7 @@ struct SettingsView: View {
     private var snapshotsContent: some View {
         List {
             Section {
-                Label("Snapshots back up every card's content and study progress. The last 10 snapshots per deck are kept automatically. To restore a snapshot, visit the web app at fasolt.app.", systemImage: "info.circle")
+                Label("Snapshots back up every card's content. The last 10 snapshots per deck are kept automatically. Restoring only reverts card content — your study progress is never affected. To restore, visit fasolt.app.", systemImage: "info.circle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
