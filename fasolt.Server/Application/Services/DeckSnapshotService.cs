@@ -123,9 +123,17 @@ public class DeckSnapshotService(AppDbContext db)
         var currentById = currentCards.ToDictionary(c => c.Id);
         var snapshotById = data.Cards.ToDictionary(c => c.CardId);
 
+        var missingCardIds = data.Cards
+            .Where(sc => !currentById.ContainsKey(sc.CardId))
+            .Select(sc => sc.CardId)
+            .ToList();
+        var existingCardIds = missingCardIds.Count > 0
+            ? (await db.Cards.Where(c => missingCardIds.Contains(c.Id)).Select(c => c.Id).ToListAsync()).ToHashSet()
+            : new HashSet<Guid>();
+
         var deleted = data.Cards
             .Where(sc => !currentById.ContainsKey(sc.CardId))
-            .Select(sc => new DiffDeletedCard(sc.CardId, sc.Front, sc.Back, sc.SourceFile, sc.Stability, sc.DueAt))
+            .Select(sc => new DiffDeletedCard(sc.CardId, sc.Front, sc.Back, sc.SourceFile, sc.Stability, sc.DueAt, existingCardIds.Contains(sc.CardId)))
             .ToList();
 
         var modified = data.Cards

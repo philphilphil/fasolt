@@ -32,7 +32,7 @@ public record SnapshotDiffDto(
 
 public record DiffDeletedCard(
     Guid CardId, string Front, string Back, string? SourceFile,
-    double? Stability, DateTimeOffset? DueAt);
+    double? Stability, DateTimeOffset? DueAt, bool StillExists);
 
 public record DiffModifiedCard(
     Guid CardId,

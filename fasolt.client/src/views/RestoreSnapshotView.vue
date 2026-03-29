@@ -161,6 +161,7 @@ function formatDue(iso: string | null) {
               <div class="text-sm font-medium">{{ card.front }}</div>
               <div class="text-xs text-muted-foreground mt-0.5">{{ card.back }}</div>
               <div class="flex gap-4 mt-1 text-[11px] text-muted-foreground">
+                <span :class="card.stillExists ? 'text-amber-500' : 'text-destructive'">{{ card.stillExists ? 'unassigned' : 'deleted' }}</span>
                 <span v-if="card.sourceFile">{{ card.sourceFile }}</span>
                 <span>stability: {{ formatStability(card.stability) }}</span>
                 <span>due: {{ formatDue(card.dueAt) }}</span>

@@ -95,6 +95,7 @@ export interface DiffDeletedCard {
   sourceFile: string | null
   stability: number | null
   dueAt: string | null
+  stillExists: boolean
 }
 
 export interface DiffModifiedCard {
