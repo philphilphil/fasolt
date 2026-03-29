@@ -4,9 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
+import { useSnapshotsStore } from '@/stores/snapshots'
 import { apiFetch, isApiError } from '@/api/client'
 
 const auth = useAuthStore()
+const snapshotsStore = useSnapshotsStore()
+const snapshotting = ref(false)
+const snapshotSuccess = ref(false)
+const snapshotCount = ref(0)
+
+async function createSnapshot() {
+  snapshotting.value = true
+  snapshotSuccess.value = false
+  try {
+    const result = await snapshotsStore.createAll()
+    snapshotCount.value = result.count
+    snapshotSuccess.value = true
+  } catch {
+    // silent
+  } finally {
+    snapshotting.value = false
+  }
+}
 
 const desiredRetention = ref(0.9)
 const maximumInterval = ref(36500)
@@ -108,6 +127,23 @@ async function savePassword() {
 <template>
   <div class="flex flex-col gap-6">
     <h1 class="text-lg font-bold tracking-tight">Settings</h1>
+
+    <Card class="border-border/60">
+      <CardHeader>
+        <CardTitle class="text-sm">Snapshots</CardTitle>
+      </CardHeader>
+      <CardContent class="flex flex-col gap-3">
+        <p class="text-xs text-muted-foreground">
+          Create a backup of all your decks. Snapshots capture every card's content and study progress so you can restore them later if something goes wrong. The last 10 snapshots per deck are kept automatically.
+        </p>
+        <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
+          Snapshot created for {{ snapshotCount }} deck{{ snapshotCount !== 1 ? 's' : '' }}.
+        </div>
+        <Button size="sm" class="self-start text-xs" :disabled="snapshotting" @click="createSnapshot">
+          {{ snapshotting ? 'Creating...' : 'Create snapshot' }}
+        </Button>
+      </CardContent>
+    </Card>
 
     <Card class="border-border/60">
       <CardHeader>

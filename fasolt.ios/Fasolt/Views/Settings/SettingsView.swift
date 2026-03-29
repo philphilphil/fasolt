@@ -216,7 +216,7 @@ struct SettingsView: View {
     private var snapshotsContent: some View {
         List {
             Section {
-                Label("To restore a snapshot, visit the web app.", systemImage: "info.circle")
+                Label("Snapshots back up every card's content and study progress. The last 10 snapshots per deck are kept automatically. To restore a snapshot, visit the web app.", systemImage: "info.circle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
