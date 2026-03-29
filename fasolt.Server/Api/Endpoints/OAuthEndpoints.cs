@@ -110,7 +110,7 @@ public static class OAuthEndpoints
         }).RequireRateLimiting("auth-strict");
 
         // Authorization Endpoint
-        app.MapGet("/oauth/authorize", async (HttpContext context, AppDbContext db, IDataProtectionProvider dataProtection, UserManager<AppUser> userManager) =>
+        app.MapGet("/oauth/authorize", async (HttpContext context, AppDbContext db, IDataProtectionProvider dataProtection) =>
         {
             var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
             if (result?.Principal is null)
@@ -120,9 +120,8 @@ public static class OAuthEndpoints
             }
 
             // Block unverified users from authorizing OAuth clients
-            var authUserId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var appUser = await userManager.FindByIdAsync(authUserId);
-            if (appUser is not null && !appUser.EmailConfirmed)
+            var emailConfirmed = result.Principal.FindFirstValue("email_confirmed");
+            if (emailConfirmed != "true")
             {
                 return Results.Redirect("/verify-email");
             }
@@ -205,6 +204,15 @@ public static class OAuthEndpoints
                         {
                             [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
                             [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The user no longer exists.",
+                        }));
+
+                if (!user.EmailConfirmed)
+                    return Results.Forbid(
+                        authenticationSchemes: [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme],
+                        properties: new(new Dictionary<string, string?>
+                        {
+                            [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
+                            [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "Email address not verified.",
                         }));
 
                 var identity = new ClaimsIdentity(
