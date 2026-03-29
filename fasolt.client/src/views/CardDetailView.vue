@@ -40,6 +40,12 @@ const resetOpen = ref(false)
 const resetting = ref(false)
 const resetSuccess = ref(false)
 
+const deckContext = computed(() => {
+  const id = route.query.deckId as string | undefined
+  const name = route.query.deckName as string | undefined
+  return id && name ? { id, name } : null
+})
+
 const truncatedFront = computed(() => {
   if (!card.value) return ''
   const plain = stripMarkdown(card.value.front)
@@ -84,8 +90,8 @@ async function save() {
     card.value = await cardsStore.updateCard(card.value.id, {
       front: front.value,
       back: back.value,
-      frontSvg: editFrontSvg.value || null,
-      backSvg: editBackSvg.value || null,
+      frontSvg: editFrontSvg.value,
+      backSvg: editBackSvg.value,
       sourceFile: editSourceFile.value || null,
       sourceHeading: editSourceHeading.value || null,
       deckIds: editDeckIds.value,
@@ -115,7 +121,7 @@ async function confirmReset() {
 }
 
 function onDeleted() {
-  router.replace('/cards')
+  router.replace(deckContext.value ? `/decks/${deckContext.value.id}` : '/cards')
 }
 </script>
 
@@ -125,7 +131,14 @@ function onDeleted() {
   <div v-else-if="card" class="space-y-6">
     <!-- Breadcrumb -->
     <div class="text-[11px] text-muted-foreground">
-      <RouterLink to="/cards" class="hover:text-foreground transition-colors">Cards</RouterLink>
+      <template v-if="deckContext">
+        <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
+        <span class="mx-1.5">/</span>
+        <RouterLink :to="`/decks/${deckContext.id}`" class="hover:text-foreground transition-colors">{{ deckContext.name }}</RouterLink>
+      </template>
+      <template v-else>
+        <RouterLink to="/cards" class="hover:text-foreground transition-colors">Cards</RouterLink>
+      </template>
       <span class="mx-1.5">/</span>
       <span class="text-foreground">{{ truncatedFront }}</span>
     </div>
