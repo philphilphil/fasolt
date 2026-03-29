@@ -18,9 +18,9 @@ public static class AccountEndpoints
         group.MapPost("/login", Login).RequireRateLimiting("auth");
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
-        group.MapPut("/email", ChangeEmail).RequireAuthorization();
+        group.MapPut("/email", ChangeEmail).RequireAuthorization("EmailVerified");
         group.MapPost("/confirm-email-change", ConfirmEmailChange).RequireAuthorization();
-        group.MapPut("/password", ChangePassword).RequireAuthorization();
+        group.MapPut("/password", ChangePassword).RequireAuthorization("EmailVerified");
         group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
         group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
         group.MapPost("/resend-verification", ResendVerification).RequireAuthorization().RequireRateLimiting("auth");
@@ -216,6 +216,7 @@ public static class AccountEndpoints
 
     private static async Task<IResult> ConfirmEmail(
         ConfirmEmailRequest request,
+        ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager)
     {
@@ -233,8 +234,10 @@ public static class AccountEndpoints
                 [""] = ["Invalid or expired confirmation link."]
             });
 
-        // Refresh cookie so email_confirmed claim is updated
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+        // Only refresh the cookie if the logged-in user is the one confirming
+        var loggedInUser = await userManager.GetUserAsync(principal);
+        if (loggedInUser?.Id == user.Id)
+            await SignInWithEmailClaimAsync(signInManager, loggedInUser, isPersistent: false);
 
         return Results.Ok();
     }
