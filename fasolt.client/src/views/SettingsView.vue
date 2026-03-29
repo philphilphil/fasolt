@@ -191,7 +191,7 @@ async function savePassword() {
       </CardContent>
     </Card>
 
-    <Card class="border-border/60">
+    <Card v-if="!auth.isExternalAccount" class="border-border/60">
       <CardHeader>
         <CardTitle class="text-sm">Email address</CardTitle>
       </CardHeader>
@@ -212,7 +212,7 @@ async function savePassword() {
       </CardContent>
     </Card>
 
-    <Card class="border-border/60">
+    <Card v-if="!auth.isExternalAccount" class="border-border/60">
       <CardHeader>
         <CardTitle class="text-sm">Change password</CardTitle>
       </CardHeader>
