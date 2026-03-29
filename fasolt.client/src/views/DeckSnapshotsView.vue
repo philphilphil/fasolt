@@ -5,7 +5,6 @@ import { useSnapshotsStore } from '@/stores/snapshots'
 import { useDecksStore } from '@/stores/decks'
 import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
-import RestoreDialog from '@/components/RestoreDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,9 +14,6 @@ const decksStore = useDecksStore()
 const deckId = route.params.id as string
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
-
-const restoreOpen = ref(false)
-const selectedSnapshotId = ref('')
 
 onMounted(async () => {
   try {
@@ -38,16 +34,6 @@ function formatDate(iso: string) {
   return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
     + ' at '
     + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-}
-
-function openRestore(snapshotId: string) {
-  selectedSnapshotId.value = snapshotId
-  restoreOpen.value = true
-}
-
-async function onRestored() {
-  restoreOpen.value = false
-  await snapshotsStore.fetchByDeck(deckId)
 }
 </script>
 
@@ -86,7 +72,12 @@ async function onRestored() {
           <div class="text-[13px] font-semibold">{{ formatDate(snapshot.createdAt) }}</div>
           <div class="text-[11px] text-muted-foreground">{{ snapshot.cardCount }} cards at time of snapshot</div>
         </div>
-        <Button variant="outline" size="sm" class="text-xs" @click="openRestore(snapshot.id)">
+        <Button
+          variant="outline"
+          size="sm"
+          class="text-xs"
+          @click="router.push(`/decks/${deckId}/snapshots/${snapshot.id}/restore`)"
+        >
           Restore
         </Button>
       </div>
@@ -96,14 +87,5 @@ async function onRestored() {
     <div v-else class="py-12 text-center text-xs text-muted-foreground">
       No snapshots yet. Snapshots are created automatically or via the study page.
     </div>
-
-    <!-- Restore dialog -->
-    <RestoreDialog
-      v-if="selectedSnapshotId"
-      v-model:open="restoreOpen"
-      :snapshot-id="selectedSnapshotId"
-      :deck-id="deckId"
-      @restored="onRestored"
-    />
   </div>
 </template>

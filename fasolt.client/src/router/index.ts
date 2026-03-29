@@ -63,6 +63,7 @@ const router = createRouter({
     { path: '/decks', name: 'decks', component: () => import('@/views/DecksView.vue') },
     { path: '/decks/:id', name: 'deck-detail', component: () => import('@/views/DeckDetailView.vue') },
     { path: '/decks/:id/snapshots', name: 'deck-snapshots', component: () => import('@/views/DeckSnapshotsView.vue') },
+    { path: '/decks/:id/snapshots/:snapshotId/restore', name: 'restore-snapshot', component: () => import('@/views/RestoreSnapshotView.vue') },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue') },
     { path: '/mcp-setup', name: 'mcp', component: () => import('@/views/McpView.vue') },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
