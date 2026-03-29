@@ -172,12 +172,12 @@ function formatDue(iso: string | null) {
               />
               <div class="min-w-0 flex-1">
                 <div v-if="card.hasContentChanges" class="text-xs space-y-0.5">
-                  <div>
+                  <div v-if="card.front !== card.currentFront">
                     <span class="text-muted-foreground">front: </span>
                     <span class="line-through text-muted-foreground">{{ card.front }}</span>
                     <span class="ml-1">{{ card.currentFront }}</span>
                   </div>
-                  <div>
+                  <div v-if="card.back !== card.currentBack">
                     <span class="text-muted-foreground">back: </span>
                     <span class="line-through text-muted-foreground">{{ card.back }}</span>
                     <span class="ml-1">{{ card.currentBack }}</span>

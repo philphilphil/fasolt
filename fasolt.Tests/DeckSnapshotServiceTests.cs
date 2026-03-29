@@ -360,9 +360,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Diff_ContentOnlyChange_HasContentChangesTrue()
+    public async Task Diff_BackOnlyChange_FrontUnchangedInResponse()
     {
-        var (deckId, cardIds) = await SeedDeck("Diff Content", 1);
+        var (deckId, cardIds) = await SeedDeck("Diff BackOnly", 1);
 
         await using (var db = _db.CreateDbContext())
         {
@@ -370,11 +370,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             await svc.CreateAll(UserId);
         }
 
+        // Only change the back, leave front untouched
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Front = "New front";
-            card.Back = "New back";
+            card.Back = "Changed back";
             await db.SaveChangesAsync();
         }
 
@@ -384,7 +384,44 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
 
         diff!.Modified.Should().HaveCount(1);
-        diff.Modified[0].HasContentChanges.Should().BeTrue();
+        var mod = diff.Modified[0];
+        mod.HasContentChanges.Should().BeTrue();
+        mod.Front.Should().Be(mod.CurrentFront, "front was not changed — snapshot and current should match");
+        mod.Back.Should().NotBe(mod.CurrentBack, "back was changed — snapshot and current should differ");
+        mod.Back.Should().Be("Diff BackOnly A0");
+        mod.CurrentBack.Should().Be("Changed back");
+    }
+
+    [Fact]
+    public async Task Diff_FrontOnlyChange_BackUnchangedInResponse()
+    {
+        var (deckId, cardIds) = await SeedDeck("Diff FrontOnly", 1);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Only change the front, leave back untouched
+        await using (var db = _db.CreateDbContext())
+        {
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.Front = "Changed front";
+            await db.SaveChangesAsync();
+        }
+
+        await using var diffDb = _db.CreateDbContext();
+        var diffSvc = new DeckSnapshotService(diffDb);
+        var snapshots = await diffSvc.ListByDeck(UserId, deckId);
+        var diff = await diffSvc.ComputeDiff(UserId, snapshots[0].Id);
+
+        diff!.Modified.Should().HaveCount(1);
+        var mod = diff.Modified[0];
+        mod.HasContentChanges.Should().BeTrue();
+        mod.Front.Should().Be("Diff FrontOnly Q0");
+        mod.CurrentFront.Should().Be("Changed front");
+        mod.Back.Should().Be(mod.CurrentBack, "back was not changed — snapshot and current should match");
     }
 
     [Fact]
