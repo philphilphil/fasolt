@@ -101,7 +101,7 @@ public static class AccountEndpoints
         IEmailSender<AppUser> emailSender)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is not null)
+        if (user is not null && user.ExternalProvider is null)
         {
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
             var resetLink = $"/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(token)}";
@@ -116,7 +116,7 @@ public static class AccountEndpoints
         UserManager<AppUser> userManager)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is null)
+        if (user is null || user.ExternalProvider is not null)
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
                 [""] = ["Invalid or expired reset link."]
