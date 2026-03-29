@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
 import { useSnapshotsStore } from '@/stores/snapshots'
 import { apiFetch, isApiError } from '@/api/client'
+
+const route = useRoute()
 
 const auth = useAuthStore()
 const snapshotsStore = useSnapshotsStore()
@@ -95,10 +98,32 @@ const totalCardsBacked = computed(() =>
   snapshotsStore.snapshots.reduce((sum, s) => sum + s.cardCount, 0)
 )
 
-onMounted(() => {
+onMounted(async () => {
   newEmail.value = auth.user?.email || ''
   loadSchedulingSettings()
   snapshotsStore.fetchRecent()
+
+  // Handle email change confirmation from link
+  if (route.query.action === 'confirm-email' && route.query.token && route.query.email) {
+    try {
+      await apiFetch('/account/confirm-email-change', {
+        method: 'POST',
+        body: JSON.stringify({
+          newEmail: route.query.email,
+          token: route.query.token,
+        }),
+      })
+      await auth.fetchUser()
+      newEmail.value = auth.user?.email || ''
+      emailSuccess.value = true
+    } catch (e) {
+      if (isApiError(e) && e.errors) {
+        emailError.value = Object.values(e.errors).flat().join(' ')
+      } else {
+        emailError.value = 'Invalid or expired confirmation link.'
+      }
+    }
+  }
 })
 
 async function saveEmail() {
