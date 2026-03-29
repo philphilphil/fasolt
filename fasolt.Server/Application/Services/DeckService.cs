@@ -116,6 +116,11 @@ public class DeckService(AppDbContext db)
                 .ToListAsync()
             : [];
 
+        // Delete snapshots for this deck
+        await db.DeckSnapshots
+            .Where(s => s.DeckId == deck.Id)
+            .ExecuteDeleteAsync();
+
         db.Decks.Remove(deck);
         await db.SaveChangesAsync();
 

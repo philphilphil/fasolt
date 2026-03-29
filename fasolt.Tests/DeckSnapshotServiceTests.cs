@@ -549,7 +549,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Diff_DeletedDeck_HandlesGracefully()
+    public async Task Diff_DeletedDeck_SnapshotsAlsoDeleted()
     {
         var (deckId, _) = await SeedDeck("Diff Deleted Deck", 1);
 
@@ -573,12 +573,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             await deckSvc.DeleteDeck(UserId, deckId, deleteCards: false);
         }
 
+        // Snapshots should be deleted along with the deck
         await using var diffDb = _db.CreateDbContext();
         var diffSvc = new DeckSnapshotService(diffDb);
         var diff = await diffSvc.ComputeDiff(UserId, snapshotPublicId);
-
-        diff.Should().NotBeNull();
-        diff!.Deleted.Should().HaveCount(1);
+        diff.Should().BeNull("snapshot should be deleted when deck is deleted");
     }
 
     [Fact]
