@@ -176,8 +176,7 @@ public class DeckSnapshotService(AppDbContext db)
             {
                 var cur = currentById[sc.CardId];
                 var contentChanged = sc.Front != cur.Front || sc.Back != cur.Back
-                    || sc.FrontSvg != cur.FrontSvg || sc.BackSvg != cur.BackSvg
-                    || sc.SourceFile != cur.SourceFile || sc.SourceHeading != cur.SourceHeading;
+                    || sc.FrontSvg != cur.FrontSvg || sc.BackSvg != cur.BackSvg;
                 if (!contentChanged) return null;
                 return new DiffModifiedCard(
                     sc.CardId, sc.Front, cur.Front, sc.Back, cur.Back,
@@ -279,8 +278,6 @@ public class DeckSnapshotService(AppDbContext db)
         card.Back = sc.Back;
         card.FrontSvg = sc.FrontSvg;
         card.BackSvg = sc.BackSvg;
-        card.SourceFile = sc.SourceFile;
-        card.SourceHeading = sc.SourceHeading;
     }
 
     private async Task EnforceRetention(string userId)
