@@ -181,7 +181,7 @@ public class DeckSnapshotService(AppDbContext db)
             var existingCard = await db.Cards.FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
             if (existingCard is not null)
             {
-                ApplySnapshotToCard(existingCard, sc);
+                // Card still exists — just re-add to deck, don't overwrite content
                 var alreadyInDeck = await db.DeckCards.AnyAsync(dc => dc.DeckId == deckId && dc.CardId == cardId);
                 if (!alreadyInDeck)
                     db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = cardId });
