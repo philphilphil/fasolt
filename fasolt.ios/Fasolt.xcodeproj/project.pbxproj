@@ -19,6 +19,7 @@
 		36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */; };
 		3ACCC3511CF87CD4B822DCB9 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */; };
 		3DF96280AD9C48E5AB080D56 /* SchedulingSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */; };
+		A1B2C3D4E5F60718A9B0C1D2 /* SnapshotViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */; };
 		45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */; };
 		49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */; };
 		4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */; };
@@ -90,6 +91,7 @@
 		4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulingSettingsViewModel.swift; sourceTree = "<group>"; };
+		D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotViewModel.swift; sourceTree = "<group>"; };
 		5B0A49ADA712CA0F08309A81 /* local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = local.xcconfig; sourceTree = "<group>"; };
 		625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySummaryView.swift; sourceTree = "<group>"; };
 		63A881609787DFFE078B49DC /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 				D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */,
 				71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */,
 				56AA69CBC6A84446A2C6C798 /* SchedulingSettingsViewModel.swift */,
+				D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */,
 				BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */,
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */,
@@ -493,6 +496,7 @@
 				36BE3B19AA559A15DC9DAF06 /* NotificationService.swift in Sources */,
 				8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */,
 				3DF96280AD9C48E5AB080D56 /* SchedulingSettingsViewModel.swift in Sources */,
+				A1B2C3D4E5F60718A9B0C1D2 /* SnapshotViewModel.swift in Sources */,
 				ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */,
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
