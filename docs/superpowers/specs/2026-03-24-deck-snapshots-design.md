@@ -49,7 +49,8 @@ No cascade delete from Deck — snapshots survive deck deletion so they can stil
       "step": 0,
       "dueAt": "2026-03-25T00:00:00Z",
       "state": "Review",
-      "lastReviewedAt": "2026-03-20T00:00:00Z"
+      "lastReviewedAt": "2026-03-20T00:00:00Z",
+      "isSuspended": false
     }
   ]
 }
@@ -139,7 +140,7 @@ These IDs are the `cardId` (Guid) values from the diff response — not PublicId
 **Note on re-restored cards:** When a truly deleted card is restored, it gets a new Id/PublicId. If a user later restores from an older snapshot that references the original cardId, that card will appear as "deleted" again (since the original Id no longer exists). This is expected — the user can restore it again, creating another new card. This is simpler than trying to track lineage across restores.
 
 **For modified cards (card in both, user chose to revert):**
-1. Update existing card's front, back, frontSvg, backSvg, sourceFile, sourceHeading, createdAt, and FSRS fields to snapshotted values.
+1. Update existing card's front, back, frontSvg, backSvg, sourceFile, sourceHeading, createdAt, isSuspended, and FSRS fields to snapshotted values.
 
 ### MCP Tools
 
@@ -191,12 +192,58 @@ No changes to iOS deck detail views.
 
 ## Testing
 
-### Backend Unit Tests
-- Snapshot creation for all decks
-- Retention: 11th snapshot triggers deletion of oldest
-- Diff computation: deleted, modified, added buckets
-- Restore: deleted card (still exists vs truly deleted), modified card revert
-- Version deserialization with missing/extra fields
+### Backend Unit Tests (DeckSnapshotServiceTests)
+
+**Create:**
+1. Creates snapshot for each non-empty deck
+2. Skips empty decks (0 cards)
+3. Returns correct count of snapshots created
+4. Captures all card fields: front, back, frontSvg, backSvg, sourceFile, sourceHeading, createdAt, stability, difficulty, step, dueAt, state, lastReviewedAt, isSuspended
+5. Snapshot stores correct deck name and description
+6. Multiple decks each get their own independent snapshot
+
+**Retention:**
+7. Keeps 10 snapshots; creating 11th triggers deletion of oldest
+8. Retention is per-deck — deck A having 11 snapshots doesn't affect deck B's snapshots
+9. Creating snapshots for multiple decks enforces retention independently per deck
+
+**List:**
+10. ListByDeck returns snapshots newest-first
+11. ListByDeck returns empty list for unknown deck
+12. ListRecent returns snapshots across all decks, limited to 50
+
+**Diff — Deleted bucket:**
+13. Card in snapshot but not in current deck → appears in `deleted`
+14. Deleted card shows front, back, sourceFile, stability, dueAt
+
+**Diff — Modified bucket:**
+15. Card with content changes (front/back differ) → `hasContentChanges: true`
+16. Card with FSRS-only changes (stability/difficulty/state differ) → `hasFsrsChanges: true`
+17. Card with both content and FSRS changes → both flags true
+18. Unchanged card → does NOT appear in modified
+
+**Diff — Added bucket:**
+19. Card in current deck but not in snapshot → appears in `added`
+
+**Diff — Edge cases:**
+20. No changes since snapshot → all three buckets empty
+21. Deck was deleted (DeckId null) → diff handles gracefully (empty current cards)
+
+**Restore — Deleted cards:**
+22. Card still exists in system (removed from deck only) → updated to snapshot state and re-added to deck
+23. Card truly deleted from system → new card created with snapshot content and FSRS state, gets new Id/PublicId
+24. Restored card has correct isSuspended value from snapshot
+
+**Restore — Modified cards:**
+25. Reverted card has all fields set to snapshot values (content + FSRS + isSuspended)
+
+**Restore — Validation:**
+26. Card ID not present in snapshot data → silently skipped
+27. Snapshot not found → returns false
+28. Snapshot with deleted deck (DeckId null) → returns false
+
+**Restore — Integration:**
+29. Mixed restore: some deleted + some modified in one request → both applied correctly
 
 ### Playwright E2E
 - Create snapshot from dashboard, verify appears in deck's snapshot list

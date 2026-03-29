@@ -154,7 +154,8 @@ public record SnapshotCardData(
     int? Step,
     DateTimeOffset? DueAt,
     string State,
-    DateTimeOffset? LastReviewedAt);
+    DateTimeOffset? LastReviewedAt,
+    bool IsSuspended);
 
 // API response for listing
 public record SnapshotListDto(string Id, string? DeckName, int CardCount, DateTimeOffset CreatedAt);
@@ -241,7 +242,8 @@ public class DeckSnapshotService(AppDbContext db)
                 cards.Select(c => new SnapshotCardData(
                     c.Id, c.PublicId, c.Front, c.Back, c.FrontSvg, c.BackSvg,
                     c.SourceFile, c.SourceHeading, c.CreatedAt,
-                    c.Stability, c.Difficulty, c.Step, c.DueAt, c.State, c.LastReviewedAt
+                    c.Stability, c.Difficulty, c.Step, c.DueAt, c.State, c.LastReviewedAt,
+                    c.IsSuspended
                 )).ToList());
 
             var snapshot = new DeckSnapshot
@@ -482,6 +484,7 @@ public async Task<bool> Restore(string userId, string snapshotPublicId, RestoreR
                 DueAt = sc.DueAt,
                 State = sc.State,
                 LastReviewedAt = sc.LastReviewedAt,
+                IsSuspended = sc.IsSuspended,
             };
             db.Cards.Add(newCard);
             db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = newCard.Id });
@@ -516,6 +519,7 @@ private static void ApplySnapshotToCard(Card card, SnapshotCardData sc)
     card.DueAt = sc.DueAt;
     card.State = sc.State;
     card.LastReviewedAt = sc.LastReviewedAt;
+    card.IsSuspended = sc.IsSuspended;
 }
 ```
 
