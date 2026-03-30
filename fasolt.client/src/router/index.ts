@@ -65,7 +65,7 @@ const router = createRouter({
       path: '/algorithm',
       name: 'algorithm',
       component: () => import('@/views/AlgorithmView.vue'),
-      meta: { public: true },
+      meta: { public: true, landing: true },
     },
     {
       path: '/privacy',

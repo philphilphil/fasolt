@@ -210,6 +210,10 @@ async function savePassword() {
       <Card class="border-border/60">
         <CardHeader>
           <CardTitle class="text-sm">Scheduling</CardTitle>
+          <p class="text-xs text-muted-foreground">
+            Adjust how the FSRS algorithm schedules your reviews.
+            <RouterLink to="/algorithm" class="text-accent hover:underline">How the algorithm works</RouterLink>
+          </p>
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-4" @submit.prevent="saveSchedulingSettings">
