@@ -10,7 +10,7 @@ public static class SnapshotEndpoints
 {
     public static void MapSnapshotEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api").RequireAuthorization().RequireRateLimiting("api");
+        var group = app.MapGroup("/api").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
         group.MapPost("/snapshots", CreateAll);
         group.MapGet("/snapshots/recent", ListRecent);

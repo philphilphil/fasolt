@@ -131,11 +131,23 @@ builder.Services.ConfigureApplicationCookie(options =>
         context.Response.StatusCode = 401;
         return Task.CompletedTask;
     };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403;
+        context.Response.ContentType = "application/problem+json";
+        return context.Response.WriteAsJsonAsync(new
+        {
+            type = "https://tools.ietf.org/html/rfc9110#section-15.5.4",
+            title = "Email not verified",
+            status = 403,
+            detail = "You must verify your email address before accessing this resource."
+        });
+    };
 });
 
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
-    options.TokenLifespan = TimeSpan.FromHours(1);
+    options.TokenLifespan = TimeSpan.FromHours(24);
 });
 
 builder.Services.AddDataProtection()
@@ -166,6 +178,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminCookieOnly", policy =>
         policy.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
               .RequireRole("Admin"));
+    options.AddPolicy("EmailVerified", policy =>
+        policy.RequireAuthenticatedUser()
+              .AddAuthenticationSchemes(
+                  IdentityConstants.ApplicationScheme,
+                  OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
+              .RequireClaim("email_confirmed", "true"));
 });
 
 builder.Services.AddCors(options =>
@@ -473,9 +491,9 @@ app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
 app.MapSchedulingSettingsEndpoints();
 app.MapSnapshotEndpoints();
-app.MapGroup("/api/identity").MapIdentityApi<AppUser>().RequireRateLimiting("auth");
+// Identity's MapIdentityApi removed — all auth endpoints are in AccountEndpoints
 
-app.MapMcp("/mcp").RequireAuthorization().RequireRateLimiting("api");
+app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");

@@ -248,7 +248,7 @@ async function savePassword() {
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
-            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Email updated.</div>
+            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Verification email sent. Check your inbox to confirm the change.</div>
             <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ emailError }}</div>
             <div class="flex flex-col gap-1.5">
               <label for="new-email" class="text-xs font-medium">New email</label>

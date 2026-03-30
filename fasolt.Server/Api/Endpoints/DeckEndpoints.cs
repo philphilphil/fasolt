@@ -10,7 +10,7 @@ public static class DeckEndpoints
 {
     public static void MapDeckEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/decks").RequireAuthorization().RequireRateLimiting("api");
+        var group = app.MapGroup("/api/decks").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
         group.MapPost("/", Create);
         group.MapGet("/", List);

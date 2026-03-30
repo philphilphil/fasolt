@@ -31,6 +31,24 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/verify-email',
+      name: 'verify-email',
+      component: () => import('@/views/EmailVerificationView.vue'),
+      meta: { requiresAuth: true, skipVerificationCheck: true },
+    },
+    {
+      path: '/confirm-email',
+      name: 'confirm-email',
+      component: () => import('@/views/ConfirmEmailView.vue'),
+      meta: { public: true },
+    },
+    {
+      path: '/confirm-email-change',
+      name: 'confirm-email-change',
+      component: () => import('@/views/ConfirmEmailChangeView.vue'),
+      meta: { skipVerificationCheck: true },
+    },
+    {
       path: '/oauth/consent',
       name: 'oauth-consent',
       component: () => import('@/views/OAuthConsentView.vue'),
@@ -89,6 +107,16 @@ router.beforeEach(async (to) => {
   }
 
   if (to.meta.authRedirect && auth.isAuthenticated) {
+    return { name: 'study' }
+  }
+
+  // Redirect unverified users to verification gate
+  if (auth.isAuthenticated && !auth.isEmailConfirmed && !isPublic && to.meta.skipVerificationCheck !== true) {
+    return { name: 'verify-email' }
+  }
+
+  // Don't let verified users visit the verification page
+  if (to.name === 'verify-email' && auth.isEmailConfirmed) {
     return { name: 'study' }
   }
 

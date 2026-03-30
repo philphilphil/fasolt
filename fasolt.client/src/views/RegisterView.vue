@@ -37,7 +37,7 @@ async function handleSubmit() {
   loading.value = true
   try {
     await auth.register(email.value, password.value)
-    router.push('/')
+    router.push('/verify-email')
   } catch (e) {
     if (isApiError(e) && e.errors) {
       errors.value = Object.values(e.errors).flat()

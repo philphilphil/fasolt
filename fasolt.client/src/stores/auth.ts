@@ -5,6 +5,7 @@ import { apiFetch } from '@/api/client'
 interface User {
   email: string
   isAdmin: boolean
+  emailConfirmed: boolean
   externalProvider: string | null
   displayName: string | null
 }
@@ -15,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.isAdmin ?? false)
   const isExternalAccount = computed(() => user.value?.externalProvider != null)
+  const isEmailConfirmed = computed(() => user.value?.emailConfirmed ?? false)
 
   async function fetchUser() {
     try {
@@ -27,21 +29,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function register(email: string, password: string) {
-    await apiFetch('/identity/register', {
+    await apiFetch('/account/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
-    await login(email, password, false)
+    await fetchUser()
   }
 
   async function login(email: string, password: string, rememberMe: boolean) {
-    const params = new URLSearchParams({
-      useCookies: 'true',
-      useSessionCookies: rememberMe ? 'false' : 'true',
-    })
-    await apiFetch(`/identity/login?${params}`, {
+    await apiFetch('/account/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberMe }),
     })
     await fetchUser()
   }
@@ -86,12 +84,17 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
+  async function resendVerification() {
+    await apiFetch('/account/resend-verification', { method: 'POST' })
+  }
+
   return {
     user,
     isLoading,
     isAuthenticated,
     isAdmin,
     isExternalAccount,
+    isEmailConfirmed,
     fetchUser,
     register,
     login,
@@ -100,5 +103,6 @@ export const useAuthStore = defineStore('auth', () => {
     changePassword,
     forgotPassword,
     resetPassword,
+    resendVerification,
   }
 })

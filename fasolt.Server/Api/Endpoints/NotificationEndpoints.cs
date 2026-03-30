@@ -10,7 +10,7 @@ public static class NotificationEndpoints
 {
     public static void MapNotificationEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/notifications").RequireAuthorization().RequireRateLimiting("api");
+        var group = app.MapGroup("/api/notifications").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
         group.MapPut("/device-token", UpsertDeviceToken);
         group.MapDelete("/device-token", DeleteDeviceToken);

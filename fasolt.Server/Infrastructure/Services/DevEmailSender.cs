@@ -29,4 +29,5 @@ public class DevEmailSender : IEmailSender<AppUser>
         _logger.LogInformation("Password reset code for {Email}: {Code}", email, resetCode);
         return Task.CompletedTask;
     }
+
 }

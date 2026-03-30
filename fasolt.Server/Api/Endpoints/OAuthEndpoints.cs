@@ -119,6 +119,13 @@ public static class OAuthEndpoints
                 return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
             }
 
+            // Block unverified users from authorizing OAuth clients
+            var emailConfirmed = result.Principal.FindFirstValue("email_confirmed");
+            if (emailConfirmed != "true")
+            {
+                return Results.Redirect("/verify-email");
+            }
+
             var user = result.Principal;
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var userName = user.FindFirstValue(ClaimTypes.Name) ?? user.FindFirstValue(ClaimTypes.Email) ?? "";
@@ -161,6 +168,7 @@ public static class OAuthEndpoints
             identity.SetClaim(Claims.Subject, userId);
             identity.SetClaim(ClaimTypes.NameIdentifier, userId);
             identity.SetClaim(Claims.Name, userName);
+            identity.SetClaim("email_confirmed", "true"); // Verified above — unverified users are redirected
             identity.SetScopes(Scopes.OfflineAccess);
 
             identity.SetDestinations(static claim => claim.Type switch
@@ -168,6 +176,7 @@ public static class OAuthEndpoints
                 ClaimTypes.NameIdentifier => [Destinations.AccessToken],
                 Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
                 Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                "email_confirmed" => [Destinations.AccessToken],
                 _ => [Destinations.AccessToken],
             });
 
@@ -199,6 +208,15 @@ public static class OAuthEndpoints
                             [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The user no longer exists.",
                         }));
 
+                if (!user.EmailConfirmed)
+                    return Results.Forbid(
+                        authenticationSchemes: [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme],
+                        properties: new(new Dictionary<string, string?>
+                        {
+                            [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
+                            [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "Email address not verified.",
+                        }));
+
                 var identity = new ClaimsIdentity(
                     authenticationType: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
                     nameType: Claims.Name,
@@ -207,6 +225,7 @@ public static class OAuthEndpoints
                 identity.SetClaim(Claims.Subject, userId);
                 identity.SetClaim(ClaimTypes.NameIdentifier, userId);
                 identity.SetClaim(Claims.Name, user.UserName);
+                identity.SetClaim("email_confirmed", "true"); // Verified above — unverified users are rejected
                 identity.SetScopes(principal.GetScopes());
 
                 identity.SetDestinations(static claim => claim.Type switch
@@ -214,6 +233,7 @@ public static class OAuthEndpoints
                     ClaimTypes.NameIdentifier => [Destinations.AccessToken],
                     Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
                     Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                    "email_confirmed" => [Destinations.AccessToken],
                     _ => [Destinations.AccessToken],
                 });
 
@@ -328,7 +348,12 @@ public static class OAuthEndpoints
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
+            {
+                var user = await signInManager.UserManager.FindByEmailAsync(email);
+                if (user is not null)
+                    await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
                 return Results.Redirect(UrlHelpers.IsLocalUrl(returnUrl) ? returnUrl : "/");
+            }
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
