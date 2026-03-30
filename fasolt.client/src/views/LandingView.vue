@@ -11,7 +11,7 @@ const { isDark, toggle } = useDarkMode()
 <template>
   <div class="min-h-screen bg-background text-foreground">
     <!-- Grid background -->
-    <div class="pointer-events-none fixed inset-0 bg-grid bg-grid-fade opacity-60" />
+    <div class="pointer-events-none fixed inset-0 -z-10 bg-grid bg-grid-fade opacity-60" />
 
     <!-- Nav -->
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
