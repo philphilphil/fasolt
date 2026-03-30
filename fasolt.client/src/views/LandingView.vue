@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun } from 'lucide-vue-next'
+import { Moon, Sun, Bot, Layers, FileText, Brain, BarChart3, Image, Search, Server } from 'lucide-vue-next'
 import { useDarkMode } from '@/composables/useDarkMode'
 import TerminalDemo from '@/components/TerminalDemo.vue'
 
@@ -92,6 +92,53 @@ const { isDark, toggle } = useDarkMode()
               Study your cards on the web or the iOS app. Spaced repetition schedules reviews at optimal intervals.
             </p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="mx-auto max-w-5xl px-6 py-16">
+      <p class="text-xs uppercase tracking-[0.2em] text-accent mb-8">Features</p>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Bot :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">MCP tools</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">AI agents create and manage cards via MCP.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Layers :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">Decks</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Organize cards into focused study groups.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <FileText :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">Source tracking</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Cards retain provenance — file and heading.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Brain :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">FSRS scheduling</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Optimal review intervals backed by research.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <BarChart3 :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">Dashboard</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Stats, due counts, and study streaks.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Image :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">SVG support</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Diagrams and visualizations on cards.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Search :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">Search</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Full-text search across all your cards.</p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Server :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">Self-hostable</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Run your own instance with Docker.</p>
         </div>
       </div>
     </section>
