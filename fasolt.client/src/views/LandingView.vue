@@ -42,11 +42,11 @@ const { isDark, toggle } = useDarkMode()
         <p class="mb-4 text-xs uppercase tracking-[0.2em] text-accent">spaced repetition</p>
         <h1 class="text-2xl sm:text-4xl font-bold tracking-tight leading-tight mb-5">
           <span class="text-accent text-glow">MCP-first</span> spaced repetition<br class="hidden sm:block" />
-          for your markdown notes.
+          for your notes.
         </h1>
         <p class="text-sm text-muted-foreground mb-8 max-w-md leading-relaxed">
           Your AI agent reads your notes and creates flashcards.
-          You review them here. API and browser also fully supported. Free.
+          Study them on the web or the iOS app. Free.
         </p>
         <div class="flex flex-wrap gap-3">
           <RouterLink to="/register">
@@ -89,7 +89,7 @@ const { isDark, toggle } = useDarkMode()
             <span class="text-xs text-accent/60 mb-2 block">03</span>
             <h3 class="text-sm font-semibold mb-2">Learn and remember</h3>
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Study your cards on the web. Spaced repetition schedules reviews at optimal intervals.
+              Study your cards on the web or the iOS app. Spaced repetition schedules reviews at optimal intervals.
             </p>
           </div>
         </div>
