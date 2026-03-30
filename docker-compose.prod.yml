@@ -6,6 +6,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=fasolt;Username=fasolt;Password=${DB_PASSWORD}
       Cors__AllowedOrigins__0: https://fasolt.app
+      GitHub__ClientId: ${GITHUB_CLIENT_ID}
+      GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET}
+      Apns__KeyId: ${APNS_KEY_ID}
+      Apns__TeamId: ${APNS_TEAM_ID}
+      Apns__BundleId: com.fasolt.app
+      Apns__KeyBase64: ${APNS_KEY_BASE64}
       OpenIddict__EncryptionCertificatePath: /certs/encryption.pfx
       OpenIddict__SigningCertificatePath: /certs/signing.pfx
     volumes:
