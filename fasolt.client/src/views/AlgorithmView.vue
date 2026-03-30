@@ -50,13 +50,15 @@ const { isDark, toggle } = useDarkMode()
           </CardHeader>
           <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
             <p>
-              Spaced repetition is a study technique where you review material at increasing intervals.
+              <a href="https://en.wikipedia.org/wiki/Spaced_repetition" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Spaced repetition</a> is a study technique where you review material at increasing intervals.
               Instead of cramming, you see a card right before you're likely to forget it.
               Each successful recall makes the memory stronger, so the next review can wait longer.
             </p>
             <p>
               A new card might be reviewed after 1 day, then 3 days, then 8 days, then 3 weeks —
-              growing exponentially as the memory stabilizes.
+              growing exponentially as the memory stabilizes. This exploits the
+              <a href="https://en.wikipedia.org/wiki/Forgetting_curve" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">forgetting curve</a>
+              discovered by Hermann Ebbinghaus in the 1880s.
             </p>
           </CardContent>
         </Card>
@@ -68,7 +70,7 @@ const { isDark, toggle } = useDarkMode()
           </CardHeader>
           <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
             <p>
-              FSRS (Free Spaced Repetition Scheduler) is a modern, open-source algorithm based on the
+              <a href="https://github.com/open-spaced-repetition/fsrs4anki" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">FSRS</a> (Free Spaced Repetition Scheduler) is a modern, open-source algorithm based on the
               <strong class="text-foreground">Three Component Model of Memory</strong>. It tracks three variables for each card:
             </p>
             <dl class="space-y-3 pl-1">
@@ -156,8 +158,8 @@ const { isDark, toggle } = useDarkMode()
           </CardHeader>
           <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
             <p>
-              FSRS replaced the SM-2 algorithm (created in 1987) as the standard for spaced repetition.
-              It's now the default in Anki, the most popular flashcard app.
+              FSRS replaced the <a href="https://en.wikipedia.org/wiki/SuperMemo#Description_of_SM-2_algorithm" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">SM-2 algorithm</a> (created in 1987) as the standard for spaced repetition.
+              It's now the default in <a href="https://en.wikipedia.org/wiki/Anki_(software)" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Anki</a> (since version 23.10), the most popular flashcard app.
             </p>
             <p>Key advantages:</p>
             <ul class="list-disc list-inside space-y-1 pl-1">
@@ -165,6 +167,23 @@ const { isDark, toggle } = useDarkMode()
               <li><strong class="text-foreground">Optimized defaults</strong> trained on 700M+ real reviews</li>
               <li><strong class="text-foreground">Better handling of overdue cards</strong> — SM-2 penalized you for reviewing late, FSRS adapts</li>
               <li><strong class="text-foreground">Open source</strong> — transparent, peer-reviewed, continuously improving</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <!-- Sources -->
+        <Card class="border-border/60">
+          <CardHeader>
+            <CardTitle class="text-sm">Sources</CardTitle>
+          </CardHeader>
+          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-2">
+            <ul class="list-disc list-inside space-y-1.5 pl-1">
+              <li><a href="https://en.wikipedia.org/wiki/Spaced_repetition" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Spaced repetition</a> — Wikipedia</li>
+              <li><a href="https://en.wikipedia.org/wiki/Forgetting_curve" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Forgetting curve</a> — Wikipedia</li>
+              <li><a href="https://github.com/open-spaced-repetition/fsrs4anki" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">FSRS4Anki</a> — open-source implementation and documentation</li>
+              <li><a href="https://dl.acm.org/doi/10.1145/3534678.3539081" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">A Stochastic Shortest Path Algorithm for Optimizing Spaced Repetition Scheduling</a> — ACM KDD 2022</li>
+              <li><a href="https://doi.org/10.1109/TKDE.2024.3407927" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Optimizing Spaced Repetition Schedule by Capturing the Dynamics of Memory</a> — IEEE TKDE 2024</li>
+              <li><a href="https://en.wikipedia.org/wiki/SuperMemo#Description_of_SM-2_algorithm" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">SM-2 algorithm</a> — Wikipedia</li>
             </ul>
           </CardContent>
         </Card>
