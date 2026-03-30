@@ -143,32 +143,32 @@ const { isDark, toggle } = useDarkMode()
       </div>
     </section>
 
-    <!-- Study preview -->
+    <!-- iOS showcase -->
     <section class="mx-auto max-w-5xl px-6 py-16">
       <div class="flex flex-col items-center gap-6">
-        <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">Study on any device</p>
-        <div class="flex items-center gap-4">
-          <div class="rounded border border-border/60 bg-card p-2 shadow-lg">
-            <img
-              src="/study-question.png"
-              alt="Flashcard question side"
-              class="rounded w-[180px] sm:w-[200px]"
-            />
-          </div>
-          <div class="rounded border border-border/60 bg-card p-2 shadow-lg">
-            <img
-              src="/study-answer.png"
-              alt="Flashcard answer side with rating buttons"
-              class="rounded w-[180px] sm:w-[200px]"
-            />
-          </div>
-          <div class="hidden sm:block rounded border border-border/60 bg-card p-2 shadow-lg">
-            <img
-              src="/study-complete.png"
-              alt="Study session complete with statistics"
-              class="rounded w-[200px]"
-            />
-          </div>
+        <p class="text-xs uppercase tracking-[0.2em] text-accent">Study anywhere</p>
+        <p class="text-xs text-muted-foreground">Native iOS app — coming soon</p>
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <img
+            src="/ios_screenshot_dashboard.png"
+            alt="iOS app dashboard"
+            class="rounded-lg w-full"
+          />
+          <img
+            src="/ios_screenshot_front.png"
+            alt="iOS app flashcard front"
+            class="rounded-lg w-full"
+          />
+          <img
+            src="/ios_screenshot_back.png"
+            alt="iOS app flashcard back"
+            class="rounded-lg w-full"
+          />
+          <img
+            src="/ios_screenshot_sessionComplete.png"
+            alt="iOS app study session complete"
+            class="rounded-lg w-full"
+          />
         </div>
       </div>
     </section>
