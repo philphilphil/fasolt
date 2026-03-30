@@ -107,6 +107,11 @@ const { isDark, toggle } = useDarkMode()
           <p class="text-xs text-muted-foreground leading-relaxed">AI agents create and manage cards via MCP.</p>
         </div>
         <div class="rounded border border-border/60 bg-card/50 p-4">
+          <Brain :size="16" class="text-accent mb-2" />
+          <h3 class="text-sm font-semibold mb-1">FSRS scheduling</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Optimal review intervals backed by research. <RouterLink to="/algorithm" class="text-accent hover:underline">Learn more</RouterLink></p>
+        </div>
+        <div class="rounded border border-border/60 bg-card/50 p-4">
           <Layers :size="16" class="text-accent mb-2" />
           <h3 class="text-sm font-semibold mb-1">Decks</h3>
           <p class="text-xs text-muted-foreground leading-relaxed">Organize cards into focused study groups.</p>
@@ -115,11 +120,6 @@ const { isDark, toggle } = useDarkMode()
           <FileText :size="16" class="text-accent mb-2" />
           <h3 class="text-sm font-semibold mb-1">Source tracking</h3>
           <p class="text-xs text-muted-foreground leading-relaxed">Cards retain provenance — file and heading.</p>
-        </div>
-        <div class="rounded border border-border/60 bg-card/50 p-4">
-          <Brain :size="16" class="text-accent mb-2" />
-          <h3 class="text-sm font-semibold mb-1">FSRS scheduling</h3>
-          <p class="text-xs text-muted-foreground leading-relaxed">Optimal review intervals backed by research. <RouterLink to="/algorithm" class="text-accent hover:underline">Learn more</RouterLink></p>
         </div>
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <BarChart3 :size="16" class="text-accent mb-2" />
