@@ -288,7 +288,7 @@ if (apnsKeyReady)
         BundleId = builder.Configuration["APNS_BUNDLE_ID"] ?? "com.fasolt.app",
         KeyBase64 = apnsKeyBase64,
         KeyPath = apnsKeyPath,
-        UseSandbox = bool.TryParse(builder.Configuration["APNS_USE_SANDBOX"], out var sandbox) && sandbox,
+        UseSandbox = !bool.TryParse(builder.Configuration["APNS_USE_SANDBOX"], out var sandbox) || sandbox,
     };
     builder.Services.AddSingleton(apnsSettings);
     builder.Services.AddHttpClient<ApnsService>();
