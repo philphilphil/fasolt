@@ -88,19 +88,8 @@ export const useAuthStore = defineStore('auth', () => {
     await apiFetch('/account/resend-verification', { method: 'POST' })
   }
 
-  async function exportData() {
-    const response = await fetch('/api/account/export', {
-      method: 'POST',
-      credentials: 'include',
-    })
-    if (!response.ok) throw new Error('Export failed')
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = response.headers.get('content-disposition')?.match(/filename="?(.+?)"?$/)?.[1] ?? 'fasolt-export.json'
-    a.click()
-    URL.revokeObjectURL(url)
+  function exportData() {
+    window.location.href = '/api/account/export'
   }
 
   async function deleteAccount(password?: string, confirmEmail?: string) {

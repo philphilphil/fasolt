@@ -28,7 +28,7 @@ public static class AccountEndpoints
         group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
-        group.MapPost("/export", ExportData).RequireAuthorization("EmailVerified");
+        group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified");
         group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified");
     }
 
