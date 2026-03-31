@@ -5,16 +5,10 @@ services:
       args:
         VITE_BUGSINK_DSN: ${VITE_BUGSINK_DSN:-}
     restart: unless-stopped
+    env_file: .env
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       DATABASE_URL: Host=db;Port=5432;Database=fasolt;Username=fasolt;Password=${DB_PASSWORD}
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      APNS_KEY_ID: ${APNS_KEY_ID:-}
-      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
-      APNS_BUNDLE_ID: com.fasolt.app
-      APNS_KEY_BASE64: ${APNS_KEY_BASE64:-}
-      BUGSINK_DSN: ${BUGSINK_DSN:-}
       OPENIDDICT_ENCRYPTION_CERT_PATH: /certs/encryption.pfx
       OPENIDDICT_SIGNING_CERT_PATH: /certs/signing.pfx
     volumes:
