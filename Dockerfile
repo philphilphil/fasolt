@@ -4,6 +4,8 @@ WORKDIR /app
 COPY fasolt.client/package.json fasolt.client/package-lock.json ./
 RUN npm ci
 COPY fasolt.client/ ./
+ARG VITE_BUGSINK_DSN=""
+ENV VITE_BUGSINK_DSN=$VITE_BUGSINK_DSN
 RUN npm run build
 
 # --- Build backend ---

@@ -20,7 +20,7 @@ DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
-var bugsinkDsn = builder.Configuration["Bugsink:Dsn"];
+var bugsinkDsn = builder.Configuration["BUGSINK_DSN"];
 if (!string.IsNullOrEmpty(bugsinkDsn))
 {
     builder.WebHost.UseSentry(o =>

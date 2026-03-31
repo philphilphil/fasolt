@@ -1,6 +1,9 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_BUGSINK_DSN: ${VITE_BUGSINK_DSN:-}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -12,6 +15,7 @@ services:
       Apns__TeamId: ${APNS_TEAM_ID}
       Apns__BundleId: com.fasolt.app
       Apns__KeyBase64: ${APNS_KEY_BASE64}
+      BUGSINK_DSN: ${BUGSINK_DSN:-}
       OpenIddict__EncryptionCertificatePath: /certs/encryption.pfx
       OpenIddict__SigningCertificatePath: /certs/signing.pfx
     volumes:
