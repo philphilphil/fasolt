@@ -1,0 +1,26 @@
+# fasolt
+
+fasolt is an MCP-first spaced repetition app for markdown notes.
+
+Users keep their notes locally. An AI agent reads those notes, creates flashcards in fasolt via MCP, and fasolt handles study and review with the FSRS spaced repetition algorithm. Cards can also be edited in the web app or the iOS app.
+
+Notable features:
+- MCP-based flashcard creation and management
+- SVG support for diagrams and visual explanations on cards
+- Source tracking with source file and heading provenance
+- Decks for organizing study material
+- Full-text search across cards
+- Dashboard with due counts and study stats
+- Web app and iOS app for editing and review
+- Self-hosting support with Docker
+
+Public URLs:
+- Home: https://fasolt.app/
+- Algorithm: https://fasolt.app/algorithm
+- Privacy: https://fasolt.app/privacy
+
+Integration URLs:
+- Remote MCP endpoint: https://fasolt.app/mcp
+- GitHub repository: https://github.com/philphilphil/fasolt
+
+For setup, self-hosting, and implementation details, see the GitHub repository README.
