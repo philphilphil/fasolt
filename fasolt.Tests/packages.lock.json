@@ -544,6 +544,27 @@
           "Polly.Core": "8.4.2"
         }
       },
+      "Sentry": {
+        "type": "Transitive",
+        "resolved": "6.3.0",
+        "contentHash": "PwcF5yIzcKuhd/3BOxU3QHJA5/xYiuSNSaSpXi2kR3x7ONKel73xi49GfYvRg4mbMN1gRjxduqxQL6iRNNWqBA=="
+      },
+      "Sentry.AspNetCore": {
+        "type": "Transitive",
+        "resolved": "6.3.0",
+        "contentHash": "0SfIEd6emJdwnORqeyCUYjqWNPwcj3mXnho7Lq32h00+wxws8jVexpqsCesorYZClkzMNrO29q4sCBfJnEl7oA==",
+        "dependencies": {
+          "Sentry.Extensions.Logging": "6.3.0"
+        }
+      },
+      "Sentry.Extensions.Logging": {
+        "type": "Transitive",
+        "resolved": "6.3.0",
+        "contentHash": "ktCsDYeM1lygBvJ9nMuNgwGuXAsjTx3Nzz9togTrgwU00p4IWdZyy0+hI1GbQTqyXjd3L6VszawqUa9Bq+3Pvg==",
+        "dependencies": {
+          "Sentry": "6.3.0"
+        }
+      },
       "xunit.abstractions": {
         "type": "Transitive",
         "resolved": "2.0.3",
@@ -598,6 +619,7 @@
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.1, )",
           "OpenIddict.AspNetCore": "[7.0.0, )",
           "OpenIddict.EntityFrameworkCore": "[7.0.0, )",
+          "Sentry.AspNetCore": "[6.3.0, )",
           "dotenv.net": "[4.0.1, )"
         }
       }

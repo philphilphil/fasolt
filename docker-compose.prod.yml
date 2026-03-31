@@ -1,19 +1,16 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        VITE_BUGSINK_DSN: ${VITE_BUGSINK_DSN:-}
     restart: unless-stopped
+    env_file: .env
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=fasolt;Username=fasolt;Password=${DB_PASSWORD}
-      Cors__AllowedOrigins__0: https://fasolt.app
-      GitHub__ClientId: ${GITHUB_CLIENT_ID}
-      GitHub__ClientSecret: ${GITHUB_CLIENT_SECRET}
-      Apns__KeyId: ${APNS_KEY_ID}
-      Apns__TeamId: ${APNS_TEAM_ID}
-      Apns__BundleId: com.fasolt.app
-      Apns__KeyBase64: ${APNS_KEY_BASE64}
-      OpenIddict__EncryptionCertificatePath: /certs/encryption.pfx
-      OpenIddict__SigningCertificatePath: /certs/signing.pfx
+      DATABASE_URL: Host=db;Port=5432;Database=fasolt;Username=fasolt;Password=${DB_PASSWORD}
+      OPENIDDICT_ENCRYPTION_CERT_PATH: /certs/encryption.pfx
+      OPENIDDICT_SIGNING_CERT_PATH: /certs/signing.pfx
     volumes:
       - ./certs:/certs:ro
     depends_on:

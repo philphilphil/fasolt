@@ -24,6 +24,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct FasoltApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var authService = AuthService()
+
     @State private var networkMonitor = NetworkMonitor()
     @Environment(\.scenePhase) private var scenePhase
     @State private var lastRefresh: Date = .distantPast
