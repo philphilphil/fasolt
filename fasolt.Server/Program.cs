@@ -20,6 +20,17 @@ DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
+var bugsinkDsn = builder.Configuration["Bugsink:Dsn"];
+if (!string.IsNullOrEmpty(bugsinkDsn))
+{
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = bugsinkDsn;
+        o.Environment = builder.Environment.EnvironmentName;
+        o.SendDefaultPii = false;
+    });
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
