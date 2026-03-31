@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import os
+import Sentry
 
 private let appLogger = Logger(subsystem: "com.fasolt.app", category: "AppDelegate")
 
@@ -24,6 +25,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct FasoltApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var authService = AuthService()
+
+    init() {
+        if let dsn = Bundle.main.object(forInfoDictionaryKey: "SENTRY_DSN") as? String, !dsn.isEmpty {
+            SentrySDK.start { options in
+                options.dsn = dsn
+                options.environment = "production"
+                options.sendDefaultPii = false
+            }
+        }
+    }
     @State private var networkMonitor = NetworkMonitor()
     @Environment(\.scenePhase) private var scenePhase
     @State private var lastRefresh: Date = .distantPast

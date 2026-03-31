@@ -44,6 +44,8 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>SENTRY_DSN</key>
+	<string>$(SENTRY_DSN)</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
