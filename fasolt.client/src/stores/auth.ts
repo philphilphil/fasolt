@@ -88,10 +88,6 @@ export const useAuthStore = defineStore('auth', () => {
     await apiFetch('/account/resend-verification', { method: 'POST' })
   }
 
-  function exportData() {
-    window.location.href = '/api/account/export'
-  }
-
   async function deleteAccount(password?: string, confirmIdentity?: string) {
     await apiFetch('/account', {
       method: 'DELETE',
@@ -116,7 +112,6 @@ export const useAuthStore = defineStore('auth', () => {
     forgotPassword,
     resetPassword,
     resendVerification,
-    exportData,
     deleteAccount,
   }
 })
