@@ -86,4 +86,37 @@ public class SearchServiceTests : IAsyncLifetime
         result.Cards.Should().ContainSingle(c => c.Headline.Contains("snake_case"));
     }
 
+    [Fact]
+    public async Task Search_MultiTermQuery_RequiresAllTerms()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var searchSvc = new SearchService(db);
+
+        await cardSvc.CreateCard(UserId, "Was ist der Unterschied von Apfel und der Birne", "Äpfel und Birnen sind Obstsorten.", null, null);
+        await cardSvc.CreateCard(UserId, "Was ist ein Apfel", "Ein Apfel ist eine Frucht.", null, null);
+        await cardSvc.CreateCard(UserId, "Unrelated card", "Nothing here.", null, null);
+
+        var result = await searchSvc.Search(UserId, "apfel birne");
+
+        result.Cards.Should().ContainSingle(c => c.Headline.Contains("Apfel"));
+        result.Cards[0].Headline.Should().Contain("Birne");
+    }
+
+    [Fact]
+    public async Task Search_MultiTermQuery_MatchesAcrossFrontAndBack()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var searchSvc = new SearchService(db);
+
+        await cardSvc.CreateCard(UserId, "Photosynthesis", "Plants convert sunlight into energy.", null, null);
+        await cardSvc.CreateCard(UserId, "Respiration", "Cells convert glucose into ATP.", null, null);
+
+        // "photosynthesis" is in front, "sunlight" is in back — both must match
+        var result = await searchSvc.Search(UserId, "photosynthesis sunlight");
+
+        result.Cards.Should().ContainSingle(c => c.Headline.Contains("Photosynthesis"));
+    }
+
 }

@@ -11,22 +11,27 @@ public class SearchService(AppDbContext db)
         if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
             return new SearchResponse([], []);
 
-        var escaped = query.Trim()
-            .Replace("\\", "\\\\")
-            .Replace("%", "\\%")
-            .Replace("_", "\\_");
-        var pattern = $"%{escaped}%";
+        var terms = query.Trim()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Select(t => "%" + t.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%")
+            .ToList();
 
-        var cards = await db.Cards
-            .Where(c => c.UserId == userId &&
-                (EF.Functions.ILike(c.Front, pattern, "\\") || EF.Functions.ILike(c.Back, pattern, "\\")))
+        var cardsQuery = db.Cards.Where(c => c.UserId == userId);
+        foreach (var term in terms)
+            cardsQuery = cardsQuery.Where(c =>
+                EF.Functions.ILike(c.Front, term, "\\") || EF.Functions.ILike(c.Back, term, "\\"));
+
+        var cards = await cardsQuery
             .OrderByDescending(c => c.CreatedAt)
             .Take(10)
             .Select(c => new CardSearchResult(c.PublicId, c.Front, c.State))
             .ToListAsync();
 
-        var decks = await db.Decks
-            .Where(d => d.UserId == userId && EF.Functions.ILike(d.Name, pattern, "\\"))
+        var decksQuery = db.Decks.Where(d => d.UserId == userId);
+        foreach (var term in terms)
+            decksQuery = decksQuery.Where(d => EF.Functions.ILike(d.Name, term, "\\"));
+
+        var decks = await decksQuery
             .OrderBy(d => d.Name)
             .Take(10)
             .Select(d => new DeckSearchResult(
