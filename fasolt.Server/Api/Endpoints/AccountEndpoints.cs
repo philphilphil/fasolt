@@ -28,8 +28,8 @@ public static class AccountEndpoints
         group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
-        group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified");
-        group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified");
+        group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
+        group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
     }
 
     private static async Task<IResult> Register(
