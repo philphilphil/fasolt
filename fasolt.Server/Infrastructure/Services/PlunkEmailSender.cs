@@ -15,7 +15,7 @@ public class PlunkEmailSender : IEmailSender<AppUser>
     {
         _httpClient = httpClient;
         _logger = logger;
-        _fromEmail = configuration["Plunk:FromEmail"] ?? "noreply@fasolt.app";
+        _fromEmail = configuration["PLUNK_FROM_EMAIL"] ?? "noreply@fasolt.app";
     }
 
     public Task SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink)

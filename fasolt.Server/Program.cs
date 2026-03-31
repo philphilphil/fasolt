@@ -33,7 +33,7 @@ if (!string.IsNullOrEmpty(bugsinkDsn))
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseNpgsql(builder.Configuration["DATABASE_URL"]);
     options.UseOpenIddict();
 });
 
@@ -55,8 +55,8 @@ builder.Services
     .AddEntityFrameworkStores<AppDbContext>()
     .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>();
 
-var gitHubClientId = builder.Configuration["GitHub:ClientId"];
-var gitHubClientSecret = builder.Configuration["GitHub:ClientSecret"];
+var gitHubClientId = builder.Configuration["GITHUB_CLIENT_ID"];
+var gitHubClientSecret = builder.Configuration["GITHUB_CLIENT_SECRET"];
 
 if (!string.IsNullOrEmpty(gitHubClientId) && !string.IsNullOrEmpty(gitHubClientSecret))
 {
@@ -90,8 +90,8 @@ builder.Services.AddOpenIddict()
 
         options.RequireProofKeyForCodeExchange();
 
-        var encryptionCertPath = builder.Configuration["OpenIddict:EncryptionCertificatePath"];
-        var signingCertPath = builder.Configuration["OpenIddict:SigningCertificatePath"];
+        var encryptionCertPath = builder.Configuration["OPENIDDICT_ENCRYPTION_CERT_PATH"];
+        var signingCertPath = builder.Configuration["OPENIDDICT_SIGNING_CERT_PATH"];
 
         if (encryptionCertPath is not null && signingCertPath is not null)
         {
@@ -106,7 +106,7 @@ builder.Services.AddOpenIddict()
         else
         {
             throw new InvalidOperationException(
-                "OpenIddict:EncryptionCertificatePath and OpenIddict:SigningCertificatePath " +
+                "OPENIDDICT_ENCRYPTION_CERT_PATH and OPENIDDICT_SIGNING_CERT_PATH " +
                 "must be configured in non-development environments.");
         }
 
@@ -166,12 +166,13 @@ builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>()
     .SetApplicationName("fasolt");
 
-if (!string.IsNullOrEmpty(builder.Configuration["Plunk:ApiKey"]))
+var plunkApiKey = builder.Configuration["PLUNK_API_KEY"];
+if (!string.IsNullOrEmpty(plunkApiKey))
 {
     builder.Services.AddHttpClient<IEmailSender<AppUser>, PlunkEmailSender>((sp, client) =>
     {
         client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", builder.Configuration["Plunk:ApiKey"]);
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", plunkApiKey);
     });
 }
 else
@@ -272,14 +273,24 @@ builder.Services.AddScoped<SchedulingSettingsService>();
 builder.Services.AddScoped<DeckSnapshotService>();
 builder.Services.AddScoped<AccountDataService>();
 
-var apnsSettings = builder.Configuration.GetSection("Apns").Get<ApnsSettings>();
-var apnsKeyReady = apnsSettings is not null &&
-    !string.IsNullOrEmpty(apnsSettings.KeyId) &&
-    (!string.IsNullOrEmpty(apnsSettings.KeyBase64) ||
-     (!string.IsNullOrEmpty(apnsSettings.KeyPath) && File.Exists(apnsSettings.KeyPath)));
+var apnsKeyId = builder.Configuration["APNS_KEY_ID"];
+var apnsKeyBase64 = builder.Configuration["APNS_KEY_BASE64"];
+var apnsKeyPath = builder.Configuration["APNS_KEY_PATH"];
+var apnsKeyReady = !string.IsNullOrEmpty(apnsKeyId) &&
+    (!string.IsNullOrEmpty(apnsKeyBase64) ||
+     (!string.IsNullOrEmpty(apnsKeyPath) && File.Exists(apnsKeyPath)));
 if (apnsKeyReady)
 {
-    builder.Services.AddSingleton(apnsSettings!);
+    var apnsSettings = new ApnsSettings
+    {
+        KeyId = apnsKeyId!,
+        TeamId = builder.Configuration["APNS_TEAM_ID"] ?? "",
+        BundleId = builder.Configuration["APNS_BUNDLE_ID"] ?? "com.fasolt.app",
+        KeyBase64 = apnsKeyBase64,
+        KeyPath = apnsKeyPath,
+        UseSandbox = builder.Configuration["APNS_USE_SANDBOX"] == "true",
+    };
+    builder.Services.AddSingleton(apnsSettings);
     builder.Services.AddHttpClient<ApnsService>();
     builder.Services.AddSingleton<NotificationBackgroundService>();
     builder.Services.AddHostedService(sp => sp.GetRequiredService<NotificationBackgroundService>());
@@ -362,7 +373,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Promote configured admin email
-var adminEmail = app.Configuration["Admin:Email"];
+var adminEmail = app.Configuration["ADMIN_EMAIL"];
 if (!string.IsNullOrEmpty(adminEmail))
 {
     using var scope = app.Services.CreateScope();
