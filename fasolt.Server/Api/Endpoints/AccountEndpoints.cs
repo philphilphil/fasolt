@@ -355,7 +355,7 @@ public static class AccountEndpoints
     }
 
     private static async Task<IResult> DeleteAccount(
-        DeleteAccountRequest request,
+        [Microsoft.AspNetCore.Mvc.FromBody] DeleteAccountRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,

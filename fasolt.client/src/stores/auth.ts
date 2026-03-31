@@ -90,6 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function exportData() {
     const response = await fetch('/api/account/export', {
+      method: 'POST',
       credentials: 'include',
     })
     if (!response.ok) throw new Error('Export failed')
