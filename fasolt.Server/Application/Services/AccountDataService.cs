@@ -38,28 +38,33 @@ public class AccountDataService(AppDbContext db)
         var userId = user.Id;
 
         var cards = await db.Cards
+            .AsNoTracking()
             .Where(c => c.UserId == userId)
             .Include(c => c.DeckCards)
             .OrderBy(c => c.CreatedAt)
             .ToListAsync();
 
         var decks = await db.Decks
+            .AsNoTracking()
             .Where(d => d.UserId == userId)
             .Include(d => d.Cards)
             .OrderBy(d => d.CreatedAt)
             .ToListAsync();
 
         var snapshots = await db.DeckSnapshots
+            .AsNoTracking()
             .Where(s => s.UserId == userId)
             .Include(s => s.Deck)
             .OrderBy(s => s.CreatedAt)
             .ToListAsync();
 
         var consentGrants = await db.ConsentGrants
+            .AsNoTracking()
             .Where(c => c.UserId == userId)
             .ToListAsync();
 
         var deviceToken = await db.DeviceTokens
+            .AsNoTracking()
             .FirstOrDefaultAsync(d => d.UserId == userId);
 
         var cardPublicIdMap = cards.ToDictionary(c => c.Id, c => c.PublicId);

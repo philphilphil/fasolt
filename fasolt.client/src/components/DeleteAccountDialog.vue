@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { isApiError } from '@/api/client'
@@ -20,6 +20,14 @@ const error = ref('')
 const deleting = ref(false)
 
 const isExternal = computed(() => auth.isExternalAccount)
+
+watch(() => props.open, (val) => {
+  if (val) {
+    password.value = ''
+    confirmIdentity.value = ''
+    error.value = ''
+  }
+})
 
 async function confirmDelete() {
   error.value = ''

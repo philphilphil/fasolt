@@ -86,21 +86,7 @@ const confirmNewPassword = ref('')
 const passwordSuccess = ref(false)
 const passwordError = ref('')
 
-const exporting = ref(false)
-const exportError = ref('')
 const deleteDialogOpen = ref(false)
-
-async function exportData() {
-  exporting.value = true
-  exportError.value = ''
-  try {
-    await auth.exportData()
-  } catch {
-    exportError.value = 'Failed to export data. Please try again.'
-  } finally {
-    exporting.value = false
-  }
-}
 
 const snapshotCount = computed(() => snapshotsStore.snapshots.length)
 const lastSnapshot = computed(() => {
@@ -318,11 +304,10 @@ async function savePassword() {
         <p class="text-xs text-muted-foreground">
           Download a copy of all your data (cards, decks, study progress, snapshots) as a JSON file, or permanently delete your account.
         </p>
-        <div v-if="exportError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ exportError }}</div>
         <div class="flex gap-2">
-          <Button size="sm" class="text-xs" :disabled="exporting" @click="exportData">
-            {{ exporting ? 'Exporting...' : 'Export data' }}
-          </Button>
+          <a href="/api/account/export" class="inline-flex">
+            <Button size="sm" class="text-xs">Export data</Button>
+          </a>
           <Button size="sm" variant="destructive" class="text-xs" @click="deleteDialogOpen = true">
             Delete account
           </Button>
