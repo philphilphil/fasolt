@@ -366,12 +366,12 @@ public static class AccountEndpoints
 
         if (user.ExternalProvider is not null)
         {
-            // GitHub accounts: confirm by email
-            if (string.IsNullOrEmpty(request.ConfirmEmail) ||
-                !string.Equals(request.ConfirmEmail, user.Email, StringComparison.OrdinalIgnoreCase))
+            // GitHub accounts: confirm by username
+            if (string.IsNullOrEmpty(request.ConfirmIdentity) ||
+                !string.Equals(request.ConfirmIdentity, user.UserName, StringComparison.OrdinalIgnoreCase))
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {
-                    ["confirmEmail"] = ["Email does not match your account."]
+                    ["confirmIdentity"] = ["Username does not match your account."]
                 });
         }
         else

@@ -15,7 +15,7 @@ const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 const auth = useAuthStore()
 const router = useRouter()
 const password = ref('')
-const confirmEmail = ref('')
+const confirmIdentity = ref('')
 const error = ref('')
 const deleting = ref(false)
 
@@ -26,7 +26,7 @@ async function confirmDelete() {
   deleting.value = true
   try {
     if (isExternal.value) {
-      await auth.deleteAccount(undefined, confirmEmail.value)
+      await auth.deleteAccount(undefined, confirmIdentity.value)
     } else {
       await auth.deleteAccount(password.value)
     }
@@ -56,8 +56,10 @@ async function confirmDelete() {
       <div class="flex flex-col gap-3">
         <div v-if="error" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ error }}</div>
         <div v-if="isExternal" class="flex flex-col gap-1.5">
-          <label for="confirm-email" class="text-xs font-medium">Type your email to confirm</label>
-          <Input id="confirm-email" v-model="confirmEmail" type="email" placeholder="your@email.com" />
+          <label for="confirm-identity" class="text-xs font-medium">
+            Type your username to confirm: <span class="font-mono select-all">{{ auth.user?.displayName }}</span>
+          </label>
+          <Input id="confirm-identity" v-model="confirmIdentity" placeholder="username" />
         </div>
         <div v-else class="flex flex-col gap-1.5">
           <label for="delete-password" class="text-xs font-medium">Enter your password to confirm</label>

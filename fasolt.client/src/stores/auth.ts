@@ -92,10 +92,10 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.href = '/api/account/export'
   }
 
-  async function deleteAccount(password?: string, confirmEmail?: string) {
+  async function deleteAccount(password?: string, confirmIdentity?: string) {
     await apiFetch('/account', {
       method: 'DELETE',
-      body: JSON.stringify({ password, confirmEmail }),
+      body: JSON.stringify({ password, confirmIdentity }),
     })
     user.value = null
   }

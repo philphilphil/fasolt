@@ -18,4 +18,4 @@ public record RegisterRequest(string Email, string Password);
 
 public record LoginRequest(string Email, string Password, bool RememberMe = false);
 
-public record DeleteAccountRequest(string? Password, string? ConfirmEmail);
+public record DeleteAccountRequest(string? Password, string? ConfirmIdentity);
