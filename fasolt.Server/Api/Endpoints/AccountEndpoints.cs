@@ -250,11 +250,7 @@ public static class AccountEndpoints
     internal static async Task SignInWithEmailClaimAsync(
         SignInManager<AppUser> signInManager, AppUser user, bool isPersistent)
     {
-        var claims = new List<Claim>
-        {
-            new("email_confirmed", user.EmailConfirmed.ToString().ToLower())
-        };
-        await signInManager.SignInWithClaimsAsync(user, isPersistent, claims);
+        await signInManager.SignInAsync(user, isPersistent);
     }
 
     private static IResult GitHubLogin(HttpContext context, IConfiguration configuration)

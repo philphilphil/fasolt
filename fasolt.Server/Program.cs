@@ -41,7 +41,8 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>();
 
 var gitHubClientId = builder.Configuration["GitHub:ClientId"];
 var gitHubClientSecret = builder.Configuration["GitHub:ClientSecret"];
