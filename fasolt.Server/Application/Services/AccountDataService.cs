@@ -7,6 +7,32 @@ namespace Fasolt.Server.Application.Services;
 
 public class AccountDataService(AppDbContext db)
 {
+    public async Task DeleteUserData(string userId)
+    {
+        // Clean up OpenIddict tokens and authorizations (not cascade-deleted).
+        // These tables are registered by OpenIddict via UseOpenIddict() in Program.cs,
+        // not in AppDbContext directly, so they may not exist in test databases.
+        try
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""DELETE FROM "OpenIddictTokens" WHERE "Subject" = {userId}""");
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"""DELETE FROM "OpenIddictAuthorizations" WHERE "Subject" = {userId}""");
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01")
+        {
+            // Table does not exist — nothing to clean up
+        }
+
+        // Delete the user — cascade handles cards, decks, snapshots, consent grants, device tokens
+        var user = await db.Users.FindAsync(userId);
+        if (user is not null)
+        {
+            db.Users.Remove(user);
+            await db.SaveChangesAsync();
+        }
+    }
+
     public async Task<AccountExport> ExportUserData(AppUser user)
     {
         var userId = user.Id;
