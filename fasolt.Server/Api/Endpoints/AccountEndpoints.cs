@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Api.Helpers;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Api.Endpoints;
@@ -27,6 +28,8 @@ public static class AccountEndpoints
         group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
+        group.MapPost("/export", ExportData).RequireAuthorization("EmailVerified");
+        group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified");
     }
 
     private static async Task<IResult> Register(
@@ -333,6 +336,57 @@ public static class AccountEndpoints
         await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
         return Results.Redirect(returnUrl);
+    }
+
+    private static async Task<IResult> ExportData(
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        AccountDataService accountDataService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var export = await accountDataService.ExportUserData(user);
+        var json = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(export,
+            new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true });
+
+        var date = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd");
+        return Results.File(json, "application/json", $"fasolt-export-{date}.json");
+    }
+
+    private static async Task<IResult> DeleteAccount(
+        DeleteAccountRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        AccountDataService accountDataService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        if (user.ExternalProvider is not null)
+        {
+            // GitHub accounts: confirm by email
+            if (string.IsNullOrEmpty(request.ConfirmEmail) ||
+                !string.Equals(request.ConfirmEmail, user.Email, StringComparison.OrdinalIgnoreCase))
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["confirmEmail"] = ["Email does not match your account."]
+                });
+        }
+        else
+        {
+            // Local accounts: confirm by password
+            if (string.IsNullOrEmpty(request.Password) || !await userManager.CheckPasswordAsync(user, request.Password))
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["password"] = ["Password is incorrect."]
+                });
+        }
+
+        await accountDataService.DeleteUserData(user.Id);
+        await signInManager.SignOutAsync();
+        return Results.Ok();
     }
 
 }

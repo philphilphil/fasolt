@@ -57,5 +57,3 @@ public record AccountExportSnapshot(
 public record AccountExportConsentGrant(string ClientId, DateTimeOffset GrantedAt);
 
 public record AccountExportDeviceToken(string Token, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
-
-public record DeleteAccountRequest(string? Password, string? ConfirmEmail);
