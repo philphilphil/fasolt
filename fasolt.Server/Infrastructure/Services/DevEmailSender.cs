@@ -14,19 +14,19 @@ public class DevEmailSender : IEmailSender<AppUser>
 
     public Task SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink)
     {
-        _logger.LogInformation("Confirmation link for {Email}: {Link}", email, confirmationLink);
+        _logger.LogWarning("[DEV EMAIL] Confirmation link for {Email}: {Link}", email, confirmationLink);
         return Task.CompletedTask;
     }
 
     public Task SendPasswordResetLinkAsync(AppUser user, string email, string resetLink)
     {
-        _logger.LogInformation("Password reset link for {Email}: {Link}", email, resetLink);
+        _logger.LogWarning("[DEV EMAIL] Password reset link for {Email}: {Link}", email, resetLink);
         return Task.CompletedTask;
     }
 
     public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode)
     {
-        _logger.LogInformation("Password reset code for {Email}: {Code}", email, resetCode);
+        _logger.LogWarning("[DEV EMAIL] Password reset code for {Email}: {Code}", email, resetCode);
         return Task.CompletedTask;
     }
 
