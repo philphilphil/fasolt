@@ -515,6 +515,7 @@ app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
 app.MapSchedulingSettingsEndpoints();
 app.MapSnapshotEndpoints();
+app.MapDemoDeckEndpoints();
 // Identity's MapIdentityApi removed — all auth endpoints are in AccountEndpoints
 
 app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");

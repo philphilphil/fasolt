@@ -18,11 +18,27 @@ struct DashboardView: View {
                         stateBar
                     }
                     if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
-                        ContentUnavailableView(
-                            "No cards yet",
-                            systemImage: "rectangle.on.rectangle",
-                            description: Text("Create cards via MCP (or the UI) to get started")
-                        )
+                        VStack(spacing: 12) {
+                            Text("New here? Create a demo deck to see how Fasolt works.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+
+                            Button {
+                                Task { await viewModel.createDemoDeck() }
+                            } label: {
+                                if viewModel.isCreatingDemo {
+                                    ProgressView()
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    Text("Create demo deck")
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                            .disabled(viewModel.isCreatingDemo)
+                        }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 32)
                     }
