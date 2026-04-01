@@ -11,7 +11,7 @@ public static class DemoDeckEndpoints
     private static readonly List<BulkCardItem> DemoCards =
     [
         new("What is Fasolt and how does it work?",
-            "Fasolt is **MCP-first spaced repetition** for your markdown notes. Your AI agent (e.g. Claude) reads your local files, extracts key concepts, and pushes flashcards via the **MCP server** or REST API — no manual card writing needed. Spaced repetition then schedules reviews at optimal intervals so you actually remember what you read."),
+            "Fasolt is **MCP-first spaced repetition** for your markdown notes. Your AI agent (e.g. Claude) reads your local files, extracts key concepts, and pushes flashcards via the **MCP server** — no manual card writing needed. Study your cards on the **web** or the **iOS app**. Spaced repetition schedules reviews at optimal intervals so you actually remember what you read."),
         new("What is spaced repetition?",
             "A study technique backed by memory research. Instead of cramming, cards are shown at **increasing intervals** based on how well you recall them. Fasolt uses the **FSRS algorithm** to calculate optimal review timing — so you study less but remember more."),
         new("What can you do with decks and cards?",
