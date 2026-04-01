@@ -2,11 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://fasolt.app/</loc>
+    <lastmod>2026-04-01</lastmod>
   </url>
   <url>
     <loc>https://fasolt.app/algorithm</loc>
+    <lastmod>2026-04-01</lastmod>
   </url>
   <url>
     <loc>https://fasolt.app/privacy</loc>
+    <lastmod>2026-04-01</lastmod>
+  </url>
+  <url>
+    <loc>https://fasolt.app/terms</loc>
+    <lastmod>2026-04-01</lastmod>
+  </url>
+  <url>
+    <loc>https://fasolt.app/impressum</loc>
+    <lastmod>2026-04-01</lastmod>
   </url>
 </urlset>

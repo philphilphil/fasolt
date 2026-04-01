@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/api/client'
 import { usePasswordRules } from '@/composables/usePasswordRules'
@@ -17,6 +18,7 @@ const { features } = useFeatures()
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const acceptedTerms = ref(false)
 const errors = ref<string[]>([])
 const loading = ref(false)
 
@@ -29,11 +31,13 @@ const canSubmit = computed(
     email.value &&
     passwordValid.value &&
     passwordsMatch.value &&
+    acceptedTerms.value &&
     !loading.value,
 )
 
 async function handleSubmit() {
   errors.value = []
+  if (!canSubmit.value) return
   loading.value = true
   try {
     await auth.register(email.value, password.value)
@@ -92,6 +96,13 @@ async function handleSubmit() {
           <Input id="confirm-password" v-model="confirmPassword" type="password" required autocomplete="new-password" />
           <p v-if="confirmPassword && !passwordsMatch" class="text-[11px] text-destructive">Passwords do not match.</p>
         </div>
+        <label for="terms" class="flex items-start gap-3 text-xs leading-relaxed">
+          <Checkbox id="terms" :model-value="acceptedTerms" class="mt-0.5" @update:model-value="acceptedTerms = !!$event" />
+          <span>
+            I agree to the
+            <RouterLink to="/terms" class="text-accent hover:underline">Terms of Service</RouterLink>.
+          </span>
+        </label>
         <Button type="submit" class="w-full" :disabled="!canSubmit">
           {{ loading ? 'Creating account\u2026' : 'Create account' }}
         </Button>
