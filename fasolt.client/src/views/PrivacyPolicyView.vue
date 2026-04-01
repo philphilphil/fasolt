@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import AppFooter from '@/components/AppFooter.vue'
 </script>
 
 <template>
@@ -73,5 +74,6 @@ import { RouterLink } from 'vue-router'
       </section>
     </div>
   </div>
+    <AppFooter />
   </div>
 </template>

@@ -79,6 +79,18 @@ const router = createRouter({
       component: () => import('@/views/PrivacyPolicyView.vue'),
       meta: { public: true, landing: true, title: 'Privacy policy' },
     },
+    {
+      path: '/impressum',
+      name: 'impressum',
+      component: () => import('@/views/ImpressumView.vue'),
+      meta: { public: true, landing: true, title: 'Impressum' },
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('@/views/TermsOfServiceView.vue'),
+      meta: { public: true, landing: true, title: 'Terms of service' },
+    },
     // App routes (require auth)
     { path: '/study', name: 'study', component: StudyView, meta: { title: 'Study' } },
     { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue'), meta: { title: 'Sources' } },

@@ -36,4 +36,14 @@ describe('router document titles', () => {
 
     expect(document.title).toBe('FSRS algorithm - fasolt')
   })
+
+  it('sets the document title for new legal pages', async () => {
+    const { default: router } = await import('@/router')
+    await router.push('/terms')
+    await router.isReady()
+    expect(document.title).toBe('Terms of service - fasolt')
+
+    await router.push('/impressum')
+    expect(document.title).toBe('Impressum - fasolt')
+  })
 })
