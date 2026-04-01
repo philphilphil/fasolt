@@ -28,18 +28,19 @@ import AppFooter from '@/components/AppFooter.vue'
 
         <section class="space-y-2">
           <h2 class="text-sm font-semibold text-foreground">2. Service description</h2>
-          <p>fasolt is a spaced repetition service for flashcards generated from your notes. Your AI agent or client can create and manage cards through the web UI, API, or MCP tools. The service is currently provided free of charge.</p>
+          <p>fasolt is a spaced repetition service for flashcards generated from your notes. Your AI agent or client can create and manage cards through the web UI, API, or MCP tools. Unless expressly agreed otherwise, the service is currently provided free of charge.</p>
         </section>
 
         <section class="space-y-2">
           <h2 class="text-sm font-semibold text-foreground">3. Accounts</h2>
           <p>You are responsible for maintaining the confidentiality of your login credentials and for activities that occur under your account.</p>
-          <p>You must provide accurate registration information and keep it up to date.</p>
+          <p>You must provide accurate registration information and keep it up to date. Some features may require a verified email address.</p>
         </section>
 
         <section class="space-y-2">
-          <h2 class="text-sm font-semibold text-foreground">4. Right of withdrawal</h2>
-          <p>As a consumer in the EU, you have a 14-day right of withdrawal from the date of registration. Because fasolt is a free digital service that begins immediately upon registration, you consent to the immediate provision of the service and acknowledge that your right of withdrawal expires once the service has been fully provided (§ 356 Abs. 4 BGB).</p>
+          <h2 class="text-sm font-semibold text-foreground">4. Consumers and statutory rights</h2>
+          <p>If you are a consumer, any mandatory statutory consumer rights, including any applicable right of withdrawal, remain unaffected.</p>
+          <p>If the law allows a withdrawal right for a digital service to expire only after separate express consent and acknowledgement, we will obtain that consent in the relevant flow. These Terms do not by themselves waive any mandatory consumer rights.</p>
         </section>
 
         <section class="space-y-2">
@@ -54,8 +55,9 @@ import AppFooter from '@/components/AppFooter.vue'
         </section>
 
         <section class="space-y-2">
-          <h2 class="text-sm font-semibold text-foreground">7. Intellectual property</h2>
+          <h2 class="text-sm font-semibold text-foreground">7. Content and intellectual property</h2>
           <p>fasolt and its branding remain the property of their respective owners. You retain rights to the content you create and upload or send through the service.</p>
+          <p>You grant us the non-exclusive rights necessary to store, process, transmit, and display your content and metadata solely for operating, securing, and providing the service to you.</p>
         </section>
 
         <section class="space-y-2">
@@ -66,7 +68,8 @@ import AppFooter from '@/components/AppFooter.vue'
 
         <section class="space-y-2">
           <h2 class="text-sm font-semibold text-foreground">9. Liability</h2>
-          <p>To the extent permitted by law, liability for slight negligence is excluded, except for damages arising from injury to life, body, or health. Mandatory statutory liability, including liability for intent and gross negligence, remains unaffected.</p>
+          <p>We are liable without limitation where liability cannot be excluded by law.</p>
+          <p>For slight negligence, we are liable only for breaches of essential contractual obligations and only for foreseeable damage typical for the contract.</p>
         </section>
 
         <section class="space-y-2">

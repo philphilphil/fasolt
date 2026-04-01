@@ -56,21 +56,6 @@ import AppFooter from '@/components/AppFooter.vue'
         </section>
 
         <section class="space-y-2">
-          <h2 class="text-sm font-semibold text-foreground">EU dispute resolution</h2>
-          <p>
-            The European Commission provides a platform for online dispute resolution (ODR):
-            <a
-              href="https://ec.europa.eu/consumers/odr/"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="text-accent hover:underline"
-            >
-              https://ec.europa.eu/consumers/odr/
-            </a>
-          </p>
-        </section>
-
-        <section class="space-y-2">
           <h2 class="text-sm font-semibold text-foreground">Consumer dispute resolution</h2>
           <p>We are not willing or obliged to participate in dispute resolution proceedings before a consumer arbitration board.</p>
         </section>
