@@ -167,7 +167,7 @@ builder.Services.AddDataProtection()
     .SetApplicationName("fasolt");
 
 var plunkApiKey = builder.Configuration["PLUNK_API_KEY"];
-if (!string.IsNullOrEmpty(plunkApiKey))
+if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(plunkApiKey))
 {
     builder.Services.AddHttpClient<IEmailSender<AppUser>, PlunkEmailSender>((sp, client) =>
     {
