@@ -30,6 +30,28 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
+    [McpServerTool, Description("Get a single card by ID. Returns full card details including front, back, source metadata, deck assignments, and SRS state.")]
+    public async Task<string> GetCard(
+        [Description("Card ID")] string cardId)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+        var result = await cardService.GetCard(userId, cardId);
+        if (result is null)
+            return JsonSerializer.Serialize(new { error = "Card not found" }, McpJson.Options);
+        return JsonSerializer.Serialize(result, McpJson.Options);
+    }
+
+    [McpServerTool, Description("Reset a card's SRS progress. Clears stability, difficulty, and scheduling — returns the card to 'new' state so it appears in the next study session. Use when a user wants to relearn a card from scratch.")]
+    public async Task<string> ResetCardProgress(
+        [Description("Card ID")] string cardId)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+        var result = await cardService.ResetProgress(userId, cardId);
+        if (result is null)
+            return JsonSerializer.Serialize(new { error = "Card not found" }, McpJson.Options);
+        return JsonSerializer.Serialize(result, McpJson.Options);
+    }
+
     [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Each card can include SVG images for front and/or back (use a landscape viewBox like '0 0 400 250' for best display). Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
     public async Task<string> CreateCards(
         [Description("Array of cards to create. Each card needs 'front' and 'back' text, plus optional 'sourceFile' and 'sourceHeading'.")] List<BulkCardItem> cards,
