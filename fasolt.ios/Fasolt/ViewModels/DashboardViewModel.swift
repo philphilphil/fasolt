@@ -14,6 +14,7 @@ final class DashboardViewModel {
     var decks: [DeckDTO] = []
     var isLoading = false
     var errorMessage: String?
+    var isCreatingDemo = false
 
     private let apiClient: APIClient
     private let deckRepository: DeckRepository
@@ -68,5 +69,18 @@ final class DashboardViewModel {
         }
 
         isLoading = false
+    }
+
+    func createDemoDeck() async {
+        isCreatingDemo = true
+        defer { isCreatingDemo = false }
+
+        let endpoint = Endpoint(path: "/api/demo-deck", method: .post)
+        do {
+            let _: DeckDTO = try await apiClient.request(endpoint)
+            await loadStats()
+        } catch {
+            errorMessage = "Could not create demo deck."
+        }
     }
 }

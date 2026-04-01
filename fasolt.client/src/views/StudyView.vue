@@ -3,6 +3,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
+import { apiFetch } from '@/api/client'
+import type { Deck } from '@/types'
 import { Button } from '@/components/ui/button'
 
 const router = useRouter()
@@ -14,6 +16,7 @@ const activeDecks = computed(() => decksStore.decks.filter(d => !d.isSuspended))
 const dueCount = ref(0)
 const totalCards = ref(0)
 const studiedToday = ref(0)
+const creatingDemo = ref(false)
 
 onMounted(async () => {
   try {
@@ -26,6 +29,16 @@ onMounted(async () => {
   }
   decksStore.fetchDecks()
 })
+
+async function createDemoDeck() {
+  creatingDemo.value = true
+  try {
+    const deck = await apiFetch<Deck>('/demo-deck', { method: 'POST' })
+    router.push(`/decks/${deck.id}`)
+  } catch {
+    creatingDemo.value = false
+  }
+}
 </script>
 
 <template>
@@ -41,13 +54,21 @@ onMounted(async () => {
       <Button v-if="dueCount > 0" size="lg" class="px-10" @click="router.push('/review')">
         Start reviewing
       </Button>
-      <p v-else class="text-sm text-muted-foreground">All caught up</p>
+      <p v-else-if="totalCards > 0" class="text-sm text-muted-foreground">All caught up</p>
     </div>
 
     <!-- Stats -->
-    <div class="flex justify-center gap-7 text-sm text-muted-foreground">
+    <div v-if="totalCards > 0" class="flex justify-center gap-7 text-sm text-muted-foreground">
       <div><span class="font-bold text-foreground">{{ totalCards }}</span> total</div>
       <div><span class="font-bold text-foreground">{{ studiedToday }}</span> today</div>
+    </div>
+
+    <!-- Empty state -->
+    <div v-if="totalCards === 0" class="text-center space-y-3 py-4">
+      <p class="text-sm text-muted-foreground">New here? Create a demo deck to see how Fasolt works.</p>
+      <Button size="lg" class="px-10" :disabled="creatingDemo" @click="createDemoDeck">
+        {{ creatingDemo ? 'Creating...' : 'Create demo deck' }}
+      </Button>
     </div>
 
     <div class="border-t border-border" />
