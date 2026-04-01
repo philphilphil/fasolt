@@ -7,6 +7,9 @@ struct CardView: View {
     let sourceFile: String?
     let sourceHeading: String?
     var svg: String? = nil
+    var cardId: String? = nil
+
+    @State private var idCopied = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,18 +39,32 @@ struct CardView: View {
 
             Spacer()
 
-            if let sourceFile {
-                HStack(spacing: 4) {
+            HStack(spacing: 4) {
+                if let sourceFile {
                     Text(sourceFile)
                     if let sourceHeading {
                         Text("\u{00B7}")
                         Text(sourceHeading)
                     }
                 }
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .padding(.bottom, 4)
+                Spacer()
+                if let cardId {
+                    Button {
+                        UIPasteboard.general.string = cardId
+                        idCopied = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            idCopied = false
+                        }
+                    } label: {
+                        Text(idCopied ? "Copied!" : cardId)
+                            .monospaced()
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .font(.caption2)
+            .foregroundStyle(.tertiary)
+            .padding(.bottom, 4)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 16)

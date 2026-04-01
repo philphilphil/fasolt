@@ -122,7 +122,8 @@ struct StudyView: View {
                     text: viewModel.isFlipped ? card.back : card.front,
                     sourceFile: card.sourceFile,
                     sourceHeading: viewModel.isFlipped ? card.sourceHeading : nil,
-                    svg: viewModel.isFlipped ? card.backSvg : card.frontSvg
+                    svg: viewModel.isFlipped ? card.backSvg : card.frontSvg,
+                    cardId: card.id
                 )
                 .padding(.horizontal)
                 .rotation3DEffect(

@@ -3,11 +3,19 @@ import type { DueCard } from '@/types'
 import { useMarkdown } from '@/composables/useMarkdown'
 import { sanitizeSvg } from '@/composables/useSvgSanitizer'
 import { Pencil } from 'lucide-vue-next'
+import { ref } from 'vue'
 
 defineProps<{ card: DueCard; isFlipped: boolean }>()
 defineEmits<{ flip: [] }>()
 
 const { render } = useMarkdown()
+const idCopied = ref(false)
+
+async function copyId(cardId: string) {
+  await navigator.clipboard.writeText(cardId)
+  idCopied.value = true
+  setTimeout(() => idCopied.value = false, 2000)
+}
 
 function openEdit(cardId: string) {
   window.open(`/cards/${cardId}?edit=true`, '_blank')
@@ -19,13 +27,22 @@ function openEdit(cardId: string) {
     class="relative flex min-h-[200px] max-h-[60vh] overflow-y-auto cursor-pointer flex-col items-center justify-center rounded border border-border/60 bg-card p-6 sm:p-10 hover:border-accent/20 transition-colors"
     @click="$emit('flip')"
   >
-    <button
-      class="absolute right-3 top-3 text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-      @click.stop="openEdit(card.id)"
-      title="Edit card"
-    >
-      <Pencil :size="14" />
-    </button>
+    <div class="absolute right-3 top-3 flex items-center gap-2">
+      <button
+        class="text-[10px] text-muted-foreground/40 hover:text-muted-foreground transition-colors font-mono"
+        @click.stop="copyId(card.id)"
+        :title="idCopied ? 'Copied!' : 'Copy card ID'"
+      >
+        {{ idCopied ? 'Copied!' : card.id }}
+      </button>
+      <button
+        class="text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+        @click.stop="openEdit(card.id)"
+        title="Edit card"
+      >
+        <Pencil :size="14" />
+      </button>
+    </div>
     <div class="text-[10px] uppercase tracking-[0.2em] text-accent/70">
       {{ isFlipped ? 'Answer' : 'Question' }}
     </div>

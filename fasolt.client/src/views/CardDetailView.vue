@@ -39,6 +39,14 @@ const error = ref('')
 const resetOpen = ref(false)
 const resetting = ref(false)
 const resetSuccess = ref(false)
+const idCopied = ref(false)
+
+async function copyId() {
+  if (!card.value) return
+  await navigator.clipboard.writeText(card.value.id)
+  idCopied.value = true
+  setTimeout(() => idCopied.value = false, 2000)
+}
 
 const deckContext = computed(() => {
   const id = route.query.deckId as string | undefined
@@ -150,6 +158,9 @@ function onDeleted() {
         <Badge variant="outline" class="text-[10px]">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="copyId">
+          {{ idCopied ? 'Copied!' : 'Copy ID' }}
+        </Button>
         <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-[10px]" @click="startEdit">Edit</Button>
         <Button
           v-if="!editing"
