@@ -17,7 +17,7 @@ import AppFooter from '@/components/AppFooter.vue'
     <div class="mx-auto max-w-3xl space-y-8 px-6 py-12">
       <div>
         <h1 class="text-lg font-semibold tracking-tight">Impressum</h1>
-        <p class="mt-1 text-xs text-muted-foreground">Information according to Section 5 TMG</p>
+        <p class="mt-1 text-xs text-muted-foreground">Angaben gemäß § 5 DDG</p>
       </div>
 
       <div class="space-y-6 text-xs leading-relaxed text-muted-foreground">
@@ -25,7 +25,7 @@ import AppFooter from '@/components/AppFooter.vue'
           <h2 class="text-sm font-semibold text-foreground">Service provider</h2>
           <address class="not-italic space-y-1">
             <p>Philipp Baum</p>
-            <p>Webix Solutions GmbH</p>
+            <p>c/o Webix Solutions GmbH</p>
             <p>Zuckerfabrik 14</p>
             <p>70376 Stuttgart</p>
             <p>Germany</p>
@@ -35,21 +35,23 @@ import AppFooter from '@/components/AppFooter.vue'
         <section class="space-y-2">
           <h2 class="text-sm font-semibold text-foreground">Contact</h2>
           <p>
-            Please use the
+            Email:
+            <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a>
+          </p>
+          <p>
+            For project-related inquiries, you can also use the
             <a
               href="https://github.com/philphilphil/fasolt"
               target="_blank"
               rel="noopener noreferrer"
               class="text-accent hover:underline"
             >
-              GitHub repository
-            </a>
-            for project-related inquiries.
+              GitHub repository</a>.
           </p>
         </section>
 
         <section class="space-y-2">
-          <h2 class="text-sm font-semibold text-foreground">Responsible for content</h2>
+          <h2 class="text-sm font-semibold text-foreground">Responsible for content according to § 18 Abs. 2 MStV</h2>
           <p>Philipp Baum, address as above.</p>
         </section>
 
