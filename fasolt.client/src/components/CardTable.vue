@@ -140,14 +140,14 @@ const table = useVueTable({
   get data() { return props.cards },
   get columns() { return columns.value },
   getCoreRowModel: getCoreRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
+  ...(props.showPagination ? { getPaginationRowModel: getPaginationRowModel() } : {}),
   getSortedRowModel: getSortedRowModel(),
   onSortingChange: updaterOrValue => valueUpdater(updaterOrValue, sorting),
   state: {
     get sorting() { return sorting.value },
   },
   initialState: {
-    pagination: { pageSize: props.pageSize },
+    pagination: { pageSize: props.showPagination ? props.pageSize : Number.MAX_SAFE_INTEGER },
   },
 })
 </script>
