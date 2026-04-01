@@ -76,6 +76,14 @@ struct DeckDetailView: View {
                                     } label: {
                                         DeckCardRow(card: card, showSourceFile: true)
                                     }
+                                    .swipeActions(edge: .leading) {
+                                        Button {
+                                            UIPasteboard.general.string = card.id
+                                        } label: {
+                                            Label("Copy ID", systemImage: "doc.on.doc")
+                                        }
+                                        .tint(.blue)
+                                    }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                         Button(role: .destructive) {
                                             cardToDelete = card

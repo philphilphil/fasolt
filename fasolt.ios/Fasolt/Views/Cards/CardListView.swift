@@ -133,6 +133,14 @@ struct CardListContent: View {
                         deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
                     )
                 }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        UIPasteboard.general.string = card.id
+                    } label: {
+                        Label("Copy ID", systemImage: "doc.on.doc")
+                    }
+                    .tint(.blue)
+                }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         cardToDelete = card
