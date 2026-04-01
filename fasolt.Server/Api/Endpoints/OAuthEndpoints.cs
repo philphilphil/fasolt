@@ -264,7 +264,7 @@ public static class OAuthEndpoints
                 : "";
             var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
 
-            var gitHubEnabled = !string.IsNullOrEmpty(configuration["GitHub:ClientId"]);
+            var gitHubEnabled = !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]);
             var gitHubReturnUrl = Uri.EscapeDataString(returnUrl);
             var gitHubHtml = gitHubEnabled ? $$"""
                 <a href="/api/account/github-login?returnUrl={{gitHubReturnUrl}}" class="btn-github">

@@ -10,7 +10,7 @@ public static class HealthEndpoints
             version = "0.1.0",
             features = new
             {
-                githubLogin = !string.IsNullOrEmpty(configuration["GitHub:ClientId"]),
+                githubLogin = !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]),
             },
         })).AllowAnonymous();
     }

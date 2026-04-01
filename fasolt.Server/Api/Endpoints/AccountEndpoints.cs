@@ -259,7 +259,7 @@ public static class AccountEndpoints
     private static IResult GitHubLogin(HttpContext context, IConfiguration configuration)
     {
         // Only available when GitHub auth is configured
-        if (string.IsNullOrEmpty(configuration["GitHub:ClientId"]))
+        if (string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]))
             return Results.NotFound();
 
         var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
