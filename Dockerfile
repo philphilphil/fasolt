@@ -18,11 +18,13 @@ RUN dotnet publish fasolt.Server/fasolt.Server.csproj -c Release -o /app/publish
 
 # --- Runtime ---
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
-RUN apt-get update && apt-get install -y --no-install-recommends libkrb5-3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libkrb5-3 curl && rm -rf /var/lib/apt/lists/*
+RUN addgroup --system fasolt && adduser --system --ingroup fasolt fasolt
 WORKDIR /app
 COPY --from=backend /app/publish ./
 COPY --from=frontend /app/dist ./wwwroot/
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
+USER fasolt
 ENTRYPOINT ["dotnet", "fasolt.Server.dll"]
