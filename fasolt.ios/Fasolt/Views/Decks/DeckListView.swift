@@ -127,6 +127,14 @@ struct DeckListContent: View {
                 } label: {
                     deckRow(deck)
                 }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        UIPasteboard.general.string = deck.id
+                    } label: {
+                        Label("Copy ID", systemImage: "doc.on.doc")
+                    }
+                    .tint(.blue)
+                }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         deckToDelete = deck

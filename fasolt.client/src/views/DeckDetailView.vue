@@ -30,6 +30,14 @@ const deleteError = ref('')
 
 const deleteCardTarget = ref<any>(null)
 const deleteCardOpen = ref(false)
+const idCopied = ref(false)
+
+async function copyDeckId() {
+  if (!deck.value) return
+  await navigator.clipboard.writeText(deck.value.id)
+  idCopied.value = true
+  setTimeout(() => idCopied.value = false, 2000)
+}
 
 onMounted(async () => {
   try {
@@ -133,6 +141,9 @@ const stateCounts = computed(() => {
         </Button>
         <Button variant="outline" size="sm" class="text-xs" @click="toggleSuspended">
           {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
+        </Button>
+        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="copyDeckId">
+          {{ idCopied ? 'Copied!' : 'Copy ID' }}
         </Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
         <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>

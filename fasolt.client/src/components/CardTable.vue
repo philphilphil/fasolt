@@ -19,6 +19,13 @@ import { Image } from 'lucide-vue-next'
 import { formatDateDot } from '@/lib/formatDate'
 
 const router = useRouter()
+const copiedCardId = ref<string | null>(null)
+
+function copyCardId(id: string) {
+  navigator.clipboard.writeText(id)
+  copiedCardId.value = id
+  setTimeout(() => copiedCardId.value = null, 2000)
+}
 
 const props = withDefaults(defineProps<{
   cards: any[]
@@ -109,6 +116,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
     cell: ({ row }) => {
       const card = row.original
       const buttons = [
+        h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => copyCardId(card.id) },
+          () => copiedCardId.value === card.id ? 'Copied!' : 'Copy ID'),
         h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => {
           const editLink = props.deckContext
             ? `/cards/${card.id}?edit=true&deckId=${props.deckContext.id}&deckName=${encodeURIComponent(props.deckContext.name)}`
