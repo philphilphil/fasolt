@@ -23,7 +23,6 @@
 		49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */; };
 		4B67D538B260F08111532BCF /* RegisterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA2AAED1B4E0691A5972F84 /* RegisterViewModel.swift */; };
 		51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */; };
-		A1B2C3D4E5F60718A9B0C1D3 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
 		58A1B3892608093BF3282922 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B345BB03F3E3F753928DA72 /* MainTabView.swift */; };
 		5DC643891C35CC116CFB4261 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8263B1FBCDBB03DB23C7A5B /* DeckListView.swift */; };
@@ -37,6 +36,7 @@
 		95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */; };
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
 		A1B2C3D4E5F60718A9B0C1D2 /* SnapshotViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */; };
+		A1B2C3D4E5F60718A9B0C1D3 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */; };
 		A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7A52B7D0A14767556278C /* CachedDeck.swift */; };
 		A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */; };
 		AA11223344556677889900AB /* StartStudyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB11223344556677889900AB /* StartStudyAction.swift */; };
@@ -107,7 +107,6 @@
 		9097BB7014F064BF83F77689 /* DeckCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckCardRow.swift; sourceTree = "<group>"; };
 		933F9C08DEBB1C1DE4B0F805 /* Fasolt.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Fasolt.entitlements; sourceTree = "<group>"; };
 		94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = McpSetupSection.swift; sourceTree = "<group>"; };
-		D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListViewModel.swift; sourceTree = "<group>"; };
 		9B4A9BFD5DB64B6323410C74 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		A23AFC0A1B6F81DD76335210 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -125,6 +124,7 @@
 		CE0A6615C77BF475BDCC9074 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotViewModel.swift; sourceTree = "<group>"; };
+		D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
 		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -634,7 +634,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.4.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -652,7 +652,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.1;
+				MARKETING_VERSION = 1.4.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
