@@ -13,11 +13,12 @@ useDarkMode()
 const route = useRoute()
 const auth = useAuthStore()
 const tabs = computed(() => {
-  const items = [
+  const items: Array<{ label: string; value: string } | { separator: true }> = [
     { label: 'Study', value: '/study' },
     { label: 'Cards', value: '/cards' },
     { label: 'Decks', value: '/decks' },
     { label: 'Sources', value: '/sources' },
+    { separator: true },
     { label: 'MCP', value: '/mcp-setup' },
     { label: 'Settings', value: '/settings' },
   ]
@@ -29,8 +30,8 @@ const tabs = computed(() => {
 
 const activeTab = computed(() => {
   const path = route.path
-  const match = tabs.value.find(t => path === t.value || path.startsWith(t.value + '/'))
-  return match?.value ?? path
+  const match = tabs.value.find(t => 'value' in t && (path === t.value || path.startsWith(t.value + '/')))
+  return match && 'value' in match ? match.value : path
 })
 </script>
 
@@ -40,19 +41,21 @@ const activeTab = computed(() => {
     <nav class="hidden border-b border-border px-5 sm:block">
       <Tabs :model-value="activeTab">
         <TabsList class="h-auto gap-0 rounded-none bg-transparent p-0">
-          <TabsTrigger
-            v-for="tab in tabs"
-            :key="tab.value"
-            :value="tab.value"
-            as-child
-          >
-            <RouterLink
-              :to="tab.value"
-              class="relative rounded-none border-b-2 border-transparent px-3.5 py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
+          <template v-for="(tab, i) in tabs" :key="i">
+            <div v-if="'separator' in tab" class="mx-1.5 h-4 w-px self-center bg-border" />
+            <TabsTrigger
+              v-else
+              :value="tab.value"
+              as-child
             >
-              {{ tab.label }}
-            </RouterLink>
-          </TabsTrigger>
+              <RouterLink
+                :to="tab.value"
+                class="relative rounded-none border-b-2 border-transparent px-3.5 py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=active]:font-semibold"
+              >
+                {{ tab.label }}
+              </RouterLink>
+            </TabsTrigger>
+          </template>
         </TabsList>
       </Tabs>
     </nav>

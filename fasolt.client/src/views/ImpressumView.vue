@@ -4,7 +4,7 @@ import AppFooter from '@/components/AppFooter.vue'
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground">
+  <div class="flex min-h-screen flex-col bg-background text-foreground">
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-3xl items-center px-6 py-4">
         <RouterLink to="/" class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
@@ -14,7 +14,7 @@ import AppFooter from '@/components/AppFooter.vue'
       </div>
     </nav>
 
-    <div class="mx-auto max-w-3xl space-y-8 px-6 py-12">
+    <div class="mx-auto max-w-3xl flex-1 space-y-8 px-6 py-12">
       <div>
         <h1 class="text-lg font-semibold tracking-tight">Impressum</h1>
         <p class="mt-1 text-xs text-muted-foreground">Angaben gemäß § 5 DDG</p>

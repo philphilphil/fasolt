@@ -50,15 +50,37 @@ struct McpSetupSection: View {
 
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("1. Go to claude.ai/settings")
-                    Text("2. Click Connectors → Add")
+                    Text("1. Go to Customize → Connectors")
+                    Text("2. Tap + then Add Custom Connector")
                     Text("3. Paste your MCP URL")
                     Text("4. Authorize with your Fasolt account")
+                    Link("See documentation",
+                         destination: URL(string: "https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp")!)
+                        .font(.caption)
                 }
                 .font(.subheadline)
                 .padding(.vertical, 4)
             } label: {
                 Label("Claude.ai Web", systemImage: "globe")
+            }
+
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Requires Pro, Team, Enterprise, or Edu plan.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("1. Enable Developer Mode in Settings → Apps → Advanced Settings")
+                    Text("2. Click Create App")
+                    Text("3. Paste your MCP URL")
+                    Text("4. Authorize with your Fasolt account")
+                    Link("See documentation",
+                         destination: URL(string: "https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta")!)
+                        .font(.caption)
+                }
+                .font(.subheadline)
+                .padding(.vertical, 4)
+            } label: {
+                Label("ChatGPT", systemImage: "bubble.left.and.bubble.right")
             }
 
             DisclosureGroup {
