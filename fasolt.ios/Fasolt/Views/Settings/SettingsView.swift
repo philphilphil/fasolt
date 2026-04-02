@@ -42,6 +42,15 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        HelpView()
+                    } label: {
+                        Label("Help", systemImage: "questionmark.circle")
+                    }
+                }
+            }
             .offlineBanner()
             .alert("Sign Out?", isPresented: $showSignOutConfirmation) {
                 Button("Cancel", role: .cancel) {}

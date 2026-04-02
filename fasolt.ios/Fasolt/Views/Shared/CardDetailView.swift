@@ -7,6 +7,7 @@ struct CardDetailView: View {
     var currentDeckId: String?
     var availableDecks: [DeckDTO] = []
     var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
+    var onToggleSuspended: ((Bool) async throws -> Void)?
 
     @State private var showEditSheet = false
 
@@ -136,19 +137,22 @@ struct CardDetailView: View {
                     back: card.back,
                     sourceFile: card.sourceFile,
                     sourceHeading: card.sourceHeading,
-                    deckId: currentDeckId
+                    deckId: currentDeckId,
+                    isSuspended: card.isSuspended
                 ),
-                decks: availableDecks
-            ) { request, deckId in
-                let updateRequest = UpdateCardRequest(
-                    front: request.front,
-                    back: request.back,
-                    sourceFile: request.sourceFile,
-                    sourceHeading: request.sourceHeading,
-                    deckIds: deckId.map { [$0] }
-                )
-                try await onSaveEdit?(updateRequest)
-            }
+                decks: availableDecks,
+                onSave: { request, deckId in
+                    let updateRequest = UpdateCardRequest(
+                        front: request.front,
+                        back: request.back,
+                        sourceFile: request.sourceFile,
+                        sourceHeading: request.sourceHeading,
+                        deckIds: deckId.map { [$0] }
+                    )
+                    try await onSaveEdit?(updateRequest)
+                },
+                onToggleSuspended: onToggleSuspended
+            )
         }
     }
 }

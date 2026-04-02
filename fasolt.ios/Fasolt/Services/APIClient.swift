@@ -98,7 +98,13 @@ actor APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         if authenticated {
-            request = try await injectAuth(request)
+            do {
+                request = try await injectAuth(request)
+            } catch APIError.unauthorized {
+                apiLogger.error("No valid credentials — triggering auth failure")
+                onAuthFailure?()
+                throw APIError.unauthorized
+            }
         }
 
         if let body = endpoint.body {
@@ -120,7 +126,8 @@ actor APIClient {
                 try validateResponse(retryResponse, data: retryData)
                 return retryData
             } else {
-                apiLogger.error("Token refresh failed")
+                apiLogger.error("Token refresh failed — triggering auth failure")
+                onAuthFailure?()
                 throw APIError.unauthorized
             }
         }

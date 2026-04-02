@@ -6,18 +6,20 @@ struct CardFormSheet: View {
     let mode: Mode
     let decks: [DeckDTO]
     let onSave: (CreateCardRequest, String?) async throws -> Void
+    var onToggleSuspended: ((Bool) async throws -> Void)?
 
     @State private var front = ""
     @State private var back = ""
     @State private var sourceFile = ""
     @State private var sourceHeading = ""
     @State private var selectedDeckId: String?
+    @State private var isSuspended = false
     @State private var isSaving = false
     @State private var errorMessage: String?
 
     enum Mode {
         case create
-        case edit(front: String, back: String, sourceFile: String?, sourceHeading: String?, deckId: String?)
+        case edit(front: String, back: String, sourceFile: String?, sourceHeading: String?, deckId: String?, isSuspended: Bool)
 
         var title: String {
             switch self {
@@ -27,20 +29,22 @@ struct CardFormSheet: View {
         }
     }
 
-    init(mode: Mode, decks: [DeckDTO], onSave: @escaping (CreateCardRequest, String?) async throws -> Void) {
+    init(mode: Mode, decks: [DeckDTO], onSave: @escaping (CreateCardRequest, String?) async throws -> Void, onToggleSuspended: ((Bool) async throws -> Void)? = nil) {
         self.mode = mode
         self.decks = decks
         self.onSave = onSave
+        self.onToggleSuspended = onToggleSuspended
 
         switch mode {
         case .create:
             break
-        case .edit(let front, let back, let sourceFile, let sourceHeading, let deckId):
+        case .edit(let front, let back, let sourceFile, let sourceHeading, let deckId, let isSuspended):
             _front = State(initialValue: front)
             _back = State(initialValue: back)
             _sourceFile = State(initialValue: sourceFile ?? "")
             _sourceHeading = State(initialValue: sourceHeading ?? "")
             _selectedDeckId = State(initialValue: deckId)
+            _isSuspended = State(initialValue: isSuspended)
         }
     }
 
@@ -72,6 +76,14 @@ struct CardFormSheet: View {
                                 Text(deck.name).tag(Optional(deck.id))
                             }
                         }
+                    }
+                }
+
+                if case .edit = mode, onToggleSuspended != nil {
+                    Section {
+                        Toggle("Suspended", isOn: $isSuspended)
+                    } footer: {
+                        Text("Suspended cards are excluded from review sessions.")
                     }
                 }
 
@@ -113,6 +125,9 @@ struct CardFormSheet: View {
 
         do {
             try await onSave(request, selectedDeckId)
+            if case .edit(_, _, _, _, _, let wasSuspended) = mode, wasSuspended != isSuspended {
+                try await onToggleSuspended?(isSuspended)
+            }
             dismiss()
         } catch {
             errorMessage = "Failed to save card. Please try again."

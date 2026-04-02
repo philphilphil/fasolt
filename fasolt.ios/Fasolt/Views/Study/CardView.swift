@@ -8,6 +8,7 @@ struct CardView: View {
     let sourceHeading: String?
     var svg: String? = nil
     var cardId: String? = nil
+    var questionText: String? = nil
 
     @State private var idCopied = false
 
@@ -21,6 +22,14 @@ struct CardView: View {
                 .tracking(1)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 12)
+
+            if let questionText {
+                StructuredText(markdown: questionText)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 8)
+            }
 
             if let svg {
                 SvgView(svg: svg)
@@ -39,15 +48,16 @@ struct CardView: View {
 
             Spacer()
 
-            HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 if let sourceFile {
-                    Text(sourceFile)
-                    if let sourceHeading {
-                        Text("\u{00B7}")
-                        Text(sourceHeading)
+                    HStack(spacing: 4) {
+                        Text(sourceFile)
+                        if let sourceHeading {
+                            Text("\u{00B7}")
+                            Text(sourceHeading)
+                        }
                     }
                 }
-                Spacer()
                 if let cardId {
                     Button {
                         UIPasteboard.general.string = cardId
@@ -62,6 +72,7 @@ struct CardView: View {
                     .buttonStyle(.plain)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .font(.caption2)
             .foregroundStyle(.tertiary)
             .padding(.bottom, 4)
