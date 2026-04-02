@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+## Repository
+
+GitHub: `philphilphil/fasolt`
+
 ## Project Overview
 
 MCP-first spaced repetition for markdown notes. Your AI reads your notes — you learn and remember.

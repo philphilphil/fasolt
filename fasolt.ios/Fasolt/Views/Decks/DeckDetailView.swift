@@ -71,6 +71,9 @@ struct DeckDetailView: View {
                                             availableDecks: availableDecks,
                                             onSaveEdit: { request in
                                                 try await viewModel.updateCard(id: card.id, request)
+                                            },
+                                            onToggleSuspended: { isSuspended in
+                                                try await viewModel.setCardSuspended(id: card.id, isSuspended: isSuspended)
                                             }
                                         )
                                     } label: {

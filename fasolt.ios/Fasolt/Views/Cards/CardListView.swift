@@ -125,6 +125,9 @@ struct CardListContent: View {
                         availableDecks: viewModel.availableDecks,
                         onSaveEdit: { request in
                             try await viewModel.updateCard(id: card.id, request)
+                        },
+                        onToggleSuspended: { isSuspended in
+                            try await viewModel.setSuspended(cardId: card.id, isSuspended: isSuspended)
                         }
                     )
                 } label: {
