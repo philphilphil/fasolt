@@ -15,8 +15,8 @@
 Connect fasolt to Claude, ChatGPT, or any MCP-compatible agent. Ask it to create flashcards — from your notes, a topic, or anything you want to learn. Study the cards it creates.
 
 <p align="center">
-  <img src="docs/media/web_front.png" alt="Study question" height="350" />
-  <img src="docs/media/web_back.png" alt="Study answer" height="350" />
+  <img src="docs/media/web_front.png" alt="Study question" width="400" />
+  <img src="docs/media/web_back.png" alt="Study answer" width="400" />
 </p>
 
 ## How It Works
