@@ -62,14 +62,19 @@ public class ApnsService
         var securityKey = new ECDsaSecurityKey(_key) { KeyId = _settings.KeyId };
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.EcdsaSha256);
 
+        var now = DateTimeOffset.UtcNow;
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _settings.TeamId,
-            IssuedAt = DateTime.UtcNow,
+            IssuedAt = now.UtcDateTime,
+            Expires = null,
+            NotBefore = null,
             SigningCredentials = credentials,
+            TokenType = null,
         };
 
         var handler = new JsonWebTokenHandler();
+        handler.SetDefaultTimesOnTokenCreation = false;
         _cachedToken = handler.CreateToken(descriptor);
         _tokenExpiry = DateTimeOffset.UtcNow.AddMinutes(50);
 
