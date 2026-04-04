@@ -101,8 +101,12 @@ actor APIClient {
             do {
                 request = try await injectAuth(request)
             } catch APIError.unauthorized {
-                apiLogger.error("No valid credentials — triggering auth failure")
-                onAuthFailure?()
+                // Only force logout if tokens were cleared (server rejected refresh).
+                // Transient network failures preserve tokens for later retry.
+                if keychain.retrieve("fasolt.refreshToken") == nil {
+                    apiLogger.error("No valid credentials — triggering auth failure")
+                    onAuthFailure?()
+                }
                 throw APIError.unauthorized
             }
         }
@@ -126,8 +130,12 @@ actor APIClient {
                 try validateResponse(retryResponse, data: retryData)
                 return retryData
             } else {
-                apiLogger.error("Token refresh failed — triggering auth failure")
-                onAuthFailure?()
+                // Only force logout if tokens were actually cleared (server rejection).
+                // If tokens still exist, it was a transient network failure — don't destroy the session.
+                if keychain.retrieve("fasolt.refreshToken") == nil {
+                    apiLogger.error("Token refresh failed (session invalid) — triggering auth failure")
+                    onAuthFailure?()
+                }
                 throw APIError.unauthorized
             }
         }
@@ -202,23 +210,56 @@ actor APIClient {
             "client_id": clientId,
         ]
 
-        do {
-            let tokenResponse: TokenResponse = try await formPost("/oauth/token", params: params)
-            keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
-            apiLogger.info("Token refreshed successfully")
-            if let newRefresh = tokenResponse.refreshToken {
-                keychain.save(newRefresh, forKey: "fasolt.refreshToken")
+        // Retry transient (network) failures — iOS may not have full connectivity
+        // right after foregrounding. Only clear tokens on auth rejection from server.
+        for attempt in 1...3 {
+            do {
+                let tokenResponse: TokenResponse = try await formPost("/oauth/token", params: params)
+                keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
+                apiLogger.info("Token refreshed successfully")
+                if let newRefresh = tokenResponse.refreshToken {
+                    keychain.save(newRefresh, forKey: "fasolt.refreshToken")
+                }
+                let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
+                keychain.save(DateFormatters.formatISO8601( expiry), forKey: "fasolt.tokenExpiry")
+                return true
+            } catch let error as APIError {
+                switch error {
+                case .networkError:
+                    // Transient — retry after a short delay
+                    apiLogger.warning("Token refresh network error (attempt \(attempt)/3)")
+                    if attempt < 3 {
+                        try? await Task.sleep(for: .seconds(2 * attempt))
+                    }
+                case .unauthorized, .forbidden:
+                    // Server explicitly rejected the refresh token — session is invalid
+                    apiLogger.error("Token refresh rejected by server: \(error)")
+                    keychain.delete("fasolt.accessToken")
+                    keychain.delete("fasolt.refreshToken")
+                    keychain.delete("fasolt.tokenExpiry")
+                    onAuthFailure?()
+                    return false
+                default:
+                    // Other server errors (400, 500) — likely the token is bad
+                    apiLogger.error("Token refresh failed: \(error)")
+                    keychain.delete("fasolt.accessToken")
+                    keychain.delete("fasolt.refreshToken")
+                    keychain.delete("fasolt.tokenExpiry")
+                    onAuthFailure?()
+                    return false
+                }
+            } catch {
+                // Non-APIError (e.g. URLSession cancellation) — treat as transient
+                apiLogger.warning("Token refresh unexpected error (attempt \(attempt)/3): \(error)")
+                if attempt < 3 {
+                    try? await Task.sleep(for: .seconds(2 * attempt))
+                }
             }
-            let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
-            keychain.save(DateFormatters.formatISO8601( expiry), forKey: "fasolt.tokenExpiry")
-            return true
-        } catch {
-            keychain.delete("fasolt.accessToken")
-            keychain.delete("fasolt.refreshToken")
-            keychain.delete("fasolt.tokenExpiry")
-            onAuthFailure?()
-            return false
         }
+
+        // All retries exhausted — network still down, but keep tokens for next attempt
+        apiLogger.error("Token refresh failed after 3 attempts, keeping tokens for later retry")
+        return false
     }
 
     private func validateResponse(_ response: URLResponse, data: Data? = nil) throws {
