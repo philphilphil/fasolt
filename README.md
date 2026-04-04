@@ -5,24 +5,24 @@
 <h1 align="center">fasolt</h1>
 
 <p align="center">
-  MCP-first spaced repetition for your markdown notes.<br/>
+  MCP-first spaced repetition powered by your AI.<br/>
 </p>
 
 <i>100 % Vibecoded. I wanted todo this project for years but was to lazy to continue. Finally started to vibecode it and it quickly shifted goals to just be a frontend and let agents generate the cards.</i>
 
 ---
 
-Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at your markdown files. Study the flashcards it creates.
+Connect fasolt to Claude, ChatGPT, or any MCP-compatible agent. Ask it to create flashcards — from your notes, a topic, or anything you want to learn. Study the cards it creates.
 
 <p align="center">
-  <img src="docs/media/web_screenshot_front.png" alt="Study question" width="400" />
-  <img src="docs/media/web_screenshot_back.png" alt="Study answer" width="400" />
+  <img src="docs/media/web_front.png" alt="Study question" height="350" />
+  <img src="docs/media/web_back.png" alt="Study answer" height="350" />
 </p>
 
 ## How It Works
 
-1. **Write notes**: Obsidian, any editor, plain text. No special format required.
-2. **Your AI creates flashcards**: ask your agent to read a file and push cards to fasolt via MCP
+1. **Connect your AI agent**: add the fasolt MCP server to Claude, ChatGPT, or any MCP-compatible agent
+2. **Create flashcards**: ask your agent to make cards — from your notes, a topic, or anything you want to learn
 3. **Study**: review due cards in the browser or iOS app, FSRS schedules reviews at increasing intervals
 
 ## Features
@@ -42,17 +42,17 @@ Connect fasolt to Claude Code, Cursor, or any MCP-compatible agent. Point it at 
 Native iOS app (Swift / SwiftUI) for studying on the go. Syncs with the backend, supports offline review with automatic sync when back online, and receives push notifications when cards are due.
 
 <p align="center">
-  <img src="docs/media/ios_screenshot_dashboard.png" alt="iOS dashboard" width="200" />
-  <img src="docs/media/ios_screenshot_front.png" alt="iOS study question" width="200" />
-  <img src="docs/media/ios_screenshot_back.png" alt="iOS study answer" width="200" />
-  <img src="docs/media/ios_screenshot_sessionComplete.png" alt="iOS session complete" width="200" />
+  <img src="docs/media/ios_dashboard.png" alt="iOS dashboard" width="200" />
+  <img src="docs/media/ios_front.png" alt="iOS study question" width="200" />
+  <img src="docs/media/ios_back.png" alt="iOS study answer" width="200" />
+  <img src="docs/media/ios_studyend.png" alt="iOS session complete" width="200" />
 </p>
 
 ## MCP
 
-fasolt exposes a remote [MCP](https://modelcontextprotocol.io/) server that lets AI agents create and manage flashcards on your behalf. Your agent reads your local markdown files, extracts key concepts, and pushes cards to fasolt — you never upload files to the server.
+fasolt exposes a remote [MCP](https://modelcontextprotocol.io/) server that lets AI agents create and manage flashcards on your behalf. Your agent can read your local files, or just take a topic — it creates cards and pushes them to fasolt.
 
-Add the MCP server URL to your agent of choice (Claude Code, Cursor, Copilot, etc.). Authentication happens via OAuth.
+Add the MCP server URL to your agent of choice (Claude, ChatGPT, Cursor, etc.). Authentication happens via OAuth.
 
 ```
 http://localhost:8080/mcp
@@ -60,10 +60,13 @@ http://localhost:8080/mcp
 
 The server provides tools for creating, searching, updating, and deleting cards and decks — all discoverable automatically when your agent connects.
 
-**Example:**
+**Examples:**
 ```
 You:   "Create flashcards from my kubernetes-notes.md"
 Agent: reads local file → checks for duplicates → creates cards via MCP → done
+
+You:   "Make me a deck about the French Revolution"
+Agent: generates cards from its knowledge → creates deck via MCP → done
 ```
 
 ## Tech Stack

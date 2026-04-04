@@ -43,11 +43,11 @@ const { isDark, toggle } = useDarkMode()
         <p class="mb-4 text-xs uppercase tracking-[0.2em] text-accent">spaced repetition</p>
         <h1 class="text-2xl sm:text-4xl font-bold tracking-tight leading-tight mb-5">
           <span class="text-accent text-glow">MCP-first</span> spaced repetition<br class="hidden sm:block" />
-          for your notes.
+          powered by your AI.
         </h1>
         <p class="text-sm text-muted-foreground mb-8 max-w-md leading-relaxed">
-          Your AI agent reads your notes and creates flashcards.
-          Study them on the web or the iOS app. Free.
+          Your AI agent creates flashcards from your notes, a topic, or anything you want to learn.
+          Study on the web or the iOS app. Free.
         </p>
         <div class="flex flex-wrap gap-3">
           <RouterLink to="/register">
@@ -74,16 +74,16 @@ const { isDark, toggle } = useDarkMode()
         <div class="grid gap-10 sm:grid-cols-3">
           <div>
             <span class="text-xs text-accent/60 mb-2 block">01</span>
-            <h3 class="text-sm font-semibold mb-2">Write notes</h3>
+            <h3 class="text-sm font-semibold mb-2">Connect your AI agent</h3>
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Use Obsidian, any editor, or plain text files. No special format required.
+              Add the fasolt MCP server to Claude, ChatGPT, or any MCP-compatible agent.
             </p>
           </div>
           <div>
             <span class="text-xs text-accent/60 mb-2 block">02</span>
-            <h3 class="text-sm font-semibold mb-2">Connect your AI agent</h3>
+            <h3 class="text-sm font-semibold mb-2">Create flashcards</h3>
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Add the fasolt MCP server to Claude, Cursor, or any MCP-compatible agent. It reads your notes and creates flashcards.
+              Ask your agent to make cards from your notes, a topic, or anything you want to learn.
             </p>
           </div>
           <div>
@@ -119,7 +119,7 @@ const { isDark, toggle } = useDarkMode()
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <FileText :size="16" class="text-accent mb-2" />
           <h3 class="text-sm font-semibold mb-1">Source tracking</h3>
-          <p class="text-xs text-muted-foreground leading-relaxed">Cards retain provenance — file and heading.</p>
+          <p class="text-xs text-muted-foreground leading-relaxed">Cards retain context via file and heading.</p>
         </div>
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <BarChart3 :size="16" class="text-accent mb-2" />

@@ -7,7 +7,7 @@ public static class HealthEndpoints
         app.MapGet("/api/health", (IConfiguration configuration) => Results.Ok(new
         {
             status = "healthy",
-            version = "0.1.0",
+            version = "0.1.1",
             features = new
             {
                 githubLogin = !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]),
