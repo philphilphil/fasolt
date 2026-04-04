@@ -7,8 +7,9 @@ namespace Fasolt.Server.Infrastructure.Services;
 
 public class AppClaimsPrincipalFactory(
     UserManager<AppUser> userManager,
+    RoleManager<IdentityRole> roleManager,
     IOptions<IdentityOptions> optionsAccessor)
-    : UserClaimsPrincipalFactory<AppUser>(userManager, optionsAccessor)
+    : UserClaimsPrincipalFactory<AppUser, IdentityRole>(userManager, roleManager, optionsAccessor)
 {
     protected override async Task<ClaimsIdentity> GenerateClaimsAsync(AppUser user)
     {
