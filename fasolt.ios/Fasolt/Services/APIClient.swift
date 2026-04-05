@@ -10,7 +10,6 @@ actor APIClient {
     private let decoder: JSONDecoder
 
     private var refreshTask: Task<Bool, Error>?
-    private var onAuthFailure: (@Sendable () -> Void)?
 
     init(session: URLSession = .shared, keychain: KeychainHelper = KeychainHelper()) {
         self.session = session
@@ -23,8 +22,9 @@ actor APIClient {
         keychain.retrieve("fasolt.serverURL")
     }
 
-    func setAuthFailureHandler(_ handler: @escaping @Sendable () -> Void) {
-        onAuthFailure = handler
+    /// Broadcasts session invalidation so AuthService (or any observer) can react.
+    nonisolated private func broadcastSessionInvalidation() {
+        NotificationCenter.default.post(name: .sessionDidInvalidate, object: nil)
     }
 
     // MARK: - Authenticated requests
@@ -105,7 +105,7 @@ actor APIClient {
                 // Transient network failures preserve tokens for later retry.
                 if keychain.retrieve("fasolt.refreshToken") == nil {
                     apiLogger.error("No valid credentials — triggering auth failure")
-                    onAuthFailure?()
+                    broadcastSessionInvalidation()
                 }
                 throw APIError.unauthorized
             }
@@ -134,7 +134,7 @@ actor APIClient {
                 // If tokens still exist, it was a transient network failure — don't destroy the session.
                 if keychain.retrieve("fasolt.refreshToken") == nil {
                     apiLogger.error("Token refresh failed (session invalid) — triggering auth failure")
-                    onAuthFailure?()
+                    broadcastSessionInvalidation()
                 }
                 throw APIError.unauthorized
             }
@@ -225,27 +225,27 @@ actor APIClient {
                 return true
             } catch let error as APIError {
                 switch error {
-                case .networkError:
-                    // Transient — retry after a short delay
-                    apiLogger.warning("Token refresh network error (attempt \(attempt)/3)")
+                case .networkError, .serverError:
+                    // Transient — retry after a short delay (network issues or server hiccups
+                    // shouldn't destroy the session)
+                    apiLogger.warning("Token refresh transient error (attempt \(attempt)/3): \(error)")
                     if attempt < 3 {
                         try? await Task.sleep(for: .seconds(2 * attempt))
                     }
-                case .unauthorized, .forbidden:
+                case .unauthorized, .forbidden, .badRequest:
                     // Server explicitly rejected the refresh token — session is invalid
                     apiLogger.error("Token refresh rejected by server: \(error)")
                     keychain.delete("fasolt.accessToken")
                     keychain.delete("fasolt.refreshToken")
                     keychain.delete("fasolt.tokenExpiry")
-                    onAuthFailure?()
+                    broadcastSessionInvalidation()
                     return false
                 default:
-                    // Other server errors (400, 500) — likely the token is bad
                     apiLogger.error("Token refresh failed: \(error)")
                     keychain.delete("fasolt.accessToken")
                     keychain.delete("fasolt.refreshToken")
                     keychain.delete("fasolt.tokenExpiry")
-                    onAuthFailure?()
+                    broadcastSessionInvalidation()
                     return false
                 }
             } catch {

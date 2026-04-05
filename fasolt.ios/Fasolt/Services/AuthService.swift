@@ -16,6 +16,7 @@ final class AuthService {
     let keychain: KeychainHelper
     let apiClient: APIClient
     private var activeAuthSession: ASWebAuthenticationSession?
+    private var sessionInvalidationObserver: Any?
 
     static let redirectURI = "fasolt://oauth/callback"
     static let firstPartyClientId = "fasolt-ios"
@@ -35,15 +36,16 @@ final class AuthService {
             return true
         }()
 
-        // Force logout when token refresh fails so the user isn't stuck on authenticated screens
-        Task { [weak self] in
-            await apiClient.setAuthFailureHandler { [weak self] in
-                Task { @MainActor [weak self] in
-                    guard let self, self.isAuthenticated else { return }
-                    authLogger.warning("Token refresh failed — forcing logout")
-                    self.isAuthenticated = false
-                }
-            }
+        // Force logout when token refresh fails so the user isn't stuck on authenticated screens.
+        // Uses NotificationCenter (synchronous, no race condition) instead of an async closure.
+        sessionInvalidationObserver = NotificationCenter.default.addObserver(
+            forName: .sessionDidInvalidate,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, self.isAuthenticated else { return }
+            authLogger.warning("Session invalidated — forcing logout")
+            self.isAuthenticated = false
         }
     }
 
