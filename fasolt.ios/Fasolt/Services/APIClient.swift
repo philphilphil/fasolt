@@ -199,7 +199,11 @@ actor APIClient {
     private func doRefreshToken() async throws -> Bool {
         guard let refreshToken = keychain.retrieve("fasolt.refreshToken"),
               let clientId = keychain.retrieve("fasolt.clientId") else {
-            apiLogger.warning("No refresh token or client ID in keychain")
+            apiLogger.warning("No refresh token or client ID in keychain — session unrecoverable")
+            keychain.delete("fasolt.accessToken")
+            keychain.delete("fasolt.refreshToken")
+            keychain.delete("fasolt.tokenExpiry")
+            broadcastSessionInvalidation()
             return false
         }
         apiLogger.info("Refreshing token")

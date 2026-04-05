@@ -188,14 +188,22 @@ public static class OAuthEndpoints
         // Token Endpoint
         app.MapPost("/oauth/token", async (HttpContext context, UserManager<AppUser> userManager) =>
         {
-            var request = context.GetOpenIddictServerRequest()
-                ?? throw new InvalidOperationException("The OpenID Connect request cannot be retrieved.");
+            var request = context.GetOpenIddictServerRequest();
+            if (request is null)
+                return Results.BadRequest(new { error = Errors.InvalidRequest, error_description = "The OpenID Connect request cannot be retrieved." });
 
             if (request.IsAuthorizationCodeGrantType() || request.IsRefreshTokenGrantType())
             {
                 var result = await context.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-                var principal = result?.Principal
-                    ?? throw new InvalidOperationException("The authorization or refresh token is no longer valid.");
+                if (result?.Principal is null)
+                    return Results.Forbid(
+                        authenticationSchemes: [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme],
+                        properties: new(new Dictionary<string, string?>
+                        {
+                            [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.InvalidGrant,
+                            [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The token is no longer valid.",
+                        }));
+                var principal = result.Principal;
 
                 var userId = principal.GetClaim(Claims.Subject)!;
                 var user = await userManager.FindByIdAsync(userId);

@@ -250,6 +250,7 @@ final class AuthService {
 
         let tokenResponse: TokenResponse = try await apiClient.formPost("/oauth/token", params: params)
 
+        keychain.save(clientId, forKey: "fasolt.clientId")
         keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
         if let refreshToken = tokenResponse.refreshToken {
             keychain.save(refreshToken, forKey: "fasolt.refreshToken")
