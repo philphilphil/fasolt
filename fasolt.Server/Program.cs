@@ -471,6 +471,7 @@ app.Use(async (context, next) =>
 
         var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
         dict["registration_endpoint"] = $"{baseUrl}/oauth/register";
+        dict["logo_uri"] = $"{baseUrl}/logo.png";
 
         context.Response.Body = originalBody;
         context.Response.ContentLength = null;
