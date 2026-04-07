@@ -123,7 +123,7 @@ final class AuthService {
 
         do {
             let body = RegisterRequest(email: email, password: password)
-            let endpoint = Endpoint(path: "/api/identity/register", method: .post, body: body)
+            let endpoint = Endpoint(path: "/api/account/register", method: .post, body: body)
             try await apiClient.unauthenticatedRequest(endpoint)
 
             authLogger.info("Registration succeeded")
