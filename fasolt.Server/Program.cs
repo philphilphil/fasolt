@@ -541,6 +541,27 @@ app.MapSnapshotEndpoints();
 app.MapDemoDeckEndpoints();
 // Identity's MapIdentityApi removed — all auth endpoints are in AccountEndpoints
 
+// Apple App Site Association — links the iOS app and the website so credentials
+// saved in iCloud Keychain by the native register form autofill in the OAuth
+// web view (and vice versa). Apple's CDN fetches this file periodically; it
+// must be served as JSON with no extension and no auth.
+app.MapGet("/.well-known/apple-app-site-association", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (IConfiguration configuration) =>
+{
+    var teamId = configuration["Apple:TeamId"];
+    var bundleId = configuration["Apple:BundleId"];
+    if (string.IsNullOrEmpty(teamId) || string.IsNullOrEmpty(bundleId))
+        return Results.NotFound();
+
+    var payload = new
+    {
+        webcredentials = new
+        {
+            apps = new[] { $"{teamId}.{bundleId}" }
+        }
+    };
+    return Results.Json(payload, contentType: "application/json");
+});
+
 app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
 // SPA fallback — serve index.html for client-side routes
