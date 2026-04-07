@@ -23,6 +23,7 @@ interface AdminUser {
   deckCount: number
   isLockedOut: boolean
   hasPush: boolean
+  emailConfirmed: boolean
 }
 
 interface AdminUserListResponse {
@@ -208,7 +209,23 @@ onMounted(() => {
             </TableCell>
           </TableRow>
           <TableRow v-for="u in users" :key="u.id">
-            <TableCell class="font-medium">{{ u.displayName || u.email }}</TableCell>
+            <TableCell class="font-medium">
+              <span class="inline-flex items-center gap-2">
+                {{ u.displayName || u.email }}
+                <span
+                  v-if="u.emailConfirmed"
+                  class="text-success"
+                  title="Email confirmed"
+                  aria-label="Email confirmed"
+                >&#x2713;</span>
+                <span
+                  v-else
+                  class="text-muted-foreground"
+                  title="Email not confirmed"
+                  aria-label="Email not confirmed"
+                >&#x25CB;</span>
+              </span>
+            </TableCell>
             <TableCell>
               <Badge v-if="u.displayName" variant="secondary">GitHub</Badge>
               <span v-else class="text-xs text-muted-foreground">Email</span>

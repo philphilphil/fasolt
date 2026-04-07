@@ -23,7 +23,8 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
                 db.Cards.Count(c => c.UserId == u.Id),
                 db.Decks.Count(d => d.UserId == u.Id),
                 u.LockoutEnabled && u.LockoutEnd > DateTimeOffset.UtcNow,
-                db.DeviceTokens.Any(d => d.UserId == u.Id)))
+                db.DeviceTokens.Any(d => d.UserId == u.Id),
+                u.EmailConfirmed))
             .ToListAsync();
 
         return new AdminUserListResponse(users, totalCount, page, pageSize);
