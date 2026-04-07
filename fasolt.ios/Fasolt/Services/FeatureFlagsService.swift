@@ -15,10 +15,13 @@ final class FeatureFlagsService {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decoded = try JSONDecoder().decode(HealthResponse.self, from: data)
-            self.githubLogin = decoded.features.githubLogin
-            self.appleLogin = decoded.features.appleLogin
+            // Unknown/missing flags default to false, so older servers without
+            // appleLogin still report their real githubLogin state instead of
+            // failing the whole decode.
+            self.githubLogin = decoded.features.githubLogin ?? false
+            self.appleLogin = decoded.features.appleLogin ?? false
             self.hasLoaded = true
-            featureLogger.info("Feature flags loaded — github=\(decoded.features.githubLogin) apple=\(decoded.features.appleLogin)")
+            featureLogger.info("Feature flags loaded — github=\(self.githubLogin) apple=\(self.appleLogin)")
         } catch {
             featureLogger.error("Failed to load feature flags: \(error.localizedDescription)")
         }
@@ -27,8 +30,8 @@ final class FeatureFlagsService {
     private struct HealthResponse: Decodable {
         let features: Features
         struct Features: Decodable {
-            let githubLogin: Bool
-            let appleLogin: Bool
+            let githubLogin: Bool?
+            let appleLogin: Bool?
         }
     }
 }
