@@ -64,6 +64,7 @@
 		FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */; };
 		AA00112233445566778899AB /* PasswordRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB00112233445566778899AB /* PasswordRules.swift */; };
 		CC00112233445566778899AB /* PasswordRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD00112233445566778899AB /* PasswordRulesTests.swift */; };
+		EE00112233445566778899AB /* RegisterViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF00112233445566778899AB /* RegisterViewModelTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +109,7 @@
 		906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+StripMarkdown.swift"; sourceTree = "<group>"; };
 		BB00112233445566778899AB /* PasswordRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordRules.swift; sourceTree = "<group>"; };
 		DD00112233445566778899AB /* PasswordRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordRulesTests.swift; sourceTree = "<group>"; };
+		FF00112233445566778899AB /* RegisterViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterViewModelTests.swift; sourceTree = "<group>"; };
 		9097BB7014F064BF83F77689 /* DeckCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckCardRow.swift; sourceTree = "<group>"; };
 		933F9C08DEBB1C1DE4B0F805 /* Fasolt.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Fasolt.entitlements; sourceTree = "<group>"; };
 		94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = McpSetupSection.swift; sourceTree = "<group>"; };
@@ -290,6 +292,7 @@
 				63A881609787DFFE078B49DC /* KeychainHelperTests.swift */,
 				C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */,
 				DD00112233445566778899AB /* PasswordRulesTests.swift */,
+				FF00112233445566778899AB /* RegisterViewModelTests.swift */,
 			);
 			path = FasoltTests;
 			sourceTree = "<group>";
@@ -467,6 +470,7 @@
 				345B1EAE7BFC27DA2F03E0C3 /* KeychainHelperTests.swift in Sources */,
 				F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */,
 				CC00112233445566778899AB /* PasswordRulesTests.swift in Sources */,
+				EE00112233445566778899AB /* RegisterViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
