@@ -333,47 +333,159 @@ public static class OAuthEndpoints
             var gitHubReturnUrl = Uri.EscapeDataString(returnUrl);
             var gitHubHtml = gitHubEnabled ? $$"""
                 <a href="/api/account/github-login?returnUrl={{gitHubReturnUrl}}" class="btn-github">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                    Sign in with GitHub
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    Continue with GitHub
                 </a>
                 <div class="or-divider"><span>or</span></div>
             """ : "";
+
+            // Inline SVG logo so this page works regardless of static-file routing.
+            // Mirrors fasolt.client/public/favicon.svg.
+            const string logoSvg = """
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <g transform="rotate(-14 40 44)"><rect x="12" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/></g>
+                  <g transform="rotate(14 40 44)"><rect x="36" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/></g>
+                  <rect x="23" y="26" width="34" height="24" rx="5" fill="#dbeafe" stroke="#0969da" stroke-width="1.5"/>
+                  <line x1="30" y1="34" x2="50" y2="34" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="30" y1="39" x2="44" y2="39" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="34" y1="66" x2="50" y2="60" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+                  <line x1="50" y1="60" x2="64" y2="52" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+                  <circle cx="34" cy="66" r="2.5" fill="#0969da" opacity="0.4"/>
+                  <circle cx="50" cy="60" r="3" fill="#0969da" opacity="0.65"/>
+                  <circle cx="64" cy="52" r="3.5" fill="#3b82f6" opacity="0.92"/>
+                </svg>
+                """;
 
             var html = $$"""
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
                 <title>Sign in — fasolt</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #fafafa; padding: 16px; }
-                    .card { width: 100%; max-width: 380px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-                    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
-                    .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
-                    .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
-                    label { display: block; font-size: 0.8125rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
-                    input { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
-                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.06); }
-                    .field { margin-bottom: 14px; }
-                    button { width: 100%; padding: 10px; margin-top: 6px; background: #18181b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.15s; }
+                    html, body { height: 100%; }
+                    body {
+                        font-family: -apple-system, system-ui, sans-serif;
+                        background: #fafafa;
+                        color: #18181b;
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: center;
+                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+                        -webkit-font-smoothing: antialiased;
+                    }
+                    @media (min-height: 640px) {
+                        body { align-items: center; }
+                    }
+                    .card {
+                        width: 100%;
+                        max-width: 380px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        padding: 24px 22px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                    }
+                    .header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 18px; }
+                    .header svg { width: 48px; height: 48px; }
+                    .header h1 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; color: #18181b; }
+                    .header p { font-size: 0.8125rem; color: #71717a; margin-top: -2px; }
+                    label { display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
+                    input {
+                        width: 100%;
+                        padding: 10px 12px;
+                        border: 1px solid #d1d5db;
+                        border-radius: 8px;
+                        font-size: 0.9375rem;
+                        outline: none;
+                        background: white;
+                        transition: border-color 0.15s, box-shadow 0.15s;
+                        -webkit-appearance: none;
+                    }
+                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
+                    .field { margin-bottom: 10px; }
+                    button {
+                        width: 100%;
+                        padding: 11px;
+                        margin-top: 4px;
+                        background: #18181b;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                        transition: background 0.15s;
+                    }
                     button:hover { background: #27272a; }
                     button:active { background: #09090b; }
-                    .error { color: #dc2626; font-size: 0.8125rem; margin-bottom: 12px; padding: 8px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; }
-                    .footer { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #a1a1aa; }
-                    .or-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #a1a1aa; font-size: 0.75rem; }
+                    .error {
+                        color: #b91c1c;
+                        font-size: 0.8125rem;
+                        margin-bottom: 10px;
+                        padding: 8px 12px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                    }
+                    .footer { text-align: center; margin-top: 14px; font-size: 0.75rem; color: #a1a1aa; }
+                    .or-divider {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        margin: 12px 0;
+                        color: #a1a1aa;
+                        font-size: 0.75rem;
+                    }
                     .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
-                    .btn-github { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: #24292f; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background 0.15s; }
+                    .btn-github {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        width: 100%;
+                        padding: 11px;
+                        background: #24292f;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                        text-decoration: none;
+                        transition: background 0.15s;
+                    }
                     .btn-github:hover { background: #32383f; }
                     .btn-github:active { background: #1b1f23; }
+                    @media (prefers-color-scheme: dark) {
+                        body { background: #0a0a0a; color: #fafafa; }
+                        .card { background: #18181b; border-color: #27272a; }
+                        .header h1 { color: #fafafa; }
+                        .header p { color: #a1a1aa; }
+                        label { color: #d4d4d8; }
+                        input { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
+                        input:focus { border-color: #fafafa; box-shadow: 0 0 0 3px rgba(250, 250, 250, 0.08); }
+                        button { background: #fafafa; color: #18181b; }
+                        button:hover { background: #e4e4e7; }
+                        button:active { background: #d4d4d8; }
+                        .error { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }
+                        .footer { color: #71717a; }
+                        .or-divider { color: #71717a; }
+                        .or-divider::before, .or-divider::after { background: #27272a; }
+                        .btn-github { background: #fafafa; color: #18181b; }
+                        .btn-github:hover { background: #e4e4e7; }
+                        .btn-github:active { background: #d4d4d8; }
+                    }
                 </style>
             </head>
             <body>
-                <div class="card">
-                    <div class="logo">fasolt</div>
-                    <p class="subtitle">Sign in to connect your AI client</p>
-                    <div class="divider"></div>
+                <main class="card">
+                    <div class="header">
+                        {{logoSvg}}
+                        <h1>Sign in to fasolt</h1>
+                    </div>
                     {{errorHtml}}
                     {{gitHubHtml}}
                     <form method="post" action="/oauth/login">
@@ -381,16 +493,16 @@ public static class OAuthEndpoints
                         <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
                         <div class="field">
                             <label for="email">Email</label>
-                            <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus />
+                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required autofocus />
                         </div>
                         <div class="field">
                             <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required />
+                            <input type="password" id="password" name="password" autocomplete="current-password" required />
                         </div>
                         <button type="submit">Sign in</button>
                     </form>
-                    <p class="footer">You'll be redirected back to your AI client.</p>
-                </div>
+                    <p class="footer">Continue to your client after signing in.</p>
+                </main>
             </body>
             </html>
             """;
