@@ -2,7 +2,10 @@ import SwiftUI
 
 struct VerifyEmailView: View {
     let email: String
-    @Environment(\.dismiss) private var dismiss
+    /// Called when the user taps "Back to sign in". RegisterView passes its
+    /// own `dismiss` here so tapping the button pops the entire registration
+    /// stack back to OnboardingView, not just one level back to RegisterView.
+    let onBackToSignIn: () -> Void
 
     var body: some View {
         VStack(spacing: 24) {
@@ -25,7 +28,7 @@ struct VerifyEmailView: View {
             Spacer()
 
             Button {
-                dismiss()
+                onBackToSignIn()
             } label: {
                 Text("Back to sign in")
                     .frame(maxWidth: .infinity)
@@ -39,11 +42,12 @@ struct VerifyEmailView: View {
         }
         .navigationTitle("Verify email")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
     }
 }
 
 #Preview {
     NavigationStack {
-        VerifyEmailView(email: "user@example.com")
+        VerifyEmailView(email: "user@example.com", onBackToSignIn: {})
     }
 }

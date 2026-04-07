@@ -133,7 +133,11 @@ struct RegisterView: View {
                 .ignoresSafeArea()
         }
         .navigationDestination(isPresented: $showVerifyEmail) {
-            VerifyEmailView(email: viewModel.email)
+            VerifyEmailView(email: viewModel.email) {
+                // Pop the entire registration stack back to OnboardingView,
+                // not just one level back to RegisterView.
+                dismiss()
+            }
         }
         .onChange(of: authService.registrationSuccess) { _, success in
             if success {
