@@ -16,6 +16,8 @@ public sealed class AppleAuthException : Exception
 
 public sealed class AppleAuthService
 {
+    public const string GrantType = "urn:fasolt:apple";
+
     private const string AppleIssuer = "https://appleid.apple.com";
     private const string ProviderName = "Apple";
 

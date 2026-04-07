@@ -88,6 +88,8 @@ builder.Services.AddOpenIddict()
         options.AllowAuthorizationCodeFlow()
                .AllowRefreshTokenFlow();
 
+        options.AllowCustomFlow(Fasolt.Server.Application.Auth.AppleAuthService.GrantType);
+
         options.RequireProofKeyForCodeExchange();
 
         var encryptionCertPath = builder.Configuration["OPENIDDICT_ENCRYPTION_CERT_PATH"];
@@ -128,6 +130,10 @@ builder.Services.AddOpenIddict()
         options.UseLocalServer();
         options.UseAspNetCore();
     });
+
+// Sign in with Apple
+builder.Services.AddHttpClient<Fasolt.Server.Application.Auth.AppleJwksCache>();
+builder.Services.AddScoped<Fasolt.Server.Application.Auth.AppleAuthService>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -330,7 +336,9 @@ if (!app.Environment.IsEnvironment("Testing"))
     // Seed first-party iOS OAuth client
     var appManager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
     const string iosClientId = "fasolt-ios";
+    const string appleGrantType = Fasolt.Server.Application.Auth.AppleAuthService.GrantType;
     var existing = await appManager.FindByClientIdAsync(iosClientId);
+
     if (existing is null)
     {
         var descriptor = new OpenIddictApplicationDescriptor
@@ -346,9 +354,23 @@ if (!app.Environment.IsEnvironment("Testing"))
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.GrantType + appleGrantType);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess);
         await appManager.CreateAsync(descriptor);
+    }
+    else
+    {
+        // Idempotently ensure the Apple grant type permission is present on existing dev/prod clients.
+        var permissions = await appManager.GetPermissionsAsync(existing);
+        var appleGrantPermission = OpenIddictConstants.Permissions.Prefixes.GrantType + appleGrantType;
+        if (!permissions.Contains(appleGrantPermission))
+        {
+            var descriptor = new OpenIddictApplicationDescriptor();
+            await appManager.PopulateAsync(descriptor, existing);
+            descriptor.Permissions.Add(appleGrantPermission);
+            await appManager.UpdateAsync(existing, descriptor);
+        }
     }
 }
 
