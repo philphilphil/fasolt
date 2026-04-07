@@ -309,6 +309,14 @@ public static class OAuthEndpoints
         // OAuth Login Page (GET)
         app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery, IConfiguration configuration) =>
         {
+            var providerHint = context.Request.Query["provider_hint"].FirstOrDefault();
+            if (providerHint == "github" && !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]))
+            {
+                var rawReturnUrlForHint = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+                var safeReturnUrl = UrlHelpers.IsLocalUrl(rawReturnUrlForHint) ? rawReturnUrlForHint : "/";
+                return Results.Redirect($"/api/account/github-login?returnUrl={Uri.EscapeDataString(safeReturnUrl)}");
+            }
+
             var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
             var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
             var error = context.Request.Query["error"].FirstOrDefault();
