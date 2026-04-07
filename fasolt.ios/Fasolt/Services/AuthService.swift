@@ -112,11 +112,16 @@ final class AuthService {
     }
 
     var registrationSuccess = false
+    /// Email of the most recently registered account, surfaced so the
+    /// onboarding screen can show a "check your email" view after RegisterView
+    /// has dismissed itself.
+    var lastRegisteredEmail: String?
 
     func register(email: String, password: String, serverURL: String) async {
         isLoading = true
         errorMessage = nil
         registrationSuccess = false
+        lastRegisteredEmail = nil
 
         let previousServerURL = keychain.retrieve("fasolt.serverURL")
         keychain.save(serverURL, forKey: "fasolt.serverURL")
@@ -127,6 +132,7 @@ final class AuthService {
             try await apiClient.unauthenticatedRequest(endpoint)
 
             authLogger.info("Registration succeeded")
+            lastRegisteredEmail = email
             registrationSuccess = true
         } catch {
             restoreServerURL(previous: previousServerURL)

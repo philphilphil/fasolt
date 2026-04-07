@@ -6,7 +6,7 @@ struct OnboardingView: View {
     @Environment(FeatureFlagsService.self) private var featureFlags
     @State private var showServerField = false
     @State private var serverURL = AuthService.defaultServerURL
-    @State private var showRegistrationSuccess = false
+    @State private var showVerifyEmail = false
     private static let selfHostDefault = "http://localhost:8080"
 
     var body: some View {
@@ -129,14 +129,6 @@ struct OnboardingView: View {
                     }
                     .padding(.horizontal)
 
-                    if showRegistrationSuccess {
-                        Text("Account created! Check your email to verify and sign in.")
-                            .font(.caption)
-                            .foregroundStyle(.green)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-
                     if let error = authService.errorMessage {
                         Text(error)
                             .font(.caption)
@@ -163,8 +155,16 @@ struct OnboardingView: View {
             }
             .onChange(of: authService.registrationSuccess) { _, success in
                 if success {
-                    showRegistrationSuccess = true
-                    authService.registrationSuccess = false
+                    showVerifyEmail = true
+                }
+            }
+            .fullScreenCover(isPresented: $showVerifyEmail) {
+                NavigationStack {
+                    VerifyEmailView(email: authService.lastRegisteredEmail ?? "") {
+                        showVerifyEmail = false
+                        authService.registrationSuccess = false
+                        authService.lastRegisteredEmail = nil
+                    }
                 }
             }
         }

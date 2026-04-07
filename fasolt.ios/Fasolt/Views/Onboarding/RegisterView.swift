@@ -5,7 +5,6 @@ struct RegisterView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = RegisterViewModel()
     @State private var showSafari = false
-    @State private var showVerifyEmail = false
     let serverURL: String
 
     private var termsURL: URL {
@@ -132,17 +131,12 @@ struct RegisterView: View {
             SafariView(url: termsURL)
                 .ignoresSafeArea()
         }
-        .navigationDestination(isPresented: $showVerifyEmail) {
-            VerifyEmailView(email: viewModel.email) {
-                // Pop the entire registration stack back to OnboardingView,
-                // not just one level back to RegisterView.
-                dismiss()
-            }
-        }
         .onChange(of: authService.registrationSuccess) { _, success in
+            // Pop back to OnboardingView. OnboardingView observes the same
+            // flag and presents VerifyEmailView as a fullScreenCover from
+            // there, so the user can return to sign-in with one tap.
             if success {
-                authService.registrationSuccess = false
-                showVerifyEmail = true
+                dismiss()
             }
         }
     }
