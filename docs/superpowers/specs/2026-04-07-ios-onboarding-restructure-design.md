@@ -123,8 +123,19 @@ Sign In continues to open the existing PKCE web view.
 
 **Backend:**
 
-- Register a custom OpenIddict grant type `urn:fasolt:apple` in the
-  existing `/oauth/token` endpoint (`OAuthEndpoints.cs`).
+- Extend the existing `/oauth/token` endpoint (`OAuthEndpoints.cs`,
+  current handler at line 189) with a third branch alongside
+  `IsAuthorizationCodeGrantType()` / `IsRefreshTokenGrantType()` that
+  matches `request.GrantType == "urn:fasolt:apple"`. The branch
+  validates the supplied `identity_token`, resolves an `AppUser`, and
+  returns `Results.SignIn(...)` against
+  `OpenIddictServerAspNetCoreDefaults.AuthenticationScheme` so
+  OpenIddict mints the access + refresh token pair the same way it
+  does for `authorization_code`.
+- Register `urn:fasolt:apple` as an allowed grant type in the
+  OpenIddict server configuration and on the `fasolt-ios` first-party
+  client's `Permissions.GrantTypes` list (so OpenIddict doesn't reject
+  the request before reaching the handler).
 - New `AppleAuthService` (Application layer):
   1. Fetches Apple's JWKS from `https://appleid.apple.com/auth/keys`
      (cached for at least an hour).
@@ -158,14 +169,21 @@ Sign In continues to open the existing PKCE web view.
 
 - New "Continue with GitHub" button below the Apple button, only
   rendered when `/api/health` reports `features.githubLogin == true`.
-- On tap it does the **same thing** as the existing Sign In button:
-  opens `/oauth/authorize` in `ASWebAuthenticationSession`, completes
-  PKCE, stores tokens. The user picks "Sign in with GitHub" on the
-  rendered web login page. (A future improvement would be a
-  `provider_hint=github` query param that auto-redirects, but that's
-  out of scope here.)
-- Mechanically the GitHub button is a *visual shortcut* for the same
-  flow Sign In already runs — its only purpose is discoverability.
+- On tap, iOS opens the existing PKCE flow against `/oauth/authorize`
+  in `ASWebAuthenticationSession` — but with an extra
+  `provider_hint=github` query parameter so the user is sent straight
+  to GitHub instead of landing on the email/password login page.
+- Backend change: the `/oauth/login` GET handler
+  (`OAuthEndpoints.cs` line 261) reads the `provider_hint` query
+  parameter (forwarded by `/oauth/authorize`'s `returnUrl` redirect
+  on line 119) and, if it equals `github` and
+  `features.githubLogin` is enabled, immediately returns
+  `Results.Redirect("/api/account/github-login?returnUrl=...")`
+  instead of rendering the HTML login page. The hint is dropped on
+  any other value to avoid open-redirect-style misuse.
+- Once the user comes back from GitHub, the existing
+  `/oauth/authorize` flow finishes normally and PKCE returns the
+  auth code to iOS — same code path as today's Sign In button.
 
 ### Feature flags on iOS
 
@@ -210,7 +228,12 @@ configured.
 **Backend — modified:**
 
 - `fasolt.Server/Api/Endpoints/OAuthEndpoints.cs` — handle
-  `grant_type == "urn:fasolt:apple"` in `/oauth/token`
+  `grant_type == "urn:fasolt:apple"` in `/oauth/token`; honor
+  `provider_hint=github` in `/oauth/login` GET (redirect straight to
+  `/api/account/github-login`)
+- `fasolt.Server/Program.cs` (or wherever OpenIddict is configured) —
+  register `urn:fasolt:apple` as an allowed custom grant type and add
+  it to the `fasolt-ios` first-party client's permitted grants
 - `fasolt.Server/Api/Endpoints/HealthEndpoints.cs` — add
   `features.appleLogin`
 
@@ -305,12 +328,13 @@ isAuthenticated = true → MainTabView
 - **Apple JWKS validation correctness.** Wrong audience or issuer
   validation is a common source of identity bypass. Tests must cover
   the negative paths explicitly.
-- **OpenIddict custom grant wiring.** The exact extension point for
-  custom `grant_type` values in the project's OpenIddict version
-  needs to be confirmed during implementation; if the registered
-  grant types are restricted, the fallback is a separate
-  `/api/auth/apple` endpoint that internally calls the same OpenIddict
-  token issuance code path.
+- **OpenIddict custom grant wiring.** The custom `urn:fasolt:apple`
+  grant type must be registered both at the OpenIddict server level
+  (`AddServer().AllowCustomFlow(...)` or equivalent for the project's
+  OpenIddict version) and on the `fasolt-ios` first-party client's
+  permitted grant types — otherwise OpenIddict rejects the request
+  before our handler runs. Verify both wiring points during
+  implementation.
 - **Apple's relay email** (`@privaterelay.appleid.com`) means we may
   store an opaque email that can't receive normal product email until
   the user supplies a real one. Out of scope to handle here, but worth
