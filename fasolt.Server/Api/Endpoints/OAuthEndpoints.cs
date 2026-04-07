@@ -11,6 +11,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using Fasolt.Server.Api.Helpers;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -246,6 +247,54 @@ public static class OAuthEndpoints
                 });
 
                 return Results.SignIn(new ClaimsPrincipal(identity),
+                    properties: null,
+                    OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            }
+
+            // Custom grants use Results.Json directly because Results.Forbid through the
+            // OpenIddict scheme only works for the built-in flows (authorization_code / refresh_token).
+            if (request.GrantType == AppleAuthService.GrantType)
+            {
+                var identityToken = request.GetParameter("identity_token")?.ToString();
+                if (string.IsNullOrEmpty(identityToken))
+                    return Results.Json(
+                        new { error = Errors.InvalidRequest, error_description = "identity_token parameter is required." },
+                        statusCode: StatusCodes.Status400BadRequest);
+
+                var appleService = context.RequestServices.GetRequiredService<AppleAuthService>();
+                AppUser appleUser;
+                try
+                {
+                    appleUser = await appleService.ResolveUserAsync(identityToken);
+                }
+                catch (AppleAuthException ex)
+                {
+                    return Results.Json(
+                        new { error = Errors.InvalidGrant, error_description = ex.Message },
+                        statusCode: StatusCodes.Status400BadRequest);
+                }
+
+                var appleIdentity = new ClaimsIdentity(
+                    authenticationType: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                    nameType: Claims.Name,
+                    roleType: Claims.Role);
+
+                appleIdentity.SetClaim(Claims.Subject, appleUser.Id);
+                appleIdentity.SetClaim(ClaimTypes.NameIdentifier, appleUser.Id);
+                appleIdentity.SetClaim(Claims.Name, appleUser.UserName ?? appleUser.Email ?? appleUser.Id);
+                appleIdentity.SetClaim("email_confirmed", "true");
+                appleIdentity.SetScopes(Scopes.OfflineAccess);
+
+                appleIdentity.SetDestinations(static claim => claim.Type switch
+                {
+                    ClaimTypes.NameIdentifier => [Destinations.AccessToken],
+                    Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
+                    Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                    "email_confirmed" => [Destinations.AccessToken],
+                    _ => [Destinations.AccessToken],
+                });
+
+                return Results.SignIn(new ClaimsPrincipal(appleIdentity),
                     properties: null,
                     OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
             }

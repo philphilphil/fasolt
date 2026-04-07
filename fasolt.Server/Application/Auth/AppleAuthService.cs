@@ -122,7 +122,7 @@ public sealed class AppleAuthService
         {
             return handler.ValidateToken(identityToken, parameters, out _);
         }
-        catch (SecurityTokenException ex)
+        catch (Exception ex) when (ex is SecurityTokenException or SecurityTokenArgumentException)
         {
             throw new AppleAuthException("Apple identity token is invalid: " + ex.Message);
         }
