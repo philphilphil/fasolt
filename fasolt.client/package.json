@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:auth": "vite build --config vite.auth.config.ts",
+    "watch:auth": "vite build --config vite.auth.config.ts --watch",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"

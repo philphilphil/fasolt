@@ -7,6 +7,7 @@ module.exports = {
   content: [
     './index.html',
     './src/**/*.{ts,js,vue}',
+    '../fasolt.Server/Pages/**/*.cshtml',
   ],
   theme: {
     container: {

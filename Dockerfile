@@ -4,9 +4,13 @@ WORKDIR /app
 COPY fasolt.client/package.json fasolt.client/package-lock.json ./
 RUN npm ci
 COPY fasolt.client/ ./
+# Copy the Razor pages directory so the Tailwind content scanner can
+# find utility classes used in .cshtml templates when building auth.css.
+COPY fasolt.Server/Pages/ ../fasolt.Server/Pages/
 ARG VITE_BUGSINK_DSN=""
 ENV VITE_BUGSINK_DSN=$VITE_BUGSINK_DSN
 RUN npm run build
+RUN npm run build:auth
 
 # --- Build backend ---
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS backend
@@ -23,6 +27,7 @@ RUN groupadd --system fasolt && useradd --system --gid fasolt --no-create-home f
 WORKDIR /app
 COPY --from=backend /app/publish ./
 COPY --from=frontend /app/dist ./wwwroot/
+COPY --from=frontend /app/fasolt.Server/wwwroot/css/auth.css ./wwwroot/css/auth.css
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
