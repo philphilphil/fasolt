@@ -10,7 +10,9 @@
     "watch:auth": "vite build --config vite.auth.config.ts --watch",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@sentry/vue": "^10.47.0",
@@ -29,6 +31,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^24.12.0",
