@@ -6,15 +6,13 @@ struct OnboardingView: View {
     @Environment(FeatureFlagsService.self) private var featureFlags
     @State private var showServerField = false
     @State private var serverURL = AuthService.defaultServerURL
-    @State private var showVerifyEmail = false
     private static let selfHostDefault = "http://localhost:8080"
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 28) {
-                    Spacer()
-                        .frame(height: 20)
+                    Spacer().frame(height: 40)
 
                     VStack(spacing: 8) {
                         Image("FasoltLogo")
@@ -48,7 +46,7 @@ struct OnboardingView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
 
-                    // — SSO section —
+                    // SSO providers — always first-class
                     VStack(spacing: 10) {
                         if featureFlags.appleLogin {
                             SignInWithAppleButton(
@@ -97,36 +95,24 @@ struct OnboardingView: View {
                         .padding(.horizontal)
                     }
 
-                    // — Local account section —
-                    VStack(spacing: 10) {
-                        Button {
-                            Task {
-                                await authService.signIn(serverURL: serverURL)
-                            }
-                        } label: {
-                            if authService.isLoading {
-                                ProgressView()
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 22)
-                            } else {
-                                Text("Sign In")
-                                    .frame(maxWidth: .infinity)
-                            }
+                    // Email — single button that opens the web popup
+                    Button {
+                        Task {
+                            await authService.signIn(serverURL: serverURL, screenHint: "signup")
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .disabled(authService.isLoading || serverURL.isEmpty)
-
-                        NavigationLink {
-                            RegisterView(serverURL: serverURL)
-                        } label: {
-                            Text("Create account")
+                    } label: {
+                        if authService.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 22)
+                        } else {
+                            Text("Continue with email")
                                 .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .disabled(serverURL.isEmpty)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .disabled(authService.isLoading || serverURL.isEmpty)
                     .padding(.horizontal)
 
                     if let error = authService.errorMessage {
@@ -149,22 +135,7 @@ struct OnboardingView: View {
                         .foregroundStyle(.secondary)
                     }
 
-                    Spacer()
-                        .frame(height: 32)
-                }
-            }
-            .onChange(of: authService.registrationSuccess) { _, success in
-                if success {
-                    showVerifyEmail = true
-                }
-            }
-            .fullScreenCover(isPresented: $showVerifyEmail) {
-                NavigationStack {
-                    VerifyEmailView(email: authService.lastRegisteredEmail ?? "") {
-                        showVerifyEmail = false
-                        authService.registrationSuccess = false
-                        authService.lastRegisteredEmail = nil
-                    }
+                    Spacer().frame(height: 32)
                 }
             }
         }
@@ -183,7 +154,6 @@ struct OnboardingView: View {
                 await authService.signInWithApple(identityToken: identityToken, serverURL: serverURL)
             }
         case .failure(let error):
-            // User cancellation: don't show an error
             if (error as NSError).code == ASAuthorizationError.canceled.rawValue {
                 return
             }
