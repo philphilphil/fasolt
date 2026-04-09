@@ -15,6 +15,8 @@ public class AppClaimsPrincipalFactory(
     {
         var identity = await base.GenerateClaimsAsync(user);
         identity.AddClaim(new Claim("email_confirmed", user.EmailConfirmed.ToString().ToLower()));
+        if (user.ExternalProvider is not null)
+            identity.AddClaim(new Claim("external_provider", user.ExternalProvider));
         return identity;
     }
 }
