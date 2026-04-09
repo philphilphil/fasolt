@@ -5,7 +5,7 @@ using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Infrastructure.Services;
 
-public class PlunkEmailSender : IEmailSender<AppUser>
+public class PlunkEmailSender : IEmailSender<AppUser>, Fasolt.Server.Application.Auth.IOtpEmailSender
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<PlunkEmailSender> _logger;
@@ -50,6 +50,17 @@ public class PlunkEmailSender : IEmailSender<AppUser>
             """;
 
         return SendAsync(email, "Your Fasolt password reset code", body);
+    }
+
+    public Task SendVerificationCodeAsync(AppUser user, string email, string code)
+    {
+        var body = $"""
+            <p>Welcome to Fasolt!</p>
+            <p>Your verification code is: <strong>{code}</strong></p>
+            <p>It expires in 15 minutes. If you didn't request this, you can safely ignore this email — no account was created.</p>
+            """;
+
+        return SendAsync(email, "Your Fasolt verification code", body);
     }
 
     private async Task SendAsync(string to, string subject, string body)

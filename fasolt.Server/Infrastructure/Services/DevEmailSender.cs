@@ -3,7 +3,7 @@ using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Infrastructure.Services;
 
-public class DevEmailSender : IEmailSender<AppUser>
+public class DevEmailSender : IEmailSender<AppUser>, Fasolt.Server.Application.Auth.IOtpEmailSender
 {
     private readonly ILogger<DevEmailSender> _logger;
 
@@ -27,6 +27,12 @@ public class DevEmailSender : IEmailSender<AppUser>
     public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode)
     {
         _logger.LogWarning("[DEV EMAIL] Password reset code for {Email}: {Code}", email, resetCode);
+        return Task.CompletedTask;
+    }
+
+    public Task SendVerificationCodeAsync(AppUser user, string email, string code)
+    {
+        _logger.LogWarning("[DEV EMAIL] Verification code for {Email}: {Code}", email, code);
         return Task.CompletedTask;
     }
 

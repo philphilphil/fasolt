@@ -188,15 +188,19 @@ builder.Services.AddDataProtection()
 var plunkApiKey = builder.Configuration["PLUNK_API_KEY"];
 if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(plunkApiKey))
 {
-    builder.Services.AddHttpClient<IEmailSender<AppUser>, PlunkEmailSender>((sp, client) =>
+    builder.Services.AddHttpClient<PlunkEmailSender>((sp, client) =>
     {
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", plunkApiKey);
     });
+    builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<PlunkEmailSender>());
+    builder.Services.AddTransient<Fasolt.Server.Application.Auth.IOtpEmailSender>(sp => sp.GetRequiredService<PlunkEmailSender>());
 }
 else
 {
-    builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
+    builder.Services.AddTransient<DevEmailSender>();
+    builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<DevEmailSender>());
+    builder.Services.AddTransient<Fasolt.Server.Application.Auth.IOtpEmailSender>(sp => sp.GetRequiredService<DevEmailSender>());
 }
 
 builder.Services.AddAuthorization(options =>
