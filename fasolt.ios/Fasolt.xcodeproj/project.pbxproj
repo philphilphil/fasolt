@@ -13,6 +13,7 @@
 		0EE54DB6BBE48B5B0C7F1D58 /* StudySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */; };
 		1851DEEFAB7935C8224DD05B /* AuthServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */; };
 		1F108C44139D54CBA1C25505 /* CardHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2686816B7E21E3DB2171066 /* CardHelpers.swift */; };
+		28E1AA2450124A3DA3D31CA1 /* FeatureFlagsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85974CB3F7C04CBAA15AB0A9 /* FeatureFlagsService.swift */; };
 		2E601D9A77CD86714AAB0BFA /* DeckRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B91F8A14874A0AB49630A6AD /* DeckRepository.swift */; };
 		33A03487EA34451FC57B7ED7 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */; };
 		345B1EAE7BFC27DA2F03E0C3 /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63A881609787DFFE078B49DC /* KeychainHelperTests.swift */; };
@@ -60,7 +61,6 @@
 		EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */; };
 		F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */; };
 		FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */; };
-		28E1AA2450124A3DA3D31CA1 /* FeatureFlagsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85974CB3F7C04CBAA15AB0A9 /* FeatureFlagsService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +100,7 @@
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		82812F20EB20898654E7FABF /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
+		85974CB3F7C04CBAA15AB0A9 /* FeatureFlagsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsService.swift; sourceTree = "<group>"; };
 		876CBB32009796B1341C8D59 /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+StripMarkdown.swift"; sourceTree = "<group>"; };
 		9097BB7014F064BF83F77689 /* DeckCardRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckCardRow.swift; sourceTree = "<group>"; };
@@ -128,7 +129,6 @@
 		DD44556677889900AABB11DD /* DeckFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckFormSheet.swift; sourceTree = "<group>"; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
-		85974CB3F7C04CBAA15AB0A9 /* FeatureFlagsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 		FF11223344556677889900CC /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
@@ -630,7 +630,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.5;
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -648,7 +648,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4.5;
+				MARKETING_VERSION = 1.5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
