@@ -12,10 +12,6 @@ public record ResetPasswordRequest(string Email, string Token, string NewPasswor
 
 public record ConfirmEmailChangeRequest(string NewEmail, string Token);
 
-public record ConfirmEmailRequest(string UserId, string Token);
-
-public record RegisterRequest(string Email, string Password);
-
 public record LoginRequest(string Email, string Password, bool RememberMe = false);
 
 public record DeleteAccountRequest(string? Password, string? ConfirmIdentity);

@@ -15,7 +15,6 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/api/account");
 
-        group.MapPost("/register", Register).RequireRateLimiting("auth");
         group.MapPost("/login", Login).RequireRateLimiting("auth");
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
@@ -25,32 +24,10 @@ public static class AccountEndpoints
         group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
         group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
         group.MapPost("/resend-verification", ResendVerification).RequireAuthorization().RequireRateLimiting("auth");
-        group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
         group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
         group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
-    }
-
-    private static async Task<IResult> Register(
-        RegisterRequest request,
-        UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager,
-        IEmailSender<AppUser> emailSender,
-        IConfiguration configuration)
-    {
-        var user = new AppUser { UserName = request.Email, Email = request.Email };
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var baseUrl = configuration["App:BaseUrl"]!;
-        var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
-        await emailSender.SendConfirmationLinkAsync(user, user.Email, confirmLink);
-
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
-        return Results.Ok();
     }
 
     private static async Task<IResult> Login(
@@ -218,34 +195,6 @@ public static class AccountEndpoints
         var baseUrl = configuration["App:BaseUrl"]!;
         var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
         await emailSender.SendConfirmationLinkAsync(user, user.Email!, confirmLink);
-
-        return Results.Ok();
-    }
-
-    private static async Task<IResult> ConfirmEmail(
-        ConfirmEmailRequest request,
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager)
-    {
-        var user = await userManager.FindByIdAsync(request.UserId);
-        if (user is null)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [""] = ["Invalid or expired confirmation link."]
-            });
-
-        var result = await userManager.ConfirmEmailAsync(user, request.Token);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [""] = ["Invalid or expired confirmation link."]
-            });
-
-        // Only refresh the cookie if the logged-in user is the one confirming
-        var loggedInUser = await userManager.GetUserAsync(principal);
-        if (loggedInUser?.Id == user.Id)
-            await SignInWithEmailClaimAsync(signInManager, loggedInUser, isPersistent: false);
 
         return Results.Ok();
     }

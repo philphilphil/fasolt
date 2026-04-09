@@ -16,11 +16,6 @@ struct TokenResponse: Decodable, Sendable {
     }
 }
 
-struct RegisterRequest: Codable, Sendable {
-    let email: String
-    let password: String
-}
-
 // MARK: - Cards
 
 struct CardDTO: Decodable, Sendable, Identifiable {
