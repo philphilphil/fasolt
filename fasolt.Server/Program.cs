@@ -226,6 +226,7 @@ if (!builder.Environment.IsDevelopment())
 }
 else
 {
+    builder.Services.AddSingleton<Fasolt.Server.Infrastructure.Services.TestEmailSink>();
     builder.Services.AddTransient<DevEmailSender>();
     builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<DevEmailSender>());
     builder.Services.AddTransient<IOtpEmailSender>(sp => sp.GetRequiredService<DevEmailSender>());
@@ -654,6 +655,15 @@ app.MapGet("/confirm-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     // was structurally a different flow and we don't want to cache.
     return Results.Redirect("/oauth/verify-email?error=This+link+has+expired.+Please+request+a+new+code.", permanent: false);
 });
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/api/test/last-email", (string email, Fasolt.Server.Infrastructure.Services.TestEmailSink sink) =>
+    {
+        var captured = sink.GetLast(email);
+        return captured is null ? Results.NotFound() : Results.Ok(captured);
+    }).AllowAnonymous();
+}
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");

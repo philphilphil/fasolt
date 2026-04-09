@@ -7,10 +7,12 @@ namespace Fasolt.Server.Infrastructure.Services;
 public class DevEmailSender : IEmailSender<AppUser>, IOtpEmailSender
 {
     private readonly ILogger<DevEmailSender> _logger;
+    private readonly TestEmailSink? _sink;
 
-    public DevEmailSender(ILogger<DevEmailSender> logger)
+    public DevEmailSender(ILogger<DevEmailSender> logger, TestEmailSink? sink = null)
     {
         _logger = logger;
+        _sink = sink;
     }
 
     public Task SendConfirmationLinkAsync(AppUser user, string email, string confirmationLink)
@@ -28,13 +30,14 @@ public class DevEmailSender : IEmailSender<AppUser>, IOtpEmailSender
     public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode)
     {
         _logger.LogWarning("[DEV EMAIL] Password reset code for {Email}: {Code}", email, resetCode);
+        _sink?.Capture(email, "Your Fasolt password reset code", resetCode);
         return Task.CompletedTask;
     }
 
     public Task SendVerificationCodeAsync(AppUser user, string email, string code)
     {
         _logger.LogWarning("[DEV EMAIL] Verification code for {Email}: {Code}", email, code);
+        _sink?.Capture(email, "Verify your Fasolt email", code);
         return Task.CompletedTask;
     }
-
 }
