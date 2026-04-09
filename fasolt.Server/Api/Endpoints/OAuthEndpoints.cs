@@ -775,6 +775,227 @@ public static class OAuthEndpoints
             return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }).RequireRateLimiting("auth-strict");
 
+        // OAuth Verify Email Page (GET)
+        app.MapGet("/oauth/verify-email", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        {
+            var email = context.Request.Query["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var error = context.Request.Query["error"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
+            var emailEncoded = System.Web.HttpUtility.HtmlAttributeEncode(email);
+            var emailDisplay = System.Web.HttpUtility.HtmlEncode(email);
+            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
+
+            var errorHtml = error is not null
+                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
+                : "";
+
+            var html = $$"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                <title>Verify email — fasolt</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    html, body { height: 100%; }
+                    body {
+                        font-family: -apple-system, system-ui, sans-serif;
+                        background: #fafafa;
+                        color: #18181b;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+                    }
+                    .card {
+                        width: 100%;
+                        max-width: 380px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        padding: 32px 24px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                        text-align: center;
+                    }
+                    .card h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #18181b; }
+                    .card p { color: #71717a; font-size: 0.875rem; margin-bottom: 20px; }
+                    .card p strong { color: #18181b; }
+                    input[type=text] {
+                        width: 100%;
+                        padding: 14px;
+                        font-size: 1.5rem;
+                        text-align: center;
+                        letter-spacing: 0.5em;
+                        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+                        border: 1px solid #d1d5db;
+                        border-radius: 10px;
+                        background: white;
+                        outline: none;
+                    }
+                    input[type=text]:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.08); }
+                    button {
+                        width: 100%;
+                        padding: 11px;
+                        margin-top: 16px;
+                        background: #18181b;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                    }
+                    .resend { margin-top: 16px; font-size: 0.8125rem; color: #71717a; }
+                    .resend a { color: #18181b; font-weight: 500; text-decoration: none; }
+                    .resend form { display: inline; }
+                    .resend button {
+                        display: inline;
+                        width: auto;
+                        padding: 0;
+                        margin: 0;
+                        background: transparent;
+                        color: #18181b;
+                        font-weight: 500;
+                        text-decoration: underline;
+                    }
+                    .error {
+                        color: #b91c1c;
+                        font-size: 0.8125rem;
+                        margin-bottom: 10px;
+                        padding: 8px 12px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                    }
+                    @media (prefers-color-scheme: dark) {
+                        body { background: #0a0a0a; color: #fafafa; }
+                        .card { background: #18181b; border-color: #27272a; }
+                        .card h1 { color: #fafafa; }
+                        .card p { color: #a1a1aa; }
+                        .card p strong { color: #fafafa; }
+                        input[type=text] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
+                        button { background: #fafafa; color: #18181b; }
+                        .resend { color: #a1a1aa; }
+                        .resend a, .resend button { color: #fafafa; }
+                    }
+                </style>
+            </head>
+            <body>
+                <main class="card">
+                    <h1>Check your email</h1>
+                    <p>We sent a 6-digit code to <strong>{{emailDisplay}}</strong></p>
+                    {{errorHtml}}
+                    <form method="post" action="/oauth/verify-email">
+                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
+                        <input type="hidden" name="email" value="{{emailEncoded}}" />
+                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                        <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus required />
+                        <button type="submit">Verify</button>
+                    </form>
+                    <p class="resend">
+                        Didn't get it?
+                        <form method="post" action="/oauth/verify-email/resend">
+                            <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
+                            <input type="hidden" name="email" value="{{emailEncoded}}" />
+                            <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                            <button type="submit">Resend code</button>
+                        </form>
+                    </p>
+                    <p class="resend"><a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Use a different email</a></p>
+                </main>
+            </body>
+            </html>
+            """;
+            return Results.Content(html, "text/html");
+        });
+
+        // OAuth Verify Email Handler (POST)
+        app.MapPost("/oauth/verify-email", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            IEmailVerificationCodeService otpService,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var code = form["code"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string ErrorRedirect(string msg)
+                => $"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                return Results.Redirect(ErrorRedirect("That code has expired. Request a new one."));
+
+            var result = await otpService.VerifyAsync(user.Id, code, context.RequestAborted);
+            switch (result)
+            {
+                case VerifyResult.Ok:
+                    user.EmailConfirmed = true;
+                    await userManager.UpdateAsync(user);
+                    await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+                    return Results.Redirect(returnUrl);
+                case VerifyResult.Incorrect:
+                    return Results.Redirect(ErrorRedirect("Incorrect code, try again."));
+                case VerifyResult.Expired:
+                case VerifyResult.NotFound:
+                    return Results.Redirect(ErrorRedirect("That code has expired. Request a new one."));
+                case VerifyResult.LockedOut:
+                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
+                default:
+                    return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
+            }
+        }).RequireRateLimiting("auth");
+
+        // OAuth Verify Email Resend Handler (POST)
+        app.MapPost("/oauth/verify-email/resend", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IEmailVerificationCodeService otpService,
+            IOtpEmailSender emailSender,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string ErrorRedirect(string msg)
+                => $"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+            var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+            switch (canResend)
+            {
+                case ResendResult.TooSoon:
+                    return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+                case ResendResult.TooManyAttempts:
+                    return Results.Redirect(ErrorRedirect("Too many codes sent. Please start over with 'Use a different email'."));
+            }
+
+            var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+            await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+
+            return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }).RequireRateLimiting("auth-strict");
+
         // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
         app.MapGet("/oauth/consent", async (
             HttpContext context,
