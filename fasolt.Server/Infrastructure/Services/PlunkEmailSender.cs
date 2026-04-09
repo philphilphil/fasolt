@@ -1,11 +1,12 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Infrastructure.Services;
 
-public class PlunkEmailSender : IEmailSender<AppUser>, Fasolt.Server.Application.Auth.IOtpEmailSender
+public class PlunkEmailSender : IEmailSender<AppUser>, IOtpEmailSender
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<PlunkEmailSender> _logger;

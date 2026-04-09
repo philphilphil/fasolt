@@ -6,6 +6,7 @@ using Fasolt.Server.Api.Endpoints;
 using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Infrastructure.Services;
 using Microsoft.AspNetCore.DataProtection;
@@ -186,21 +187,30 @@ builder.Services.AddDataProtection()
     .SetApplicationName("fasolt");
 
 var plunkApiKey = builder.Configuration["PLUNK_API_KEY"];
-if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(plunkApiKey))
+if (!builder.Environment.IsDevelopment())
 {
+    // Fail fast: DevEmailSender logs codes and links to the application log.
+    // In production that's a credential-in-logs finding — OTPs, confirmation
+    // links, and password reset tokens would all end up in Bugsink/Sentry and
+    // any aggregator with log-read access. Never allow the dev sender in prod.
+    if (string.IsNullOrEmpty(plunkApiKey))
+        throw new InvalidOperationException(
+            "PLUNK_API_KEY is required in non-development environments. " +
+            "The dev email sender must never run in production because it logs verification codes.");
+
     builder.Services.AddHttpClient<PlunkEmailSender>((sp, client) =>
     {
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", plunkApiKey);
     });
     builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<PlunkEmailSender>());
-    builder.Services.AddTransient<Fasolt.Server.Application.Auth.IOtpEmailSender>(sp => sp.GetRequiredService<PlunkEmailSender>());
+    builder.Services.AddTransient<IOtpEmailSender>(sp => sp.GetRequiredService<PlunkEmailSender>());
 }
 else
 {
     builder.Services.AddTransient<DevEmailSender>();
     builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<DevEmailSender>());
-    builder.Services.AddTransient<Fasolt.Server.Application.Auth.IOtpEmailSender>(sp => sp.GetRequiredService<DevEmailSender>());
+    builder.Services.AddTransient<IOtpEmailSender>(sp => sp.GetRequiredService<DevEmailSender>());
 }
 
 builder.Services.AddAuthorization(options =>

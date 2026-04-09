@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Identity;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Infrastructure.Services;
 
-public class DevEmailSender : IEmailSender<AppUser>, Fasolt.Server.Application.Auth.IOtpEmailSender
+public class DevEmailSender : IEmailSender<AppUser>, IOtpEmailSender
 {
     private readonly ILogger<DevEmailSender> _logger;
 
