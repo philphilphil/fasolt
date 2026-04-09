@@ -748,7 +748,14 @@ public static class OAuthEndpoints
                 if (existing.EmailConfirmed)
                     return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("An account with this email already exists. Sign in instead.")}");
 
-                // Unconfirmed existing user — reuse the row, regenerate OTP
+                // Unconfirmed existing user — reuse the row, regenerate OTP.
+                // Guard against exceeding the per-session send cap — the service
+                // throws InvalidOperationException at SentCount >= 5, which
+                // would surface as a 500 without this check.
+                var canResend = await otpService.CanResendAsync(existing.Id, context.RequestAborted);
+                if (canResend == ResendResult.TooManyAttempts)
+                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("Too many verification emails sent for this address. Try again later.")}");
+
                 user = existing;
             }
             else
@@ -762,7 +769,7 @@ public static class OAuthEndpoints
                 }
             }
 
-            var code = await otpService.GenerateAndStoreAsync(user.Id, CancellationToken.None);
+            var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
             await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
 
             return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
