@@ -49,6 +49,10 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
         }
         else
         {
+            if (existing.SentCount >= MaxSendsPerSession)
+                throw new InvalidOperationException(
+                    "Cannot generate another code: session send cap exceeded. Call CanResendAsync first.");
+
             existing.CodeHash = hash;
             existing.ExpiresAt = now.Add(CodeLifetime);
             existing.Attempts = 0;
@@ -72,6 +76,16 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
 
         if (row.LockedUntil is { } lockedUntil && lockedUntil > now)
             return VerifyResult.LockedOut;
+
+        // Lockout has expired — give the user a fresh attempt counter
+        if (row.LockedUntil is not null)
+        {
+            row.LockedUntil = null;
+            row.Attempts = 0;
+            // Note: we don't SaveChanges yet — the hash compare below will
+            // SaveChanges either way (on match via Remove, on mismatch via
+            // increment). The reset travels with whichever path fires.
+        }
 
         if (row.ExpiresAt <= now)
             return VerifyResult.Expired;

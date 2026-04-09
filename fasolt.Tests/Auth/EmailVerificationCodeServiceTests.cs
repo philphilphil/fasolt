@@ -125,7 +125,7 @@ public class EmailVerificationCodeServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GenerateAndStoreAsync_RejectsResend_AfterFiveSends()
+    public async Task CanResendAsync_ReturnsTooManyAttempts_AfterFiveSends()
     {
         var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
         var (service, ctx) = CreateService(time);
@@ -139,6 +139,60 @@ public class EmailVerificationCodeServiceTests : IAsyncLifetime
 
         var result = await service.CanResendAsync(_db.UserId, CancellationToken.None);
         result.Should().Be(ResendResult.TooManyAttempts);
+    }
+
+    [Fact]
+    public async Task GenerateAndStoreAsync_Throws_WhenSessionCapExceeded()
+    {
+        var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (service, ctx) = CreateService(time);
+        await using var _ = ctx;
+
+        // Fill the session cap
+        for (var i = 0; i < 5; i++)
+        {
+            await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+            time.Advance(TimeSpan.FromSeconds(31));
+        }
+
+        // The 6th call should throw
+        var act = async () => await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*session send cap*");
+    }
+
+    [Fact]
+    public async Task VerifyAsync_ResetsAttempts_AfterLockoutExpires()
+    {
+        var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (service, ctx) = CreateService(time);
+        await using var _ = ctx;
+
+        var code = await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+
+        // Lock the user out with 5 wrong attempts
+        for (var i = 0; i < 5; i++)
+            await service.VerifyAsync(_db.UserId, "000001", CancellationToken.None);
+
+        // Still within the lockout window
+        time.Advance(TimeSpan.FromMinutes(5));
+        (await service.VerifyAsync(_db.UserId, code, CancellationToken.None))
+            .Should().Be(VerifyResult.LockedOut);
+
+        // Past the lockout window — the correct code should now work
+        time.Advance(TimeSpan.FromMinutes(6));
+        (await service.VerifyAsync(_db.UserId, code, CancellationToken.None))
+            .Should().Be(VerifyResult.Ok);
+    }
+
+    [Fact]
+    public async Task VerifyAsync_ReturnsNotFound_WhenNoRowExists()
+    {
+        var (service, ctx) = CreateService();
+        await using var _ = ctx;
+
+        var result = await service.VerifyAsync(_db.UserId, "123456", CancellationToken.None);
+        result.Should().Be(VerifyResult.NotFound);
     }
 
     private (EmailVerificationCodeService service, AppDbContext db) CreateService(TimeProvider? time = null)
