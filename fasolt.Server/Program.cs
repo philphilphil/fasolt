@@ -38,6 +38,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOpenIddict();
 });
 
+builder.Services.AddRazorPages();
+
 builder.Services
     .AddIdentityApiEndpoints<AppUser>(options =>
     {
@@ -577,6 +579,7 @@ app.MapDeckEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapOAuthEndpoints();
+app.MapRazorPages();
 app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
 app.MapSchedulingSettingsEndpoints();
