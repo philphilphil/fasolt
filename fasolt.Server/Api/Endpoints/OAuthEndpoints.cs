@@ -507,7 +507,7 @@ public static class OAuthEndpoints
                         </div>
                         <button type="submit">Sign in</button>
                     </form>
-                    <p class="footer">Continue to your client after signing in.</p>
+                    <p class="footer">New to Fasolt? <a href="/oauth/register?returnUrl={{returnUrlEncoded}}" style="color:inherit;font-weight:500;">Create an account</a></p>
                 </main>
             </body>
             </html>

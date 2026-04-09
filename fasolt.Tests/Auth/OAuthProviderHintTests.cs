@@ -61,4 +61,19 @@ public class OAuthProviderHintTests : IClassFixture<WebApplicationFactory<Progra
         var response = await client.GetAsync("/oauth/login?provider_hint=evilcorp&returnUrl=/");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task OAuthLogin_ContainsCreateAccountLink()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+        });
+
+        var response = await client.GetAsync("/oauth/login?returnUrl=/");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("/oauth/register");
+        body.Should().Contain("Create an account");
+    }
 }
