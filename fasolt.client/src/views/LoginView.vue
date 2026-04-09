@@ -91,7 +91,7 @@ async function handleSubmit() {
         </Button>
         <div class="flex flex-col items-center gap-1 text-xs">
           <a href="/oauth/register" class="text-accent hover:underline">Create an account</a>
-          <RouterLink to="/forgot-password" class="text-muted-foreground hover:underline">Forgot password?</RouterLink>
+          <a href="/oauth/forgot-password" class="text-muted-foreground hover:underline">Forgot password?</a>
         </div>
       </form>
     </CardContent>

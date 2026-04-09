@@ -62,20 +62,6 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
-  async function forgotPassword(email: string) {
-    await apiFetch('/account/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    })
-  }
-
-  async function resetPassword(email: string, token: string, newPassword: string) {
-    await apiFetch('/account/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ email, token, newPassword }),
-    })
-  }
-
   async function deleteAccount(password?: string, confirmIdentity?: string) {
     await apiFetch('/account', {
       method: 'DELETE',
@@ -96,8 +82,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     changeEmail,
     changePassword,
-    forgotPassword,
-    resetPassword,
     deleteAccount,
   }
 })

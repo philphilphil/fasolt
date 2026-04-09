@@ -157,6 +157,14 @@ builder.Services.AddScoped<Fasolt.Server.Application.Auth.IEmailVerificationCode
         otpPepper,
         sp.GetRequiredService<TimeProvider>()));
 
+// Password reset OTP service — same pepper, same TimeProvider, different
+// entity table. Shares the OTP state machine via OtpCodeStore<T>.
+builder.Services.AddScoped<Fasolt.Server.Application.Auth.IPasswordResetCodeService>(sp =>
+    new Fasolt.Server.Application.Auth.PasswordResetCodeService(
+        sp.GetRequiredService<Fasolt.Server.Infrastructure.Data.AppDbContext>(),
+        otpPepper,
+        sp.GetRequiredService<TimeProvider>()));
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -614,6 +622,22 @@ app.MapGet("/verify-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] 
     var email = ctx.Request.Query["email"].FirstOrDefault() ?? "";
     var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
     return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
+app.MapGet("/forgot-password", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/forgot-password?returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
+app.MapGet("/reset-password", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    // Legacy URL-token reset links get redirected to the new OTP entry page.
+    // Any ?token= param is dropped on the floor — the user will now receive
+    // a code in a fresh email (triggered via /oauth/forgot-password) and
+    // paste it into /oauth/reset-password. Not permanent: the old URL
+    // structure was meaningfully different, we don't want it cached.
+    var email = ctx.Request.Query["email"].FirstOrDefault() ?? "";
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: false);
 });
 app.MapGet("/confirm-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext _) =>
 {

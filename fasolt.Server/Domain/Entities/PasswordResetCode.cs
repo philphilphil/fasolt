@@ -1,6 +1,6 @@
 namespace Fasolt.Server.Domain.Entities;
 
-public class EmailVerificationCode : IOtpCodeEntity
+public class PasswordResetCode : IOtpCodeEntity
 {
     public int Id { get; set; }
     public string UserId { get; set; } = default!;
@@ -17,7 +17,7 @@ public class EmailVerificationCode : IOtpCodeEntity
     /// <summary>Failed verify attempts against the current code. Resets on resend.</summary>
     public int Attempts { get; set; }
 
-    /// <summary>Total sends in this verification session. Never resets until row is deleted.</summary>
+    /// <summary>Total sends in this reset session. Never resets until row is deleted.</summary>
     public int SentCount { get; set; }
 
     public DateTimeOffset LastSentAt { get; set; }

@@ -21,8 +21,8 @@ public static class AccountEndpoints
         group.MapPut("/email", ChangeEmail).RequireAuthorization("EmailVerified");
         group.MapPost("/confirm-email-change", ConfirmEmailChange).RequireAuthorization();
         group.MapPut("/password", ChangePassword).RequireAuthorization("EmailVerified");
-        group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
-        group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
+        // Password reset lives at /oauth/forgot-password and /oauth/reset-password
+        // as an OTP flow (see OAuthEndpoints) — no JSON API surface.
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
         group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
@@ -175,43 +175,6 @@ public static class AccountEndpoints
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
             return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-        return Results.Ok();
-    }
-
-    private static async Task<IResult> ForgotPassword(
-        ForgotPasswordRequest request,
-        UserManager<AppUser> userManager,
-        IEmailSender<AppUser> emailSender,
-        IConfiguration configuration)
-    {
-        var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is not null && user.ExternalProvider is null && user.EmailConfirmed)
-        {
-            var token = await userManager.GeneratePasswordResetTokenAsync(user);
-            var baseUrl = configuration["App:BaseUrl"]!;
-            var resetLink = $"{baseUrl}/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(token)}";
-            await emailSender.SendPasswordResetLinkAsync(user, request.Email, resetLink);
-        }
-        // Always return OK to prevent email enumeration
-        return Results.Ok();
-    }
-
-    private static async Task<IResult> ResetPassword(
-        ResetPasswordRequest request,
-        UserManager<AppUser> userManager)
-    {
-        var user = await userManager.FindByEmailAsync(request.Email);
-        if (user is null || user.ExternalProvider is not null)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [""] = ["Invalid or expired reset link."]
-            });
-        var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [""] = ["Invalid or expired reset link."]
-            });
         return Results.Ok();
     }
 

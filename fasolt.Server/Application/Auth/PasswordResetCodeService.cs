@@ -4,19 +4,22 @@ using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Application.Auth;
 
-public class EmailVerificationCodeService : IEmailVerificationCodeService
+public class PasswordResetCodeService : IPasswordResetCodeService
 {
+    // 15 minutes: password reset is higher-stakes than email verification,
+    // so keep the window as short as the spec allows without making the
+    // inbox-to-browser round trip user-hostile.
     private static readonly TimeSpan CodeLifetime = TimeSpan.FromMinutes(15);
 
-    private readonly OtpCodeStore<EmailVerificationCode> _store;
+    private readonly OtpCodeStore<PasswordResetCode> _store;
 
-    public EmailVerificationCodeService(AppDbContext db, string pepper, TimeProvider time)
+    public PasswordResetCodeService(AppDbContext db, string pepper, TimeProvider time)
     {
-        _store = new OtpCodeStore<EmailVerificationCode>(
+        _store = new OtpCodeStore<PasswordResetCode>(
             db,
             Encoding.UTF8.GetBytes(pepper),
             time,
-            ctx => ctx.EmailVerificationCodes,
+            ctx => ctx.PasswordResetCodes,
             CodeLifetime);
     }
 

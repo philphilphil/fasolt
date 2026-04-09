@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<DeckSnapshot> DeckSnapshots => Set<DeckSnapshot>();
     public DbSet<AppLog> Logs => Set<AppLog>();
     public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
+    public DbSet<PasswordResetCode> PasswordResetCodes => Set<PasswordResetCode>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -125,6 +126,14 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
         });
 
         builder.Entity<EmailVerificationCode>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CodeHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<PasswordResetCode>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.CodeHash).HasMaxLength(64).IsRequired();
