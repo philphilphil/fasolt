@@ -50,9 +50,9 @@ const { isDark, toggle } = useDarkMode()
           Study on the web or the iOS app. Free.
         </p>
         <div class="flex flex-wrap gap-3">
-          <RouterLink to="/register">
+          <a href="/oauth/register">
             <Button class="glow-accent">Get started</Button>
-          </RouterLink>
+          </a>
           <RouterLink to="/login">
             <Button variant="outline">Log in</Button>
           </RouterLink>
@@ -177,9 +177,9 @@ const { isDark, toggle } = useDarkMode()
     <!-- CTA -->
     <section class="mx-auto max-w-5xl px-6 py-16 text-center">
       <p class="text-xs text-muted-foreground mb-4 uppercase tracking-[0.2em]">Free and open source</p>
-      <RouterLink to="/register">
+      <a href="/oauth/register">
         <Button class="glow-accent">Get started</Button>
-      </RouterLink>
+      </a>
     </section>
 
     <AppFooter />

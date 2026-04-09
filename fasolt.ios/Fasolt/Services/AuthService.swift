@@ -55,7 +55,7 @@ final class AuthService {
         keychain.retrieve("fasolt.serverURL") ?? Self.defaultServerURL
     }
 
-    func signIn(serverURL: String) async {
+    func signIn(serverURL: String, providerHint: String? = nil, screenHint: String? = nil) async {
         isLoading = true
         errorMessage = nil
 
@@ -75,7 +75,9 @@ final class AuthService {
             let authCode = try await openAuthSession(
                 serverURL: serverURL,
                 clientId: clientId,
-                codeChallenge: codeChallenge
+                codeChallenge: codeChallenge,
+                providerHint: providerHint,
+                screenHint: screenHint
             )
             authLogger.info("Got auth code, exchanging for token")
 
@@ -110,66 +112,39 @@ final class AuthService {
         isLoading = false
     }
 
-    var registrationSuccess = false
+    // MARK: - Apple Sign-In
 
-    func register(email: String, password: String, serverURL: String) async {
+    func signInWithApple(identityToken: String, serverURL: String) async {
         isLoading = true
         errorMessage = nil
-        registrationSuccess = false
 
         let previousServerURL = keychain.retrieve("fasolt.serverURL")
         keychain.save(serverURL, forKey: "fasolt.serverURL")
 
         do {
-            let body = RegisterRequest(email: email, password: password)
-            let endpoint = Endpoint(path: "/api/identity/register", method: .post, body: body)
-            try await apiClient.unauthenticatedRequest(endpoint)
+            let params: [String: String] = [
+                "grant_type": "urn:fasolt:apple",
+                "client_id": Self.firstPartyClientId,
+                "identity_token": identityToken,
+            ]
 
-            authLogger.info("Registration succeeded")
-            registrationSuccess = true
-        } catch {
-            restoreServerURL(previous: previousServerURL)
-            if let apiError = error as? APIError {
-                errorMessage = Self.registrationErrorMessage(from: apiError)
-            } else {
-                errorMessage = "Registration failed. Please try again."
+            let tokenResponse: TokenResponse = try await apiClient.formPost("/oauth/token", params: params)
+            keychain.save(Self.firstPartyClientId, forKey: "fasolt.clientId")
+            keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
+            if let refreshToken = tokenResponse.refreshToken {
+                keychain.save(refreshToken, forKey: "fasolt.refreshToken")
             }
+            let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
+            keychain.save(DateFormatters.formatISO8601(expiry), forKey: "fasolt.tokenExpiry")
+            authLogger.info("Apple sign-in complete")
+            isAuthenticated = true
+        } catch {
+            authLogger.error("Apple sign-in failed: \(error)")
+            restoreServerURL(previous: previousServerURL)
+            errorMessage = "Could not sign in with Apple. Please try again."
         }
 
         isLoading = false
-    }
-
-    private static func registrationErrorMessage(from error: APIError) -> String {
-        switch error {
-        case .badRequest(let detail):
-            guard let detail else { return "Registration failed. Please try again." }
-            let lower = detail.lowercased()
-            if lower.contains("duplicate") || lower.contains("already taken") {
-                return "An account with this email already exists."
-            }
-            if lower.contains("too short") || lower.contains("too few") {
-                return "Password must be at least 8 characters."
-            }
-            if lower.contains("uppercase") {
-                return "Password must contain an uppercase letter."
-            }
-            if lower.contains("lowercase") {
-                return "Password must contain a lowercase letter."
-            }
-            if lower.contains("digit") || lower.contains("number") {
-                return "Password must contain a number."
-            }
-            if lower.contains("email") {
-                return "Please enter a valid email address."
-            }
-            return detail
-        case .serverError(_, let detail):
-            return detail ?? "Registration failed. Please try again."
-        case .networkError:
-            return "Could not connect. Check your internet connection."
-        default:
-            return "Registration failed. Please try again."
-        }
     }
 
     private func restoreServerURL(previous: String?) {
@@ -192,12 +167,14 @@ final class AuthService {
     private func openAuthSession(
         serverURL: String,
         clientId: String,
-        codeChallenge: String
+        codeChallenge: String,
+        providerHint: String? = nil,
+        screenHint: String? = nil
     ) async throws -> String {
         guard var components = URLComponents(string: serverURL + "/oauth/authorize") else {
             throw APIError.invalidURL
         }
-        components.queryItems = [
+        var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "redirect_uri", value: Self.redirectURI),
@@ -205,6 +182,13 @@ final class AuthService {
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "scope", value: "offline_access"),
         ]
+        if let providerHint {
+            queryItems.append(URLQueryItem(name: "provider_hint", value: providerHint))
+        }
+        if let screenHint {
+            queryItems.append(URLQueryItem(name: "screen_hint", value: screenHint))
+        }
+        components.queryItems = queryItems
 
         guard let authURL = components.url else {
             throw APIError.invalidURL

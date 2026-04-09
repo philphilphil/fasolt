@@ -90,7 +90,7 @@ async function handleSubmit() {
           {{ loading ? 'Logging in\u2026' : 'Log in' }}
         </Button>
         <div class="flex flex-col items-center gap-1 text-xs">
-          <RouterLink to="/register" class="text-accent hover:underline">Create an account</RouterLink>
+          <a href="/oauth/register" class="text-accent hover:underline">Create an account</a>
           <RouterLink to="/forgot-password" class="text-muted-foreground hover:underline">Forgot password?</RouterLink>
         </div>
       </form>

@@ -15,7 +15,6 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/api/account");
 
-        group.MapPost("/register", Register).RequireRateLimiting("auth");
         group.MapPost("/login", Login).RequireRateLimiting("auth");
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
@@ -24,51 +23,35 @@ public static class AccountEndpoints
         group.MapPut("/password", ChangePassword).RequireAuthorization("EmailVerified");
         group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
         group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
-        group.MapPost("/resend-verification", ResendVerification).RequireAuthorization().RequireRateLimiting("auth");
-        group.MapPost("/confirm-email", ConfirmEmail).RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
         group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
         group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
     }
 
-    private static async Task<IResult> Register(
-        RegisterRequest request,
-        UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager,
-        IEmailSender<AppUser> emailSender,
-        IConfiguration configuration)
-    {
-        var user = new AppUser { UserName = request.Email, Email = request.Email };
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
-
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var baseUrl = configuration["App:BaseUrl"]!;
-        var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
-        await emailSender.SendConfirmationLinkAsync(user, user.Email, confirmLink);
-
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
-        return Results.Ok();
-    }
-
     private static async Task<IResult> Login(
         LoginRequest request,
         SignInManager<AppUser> signInManager)
     {
-        var result = await signInManager.PasswordSignInAsync(
-            request.Email, request.Password, isPersistent: false, lockoutOnFailure: true);
+        // Look up first so we can use CheckPasswordSignInAsync + a single
+        // SignInAsync. PasswordSignInAsync would also issue a cookie, and
+        // then we'd need a second SignInAsync to honor RememberMe — two
+        // Set-Cookie headers on one response. This avoids that.
+        var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
+        if (user is null)
+            return Results.Problem("Invalid email or password.", statusCode: 401);
+
+        var result = await signInManager.CheckPasswordSignInAsync(
+            user, request.Password, lockoutOnFailure: true);
 
         if (result.IsLockedOut)
             return Results.Problem("Account locked. Try again later.", statusCode: 429);
         if (!result.Succeeded)
             return Results.Problem("Invalid email or password.", statusCode: 401);
 
-        // Re-sign-in with email_confirmed claim in cookie
-        var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
-        if (user is not null)
-            await SignInWithEmailClaimAsync(signInManager, user, request.RememberMe);
+        // AppClaimsPrincipalFactory injects email_confirmed and
+        // external_provider claims into the cookie.
+        await signInManager.SignInAsync(user, request.RememberMe);
 
         return Results.Ok();
     }
@@ -83,11 +66,39 @@ public static class AccountEndpoints
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager)
     {
+        // Fast path for cookie auth: the Identity cookie has Email, Role,
+        // email_confirmed, and external_provider claims (populated by
+        // AppClaimsPrincipalFactory). No DB hit on the hot path that fires
+        // on every web page load. Tradeoff: a role promotion doesn't take
+        // effect until the user signs out and back in. Admin authorization
+        // enforcement lives on each admin endpoint via [Authorize] policies,
+        // which also read the same role claim, so there's no staleness gap
+        // in the security path — only in nav rendering.
+        var claimEmail = principal.FindFirstValue(ClaimTypes.Email);
+        if (!string.IsNullOrEmpty(claimEmail))
+        {
+            var externalProvider = principal.FindFirstValue("external_provider");
+            var displayName = externalProvider is not null
+                ? principal.FindFirstValue(ClaimTypes.Name)
+                : null;
+            return Results.Ok(new UserInfoResponse(
+                claimEmail,
+                principal.IsInRole("Admin"),
+                principal.FindFirstValue("email_confirmed") == "true",
+                externalProvider,
+                displayName));
+        }
+
+        // Slow path for OAuth bearer tokens (iOS, MCP clients): access tokens
+        // issued by OpenIddict only include sub/NameIdentifier/name/email_confirmed
+        // (see OAuthEndpoints.cs SetDestinations blocks). No Email/Role/
+        // external_provider in the token, so we need a user lookup. Called
+        // roughly once per iOS app launch — one query is acceptable.
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
-        var displayName = user.ExternalProvider is not null ? user.UserName : null;
-        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, displayName));
+        var dbDisplayName = user.ExternalProvider is not null ? user.UserName : null;
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, dbDisplayName));
     }
 
     private static async Task<IResult> ChangeEmail(
@@ -143,7 +154,7 @@ public static class AccountEndpoints
         await userManager.UpdateAsync(user);
 
         // Refresh cookie — ChangeEmailAsync invalidates SecurityStamp
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+        await signInManager.SignInAsync(user, isPersistent: false);
 
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
         return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, null));
@@ -202,58 +213,6 @@ public static class AccountEndpoints
                 [""] = ["Invalid or expired reset link."]
             });
         return Results.Ok();
-    }
-
-    private static async Task<IResult> ResendVerification(
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager,
-        IEmailSender<AppUser> emailSender,
-        IConfiguration configuration)
-    {
-        var user = await userManager.GetUserAsync(principal);
-        if (user is null) return Results.Unauthorized();
-        if (user.EmailConfirmed) return Results.Ok();
-
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var baseUrl = configuration["App:BaseUrl"]!;
-        var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
-        await emailSender.SendConfirmationLinkAsync(user, user.Email!, confirmLink);
-
-        return Results.Ok();
-    }
-
-    private static async Task<IResult> ConfirmEmail(
-        ConfirmEmailRequest request,
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager)
-    {
-        var user = await userManager.FindByIdAsync(request.UserId);
-        if (user is null)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [""] = ["Invalid or expired confirmation link."]
-            });
-
-        var result = await userManager.ConfirmEmailAsync(user, request.Token);
-        if (!result.Succeeded)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                [""] = ["Invalid or expired confirmation link."]
-            });
-
-        // Only refresh the cookie if the logged-in user is the one confirming
-        var loggedInUser = await userManager.GetUserAsync(principal);
-        if (loggedInUser?.Id == user.Id)
-            await SignInWithEmailClaimAsync(signInManager, loggedInUser, isPersistent: false);
-
-        return Results.Ok();
-    }
-
-    internal static async Task SignInWithEmailClaimAsync(
-        SignInManager<AppUser> signInManager, AppUser user, bool isPersistent)
-    {
-        await signInManager.SignInAsync(user, isPersistent);
     }
 
     private static IResult GitHubLogin(HttpContext context, IConfiguration configuration)
@@ -332,7 +291,7 @@ public static class AccountEndpoints
         }
 
         // Sign in with the application cookie
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: true);
+        await signInManager.SignInAsync(user, isPersistent: true);
         await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
         return Results.Redirect(returnUrl);

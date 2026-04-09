@@ -7,7 +7,8 @@ public record AdminUserDto(
     int CardCount,
     int DeckCount,
     bool IsLockedOut,
-    bool HasPush);
+    bool HasPush,
+    bool EmailConfirmed);
 
 public record AdminUserListResponse(
     List<AdminUserDto> Users,

@@ -6,6 +6,7 @@ using Fasolt.Server.Api.Endpoints;
 using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Infrastructure.Services;
 using Microsoft.AspNetCore.DataProtection;
@@ -88,6 +89,8 @@ builder.Services.AddOpenIddict()
         options.AllowAuthorizationCodeFlow()
                .AllowRefreshTokenFlow();
 
+        options.AllowCustomFlow(Fasolt.Server.Application.Auth.AppleAuthService.GrantType);
+
         options.RequireProofKeyForCodeExchange();
 
         var encryptionCertPath = builder.Configuration["OPENIDDICT_ENCRYPTION_CERT_PATH"];
@@ -129,6 +132,31 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
+// Sign in with Apple — JWKS cache must be singleton so the in-memory
+// cache survives across requests. Uses a named HttpClient so the
+// typed-client's transient lifetime doesn't leak.
+builder.Services.AddHttpClient(Fasolt.Server.Application.Auth.AppleJwksCache.HttpClientName);
+builder.Services.AddSingleton<Fasolt.Server.Application.Auth.AppleJwksCache>();
+builder.Services.AddScoped<Fasolt.Server.Application.Auth.AppleAuthService>();
+
+// Email verification OTP service
+builder.Services.AddSingleton(TimeProvider.System);
+var otpPepper = builder.Configuration["OTP_PEPPER"]
+    ?? throw new InvalidOperationException("OTP_PEPPER is not configured. Generate with 'openssl rand -hex 32' and set in .env or environment.");
+// Outside of Development, refuse to start with a weak pepper. 32 chars is
+// the minimum we consider acceptable (matches 'openssl rand -hex 16' /
+// 128 bits). Catches misconfigurations where prod silently gets a test
+// value — since the pepper is the only thing between a DB dump and an
+// offline brute force of 6-digit codes.
+if (!builder.Environment.IsDevelopment() && otpPepper.Length < 32)
+    throw new InvalidOperationException(
+        "OTP_PEPPER must be at least 32 characters in non-Development environments. Generate with 'openssl rand -hex 32'.");
+builder.Services.AddScoped<Fasolt.Server.Application.Auth.IEmailVerificationCodeService>(sp =>
+    new Fasolt.Server.Application.Auth.EmailVerificationCodeService(
+        sp.GetRequiredService<Fasolt.Server.Infrastructure.Data.AppDbContext>(),
+        otpPepper,
+        sp.GetRequiredService<TimeProvider>()));
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -167,17 +195,30 @@ builder.Services.AddDataProtection()
     .SetApplicationName("fasolt");
 
 var plunkApiKey = builder.Configuration["PLUNK_API_KEY"];
-if (!builder.Environment.IsDevelopment() && !string.IsNullOrEmpty(plunkApiKey))
+if (!builder.Environment.IsDevelopment())
 {
-    builder.Services.AddHttpClient<IEmailSender<AppUser>, PlunkEmailSender>((sp, client) =>
+    // Fail fast: DevEmailSender logs codes and links to the application log.
+    // In production that's a credential-in-logs finding — OTPs, confirmation
+    // links, and password reset tokens would all end up in Bugsink/Sentry and
+    // any aggregator with log-read access. Never allow the dev sender in prod.
+    if (string.IsNullOrEmpty(plunkApiKey))
+        throw new InvalidOperationException(
+            "PLUNK_API_KEY is required in non-development environments. " +
+            "The dev email sender must never run in production because it logs verification codes.");
+
+    builder.Services.AddHttpClient<PlunkEmailSender>((sp, client) =>
     {
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", plunkApiKey);
     });
+    builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<PlunkEmailSender>());
+    builder.Services.AddTransient<IOtpEmailSender>(sp => sp.GetRequiredService<PlunkEmailSender>());
 }
 else
 {
-    builder.Services.AddTransient<IEmailSender<AppUser>, DevEmailSender>();
+    builder.Services.AddTransient<DevEmailSender>();
+    builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<DevEmailSender>());
+    builder.Services.AddTransient<IOtpEmailSender>(sp => sp.GetRequiredService<DevEmailSender>());
 }
 
 builder.Services.AddAuthorization(options =>
@@ -284,8 +325,8 @@ if (apnsKeyReady)
     var apnsSettings = new ApnsSettings
     {
         KeyId = apnsKeyId!,
-        TeamId = builder.Configuration["APNS_TEAM_ID"] ?? "",
-        BundleId = builder.Configuration["APNS_BUNDLE_ID"] ?? "com.fasolt.app",
+        TeamId = builder.Configuration["APPLE_TEAM_ID"] ?? "",
+        BundleId = builder.Configuration["APPLE_BUNDLE_ID"] ?? "com.fasolt.app",
         KeyBase64 = apnsKeyBase64,
         KeyPath = apnsKeyPath,
         UseSandbox = !bool.TryParse(builder.Configuration["APNS_USE_SANDBOX"], out var sandbox) || sandbox,
@@ -330,7 +371,9 @@ if (!app.Environment.IsEnvironment("Testing"))
     // Seed first-party iOS OAuth client
     var appManager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
     const string iosClientId = "fasolt-ios";
+    const string appleGrantType = Fasolt.Server.Application.Auth.AppleAuthService.GrantType;
     var existing = await appManager.FindByClientIdAsync(iosClientId);
+
     if (existing is null)
     {
         var descriptor = new OpenIddictApplicationDescriptor
@@ -346,9 +389,23 @@ if (!app.Environment.IsEnvironment("Testing"))
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.GrantType + appleGrantType);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess);
         await appManager.CreateAsync(descriptor);
+    }
+    else
+    {
+        // Idempotently ensure the Apple grant type permission is present on existing dev/prod clients.
+        var permissions = await appManager.GetPermissionsAsync(existing);
+        var appleGrantPermission = OpenIddictConstants.Permissions.Prefixes.GrantType + appleGrantType;
+        if (!permissions.Contains(appleGrantPermission))
+        {
+            var descriptor = new OpenIddictApplicationDescriptor();
+            await appManager.PopulateAsync(descriptor, existing);
+            descriptor.Permissions.Add(appleGrantPermission);
+            await appManager.UpdateAsync(existing, descriptor);
+        }
     }
 }
 
@@ -470,7 +527,7 @@ app.Use(async (context, next) =>
             dict[prop.Name] = prop.Value;
 
         var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
-        dict["registration_endpoint"] = $"{baseUrl}/oauth/register";
+        dict["registration_endpoint"] = $"{baseUrl}/oauth/clients/register";
         dict["logo_uri"] = $"{baseUrl}/logo.png";
 
         context.Response.Body = originalBody;
@@ -519,7 +576,52 @@ app.MapSnapshotEndpoints();
 app.MapDemoDeckEndpoints();
 // Identity's MapIdentityApi removed — all auth endpoints are in AccountEndpoints
 
+// Apple App Site Association — links the iOS app and the website so credentials
+// saved in iCloud Keychain by the native register form autofill in the OAuth
+// web view (and vice versa). Apple's CDN fetches this file periodically; it
+// must be served as JSON with no extension and no auth.
+app.MapGet("/.well-known/apple-app-site-association", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (IConfiguration configuration) =>
+{
+    var teamId = configuration["APPLE_TEAM_ID"];
+    var bundleId = configuration["APPLE_BUNDLE_ID"];
+    if (string.IsNullOrEmpty(teamId) || string.IsNullOrEmpty(bundleId))
+        return Results.NotFound();
+
+    var payload = new
+    {
+        webcredentials = new
+        {
+            apps = new[] { $"{teamId}.{bundleId}" }
+        }
+    };
+    return Results.Json(payload, contentType: "application/json");
+});
+
 app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
+
+// Legacy auth routes — 301 to the new server-rendered OAuth pages.
+// These used to be Vue SPA routes; after the OTP refactor the canonical
+// register/verify surface is the server-rendered /oauth/* pages that both
+// the iOS popup and web browsers use. Endpoint routing runs before the
+// SPA fallback, so Vue never sees the stale paths.
+app.MapGet("/register", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
+app.MapGet("/verify-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    var email = ctx.Request.Query["email"].FirstOrDefault() ?? "";
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
+app.MapGet("/confirm-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext _) =>
+{
+    // Legacy URL-token confirmation is dead; point stale email links at a
+    // friendly error on the verify page. Not permanent — URL-token confirm
+    // was structurally a different flow and we don't want to cache.
+    return Results.Redirect("/oauth/verify-email?error=This+link+has+expired.+Please+request+a+new+code.", permanent: false);
+});
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");

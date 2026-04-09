@@ -11,6 +11,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using Fasolt.Server.Api.Helpers;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -49,7 +50,10 @@ public static class OAuthEndpoints
         });
 
         // Dynamic Client Registration (RFC 7591)
-        app.MapPost("/oauth/register", [AllowAnonymous] async (
+        // Moved from /oauth/register to /oauth/clients/register to free up
+        // /oauth/register for the user-facing HTML registration page.
+        // The discovery document in Program.cs advertises this new path.
+        app.MapPost("/oauth/clients/register", [AllowAnonymous] async (
             HttpContext context,
             IOpenIddictApplicationManager applicationManager,
             IConfiguration configuration) =>
@@ -116,14 +120,22 @@ public static class OAuthEndpoints
             if (result?.Principal is null)
             {
                 var returnUrl = context.Request.QueryString.Value;
-                return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
+                var openIddictReq = context.GetOpenIddictServerRequest();
+                var hint = openIddictReq?.GetParameter("screen_hint")?.ToString();
+                var target = hint == "signup" ? "/oauth/register" : "/oauth/login";
+                return Results.Redirect($"{target}?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
             }
 
-            // Block unverified users from authorizing OAuth clients
+            // Block unverified users from authorizing OAuth clients. Send them
+            // to the server-rendered OTP page with the original authorize
+            // query preserved as returnUrl, so verifying resumes the flow.
             var emailConfirmed = result.Principal.FindFirstValue("email_confirmed");
             if (emailConfirmed != "true")
             {
-                return Results.Redirect("/verify-email");
+                var authorizeReturnUrl = "/oauth/authorize" + (context.Request.QueryString.Value ?? "");
+                var userEmail = result.Principal.FindFirstValue(ClaimTypes.Email) ?? "";
+                return Results.Redirect(
+                    $"/oauth/verify-email?email={Uri.EscapeDataString(userEmail)}&returnUrl={Uri.EscapeDataString(authorizeReturnUrl)}");
             }
 
             var user = result.Principal;
@@ -250,6 +262,54 @@ public static class OAuthEndpoints
                     OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
             }
 
+            // Custom grants use Results.Json directly because Results.Forbid through the
+            // OpenIddict scheme only works for the built-in flows (authorization_code / refresh_token).
+            if (request.GrantType == AppleAuthService.GrantType)
+            {
+                var identityToken = request.GetParameter("identity_token")?.ToString();
+                if (string.IsNullOrEmpty(identityToken))
+                    return Results.Json(
+                        new { error = Errors.InvalidRequest, error_description = "identity_token parameter is required." },
+                        statusCode: StatusCodes.Status400BadRequest);
+
+                var appleService = context.RequestServices.GetRequiredService<AppleAuthService>();
+                AppUser appleUser;
+                try
+                {
+                    appleUser = await appleService.ResolveUserAsync(identityToken);
+                }
+                catch (AppleAuthException ex)
+                {
+                    return Results.Json(
+                        new { error = Errors.InvalidGrant, error_description = ex.Message },
+                        statusCode: StatusCodes.Status400BadRequest);
+                }
+
+                var appleIdentity = new ClaimsIdentity(
+                    authenticationType: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                    nameType: Claims.Name,
+                    roleType: Claims.Role);
+
+                appleIdentity.SetClaim(Claims.Subject, appleUser.Id);
+                appleIdentity.SetClaim(ClaimTypes.NameIdentifier, appleUser.Id);
+                appleIdentity.SetClaim(Claims.Name, appleUser.UserName ?? appleUser.Email ?? appleUser.Id);
+                appleIdentity.SetClaim("email_confirmed", "true");
+                appleIdentity.SetScopes(Scopes.OfflineAccess);
+
+                appleIdentity.SetDestinations(static claim => claim.Type switch
+                {
+                    ClaimTypes.NameIdentifier => [Destinations.AccessToken],
+                    Claims.Subject => [Destinations.AccessToken, Destinations.IdentityToken],
+                    Claims.Name => [Destinations.AccessToken, Destinations.IdentityToken],
+                    "email_confirmed" => [Destinations.AccessToken],
+                    _ => [Destinations.AccessToken],
+                });
+
+                return Results.SignIn(new ClaimsPrincipal(appleIdentity),
+                    properties: null,
+                    OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
+            }
+
             return Results.BadRequest(new
             {
                 error = Errors.UnsupportedGrantType,
@@ -260,6 +320,14 @@ public static class OAuthEndpoints
         // OAuth Login Page (GET)
         app.MapGet("/oauth/login", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery, IConfiguration configuration) =>
         {
+            var providerHint = context.Request.Query["provider_hint"].FirstOrDefault();
+            if (providerHint == "github" && !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]))
+            {
+                var rawReturnUrlForHint = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+                var safeReturnUrl = UrlHelpers.IsLocalUrl(rawReturnUrlForHint) ? rawReturnUrlForHint : "/";
+                return Results.Redirect($"/api/account/github-login?returnUrl={Uri.EscapeDataString(safeReturnUrl)}");
+            }
+
             var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
             var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
             var error = context.Request.Query["error"].FirstOrDefault();
@@ -276,47 +344,159 @@ public static class OAuthEndpoints
             var gitHubReturnUrl = Uri.EscapeDataString(returnUrl);
             var gitHubHtml = gitHubEnabled ? $$"""
                 <a href="/api/account/github-login?returnUrl={{gitHubReturnUrl}}" class="btn-github">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                    Sign in with GitHub
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                    Continue with GitHub
                 </a>
                 <div class="or-divider"><span>or</span></div>
             """ : "";
+
+            // Inline SVG logo so this page works regardless of static-file routing.
+            // Mirrors fasolt.client/public/favicon.svg.
+            const string logoSvg = """
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <g transform="rotate(-14 40 44)"><rect x="12" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/></g>
+                  <g transform="rotate(14 40 44)"><rect x="36" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/></g>
+                  <rect x="23" y="26" width="34" height="24" rx="5" fill="#dbeafe" stroke="#0969da" stroke-width="1.5"/>
+                  <line x1="30" y1="34" x2="50" y2="34" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="30" y1="39" x2="44" y2="39" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="34" y1="66" x2="50" y2="60" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+                  <line x1="50" y1="60" x2="64" y2="52" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+                  <circle cx="34" cy="66" r="2.5" fill="#0969da" opacity="0.4"/>
+                  <circle cx="50" cy="60" r="3" fill="#0969da" opacity="0.65"/>
+                  <circle cx="64" cy="52" r="3.5" fill="#3b82f6" opacity="0.92"/>
+                </svg>
+                """;
 
             var html = $$"""
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
                 <title>Sign in — fasolt</title>
                 <style>
                     * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #fafafa; padding: 16px; }
-                    .card { width: 100%; max-width: 380px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-                    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
-                    .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
-                    .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
-                    label { display: block; font-size: 0.8125rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
-                    input { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
-                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.06); }
-                    .field { margin-bottom: 14px; }
-                    button { width: 100%; padding: 10px; margin-top: 6px; background: #18181b; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.15s; }
+                    html, body { height: 100%; }
+                    body {
+                        font-family: -apple-system, system-ui, sans-serif;
+                        background: #fafafa;
+                        color: #18181b;
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: center;
+                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+                        -webkit-font-smoothing: antialiased;
+                    }
+                    @media (min-height: 640px) {
+                        body { align-items: center; }
+                    }
+                    .card {
+                        width: 100%;
+                        max-width: 380px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        padding: 24px 22px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                    }
+                    .header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 18px; }
+                    .header svg { width: 48px; height: 48px; }
+                    .header h1 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; color: #18181b; }
+                    .header p { font-size: 0.8125rem; color: #71717a; margin-top: -2px; }
+                    label { display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
+                    input {
+                        width: 100%;
+                        padding: 10px 12px;
+                        border: 1px solid #d1d5db;
+                        border-radius: 8px;
+                        font-size: 0.9375rem;
+                        outline: none;
+                        background: white;
+                        transition: border-color 0.15s, box-shadow 0.15s;
+                        -webkit-appearance: none;
+                    }
+                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
+                    .field { margin-bottom: 10px; }
+                    button {
+                        width: 100%;
+                        padding: 11px;
+                        margin-top: 4px;
+                        background: #18181b;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                        transition: background 0.15s;
+                    }
                     button:hover { background: #27272a; }
                     button:active { background: #09090b; }
-                    .error { color: #dc2626; font-size: 0.8125rem; margin-bottom: 12px; padding: 8px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; }
-                    .footer { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #a1a1aa; }
-                    .or-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #a1a1aa; font-size: 0.75rem; }
+                    .error {
+                        color: #b91c1c;
+                        font-size: 0.8125rem;
+                        margin-bottom: 10px;
+                        padding: 8px 12px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                    }
+                    .footer { text-align: center; margin-top: 14px; font-size: 0.75rem; color: #a1a1aa; }
+                    .or-divider {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        margin: 12px 0;
+                        color: #a1a1aa;
+                        font-size: 0.75rem;
+                    }
                     .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
-                    .btn-github { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; background: #24292f; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: background 0.15s; }
+                    .btn-github {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        width: 100%;
+                        padding: 11px;
+                        background: #24292f;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                        text-decoration: none;
+                        transition: background 0.15s;
+                    }
                     .btn-github:hover { background: #32383f; }
                     .btn-github:active { background: #1b1f23; }
+                    @media (prefers-color-scheme: dark) {
+                        body { background: #0a0a0a; color: #fafafa; }
+                        .card { background: #18181b; border-color: #27272a; }
+                        .header h1 { color: #fafafa; }
+                        .header p { color: #a1a1aa; }
+                        label { color: #d4d4d8; }
+                        input { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
+                        input:focus { border-color: #fafafa; box-shadow: 0 0 0 3px rgba(250, 250, 250, 0.08); }
+                        button { background: #fafafa; color: #18181b; }
+                        button:hover { background: #e4e4e7; }
+                        button:active { background: #d4d4d8; }
+                        .error { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }
+                        .footer { color: #71717a; }
+                        .or-divider { color: #71717a; }
+                        .or-divider::before, .or-divider::after { background: #27272a; }
+                        .btn-github { background: #fafafa; color: #18181b; }
+                        .btn-github:hover { background: #e4e4e7; }
+                        .btn-github:active { background: #d4d4d8; }
+                    }
                 </style>
             </head>
             <body>
-                <div class="card">
-                    <div class="logo">fasolt</div>
-                    <p class="subtitle">Sign in to connect your AI client</p>
-                    <div class="divider"></div>
+                <main class="card">
+                    <div class="header">
+                        {{logoSvg}}
+                        <h1>Sign in to fasolt</h1>
+                    </div>
                     {{errorHtml}}
                     {{gitHubHtml}}
                     <form method="post" action="/oauth/login">
@@ -324,16 +504,16 @@ public static class OAuthEndpoints
                         <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
                         <div class="field">
                             <label for="email">Email</label>
-                            <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus />
+                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required autofocus />
                         </div>
                         <div class="field">
                             <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required />
+                            <input type="password" id="password" name="password" autocomplete="current-password" required />
                         </div>
                         <button type="submit">Sign in</button>
                     </form>
-                    <p class="footer">You'll be redirected back to your AI client.</p>
-                </div>
+                    <p class="footer">New to Fasolt? <a href="/oauth/register?returnUrl={{returnUrlEncoded}}" style="color:inherit;font-weight:500;">Create an account</a></p>
+                </main>
             </body>
             </html>
             """;
@@ -344,6 +524,8 @@ public static class OAuthEndpoints
         app.MapPost("/oauth/login", [AllowAnonymous] async (
             HttpContext context,
             SignInManager<AppUser> signInManager,
+            IEmailVerificationCodeService otpService,
+            IOtpEmailSender emailSender,
             IAntiforgery antiforgery) =>
         {
             if (!await antiforgery.IsRequestValidAsync(context))
@@ -352,20 +534,551 @@ public static class OAuthEndpoints
             var form = await context.Request.ReadFormAsync();
             var email = form["email"].FirstOrDefault() ?? "";
             var password = form["password"].FirstOrDefault() ?? "";
-            var returnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
             {
                 var user = await signInManager.UserManager.FindByEmailAsync(email);
-                if (user is not null)
-                    await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
-                return Results.Redirect(UrlHelpers.IsLocalUrl(returnUrl) ? returnUrl : "/");
+                if (user is null)
+                    return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("Invalid email or password.")}");
+
+                // Unverified accounts must complete OTP verification before we
+                // hand out a cookie. Otherwise they can reach /oauth/authorize
+                // with an email_confirmed=false claim and bounce through the
+                // verify-email redirect loop, and they'd also be able to hit
+                // any non-EmailVerified-gated endpoint with a valid cookie.
+                // Sign them out of the PasswordSignIn, generate a fresh OTP
+                // (respecting the resend window), and send them to the OTP
+                // page — same UX as a fresh registration.
+                if (!user.EmailConfirmed)
+                {
+                    await signInManager.SignOutAsync();
+
+                    var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+                    if (canResend == ResendResult.Ok)
+                    {
+                        // CanResendAsync is advisory — GenerateAndStoreAsync
+                        // re-checks cap/cooldown inside its advisory lock and
+                        // throws if a concurrent caller won the race. Swallow
+                        // that here: the user's other tab/click already got a
+                        // fresh code, and silently falling through to the
+                        // verify page is the right UX.
+                        try
+                        {
+                            var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                            await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                        }
+                    }
+                    // If we can't resend (cooldown / cap / lockout), fall through
+                    // silently — the user still has whatever code we sent last
+                    // time, and the verify page will surface any lockout error
+                    // on its next submit.
+
+                    return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+                }
+
+                await signInManager.SignInAsync(user, isPersistent: false);
+                return Results.Redirect(returnUrl);
             }
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
         }).RequireRateLimiting("auth");
+
+        // OAuth Register Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
+        app.MapGet("/oauth/register", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        {
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var error = context.Request.Query["error"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
+            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
+
+            var errorHtml = error is not null
+                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
+                : "";
+
+            var html = $$"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                <title>Create account — fasolt</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    html, body { height: 100%; }
+                    body {
+                        font-family: -apple-system, system-ui, sans-serif;
+                        background: #fafafa;
+                        color: #18181b;
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: center;
+                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+                        -webkit-font-smoothing: antialiased;
+                    }
+                    @media (min-height: 720px) { body { align-items: center; } }
+                    .card {
+                        width: 100%;
+                        max-width: 380px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        padding: 24px 22px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                    }
+                    .header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 18px; }
+                    .header h1 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; color: #18181b; }
+                    label { display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
+                    input[type=email], input[type=password] {
+                        width: 100%;
+                        padding: 10px 12px;
+                        border: 1px solid #d1d5db;
+                        border-radius: 8px;
+                        font-size: 0.9375rem;
+                        outline: none;
+                        background: white;
+                        -webkit-appearance: none;
+                    }
+                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
+                    .field { margin-bottom: 10px; }
+                    button {
+                        width: 100%;
+                        padding: 11px;
+                        margin-top: 4px;
+                        background: #18181b;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                    }
+                    button:disabled { background: #a1a1aa; cursor: not-allowed; }
+                    .error {
+                        color: #b91c1c;
+                        font-size: 0.8125rem;
+                        margin-bottom: 10px;
+                        padding: 8px 12px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                    }
+                    .footer { text-align: center; margin-top: 14px; font-size: 0.8125rem; color: #71717a; }
+                    .footer a { color: #18181b; font-weight: 500; text-decoration: none; }
+                    .rules { margin-top: 6px; font-size: 0.75rem; color: #71717a; list-style: none; padding-left: 0; }
+                    .rules li { padding: 2px 0; }
+                    .rules li.ok { color: #059669; }
+                    .rules li.ok::before { content: "✓ "; }
+                    .rules li.pending::before { content: "○ "; }
+                    .mismatch { color: #b91c1c; font-size: 0.75rem; margin-top: 4px; }
+                    .tos { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 0.8125rem; color: #374151; }
+                    .tos input { margin-top: 2px; }
+                    .tos a { color: #18181b; font-weight: 500; }
+                    @media (prefers-color-scheme: dark) {
+                        body { background: #0a0a0a; color: #fafafa; }
+                        .card { background: #18181b; border-color: #27272a; }
+                        .header h1 { color: #fafafa; }
+                        label { color: #d4d4d8; }
+                        input[type=email], input[type=password] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
+                        button { background: #fafafa; color: #18181b; }
+                        .footer { color: #a1a1aa; }
+                        .footer a { color: #fafafa; }
+                        .tos { color: #d4d4d8; }
+                        .tos a { color: #fafafa; }
+                    }
+                </style>
+            </head>
+            <body>
+                <main class="card">
+                    <div class="header">
+                        <h1>Create your Fasolt account</h1>
+                    </div>
+                    {{errorHtml}}
+                    <form method="post" action="/oauth/register" id="registerForm">
+                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
+                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required autofocus />
+                        </div>
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" autocomplete="new-password" required />
+                            <ul class="rules" id="rules">
+                                <li class="pending" data-rule="length">At least 8 characters</li>
+                                <li class="pending" data-rule="upper">Uppercase letter</li>
+                                <li class="pending" data-rule="lower">Lowercase letter</li>
+                                <li class="pending" data-rule="digit">Number</li>
+                            </ul>
+                        </div>
+                        <div class="field">
+                            <label for="confirmPassword">Confirm password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" required />
+                            <div class="mismatch" id="mismatch" style="display:none">Passwords don't match</div>
+                        </div>
+                        <label class="tos">
+                            <input type="checkbox" name="tosAccepted" value="true" id="tos" required />
+                            <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a></span>
+                        </label>
+                        <button type="submit" id="submit">Create account</button>
+                    </form>
+                    <p class="footer">Already have an account? <a href="/oauth/login?returnUrl={{returnUrlEncoded}}">Sign in</a></p>
+                </main>
+                <script>
+                    const pwd = document.getElementById('password');
+                    const confirm = document.getElementById('confirmPassword');
+                    const rules = document.getElementById('rules');
+                    const mismatch = document.getElementById('mismatch');
+                    function evaluate() {
+                        const v = pwd.value;
+                        const checks = {
+                            length: v.length >= 8,
+                            upper: /[A-Z]/.test(v),
+                            lower: /[a-z]/.test(v),
+                            digit: /[0-9]/.test(v)
+                        };
+                        for (const li of rules.children) {
+                            const r = li.dataset.rule;
+                            li.className = checks[r] ? 'ok' : 'pending';
+                        }
+                        mismatch.style.display = (confirm.value && confirm.value !== v) ? 'block' : 'none';
+                    }
+                    pwd.addEventListener('input', evaluate);
+                    confirm.addEventListener('input', evaluate);
+                </script>
+            </body>
+            </html>
+            """;
+            return Results.Content(html, "text/html");
+        });
+
+        // OAuth Register Handler (POST)
+        app.MapPost("/oauth/register", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IEmailVerificationCodeService otpService,
+            IOtpEmailSender emailSender,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var password = form["password"].FirstOrDefault() ?? "";
+            var confirmPassword = form["confirmPassword"].FirstOrDefault() ?? "";
+            var tosAccepted = form["tosAccepted"].FirstOrDefault() == "true";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string? error = null;
+            if (!tosAccepted) error = "You must accept the Terms of Service.";
+            else if (password != confirmPassword) error = "Passwords don't match.";
+            else if (string.IsNullOrEmpty(email) || !email.Contains('@')) error = "Please enter a valid email address.";
+
+            if (error is not null)
+                return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
+
+            // Enforce the password policy before touching the user lookup. If
+            // this ran after FindByEmailAsync, weak passwords + already-taken
+            // emails would short-circuit to the verify-email redirect while
+            // weak passwords + new emails would error — an enumeration oracle.
+            // Running it first makes the error response identical regardless of
+            // whether the email exists.
+            var passwordProbe = new AppUser { UserName = email, Email = email };
+            foreach (var validator in userManager.PasswordValidators)
+            {
+                var pwResult = await validator.ValidateAsync(userManager, passwordProbe, password);
+                if (!pwResult.Succeeded)
+                {
+                    var pwMsg = string.Join("; ", pwResult.Errors.Select(e => e.Description));
+                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(pwMsg)}");
+                }
+            }
+
+            // Check if email exists. We never reveal whether a given address is
+            // already registered (enumeration) and we never let an anonymous
+            // POST regenerate OTPs on behalf of an existing user (griefing).
+            // Both cases fall through to the same generic verify-email redirect
+            // as a fresh signup — indistinguishable from the attacker's side.
+            // If the real owner of an unconfirmed account lost their code, they
+            // can request a new one from the verify-email page, which is
+            // separately rate-limited and goes through CanResendAsync.
+            var existing = await userManager.FindByEmailAsync(email);
+            if (existing is not null)
+            {
+                return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+            }
+
+            var user = new AppUser { UserName = email, Email = email };
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
+            {
+                // Should be rare now that PasswordValidators ran above, but
+                // CreateAsync also enforces User.* policies (e.g. invalid email
+                // characters) that we haven't pre-validated.
+                var msg = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}");
+            }
+
+            var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+            await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+
+            return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }).RequireRateLimiting("auth-strict");
+
+        // OAuth Verify Email Page (GET)
+        app.MapGet("/oauth/verify-email", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        {
+            var email = context.Request.Query["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var error = context.Request.Query["error"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
+            var emailEncoded = System.Web.HttpUtility.HtmlAttributeEncode(email);
+            var emailDisplay = System.Web.HttpUtility.HtmlEncode(email);
+            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
+
+            var errorHtml = error is not null
+                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
+                : "";
+
+            var html = $$"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                <title>Verify email — fasolt</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    html, body { height: 100%; }
+                    body {
+                        font-family: -apple-system, system-ui, sans-serif;
+                        background: #fafafa;
+                        color: #18181b;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+                    }
+                    .card {
+                        width: 100%;
+                        max-width: 380px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        padding: 32px 24px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                        text-align: center;
+                    }
+                    .card h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #18181b; }
+                    .card p { color: #71717a; font-size: 0.875rem; margin-bottom: 20px; }
+                    .card p strong { color: #18181b; }
+                    input[type=text] {
+                        width: 100%;
+                        padding: 14px;
+                        font-size: 1.5rem;
+                        text-align: center;
+                        letter-spacing: 0.5em;
+                        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+                        border: 1px solid #d1d5db;
+                        border-radius: 10px;
+                        background: white;
+                        outline: none;
+                    }
+                    input[type=text]:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.08); }
+                    button {
+                        width: 100%;
+                        padding: 11px;
+                        margin-top: 16px;
+                        background: #18181b;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                    }
+                    .resend { margin-top: 16px; font-size: 0.8125rem; color: #71717a; }
+                    .resend a { color: #18181b; font-weight: 500; text-decoration: none; }
+                    .resend form { display: inline; }
+                    .resend-inline-button {
+                        display: inline;
+                        width: auto;
+                        padding: 0;
+                        margin: 0;
+                        background: transparent;
+                        color: #18181b;
+                        font-weight: 500;
+                        text-decoration: underline;
+                        border: none;
+                        cursor: pointer;
+                        font-size: inherit;
+                    }
+                    .error {
+                        color: #b91c1c;
+                        font-size: 0.8125rem;
+                        margin-bottom: 10px;
+                        padding: 8px 12px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                    }
+                    @media (prefers-color-scheme: dark) {
+                        body { background: #0a0a0a; color: #fafafa; }
+                        .card { background: #18181b; border-color: #27272a; }
+                        .card h1 { color: #fafafa; }
+                        .card p { color: #a1a1aa; }
+                        .card p strong { color: #fafafa; }
+                        input[type=text] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
+                        button { background: #fafafa; color: #18181b; }
+                        .resend { color: #a1a1aa; }
+                        .resend a, .resend-inline-button { color: #fafafa; }
+                    }
+                </style>
+            </head>
+            <body>
+                <main class="card">
+                    <h1>Check your email</h1>
+                    <p>We sent a 6-digit code to <strong>{{emailDisplay}}</strong></p>
+                    {{errorHtml}}
+                    <form method="post" action="/oauth/verify-email">
+                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
+                        <input type="hidden" name="email" value="{{emailEncoded}}" />
+                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                        <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus required />
+                        <button type="submit">Verify</button>
+                    </form>
+                    <div class="resend">
+                        Didn't get it?
+                        <form method="post" action="/oauth/verify-email/resend">
+                            <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
+                            <input type="hidden" name="email" value="{{emailEncoded}}" />
+                            <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                            <button type="submit" class="resend-inline-button">Resend code</button>
+                        </form>
+                    </div>
+                    <p class="resend"><a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Use a different email</a></p>
+                </main>
+            </body>
+            </html>
+            """;
+            return Results.Content(html, "text/html");
+        });
+
+        // OAuth Verify Email Handler (POST)
+        app.MapPost("/oauth/verify-email", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
+            IEmailVerificationCodeService otpService,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var code = form["code"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string ErrorRedirect(string msg)
+                => $"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                return Results.Redirect(ErrorRedirect("That code has expired. Request a new one."));
+
+            var result = await otpService.VerifyAsync(user.Id, code, context.RequestAborted);
+            switch (result)
+            {
+                case VerifyResult.Ok:
+                    // UpdateAsync must precede SignInAsync so the Identity cookie
+                    // reflects the confirmed state. If UpdateAsync silently failed,
+                    // we'd hand out a cookie claiming "email_confirmed" while the
+                    // DB row still said otherwise — a confusing half-state, and
+                    // the OTP row has already been consumed inside VerifyAsync.
+                    user.EmailConfirmed = true;
+                    var updateResult = await userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                        return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
+                    await signInManager.SignInAsync(user, isPersistent: false);
+                    return Results.Redirect(returnUrl);
+                case VerifyResult.Incorrect:
+                    return Results.Redirect(ErrorRedirect("Incorrect code, try again."));
+                case VerifyResult.Expired:
+                case VerifyResult.NotFound:
+                    return Results.Redirect(ErrorRedirect("That code has expired. Request a new one."));
+                case VerifyResult.LockedOut:
+                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
+                default:
+                    return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
+            }
+        }).RequireRateLimiting("auth");
+
+        // OAuth Verify Email Resend Handler (POST)
+        app.MapPost("/oauth/verify-email/resend", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IEmailVerificationCodeService otpService,
+            IOtpEmailSender emailSender,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string ErrorRedirect(string msg)
+                => $"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+            var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+            switch (canResend)
+            {
+                case ResendResult.TooSoon:
+                    return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+                case ResendResult.LockedOut:
+                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
+                case ResendResult.TooManyAttempts:
+                    return Results.Redirect(ErrorRedirect("Too many codes sent. Please wait and try again later."));
+            }
+
+            // CanResendAsync above is advisory; GenerateAndStoreAsync
+            // re-checks cap/cooldown inside an advisory lock. If another
+            // request won the race, translate the throw into the same
+            // user-visible "too soon" error rather than a 500.
+            try
+            {
+                var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+            }
+            catch (InvalidOperationException)
+            {
+                return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+            }
+
+            return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }).RequireRateLimiting("auth-strict");
 
         // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
         app.MapGet("/oauth/consent", async (

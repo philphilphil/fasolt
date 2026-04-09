@@ -28,14 +28,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(email: string, password: string) {
-    await apiFetch('/account/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
-    await fetchUser()
-  }
-
   async function login(email: string, password: string, rememberMe: boolean) {
     await apiFetch('/account/login', {
       method: 'POST',
@@ -84,10 +76,6 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
-  async function resendVerification() {
-    await apiFetch('/account/resend-verification', { method: 'POST' })
-  }
-
   async function deleteAccount(password?: string, confirmIdentity?: string) {
     await apiFetch('/account', {
       method: 'DELETE',
@@ -104,14 +92,12 @@ export const useAuthStore = defineStore('auth', () => {
     isExternalAccount,
     isEmailConfirmed,
     fetchUser,
-    register,
     login,
     logout,
     changeEmail,
     changePassword,
     forgotPassword,
     resetPassword,
-    resendVerification,
     deleteAccount,
   }
 })
