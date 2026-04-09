@@ -12,6 +12,7 @@ struct MainTabView: View {
     @State private var notificationService: NotificationService?
     @State private var showStudy = false
     @State private var studyDeckId: String?
+    @State private var router = NavigationRouter.shared
 
     var body: some View {
         Group {
@@ -66,6 +67,12 @@ struct MainTabView: View {
                     studyDeckId = deckId
                     showStudy = true
                 })
+                .onAppear {
+                    handlePendingDeepLink()
+                }
+                .onChange(of: router.pendingDeepLink) { _, _ in
+                    handlePendingDeepLink()
+                }
             } else {
                 ProgressView()
             }
@@ -91,6 +98,20 @@ struct MainTabView: View {
             )
             syncService = service
             await service.startMonitoring()
+        }
+    }
+
+    private func handlePendingDeepLink() {
+        guard let deepLink = router.pendingDeepLink else { return }
+        switch deepLink {
+        case .study:
+            // Clear first so tapping the notification again after dismissing
+            // study can trigger another navigation.
+            router.pendingDeepLink = nil
+            // Avoid re-presenting while a study session is already on screen.
+            guard !showStudy else { return }
+            studyDeckId = nil
+            showStudy = true
         }
     }
 }
