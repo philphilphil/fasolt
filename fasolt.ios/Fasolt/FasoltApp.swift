@@ -1,11 +1,18 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
 import os
 
 private let appLogger = Logger(subsystem: "com.fasolt.app", category: "AppDelegate")
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
     var onDeviceToken: ((Data) -> Void)?
+
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
 
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
@@ -18,6 +25,40 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                      didFailToRegisterForRemoteNotificationsWithError error: Error) {
         appLogger.error("Remote notification registration failed: \(error)")
     }
+
+    // Show notifications as banners even when app is in foreground.
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .badge])
+    }
+
+    // Handle user tapping a notification — deep link into the study screen.
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        defer { completionHandler() }
+        guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
+        appLogger.info("Notification tapped — requesting study view")
+        NavigationRouter.shared.pendingDeepLink = .study
+    }
+}
+
+/// Holds a pending deep link request so that navigation survives between the
+/// notification delegate callback (which may fire during cold launch before
+/// SwiftUI views have mounted) and the view hierarchy becoming ready.
+@MainActor
+@Observable
+final class NavigationRouter {
+    static let shared = NavigationRouter()
+
+    enum DeepLink: Equatable {
+        case study
+    }
+
+    var pendingDeepLink: DeepLink?
+
+    private init() {}
 }
 
 @main

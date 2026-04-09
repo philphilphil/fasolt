@@ -12,6 +12,8 @@ struct MainTabView: View {
     @State private var notificationService: NotificationService?
     @State private var showStudy = false
     @State private var studyDeckId: String?
+    @State private var selectedTab: Int = 0
+    @State private var router = NavigationRouter.shared
 
     var body: some View {
         Group {
@@ -22,13 +24,14 @@ struct MainTabView: View {
                     return vm
                 }
 
-                TabView {
+                TabView(selection: $selectedTab) {
                     DashboardView(
                         viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository)
                     )
                     .tabItem {
                         Label("Study", systemImage: "book.fill")
                     }
+                    .tag(0)
 
                     LibraryView(
                         deckListViewModel: DeckListViewModel(deckRepository: deckRepository),
@@ -43,6 +46,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Library", systemImage: "books.vertical.fill")
                     }
+                    .tag(1)
 
                     SettingsView(
                         viewModel: SettingsViewModel(apiClient: authService.apiClient),
@@ -53,6 +57,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
+                    .tag(2)
                 }
                 .fullScreenCover(isPresented: $showStudy, onDismiss: {
                     studyDeckId = nil
@@ -66,6 +71,12 @@ struct MainTabView: View {
                     studyDeckId = deckId
                     showStudy = true
                 })
+                .onAppear {
+                    handlePendingDeepLink()
+                }
+                .onChange(of: router.pendingDeepLink) { _, _ in
+                    handlePendingDeepLink()
+                }
             } else {
                 ProgressView()
             }
@@ -91,6 +102,15 @@ struct MainTabView: View {
             )
             syncService = service
             await service.startMonitoring()
+        }
+    }
+
+    private func handlePendingDeepLink() {
+        guard let deepLink = router.pendingDeepLink else { return }
+        switch deepLink {
+        case .study:
+            router.pendingDeepLink = nil
+            selectedTab = 0
         }
     }
 }
