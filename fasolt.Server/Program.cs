@@ -282,7 +282,9 @@ builder.Services.AddRateLimiter(options =>
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                // In development, use a high limit so E2E test suites don't exhaust
+                // the quota. Production keeps the real 10/min guard.
+                PermitLimit = builder.Environment.IsDevelopment() ? 100 : 10,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
