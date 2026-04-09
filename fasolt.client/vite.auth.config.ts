@@ -14,16 +14,14 @@ export default defineConfig({
       plugins: [tailwind(), autoprefixer()],
     },
   },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
   build: {
     // Absolute output dir — outside fasolt.client to reach the server wwwroot.
     outDir: path.resolve(__dirname, '../fasolt.Server/wwwroot'),
     // We're writing into the server's wwwroot — never wipe it.
     emptyOutDir: false,
+    // CSS-only entry — Rollup emits no JS chunk for .css inputs in Vite 8+.
+    // If a stray auth.js appears in wwwroot/css/ after a Vite upgrade, either
+    // switch to build.lib mode or use a standalone PostCSS build pipeline.
     rollupOptions: {
       input: {
         auth: path.resolve(__dirname, 'src/auth.css'),

@@ -6,6 +6,11 @@ RUN npm ci
 COPY fasolt.client/ ./
 # Copy the Razor pages directory so the Tailwind content scanner can
 # find utility classes used in .cshtml templates when building auth.css.
+# The destination "../fasolt.Server/Pages/" resolves to /fasolt.Server/Pages/
+# because WORKDIR is /app — this MUST match the 'content' glob in
+# tailwind.config.js ('../fasolt.Server/Pages/**/*.cshtml' relative to
+# fasolt.client/, which is also /app inside this stage). If WORKDIR ever
+# changes, update both ends of this path coupling together.
 COPY fasolt.Server/Pages/ ../fasolt.Server/Pages/
 ARG VITE_BUGSINK_DSN=""
 ENV VITE_BUGSINK_DSN=$VITE_BUGSINK_DSN
