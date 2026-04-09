@@ -33,21 +33,25 @@ public static class AccountEndpoints
         LoginRequest request,
         SignInManager<AppUser> signInManager)
     {
-        var result = await signInManager.PasswordSignInAsync(
-            request.Email, request.Password, isPersistent: false, lockoutOnFailure: true);
+        // Look up first so we can use CheckPasswordSignInAsync + a single
+        // SignInAsync. PasswordSignInAsync would also issue a cookie, and
+        // then we'd need a second SignInAsync to honor RememberMe — two
+        // Set-Cookie headers on one response. This avoids that.
+        var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
+        if (user is null)
+            return Results.Problem("Invalid email or password.", statusCode: 401);
+
+        var result = await signInManager.CheckPasswordSignInAsync(
+            user, request.Password, lockoutOnFailure: true);
 
         if (result.IsLockedOut)
             return Results.Problem("Account locked. Try again later.", statusCode: 429);
         if (!result.Succeeded)
             return Results.Problem("Invalid email or password.", statusCode: 401);
 
-        // Re-sign-in so RememberMe (persistent cookie) is honored — the
-        // PasswordSignInAsync above always uses isPersistent: false.
-        // AppClaimsPrincipalFactory is what injects the email_confirmed and
-        // external_provider claims into the cookie; we don't need a wrapper.
-        var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
-        if (user is not null)
-            await signInManager.SignInAsync(user, request.RememberMe);
+        // AppClaimsPrincipalFactory injects email_confirmed and
+        // external_provider claims into the cookie.
+        await signInManager.SignInAsync(user, request.RememberMe);
 
         return Results.Ok();
     }

@@ -143,6 +143,14 @@ builder.Services.AddScoped<Fasolt.Server.Application.Auth.AppleAuthService>();
 builder.Services.AddSingleton(TimeProvider.System);
 var otpPepper = builder.Configuration["OTP_PEPPER"]
     ?? throw new InvalidOperationException("OTP_PEPPER is not configured. Generate with 'openssl rand -hex 32' and set in .env or environment.");
+// Outside of Development, refuse to start with a weak pepper. 32 chars is
+// the minimum we consider acceptable (matches 'openssl rand -hex 16' /
+// 128 bits). Catches misconfigurations where prod silently gets a test
+// value — since the pepper is the only thing between a DB dump and an
+// offline brute force of 6-digit codes.
+if (!builder.Environment.IsDevelopment() && otpPepper.Length < 32)
+    throw new InvalidOperationException(
+        "OTP_PEPPER must be at least 32 characters in non-Development environments. Generate with 'openssl rand -hex 32'.");
 builder.Services.AddScoped<Fasolt.Server.Application.Auth.IEmailVerificationCodeService>(sp =>
     new Fasolt.Server.Application.Auth.EmailVerificationCodeService(
         sp.GetRequiredService<Fasolt.Server.Infrastructure.Data.AppDbContext>(),

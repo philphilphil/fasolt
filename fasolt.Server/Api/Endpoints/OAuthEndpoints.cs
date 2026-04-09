@@ -559,8 +559,20 @@ public static class OAuthEndpoints
                     var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
                     if (canResend == ResendResult.Ok)
                     {
-                        var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
-                        await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+                        // CanResendAsync is advisory — GenerateAndStoreAsync
+                        // re-checks cap/cooldown inside its advisory lock and
+                        // throws if a concurrent caller won the race. Swallow
+                        // that here: the user's other tab/click already got a
+                        // fresh code, and silently falling through to the
+                        // verify page is the right UX.
+                        try
+                        {
+                            var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                            await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                        }
                     }
                     // If we can't resend (cooldown / cap / lockout), fall through
                     // silently — the user still has whatever code we sent last
@@ -902,7 +914,7 @@ public static class OAuthEndpoints
                     .resend { margin-top: 16px; font-size: 0.8125rem; color: #71717a; }
                     .resend a { color: #18181b; font-weight: 500; text-decoration: none; }
                     .resend form { display: inline; }
-                    .resend button {
+                    .resend-inline-button {
                         display: inline;
                         width: auto;
                         padding: 0;
@@ -911,6 +923,9 @@ public static class OAuthEndpoints
                         color: #18181b;
                         font-weight: 500;
                         text-decoration: underline;
+                        border: none;
+                        cursor: pointer;
+                        font-size: inherit;
                     }
                     .error {
                         color: #b91c1c;
@@ -930,7 +945,7 @@ public static class OAuthEndpoints
                         input[type=text] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
                         button { background: #fafafa; color: #18181b; }
                         .resend { color: #a1a1aa; }
-                        .resend a, .resend button { color: #fafafa; }
+                        .resend a, .resend-inline-button { color: #fafafa; }
                     }
                 </style>
             </head>
@@ -946,15 +961,15 @@ public static class OAuthEndpoints
                         <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus required />
                         <button type="submit">Verify</button>
                     </form>
-                    <p class="resend">
+                    <div class="resend">
                         Didn't get it?
                         <form method="post" action="/oauth/verify-email/resend">
                             <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                             <input type="hidden" name="email" value="{{emailEncoded}}" />
                             <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
-                            <button type="submit">Resend code</button>
+                            <button type="submit" class="resend-inline-button">Resend code</button>
                         </form>
-                    </p>
+                    </div>
                     <p class="resend"><a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Use a different email</a></p>
                 </main>
             </body>
@@ -1048,8 +1063,19 @@ public static class OAuthEndpoints
                     return Results.Redirect(ErrorRedirect("Too many codes sent. Please wait and try again later."));
             }
 
-            var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
-            await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+            // CanResendAsync above is advisory; GenerateAndStoreAsync
+            // re-checks cap/cooldown inside an advisory lock. If another
+            // request won the race, translate the throw into the same
+            // user-visible "too soon" error rather than a 500.
+            try
+            {
+                var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+            }
+            catch (InvalidOperationException)
+            {
+                return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+            }
 
             return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }).RequireRateLimiting("auth-strict");

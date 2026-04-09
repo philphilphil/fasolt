@@ -27,6 +27,17 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
 
     public async Task<string> GenerateAndStoreAsync(string userId, CancellationToken cancellationToken)
     {
+        // Serialize concurrent resends for this user. Without this, two
+        // callers can both pass CanResendAsync, both read SentCount=N, and
+        // both write N+1 — bypassing the cap and cooldown by one on each
+        // simultaneous click. A per-user Postgres advisory lock held for the
+        // transaction's lifetime is the cheapest fix: no schema change, no
+        // global contention. We also re-check cap + cooldown inside the lock
+        // because CanResendAsync (outside the lock) is only advisory.
+        await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtext({userId})::bigint)", cancellationToken);
+
         var now = _time.GetUtcNow();
         var code = GenerateCode();
         var hash = Hash(code);
@@ -63,6 +74,10 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
                 throw new InvalidOperationException(
                     "Cannot generate another code: session send cap exceeded. Call CanResendAsync first.");
 
+            if (now - existing.LastSentAt < ResendCooldown)
+                throw new InvalidOperationException(
+                    "Cannot generate another code: resend cooldown in effect. Call CanResendAsync first.");
+
             existing.CodeHash = hash;
             existing.ExpiresAt = now.Add(CodeLifetime);
             existing.Attempts = 0;
@@ -72,6 +87,7 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await tx.CommitAsync(cancellationToken);
         return code;
     }
 
