@@ -11,7 +11,7 @@ using Fasolt.Server.Domain.Entities;
 namespace Fasolt.Server.Pages.Oauth;
 
 [AllowAnonymous]
-[EnableRateLimiting("auth")]
+[EnableRateLimiting("auth")] // OnPostResendAsync overrides this with "auth-strict"
 [ValidateAntiForgeryToken]
 public class ResetPasswordModel : PageModel
 {
@@ -124,6 +124,12 @@ public class ResetPasswordModel : PageModel
         // OTP consumed. Rotate the password via Remove + Add so SecurityStamp
         // gets bumped and existing cookie sessions eventually invalidate
         // (ValidateSecurityStampAsync interval).
+        //
+        // NOTE: If RemovePasswordAsync succeeds but AddPasswordAsync fails,
+        // the user is left without a password. Identity has no atomic swap.
+        // In practice the only Add failures post-Remove are validator
+        // rejections (already pre-checked above), so this window is narrow,
+        // but it's real — tracked in #111 as a session-management follow-up.
         var removeResult = await _userManager.RemovePasswordAsync(user);
         if (!removeResult.Succeeded)
         {
