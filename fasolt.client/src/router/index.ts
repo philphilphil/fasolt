@@ -18,18 +18,10 @@ const router = createRouter({
       component: () => import('@/views/LoginView.vue'),
       meta: { public: true, authRedirect: true, title: 'Log in' },
     },
-    {
-      path: '/forgot-password',
-      name: 'forgot-password',
-      component: () => import('@/views/ForgotPasswordView.vue'),
-      meta: { public: true, title: 'Forgot password' },
-    },
-    {
-      path: '/reset-password',
-      name: 'reset-password',
-      component: () => import('@/views/ResetPasswordView.vue'),
-      meta: { public: true, title: 'Reset password' },
-    },
+    // /forgot-password and /reset-password are handled by the backend: it
+    // 301s to the server-rendered /oauth/forgot-password + /oauth/reset-password
+    // OTP pages. No SPA routes needed — the backend redirect runs before the
+    // Vue router ever sees the path.
     {
       path: '/confirm-email-change',
       name: 'confirm-email-change',

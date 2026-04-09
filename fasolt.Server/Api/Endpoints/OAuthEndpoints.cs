@@ -617,6 +617,220 @@ public static class OAuthEndpoints
             return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }).RequireRateLimiting("auth-strict");
 
+        // OAuth Forgot Password Page (GET) — user requests a reset code.
+        // Dual state machine keyed on ?sent=1: the entry form renders when
+        // sent is absent; after POST we redirect back here with sent=1 to
+        // show a generic "check your email" confirmation. One URL, two
+        // views, so the POST→GET round trip survives refresh/back-button.
+        app.MapGet("/oauth/forgot-password", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        {
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var error = context.Request.Query["error"].FirstOrDefault();
+            var sent = context.Request.Query["sent"].FirstOrDefault() == "1";
+            var email = context.Request.Query["email"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+
+            return Results.Content(
+                OAuthForgotPasswordPage.Render(tokens.RequestToken!, returnUrl, error, sent, email),
+                "text/html");
+        });
+
+        // OAuth Forgot Password Handler (POST)
+        app.MapPost("/oauth/forgot-password", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IPasswordResetCodeService otpService,
+            IOtpEmailSender emailSender,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            if (string.IsNullOrEmpty(email) || !email.Contains('@'))
+                return Results.Redirect(
+                    $"/oauth/forgot-password?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("Please enter a valid email address.")}");
+
+            // Look up the user but never reveal whether an account exists —
+            // that's an enumeration oracle. Also skip external-provider users
+            // (GitHub/Apple) and unverified users: neither has a password we
+            // can reset. Fall through to the generic "check your email" view
+            // in every case so an attacker can't tell the difference.
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is not null && user.ExternalProvider is null && user.EmailConfirmed)
+            {
+                // Advisory check first; GenerateAndStoreAsync re-checks inside
+                // the per-user lock. If a cap/cooldown is tripped, swallow and
+                // still render the generic confirmation so timing/behaviour
+                // can't leak account existence.
+                var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+                if (canResend == ResendResult.Ok)
+                {
+                    try
+                    {
+                        var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                        await emailSender.SendPasswordResetCodeAsync(user, user.Email!, code);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Lost a cap/cooldown race. Still confirm silently.
+                    }
+                }
+            }
+
+            return Results.Redirect(
+                $"/oauth/forgot-password?returnUrl={Uri.EscapeDataString(returnUrl)}&email={Uri.EscapeDataString(email)}&sent=1");
+        }).RequireRateLimiting("auth-strict");
+
+        // OAuth Reset Password Page (GET) — user pastes the code + new password
+        app.MapGet("/oauth/reset-password", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        {
+            var email = context.Request.Query["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var error = context.Request.Query["error"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+
+            return Results.Content(
+                OAuthResetPasswordPage.Render(tokens.RequestToken!, email, returnUrl, error, success: false),
+                "text/html");
+        });
+
+        // OAuth Reset Password Handler (POST)
+        app.MapPost("/oauth/reset-password", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IPasswordResetCodeService otpService,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var code = form["code"].FirstOrDefault() ?? "";
+            var password = form["password"].FirstOrDefault() ?? "";
+            var confirmPassword = form["confirmPassword"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string ErrorRedirect(string msg)
+                => $"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
+
+            if (password != confirmPassword)
+                return Results.Redirect(ErrorRedirect("Passwords don't match."));
+
+            // Run the password policy BEFORE any account lookup so weak-password
+            // + unknown-email and weak-password + known-email take identical
+            // paths. Otherwise the policy check on a real user would behave
+            // differently from the early-out on an unknown email — an
+            // enumeration oracle via latency/errors.
+            var passwordProbe = new AppUser { UserName = email, Email = email };
+            foreach (var validator in userManager.PasswordValidators)
+            {
+                var pwResult = await validator.ValidateAsync(userManager, passwordProbe, password);
+                if (!pwResult.Succeeded)
+                {
+                    var pwMsg = string.Join("; ", pwResult.Errors.Select(e => e.Description));
+                    return Results.Redirect(ErrorRedirect(pwMsg));
+                }
+            }
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null || user.ExternalProvider is not null || !user.EmailConfirmed)
+                return Results.Redirect(ErrorRedirect("That code has expired. Request a new one."));
+
+            var verifyResult = await otpService.VerifyAsync(user.Id, code, context.RequestAborted);
+            switch (verifyResult)
+            {
+                case VerifyResult.Ok:
+                    break;
+                case VerifyResult.Incorrect:
+                    return Results.Redirect(ErrorRedirect("Incorrect code, try again."));
+                case VerifyResult.Expired:
+                case VerifyResult.NotFound:
+                    return Results.Redirect(ErrorRedirect("That code has expired. Request a new one."));
+                case VerifyResult.LockedOut:
+                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
+                default:
+                    return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
+            }
+
+            // OTP is consumed (row deleted inside VerifyAsync). Now rotate the
+            // password. Using RemovePasswordAsync + AddPasswordAsync rather
+            // than ResetPasswordAsync so we don't need an Identity URL token —
+            // the OTP is our authentication factor here, and removing+adding
+            // bumps the SecurityStamp which invalidates existing sessions.
+            var removeResult = await userManager.RemovePasswordAsync(user);
+            if (!removeResult.Succeeded)
+                return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
+            var addResult = await userManager.AddPasswordAsync(user, password);
+            if (!addResult.Succeeded)
+            {
+                var msg = string.Join("; ", addResult.Errors.Select(e => e.Description));
+                return Results.Redirect(ErrorRedirect(msg));
+            }
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            return Results.Content(
+                OAuthResetPasswordPage.Render(tokens.RequestToken!, email, returnUrl, error: null, success: true),
+                "text/html");
+        }).RequireRateLimiting("auth");
+
+        // OAuth Reset Password Resend Handler (POST)
+        app.MapPost("/oauth/reset-password/resend", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IPasswordResetCodeService otpService,
+            IOtpEmailSender emailSender,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string ErrorRedirect(string msg)
+                => $"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null || user.ExternalProvider is not null || !user.EmailConfirmed)
+                return Results.Redirect($"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+            var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+            switch (canResend)
+            {
+                case ResendResult.TooSoon:
+                    return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+                case ResendResult.LockedOut:
+                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
+                case ResendResult.TooManyAttempts:
+                    return Results.Redirect(ErrorRedirect("Too many codes sent. Please wait and try again later."));
+            }
+
+            try
+            {
+                var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                await emailSender.SendPasswordResetCodeAsync(user, user.Email!, code);
+            }
+            catch (InvalidOperationException)
+            {
+                return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+            }
+
+            return Results.Redirect($"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }).RequireRateLimiting("auth-strict");
+
         // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
         app.MapGet("/oauth/consent", async (
             HttpContext context,

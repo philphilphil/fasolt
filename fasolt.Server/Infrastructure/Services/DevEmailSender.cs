@@ -19,11 +19,11 @@ public class DevEmailSender : IEmailSender<AppUser>, IOtpEmailSender
         return Task.CompletedTask;
     }
 
+    // SendPasswordResetLinkAsync is part of IEmailSender<AppUser> (ASP.NET Core
+    // Identity). The app uses OTP codes (SendPasswordResetCodeAsync) instead,
+    // so this is a no-op kept only to satisfy the interface.
     public Task SendPasswordResetLinkAsync(AppUser user, string email, string resetLink)
-    {
-        _logger.LogWarning("[DEV EMAIL] Password reset link for {Email}: {Link}", email, resetLink);
-        return Task.CompletedTask;
-    }
+        => Task.CompletedTask;
 
     public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode)
     {

@@ -31,23 +31,20 @@ public class PlunkEmailSender : IEmailSender<AppUser>, IOtpEmailSender
         return SendAsync(email, "Confirm your Fasolt account", body);
     }
 
+    // SendPasswordResetLinkAsync is part of IEmailSender<AppUser> (ASP.NET Core
+    // Identity). Identity's default password reset flow uses it, but Fasolt's
+    // /oauth/forgot-password flow uses 6-digit OTP codes (see
+    // SendPasswordResetCodeAsync). Left as a no-op so the Identity interface
+    // is satisfied without a dead URL-token link ever being minted.
     public Task SendPasswordResetLinkAsync(AppUser user, string email, string resetLink)
-    {
-        var body = $"""
-            <p>You requested a password reset for your Fasolt account.</p>
-            <p><a href="{resetLink}">Reset your password</a></p>
-            <p>This link expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
-            """;
-
-        return SendAsync(email, "Reset your Fasolt password", body);
-    }
+        => Task.CompletedTask;
 
     public Task SendPasswordResetCodeAsync(AppUser user, string email, string resetCode)
     {
         var body = $"""
             <p>You requested a password reset for your Fasolt account.</p>
             <p>Your reset code is: <strong>{resetCode}</strong></p>
-            <p>This code expires in 24 hours. If you didn't request this, you can safely ignore this email.</p>
+            <p>It expires in 15 minutes. If you didn't request this, you can safely ignore this email.</p>
             """;
 
         return SendAsync(email, "Your Fasolt password reset code", body);
