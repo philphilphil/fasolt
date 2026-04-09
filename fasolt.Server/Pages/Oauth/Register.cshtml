@@ -1,0 +1,51 @@
+@page "/oauth/register"
+@model RegisterModel
+@{
+    ViewData["Title"] = "Create account";
+}
+
+<main class="oauth-card">
+    <h1>Create your fasolt account</h1>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="oauth-error">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" action="/oauth/register" id="registerForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div class="oauth-field">
+            <label asp-for="Input.Email">Email</label>
+            <input asp-for="Input.Email" type="email" placeholder="you@example.com" autocomplete="email" required autofocus />
+            <span class="oauth-field-error" asp-validation-for="Input.Email"></span>
+        </div>
+        <div class="oauth-field">
+            <label asp-for="Input.Password">Password</label>
+            <input asp-for="Input.Password" type="password" id="password" autocomplete="new-password" required />
+            <ul class="oauth-rules" id="rules">
+                <li class="pending" data-rule="length">At least 8 characters</li>
+                <li class="pending" data-rule="upper">Uppercase letter</li>
+                <li class="pending" data-rule="lower">Lowercase letter</li>
+                <li class="pending" data-rule="digit">Number</li>
+            </ul>
+        </div>
+        <div class="oauth-field">
+            <label asp-for="Input.ConfirmPassword">Confirm password</label>
+            <input asp-for="Input.ConfirmPassword" type="password" id="confirmPassword" autocomplete="new-password" required />
+            <div class="oauth-mismatch" id="mismatch" style="display:none">Passwords don't match</div>
+        </div>
+        <label class="oauth-tos">
+            <input asp-for="Input.TosAccepted" type="checkbox" id="tos" required />
+            <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a></span>
+        </label>
+        <button type="submit" class="oauth-btn" id="submit">Create account</button>
+    </form>
+
+    <div class="oauth-footer">
+        <span>Already have an account?</span>
+        <a href="/oauth/login?returnUrl=@Uri.EscapeDataString(Model.ReturnUrl)">Sign in</a>
+    </div>
+</main>
+
+<script src="~/js/password-rules.js" asp-append-version="true" defer></script>
