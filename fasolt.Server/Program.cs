@@ -519,7 +519,7 @@ app.Use(async (context, next) =>
             dict[prop.Name] = prop.Value;
 
         var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
-        dict["registration_endpoint"] = $"{baseUrl}/oauth/register";
+        dict["registration_endpoint"] = $"{baseUrl}/oauth/clients/register";
         dict["logo_uri"] = $"{baseUrl}/logo.png";
 
         context.Response.Body = originalBody;

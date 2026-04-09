@@ -50,7 +50,10 @@ public static class OAuthEndpoints
         });
 
         // Dynamic Client Registration (RFC 7591)
-        app.MapPost("/oauth/register", [AllowAnonymous] async (
+        // Moved from /oauth/register to /oauth/clients/register to free up
+        // /oauth/register for the user-facing HTML registration page.
+        // The discovery document in Program.cs advertises this new path.
+        app.MapPost("/oauth/clients/register", [AllowAnonymous] async (
             HttpContext context,
             IOpenIddictApplicationManager applicationManager,
             IConfiguration configuration) =>
@@ -538,6 +541,232 @@ public static class OAuthEndpoints
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
             return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
         }).RequireRateLimiting("auth");
+
+        // OAuth Register Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
+        app.MapGet("/oauth/register", [AllowAnonymous] (HttpContext context, IAntiforgery antiforgery) =>
+        {
+            var rawReturnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+            var error = context.Request.Query["error"].FirstOrDefault();
+
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
+            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
+
+            var errorHtml = error is not null
+                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
+                : "";
+
+            var html = $$"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                <title>Create account — fasolt</title>
+                <style>
+                    * { box-sizing: border-box; margin: 0; padding: 0; }
+                    html, body { height: 100%; }
+                    body {
+                        font-family: -apple-system, system-ui, sans-serif;
+                        background: #fafafa;
+                        color: #18181b;
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: center;
+                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
+                        -webkit-font-smoothing: antialiased;
+                    }
+                    @media (min-height: 720px) { body { align-items: center; } }
+                    .card {
+                        width: 100%;
+                        max-width: 380px;
+                        background: white;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 14px;
+                        padding: 24px 22px;
+                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+                    }
+                    .header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 18px; }
+                    .header h1 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; color: #18181b; }
+                    label { display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
+                    input[type=email], input[type=password] {
+                        width: 100%;
+                        padding: 10px 12px;
+                        border: 1px solid #d1d5db;
+                        border-radius: 8px;
+                        font-size: 0.9375rem;
+                        outline: none;
+                        background: white;
+                        -webkit-appearance: none;
+                    }
+                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
+                    .field { margin-bottom: 10px; }
+                    button {
+                        width: 100%;
+                        padding: 11px;
+                        margin-top: 4px;
+                        background: #18181b;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                    }
+                    button:disabled { background: #a1a1aa; cursor: not-allowed; }
+                    .error {
+                        color: #b91c1c;
+                        font-size: 0.8125rem;
+                        margin-bottom: 10px;
+                        padding: 8px 12px;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                    }
+                    .footer { text-align: center; margin-top: 14px; font-size: 0.8125rem; color: #71717a; }
+                    .footer a { color: #18181b; font-weight: 500; text-decoration: none; }
+                    .rules { margin-top: 6px; font-size: 0.75rem; color: #71717a; list-style: none; padding-left: 0; }
+                    .rules li { padding: 2px 0; }
+                    .rules li.ok { color: #059669; }
+                    .rules li.ok::before { content: "✓ "; }
+                    .rules li.pending::before { content: "○ "; }
+                    .mismatch { color: #b91c1c; font-size: 0.75rem; margin-top: 4px; }
+                    .tos { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 0.8125rem; color: #374151; }
+                    .tos input { margin-top: 2px; }
+                    .tos a { color: #18181b; font-weight: 500; }
+                    @media (prefers-color-scheme: dark) {
+                        body { background: #0a0a0a; color: #fafafa; }
+                        .card { background: #18181b; border-color: #27272a; }
+                        .header h1 { color: #fafafa; }
+                        label { color: #d4d4d8; }
+                        input[type=email], input[type=password] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
+                        button { background: #fafafa; color: #18181b; }
+                        .footer { color: #a1a1aa; }
+                        .footer a { color: #fafafa; }
+                        .tos { color: #d4d4d8; }
+                        .tos a { color: #fafafa; }
+                    }
+                </style>
+            </head>
+            <body>
+                <main class="card">
+                    <div class="header">
+                        <h1>Create your Fasolt account</h1>
+                    </div>
+                    {{errorHtml}}
+                    <form method="post" action="/oauth/register" id="registerForm">
+                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
+                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required autofocus />
+                        </div>
+                        <div class="field">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" autocomplete="new-password" required />
+                            <ul class="rules" id="rules">
+                                <li class="pending" data-rule="length">At least 8 characters</li>
+                                <li class="pending" data-rule="upper">Uppercase letter</li>
+                                <li class="pending" data-rule="lower">Lowercase letter</li>
+                                <li class="pending" data-rule="digit">Number</li>
+                            </ul>
+                        </div>
+                        <div class="field">
+                            <label for="confirmPassword">Confirm password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" required />
+                            <div class="mismatch" id="mismatch" style="display:none">Passwords don't match</div>
+                        </div>
+                        <label class="tos">
+                            <input type="checkbox" name="tosAccepted" value="true" id="tos" required />
+                            <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a></span>
+                        </label>
+                        <button type="submit" id="submit">Create account</button>
+                    </form>
+                    <p class="footer">Already have an account? <a href="/oauth/login?returnUrl={{returnUrlEncoded}}">Sign in</a></p>
+                </main>
+                <script>
+                    const pwd = document.getElementById('password');
+                    const confirm = document.getElementById('confirmPassword');
+                    const rules = document.getElementById('rules');
+                    const mismatch = document.getElementById('mismatch');
+                    function evaluate() {
+                        const v = pwd.value;
+                        const checks = {
+                            length: v.length >= 8,
+                            upper: /[A-Z]/.test(v),
+                            lower: /[a-z]/.test(v),
+                            digit: /[0-9]/.test(v)
+                        };
+                        for (const li of rules.children) {
+                            const r = li.dataset.rule;
+                            li.className = checks[r] ? 'ok' : 'pending';
+                        }
+                        mismatch.style.display = (confirm.value && confirm.value !== v) ? 'block' : 'none';
+                    }
+                    pwd.addEventListener('input', evaluate);
+                    confirm.addEventListener('input', evaluate);
+                </script>
+            </body>
+            </html>
+            """;
+            return Results.Content(html, "text/html");
+        });
+
+        // OAuth Register Handler (POST)
+        app.MapPost("/oauth/register", [AllowAnonymous] async (
+            HttpContext context,
+            UserManager<AppUser> userManager,
+            IEmailVerificationCodeService otpService,
+            IOtpEmailSender emailSender,
+            IAntiforgery antiforgery) =>
+        {
+            if (!await antiforgery.IsRequestValidAsync(context))
+                return Results.BadRequest("Invalid request");
+
+            var form = await context.Request.ReadFormAsync();
+            var email = form["email"].FirstOrDefault() ?? "";
+            var password = form["password"].FirstOrDefault() ?? "";
+            var confirmPassword = form["confirmPassword"].FirstOrDefault() ?? "";
+            var tosAccepted = form["tosAccepted"].FirstOrDefault() == "true";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
+
+            string? error = null;
+            if (!tosAccepted) error = "You must accept the Terms of Service.";
+            else if (password != confirmPassword) error = "Passwords don't match.";
+            else if (string.IsNullOrEmpty(email) || !email.Contains('@')) error = "Please enter a valid email address.";
+
+            if (error is not null)
+                return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
+
+            // Check if email exists
+            var existing = await userManager.FindByEmailAsync(email);
+            AppUser user;
+            if (existing is not null)
+            {
+                if (existing.EmailConfirmed)
+                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("An account with this email already exists. Sign in instead.")}");
+
+                // Unconfirmed existing user — reuse the row, regenerate OTP
+                user = existing;
+            }
+            else
+            {
+                user = new AppUser { UserName = email, Email = email };
+                var createResult = await userManager.CreateAsync(user, password);
+                if (!createResult.Succeeded)
+                {
+                    var msg = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}");
+                }
+            }
+
+            var code = await otpService.GenerateAndStoreAsync(user.Id, CancellationToken.None);
+            await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+
+            return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }).RequireRateLimiting("auth-strict");
 
         // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
         app.MapGet("/oauth/consent", async (
