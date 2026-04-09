@@ -334,10 +334,6 @@ public static class OAuthEndpoints
 
             var tokens = antiforgery.GetAndStoreTokens(context);
             var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
-
-            var errorHtml = error is not null
-                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
-                : "";
             var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
 
             var gitHubEnabled = !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]);
@@ -367,137 +363,51 @@ public static class OAuthEndpoints
                 </svg>
                 """;
 
-            var html = $$"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-                <title>Sign in — fasolt</title>
-                <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    html, body { height: 100%; }
-                    body {
-                        font-family: -apple-system, system-ui, sans-serif;
-                        background: #fafafa;
-                        color: #18181b;
-                        display: flex;
-                        align-items: flex-start;
-                        justify-content: center;
-                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
-                        -webkit-font-smoothing: antialiased;
-                    }
-                    @media (min-height: 640px) {
-                        body { align-items: center; }
-                    }
-                    .card {
-                        width: 100%;
-                        max-width: 380px;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 14px;
-                        padding: 24px 22px;
-                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-                    }
-                    .header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 18px; }
-                    .header svg { width: 48px; height: 48px; }
-                    .header h1 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; color: #18181b; }
-                    .header p { font-size: 0.8125rem; color: #71717a; margin-top: -2px; }
-                    label { display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
-                    input {
-                        width: 100%;
-                        padding: 10px 12px;
-                        border: 1px solid #d1d5db;
-                        border-radius: 8px;
-                        font-size: 0.9375rem;
-                        outline: none;
-                        background: white;
-                        transition: border-color 0.15s, box-shadow 0.15s;
-                        -webkit-appearance: none;
-                    }
-                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
-                    .field { margin-bottom: 10px; }
-                    button {
-                        width: 100%;
-                        padding: 11px;
-                        margin-top: 4px;
-                        background: #18181b;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-size: 0.9375rem;
-                        font-weight: 500;
-                        transition: background 0.15s;
-                    }
-                    button:hover { background: #27272a; }
-                    button:active { background: #09090b; }
-                    .error {
-                        color: #b91c1c;
-                        font-size: 0.8125rem;
-                        margin-bottom: 10px;
-                        padding: 8px 12px;
-                        background: #fef2f2;
-                        border: 1px solid #fecaca;
-                        border-radius: 8px;
-                    }
-                    .footer { text-align: center; margin-top: 14px; font-size: 0.75rem; color: #a1a1aa; }
-                    .or-divider {
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        margin: 12px 0;
-                        color: #a1a1aa;
-                        font-size: 0.75rem;
-                    }
-                    .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
-                    .btn-github {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        width: 100%;
-                        padding: 11px;
-                        background: #24292f;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-size: 0.9375rem;
-                        font-weight: 500;
-                        text-decoration: none;
-                        transition: background 0.15s;
-                    }
-                    .btn-github:hover { background: #32383f; }
-                    .btn-github:active { background: #1b1f23; }
-                    @media (prefers-color-scheme: dark) {
-                        body { background: #0a0a0a; color: #fafafa; }
-                        .card { background: #18181b; border-color: #27272a; }
-                        .header h1 { color: #fafafa; }
-                        .header p { color: #a1a1aa; }
-                        label { color: #d4d4d8; }
-                        input { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
-                        input:focus { border-color: #fafafa; box-shadow: 0 0 0 3px rgba(250, 250, 250, 0.08); }
-                        button { background: #fafafa; color: #18181b; }
-                        button:hover { background: #e4e4e7; }
-                        button:active { background: #d4d4d8; }
-                        .error { background: #450a0a; border-color: #7f1d1d; color: #fecaca; }
-                        .footer { color: #71717a; }
-                        .or-divider { color: #71717a; }
-                        .or-divider::before, .or-divider::after { background: #27272a; }
-                        .btn-github { background: #fafafa; color: #18181b; }
-                        .btn-github:hover { background: #e4e4e7; }
-                        .btn-github:active { background: #d4d4d8; }
-                    }
-                </style>
-            </head>
-            <body>
+            const string loginExtraStyles = """
+                            .or-divider {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+                                margin: 12px 0;
+                                color: #a1a1aa;
+                                font-size: 0.75rem;
+                            }
+                            .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+                            .btn-github {
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 8px;
+                                width: 100%;
+                                padding: 11px;
+                                background: #24292f;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 0.9375rem;
+                                font-weight: 500;
+                                text-decoration: none;
+                                transition: background 0.15s;
+                            }
+                            .btn-github:hover { background: #32383f; }
+                            .btn-github:active { background: #1b1f23; }
+                            @media (prefers-color-scheme: dark) {
+                                .or-divider { color: #71717a; }
+                                .or-divider::before, .or-divider::after { background: #27272a; }
+                                .btn-github { background: #fafafa; color: #18181b; }
+                                .btn-github:hover { background: #e4e4e7; }
+                                .btn-github:active { background: #d4d4d8; }
+                            }
+                """;
+
+            var body = $$"""
                 <main class="card">
                     <div class="header">
                         {{logoSvg}}
                         <h1>Sign in to fasolt</h1>
                     </div>
-                    {{errorHtml}}
+                    {{OAuthPageLayout.ErrorBlock(error)}}
                     {{gitHubHtml}}
                     <form method="post" action="/oauth/login">
                         <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
@@ -512,12 +422,11 @@ public static class OAuthEndpoints
                         </div>
                         <button type="submit">Sign in</button>
                     </form>
-                    <p class="footer">New to Fasolt? <a href="/oauth/register?returnUrl={{returnUrlEncoded}}" style="color:inherit;font-weight:500;">Create an account</a></p>
+                    <p class="footer">New to Fasolt? <a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Create an account</a></p>
                 </main>
-            </body>
-            </html>
-            """;
-            return Results.Content(html, "text/html");
+                """;
+
+            return Results.Content(OAuthPageLayout.Render("Sign in", body, loginExtraStyles), "text/html");
         });
 
         // OAuth Login Handler (POST)
@@ -601,108 +510,32 @@ public static class OAuthEndpoints
             var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
             var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
 
-            var errorHtml = error is not null
-                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
-                : "";
+            const string registerExtraStyles = """
+                            .rules { margin-top: 6px; font-size: 0.75rem; color: #71717a; list-style: none; padding-left: 0; }
+                            .rules li { padding: 2px 0; }
+                            .rules li.ok { color: #059669; }
+                            .rules li.ok::before { content: "✓ "; }
+                            .rules li.pending::before { content: "○ "; }
+                            .mismatch { color: #b91c1c; font-size: 0.75rem; margin-top: 4px; }
+                            .tos { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 0.8125rem; color: #374151; }
+                            .tos input { margin-top: 2px; width: auto; }
+                            .tos a { color: #18181b; font-weight: 500; }
+                            @media (prefers-color-scheme: dark) {
+                                .tos { color: #d4d4d8; }
+                                .tos a { color: #fafafa; }
+                            }
+                """;
 
-            var html = $$"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-                <title>Create account — fasolt</title>
-                <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    html, body { height: 100%; }
-                    body {
-                        font-family: -apple-system, system-ui, sans-serif;
-                        background: #fafafa;
-                        color: #18181b;
-                        display: flex;
-                        align-items: flex-start;
-                        justify-content: center;
-                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
-                        -webkit-font-smoothing: antialiased;
-                    }
-                    @media (min-height: 720px) { body { align-items: center; } }
-                    .card {
-                        width: 100%;
-                        max-width: 380px;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 14px;
-                        padding: 24px 22px;
-                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-                    }
-                    .header { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 18px; }
-                    .header h1 { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; color: #18181b; }
-                    label { display: block; font-size: 0.75rem; font-weight: 500; color: #374151; margin-bottom: 4px; }
-                    input[type=email], input[type=password] {
-                        width: 100%;
-                        padding: 10px 12px;
-                        border: 1px solid #d1d5db;
-                        border-radius: 8px;
-                        font-size: 0.9375rem;
-                        outline: none;
-                        background: white;
-                        -webkit-appearance: none;
-                    }
-                    input:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.08); }
-                    .field { margin-bottom: 10px; }
-                    button {
-                        width: 100%;
-                        padding: 11px;
-                        margin-top: 4px;
-                        background: #18181b;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-size: 0.9375rem;
-                        font-weight: 500;
-                    }
-                    button:disabled { background: #a1a1aa; cursor: not-allowed; }
-                    .error {
-                        color: #b91c1c;
-                        font-size: 0.8125rem;
-                        margin-bottom: 10px;
-                        padding: 8px 12px;
-                        background: #fef2f2;
-                        border: 1px solid #fecaca;
-                        border-radius: 8px;
-                    }
-                    .footer { text-align: center; margin-top: 14px; font-size: 0.8125rem; color: #71717a; }
-                    .footer a { color: #18181b; font-weight: 500; text-decoration: none; }
-                    .rules { margin-top: 6px; font-size: 0.75rem; color: #71717a; list-style: none; padding-left: 0; }
-                    .rules li { padding: 2px 0; }
-                    .rules li.ok { color: #059669; }
-                    .rules li.ok::before { content: "✓ "; }
-                    .rules li.pending::before { content: "○ "; }
-                    .mismatch { color: #b91c1c; font-size: 0.75rem; margin-top: 4px; }
-                    .tos { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 0.8125rem; color: #374151; }
-                    .tos input { margin-top: 2px; }
-                    .tos a { color: #18181b; font-weight: 500; }
-                    @media (prefers-color-scheme: dark) {
-                        body { background: #0a0a0a; color: #fafafa; }
-                        .card { background: #18181b; border-color: #27272a; }
-                        .header h1 { color: #fafafa; }
-                        label { color: #d4d4d8; }
-                        input[type=email], input[type=password] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
-                        button { background: #fafafa; color: #18181b; }
-                        .footer { color: #a1a1aa; }
-                        .footer a { color: #fafafa; }
-                        .tos { color: #d4d4d8; }
-                        .tos a { color: #fafafa; }
-                    }
-                </style>
-            </head>
-            <body>
+            // NOTE: Keep the rule list below in sync with the password policy
+            // configured in Program.cs (IdentityOptions.Password). Drift here
+            // means the client-side checklist lies to the user. Issue #107
+            // non-goal — tracked separately.
+            var body = $$"""
                 <main class="card">
                     <div class="header">
                         <h1>Create your Fasolt account</h1>
                     </div>
-                    {{errorHtml}}
+                    {{OAuthPageLayout.ErrorBlock(error)}}
                     <form method="post" action="/oauth/register" id="registerForm">
                         <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                         <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
@@ -733,6 +566,9 @@ public static class OAuthEndpoints
                     </form>
                     <p class="footer">Already have an account? <a href="/oauth/login?returnUrl={{returnUrlEncoded}}">Sign in</a></p>
                 </main>
+                """;
+
+            const string registerScript = """
                 <script>
                     const pwd = document.getElementById('password');
                     const confirm = document.getElementById('confirmPassword');
@@ -755,10 +591,9 @@ public static class OAuthEndpoints
                     pwd.addEventListener('input', evaluate);
                     confirm.addEventListener('input', evaluate);
                 </script>
-            </body>
-            </html>
-            """;
-            return Results.Content(html, "text/html");
+                """;
+
+            return Results.Content(OAuthPageLayout.Render("Create account", body, registerExtraStyles, registerScript), "text/html");
         });
 
         // OAuth Register Handler (POST)
@@ -850,110 +685,50 @@ public static class OAuthEndpoints
             var emailDisplay = System.Web.HttpUtility.HtmlEncode(email);
             var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
 
-            var errorHtml = error is not null
-                ? $"<p class=\"error\">{System.Web.HttpUtility.HtmlEncode(error)}</p>"
-                : "";
+            const string verifyExtraStyles = """
+                            .card { padding: 32px 24px; text-align: center; }
+                            .card h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #18181b; }
+                            .card p { color: #71717a; font-size: 0.875rem; margin-bottom: 20px; }
+                            .card p strong { color: #18181b; }
+                            input[name=code] {
+                                padding: 14px;
+                                font-size: 1.5rem;
+                                text-align: center;
+                                letter-spacing: 0.5em;
+                                font-family: ui-monospace, "SF Mono", Menlo, monospace;
+                                border-radius: 10px;
+                            }
+                            button { margin-top: 16px; }
+                            .resend { margin-top: 16px; font-size: 0.8125rem; color: #71717a; }
+                            .resend a { color: #18181b; font-weight: 500; text-decoration: none; }
+                            .resend form { display: inline; }
+                            .resend-inline-button {
+                                display: inline;
+                                width: auto;
+                                padding: 0;
+                                margin: 0;
+                                background: transparent;
+                                color: #18181b;
+                                font-weight: 500;
+                                text-decoration: underline;
+                                border: none;
+                                cursor: pointer;
+                                font-size: inherit;
+                            }
+                            @media (prefers-color-scheme: dark) {
+                                .card h1 { color: #fafafa; }
+                                .card p { color: #a1a1aa; }
+                                .card p strong { color: #fafafa; }
+                                .resend { color: #a1a1aa; }
+                                .resend a, .resend-inline-button { color: #fafafa; }
+                            }
+                """;
 
-            var html = $$"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-                <title>Verify email — fasolt</title>
-                <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    html, body { height: 100%; }
-                    body {
-                        font-family: -apple-system, system-ui, sans-serif;
-                        background: #fafafa;
-                        color: #18181b;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
-                    }
-                    .card {
-                        width: 100%;
-                        max-width: 380px;
-                        background: white;
-                        border: 1px solid #e5e7eb;
-                        border-radius: 14px;
-                        padding: 32px 24px;
-                        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-                        text-align: center;
-                    }
-                    .card h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #18181b; }
-                    .card p { color: #71717a; font-size: 0.875rem; margin-bottom: 20px; }
-                    .card p strong { color: #18181b; }
-                    input[type=text] {
-                        width: 100%;
-                        padding: 14px;
-                        font-size: 1.5rem;
-                        text-align: center;
-                        letter-spacing: 0.5em;
-                        font-family: ui-monospace, "SF Mono", Menlo, monospace;
-                        border: 1px solid #d1d5db;
-                        border-radius: 10px;
-                        background: white;
-                        outline: none;
-                    }
-                    input[type=text]:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.08); }
-                    button {
-                        width: 100%;
-                        padding: 11px;
-                        margin-top: 16px;
-                        background: #18181b;
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-size: 0.9375rem;
-                        font-weight: 500;
-                    }
-                    .resend { margin-top: 16px; font-size: 0.8125rem; color: #71717a; }
-                    .resend a { color: #18181b; font-weight: 500; text-decoration: none; }
-                    .resend form { display: inline; }
-                    .resend-inline-button {
-                        display: inline;
-                        width: auto;
-                        padding: 0;
-                        margin: 0;
-                        background: transparent;
-                        color: #18181b;
-                        font-weight: 500;
-                        text-decoration: underline;
-                        border: none;
-                        cursor: pointer;
-                        font-size: inherit;
-                    }
-                    .error {
-                        color: #b91c1c;
-                        font-size: 0.8125rem;
-                        margin-bottom: 10px;
-                        padding: 8px 12px;
-                        background: #fef2f2;
-                        border: 1px solid #fecaca;
-                        border-radius: 8px;
-                    }
-                    @media (prefers-color-scheme: dark) {
-                        body { background: #0a0a0a; color: #fafafa; }
-                        .card { background: #18181b; border-color: #27272a; }
-                        .card h1 { color: #fafafa; }
-                        .card p { color: #a1a1aa; }
-                        .card p strong { color: #fafafa; }
-                        input[type=text] { background: #0a0a0a; border-color: #3f3f46; color: #fafafa; }
-                        button { background: #fafafa; color: #18181b; }
-                        .resend { color: #a1a1aa; }
-                        .resend a, .resend-inline-button { color: #fafafa; }
-                    }
-                </style>
-            </head>
-            <body>
+            var body = $$"""
                 <main class="card">
                     <h1>Check your email</h1>
                     <p>We sent a 6-digit code to <strong>{{emailDisplay}}</strong></p>
-                    {{errorHtml}}
+                    {{OAuthPageLayout.ErrorBlock(error)}}
                     <form method="post" action="/oauth/verify-email">
                         <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                         <input type="hidden" name="email" value="{{emailEncoded}}" />
@@ -972,10 +747,9 @@ public static class OAuthEndpoints
                     </div>
                     <p class="resend"><a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Use a different email</a></p>
                 </main>
-            </body>
-            </html>
-            """;
-            return Results.Content(html, "text/html");
+                """;
+
+            return Results.Content(OAuthPageLayout.Render("Verify email", body, verifyExtraStyles), "text/html");
         });
 
         // OAuth Verify Email Handler (POST)
@@ -1102,39 +876,52 @@ public static class OAuthEndpoints
             var clientIdEncoded = System.Web.HttpUtility.HtmlAttributeEncode(clientId);
             var clientNameEncoded = System.Web.HttpUtility.HtmlEncode(clientName);
 
-            var html = $$"""
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <title>Authorize — fasolt</title>
-                <style>
-                    * { box-sizing: border-box; margin: 0; padding: 0; }
-                    body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #fafafa; padding: 16px; }
-                    .card { width: 100%; max-width: 380px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-                    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
-                    .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
-                    .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
-                    .app-name { font-weight: 600; color: #18181b; }
-                    .prompt { font-size: 0.875rem; color: #374151; text-align: center; margin-bottom: 16px; }
-                    .permissions { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
-                    .permissions-title { font-size: 0.75rem; font-weight: 500; color: #6b7280; margin-bottom: 8px; }
-                    .permissions ul { list-style: none; }
-                    .permissions li { font-size: 0.8125rem; color: #374151; padding: 3px 0; }
-                    .permissions li::before { content: "\2022"; color: #9ca3af; margin-right: 8px; }
-                    .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.15s; }
-                    .btn-approve { background: #18181b; color: white; margin-bottom: 8px; }
-                    .btn-approve:hover { background: #27272a; }
-                    .btn-approve:active { background: #09090b; }
-                    .btn-deny { background: white; color: #374151; border: 1px solid #d1d5db; }
-                    .btn-deny:hover { background: #f9fafb; }
-                    .btn-deny:active { background: #f3f4f6; }
-                    .footer { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #a1a1aa; }
-                </style>
-            </head>
-            <body>
-                <div class="card">
+            const string consentExtraStyles = """
+                            .card { padding: 32px; border-radius: 12px; }
+                            .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
+                            .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
+                            .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
+                            .app-name { font-weight: 600; color: #18181b; }
+                            .prompt { font-size: 0.875rem; color: #374151; text-align: center; margin-bottom: 16px; }
+                            .permissions { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
+                            .permissions-title { font-size: 0.75rem; font-weight: 500; color: #6b7280; margin-bottom: 8px; }
+                            .permissions ul { list-style: none; }
+                            .permissions li { font-size: 0.8125rem; color: #374151; padding: 3px 0; }
+                            .permissions li::before { content: "\2022"; color: #9ca3af; margin-right: 8px; }
+                            button[value=approve] { margin-top: 0; margin-bottom: 8px; }
+                            .btn-deny {
+                                width: 100%;
+                                padding: 11px;
+                                background: white;
+                                color: #374151;
+                                border: 1px solid #d1d5db;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 0.9375rem;
+                                font-weight: 500;
+                                transition: background 0.15s;
+                            }
+                            .btn-deny:hover { background: #f9fafb; }
+                            .btn-deny:active { background: #f3f4f6; }
+                            .footer { margin-top: 16px; }
+                            @media (prefers-color-scheme: dark) {
+                                .logo { color: #fafafa; }
+                                .subtitle { color: #a1a1aa; }
+                                .divider { background: #27272a; }
+                                .app-name { color: #fafafa; }
+                                .prompt { color: #d4d4d8; }
+                                .permissions { background: #0a0a0a; border-color: #27272a; }
+                                .permissions-title { color: #a1a1aa; }
+                                .permissions li { color: #d4d4d8; }
+                                .permissions li::before { color: #52525b; }
+                                .btn-deny { background: #18181b; color: #d4d4d8; border-color: #3f3f46; }
+                                .btn-deny:hover { background: #27272a; }
+                                .btn-deny:active { background: #0a0a0a; }
+                            }
+                """;
+
+            var body = $$"""
+                <main class="card">
                     <div class="logo">fasolt</div>
                     <p class="subtitle">Authorize application</p>
                     <div class="divider"></div>
@@ -1151,15 +938,14 @@ public static class OAuthEndpoints
                     <form method="post" action="/oauth/consent">
                         <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
                         <input type="hidden" name="client_id" value="{{clientIdEncoded}}" />
-                        <button type="submit" name="decision" value="approve" class="btn btn-approve">Authorize</button>
-                        <button type="submit" name="decision" value="deny" class="btn btn-deny">Deny</button>
+                        <button type="submit" name="decision" value="approve">Authorize</button>
+                        <button type="submit" name="decision" value="deny" class="btn-deny">Deny</button>
                     </form>
                     <p class="footer">You'll be redirected back to your application.</p>
-                </div>
-            </body>
-            </html>
-            """;
-            return Results.Content(html, "text/html");
+                </main>
+                """;
+
+            return Results.Content(OAuthPageLayout.Render("Authorize", body, consentExtraStyles), "text/html");
         });
 
         // OAuth Consent Handler (POST) — server-rendered form submission
