@@ -117,7 +117,10 @@ public static class OAuthEndpoints
             if (result?.Principal is null)
             {
                 var returnUrl = context.Request.QueryString.Value;
-                return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
+                var openIddictReq = context.GetOpenIddictServerRequest();
+                var hint = openIddictReq?.GetParameter("screen_hint")?.ToString();
+                var target = hint == "signup" ? "/oauth/register" : "/oauth/login";
+                return Results.Redirect($"{target}?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
             }
 
             // Block unverified users from authorizing OAuth clients
