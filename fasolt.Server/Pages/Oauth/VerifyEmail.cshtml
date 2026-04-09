@@ -1,0 +1,39 @@
+@page "/oauth/verify-email"
+@model VerifyEmailModel
+@{
+    ViewData["Title"] = "Verify your email";
+}
+
+<main class="oauth-card">
+    <h1>Verify your email</h1>
+    <p class="lead">We sent a 6-digit code to <strong>@(string.IsNullOrEmpty(Model.Email) ? "your email address" : Model.Email)</strong></p>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="oauth-error">@Model.ErrorMessage</div>
+    }
+
+    <form method="post" action="/oauth/verify-email">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Email" />
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div class="oauth-field">
+            <input asp-for="Input.Code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus required />
+        </div>
+        <button type="submit" class="oauth-btn">Verify</button>
+    </form>
+
+    <div class="oauth-resend">
+        Didn't get it?
+        <form method="post" asp-page-handler="resend">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Email" />
+            <input type="hidden" asp-for="ReturnUrl" />
+            <button type="submit">Resend code</button>
+        </form>
+    </div>
+
+    <div class="oauth-footer">
+        <a href="/oauth/login?returnUrl=@Uri.EscapeDataString(Model.ReturnUrl)">Back to sign in</a>
+    </div>
+</main>
