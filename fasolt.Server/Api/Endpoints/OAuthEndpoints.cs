@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -11,7 +10,6 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using Fasolt.Server.Api.Helpers;
-using Fasolt.Server.Api.Helpers.OAuthPages;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
@@ -317,108 +315,6 @@ public static class OAuthEndpoints
                 error_description = "The specified grant type is not supported.",
             });
         }).RequireRateLimiting("auth");
-
-        // OAuth Consent Page (GET) — server-rendered for ASWebAuthenticationSession compatibility
-        app.MapGet("/oauth/consent", async (
-            HttpContext context,
-            IOpenIddictApplicationManager applicationManager,
-            IAntiforgery antiforgery) =>
-        {
-            var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-            if (result?.Principal is null)
-                return Results.Redirect("/oauth/login");
-
-            var clientId = context.Request.Query["client_id"].FirstOrDefault() ?? "";
-            var application = await applicationManager.FindByClientIdAsync(clientId);
-            var clientName = application is not null
-                ? (await applicationManager.GetDisplayNameAsync(application) ?? clientId)
-                : clientId;
-
-            var tokens = antiforgery.GetAndStoreTokens(context);
-
-            return Results.Content(
-                OAuthConsentPage.Render(tokens.RequestToken!, clientId, clientName),
-                "text/html");
-        });
-
-        // OAuth Consent Handler (POST) — server-rendered form submission
-        app.MapPost("/oauth/consent", async (
-            HttpContext context,
-            IOpenIddictApplicationManager applicationManager,
-            IDataProtectionProvider dataProtection,
-            AppDbContext db,
-            IAntiforgery antiforgery) =>
-        {
-            if (!await antiforgery.IsRequestValidAsync(context))
-                return Results.BadRequest("Invalid request");
-
-            var result = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-            if (result?.Principal is null)
-                return Results.Redirect("/oauth/login");
-
-            var userId = result.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-            var form = await context.Request.ReadFormAsync();
-            var clientId = form["client_id"].FirstOrDefault() ?? "";
-            var decision = form["decision"].FirstOrDefault() ?? "";
-
-            var application = await applicationManager.FindByClientIdAsync(clientId);
-            if (application is null)
-                return Results.BadRequest("Unknown client");
-
-            // Validate that an active OAuth flow exists (cookie must be present)
-            var encryptedQuery = context.Request.Cookies["oauth_authorize_query"];
-            if (string.IsNullOrEmpty(encryptedQuery))
-                return Results.BadRequest("No active authorization flow");
-
-            // Decrypt and validate the stored query string
-            var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
-            string authorizeQuery;
-            try
-            {
-                authorizeQuery = protector.Unprotect(encryptedQuery);
-            }
-            catch
-            {
-                return Results.BadRequest("Invalid or expired authorization flow");
-            }
-
-            // Verify the client_id in the cookie matches the consent form
-            var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(authorizeQuery.TrimStart('?'));
-            if (!queryParams.TryGetValue("client_id", out var cookieClientId) || cookieClientId != clientId)
-                return Results.BadRequest("Client ID mismatch");
-
-            context.Response.Cookies.Delete("oauth_authorize_query");
-
-            if (decision == "approve")
-            {
-                // Store consent grant
-                var existing = await db.ConsentGrants
-                    .FirstOrDefaultAsync(g => g.UserId == userId && g.ClientId == clientId);
-                if (existing is null)
-                {
-                    db.ConsentGrants.Add(new ConsentGrant
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = userId,
-                        ClientId = clientId,
-                        GrantedAt = DateTimeOffset.UtcNow,
-                    });
-                    await db.SaveChangesAsync();
-                }
-
-                // Redirect back to authorize endpoint
-                return Results.Redirect($"/oauth/authorize{authorizeQuery}");
-            }
-            else
-            {
-                // Deny — redirect to client with error
-                var redirectUris = await applicationManager.GetRedirectUrisAsync(application);
-                var clientRedirectUri = redirectUris.FirstOrDefault() ?? "/";
-                var separator = clientRedirectUri.Contains('?') ? '&' : '?';
-                return Results.Redirect($"{clientRedirectUri}{separator}error=access_denied");
-            }
-        });
 
         // Consent Info API (GET) — for Vue SPA fallback
         app.MapGet("/api/oauth/consent-info", async (

@@ -1,0 +1,29 @@
+@page "/oauth/consent"
+@model ConsentModel
+@{
+    ViewData["Title"] = "Authorize application";
+}
+
+<main class="oauth-card">
+    <h1>Authorize application</h1>
+    <p class="lead"><strong>@Model.ClientName</strong> wants to access your fasolt account.</p>
+
+    <div class="oauth-permissions">
+        <div class="oauth-permissions-title">This will allow the application to:</div>
+        <ul>
+            <li>Read and create flashcards and decks</li>
+            <li>View and manage sources</li>
+            <li>Review cards and track study progress</li>
+            <li>Stay signed in and refresh access</li>
+        </ul>
+    </div>
+
+    <form method="post" action="/oauth/consent">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ClientId" />
+        <button type="submit" name="Decision" value="approve" class="oauth-btn">Authorize</button>
+        <button type="submit" name="Decision" value="deny" class="oauth-btn-secondary">Deny</button>
+    </form>
+
+    <p class="oauth-footer">You'll be redirected back to your application.</p>
+</main>
