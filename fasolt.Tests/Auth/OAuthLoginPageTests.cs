@@ -1,10 +1,8 @@
 using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Domain.Entities;
-using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Tests.Auth;
 
@@ -63,6 +61,20 @@ public class OAuthLoginPageTests : IClassFixture<WebApplicationFactory<Program>>
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().StartWith("/api/account/github-login");
+    }
+
+    [Theory]
+    [InlineData("github_auth_failed", "GitHub authentication failed. Please try again.")]
+    [InlineData("account_creation_failed", "Could not create your account. Please try again.")]
+    public async Task Get_WithErrorQuery_RendersMappedMessage(string errorCode, string expectedMessage)
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync($"/oauth/login?returnUrl=%2F&error={errorCode}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain(expectedMessage);
+        body.Should().Contain("oauth-error");
     }
 
     [Fact]
@@ -149,6 +161,43 @@ public class OAuthLoginPageTests : IClassFixture<WebApplicationFactory<Program>>
         response.Headers.TryGetValues("Set-Cookie", out var setCookies).Should().BeTrue();
         setCookies!.Any(c => c.Contains(".AspNetCore.Identity.Application")).Should().BeTrue(
             "successful login must issue the Identity application cookie");
+        setCookies!.Any(c => c.Contains(".AspNetCore.Identity.Application") && c.Contains("expires=", StringComparison.OrdinalIgnoreCase))
+            .Should().BeTrue("isPersistent: true must issue a cookie with an explicit Expires attribute, not a session cookie");
+    }
+
+    [Fact]
+    public async Task Post_MaliciousReturnUrl_RedirectsToRootNotEvilDomain()
+    {
+        var email = $"redirect-{Guid.NewGuid():N}@example.com";
+        const string password = "Abcdefg1";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
+            var user = new AppUser { UserName = email, Email = email, EmailConfirmed = true };
+            (await userManager.CreateAsync(user, password)).Succeeded.Should().BeTrue();
+        }
+
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var getResponse = await client.GetAsync("/oauth/login?returnUrl=https%3A%2F%2Fevil.com");
+        var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+        var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = csrfToken,
+            ["Input.Email"] = email,
+            ["Input.Password"] = password,
+            ["ReturnUrl"] = "https://evil.com",
+        });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+        request.Headers.Add("Cookie", cookieHeader);
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location!.OriginalString.Should().Be("/",
+            "UrlHelpers.IsLocalUrl must reject absolute URLs and fall back to '/'");
     }
 
     [Fact]
@@ -209,8 +258,11 @@ public class OAuthLoginPageTests : IClassFixture<WebApplicationFactory<Program>>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
-        // Data-annotation EmailAddress validator surfaces via ModelState
-        body.Should().MatchRegex("[Ee]mail");
+        // Data-annotation EmailAddress validator surfaces via ModelState into the
+        // oauth-field-error span rendered by asp-validation-for. The regex requires
+        // non-empty content inside the span, so a bare <span class="oauth-field-error"></span>
+        // would fail — catching a broken asp-validation-for tag helper.
+        body.Should().MatchRegex(@"class=""oauth-field-error[^""]*""[^>]*>\s*[^\s<][^<]*</span>");
     }
 
     private static string ExtractCsrfToken(string html)
