@@ -82,16 +82,15 @@ public class OAuthVerifyEmailEndpointTests : IClassFixture<WebApplicationFactory
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().Be("/");
 
-        // Session should be persistent (isPersistent: true) — cookie has an expires attribute
-        var setCookieHeaders = response.Headers.Contains("Set-Cookie")
-            ? response.Headers.GetValues("Set-Cookie")
-            : getResponse.Headers.GetValues("Set-Cookie");
+        // Session should be persistent (isPersistent: true) — cookie has an expires attribute.
+        // This assertion guards against a silent regression of the Task 4 convergence
+        // decision to default to persistent sessions across all auth pages.
+        response.Headers.Contains("Set-Cookie").Should().BeTrue();
+        var setCookieHeaders = response.Headers.GetValues("Set-Cookie").ToList();
         var identityCookie = setCookieHeaders.FirstOrDefault(c => c.Contains(".AspNetCore.Identity.Application"));
-        // The identity application cookie should be set on the POST response
-        var postCookies = response.Headers.Contains("Set-Cookie")
-            ? string.Join("; ", response.Headers.GetValues("Set-Cookie"))
-            : "";
-        postCookies.Should().Contain(".AspNetCore.Identity.Application");
+        identityCookie.Should().NotBeNull("successful verify must issue the Identity cookie on the POST response");
+        identityCookie!.Should().Contain("expires=",
+            "isPersistent: true must issue a cookie with an explicit Expires attribute, not a session cookie");
 
         using var verifyScope = _factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
