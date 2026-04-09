@@ -942,8 +942,15 @@ public static class OAuthEndpoints
             switch (result)
             {
                 case VerifyResult.Ok:
+                    // UpdateAsync must precede SignInAsync so the Identity cookie
+                    // reflects the confirmed state. If UpdateAsync silently failed,
+                    // we'd hand out a cookie claiming "email_confirmed" while the
+                    // DB row still said otherwise — a confusing half-state, and
+                    // the OTP row has already been consumed inside VerifyAsync.
                     user.EmailConfirmed = true;
-                    await userManager.UpdateAsync(user);
+                    var updateResult = await userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                        return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
                     await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
                     return Results.Redirect(returnUrl);
                 case VerifyResult.Incorrect:
