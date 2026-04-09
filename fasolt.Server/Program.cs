@@ -138,6 +138,16 @@ builder.Services.AddHttpClient(Fasolt.Server.Application.Auth.AppleJwksCache.Htt
 builder.Services.AddSingleton<Fasolt.Server.Application.Auth.AppleJwksCache>();
 builder.Services.AddScoped<Fasolt.Server.Application.Auth.AppleAuthService>();
 
+// Email verification OTP service
+builder.Services.AddSingleton(TimeProvider.System);
+var otpPepper = builder.Configuration["OTP_PEPPER"]
+    ?? throw new InvalidOperationException("OTP_PEPPER is not configured. Generate with 'openssl rand -hex 32' and set in .env or environment.");
+builder.Services.AddScoped<Fasolt.Server.Application.Auth.IEmailVerificationCodeService>(sp =>
+    new Fasolt.Server.Application.Auth.EmailVerificationCodeService(
+        sp.GetRequiredService<Fasolt.Server.Infrastructure.Data.AppDbContext>(),
+        otpPepper,
+        sp.GetRequiredService<TimeProvider>()));
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;
