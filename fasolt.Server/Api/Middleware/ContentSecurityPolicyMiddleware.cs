@@ -38,10 +38,13 @@ public class ContentSecurityPolicyMiddleware
     {
         context.Response.OnStarting(() =>
         {
-            if (!context.Response.Headers.ContainsKey("Content-Security-Policy"))
-            {
-                context.Response.Headers["Content-Security-Policy"] = PolicyHeaderValue;
-            }
+            // Always overwrite — a less strict CSP may have been set by an
+            // upstream middleware for non-oauth paths, but for /oauth/*
+            // (the only path this middleware runs on) we want the strict
+            // version to take precedence. OnStarting callbacks fire in LIFO
+            // order, and this middleware runs after the baseline middleware in
+            // the pipeline, so its callback fires last and wins.
+            context.Response.Headers["Content-Security-Policy"] = PolicyHeaderValue;
             return Task.CompletedTask;
         });
 

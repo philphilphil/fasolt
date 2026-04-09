@@ -48,13 +48,20 @@ public class OAuthCspHeaderTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task NonOauthPaths_DoNotReturnCspHeader()
+    public async Task NonOauthPaths_StillReturnPermissiveCsp()
     {
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/health");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        response.Headers.Contains("Content-Security-Policy").Should().BeFalse(
-            "CSP middleware should be scoped to /oauth/*");
+        response.Headers.Contains("Content-Security-Policy").Should().BeTrue(
+            "non-oauth paths still need CSP — the SPA bundle has XSS surface area too");
+
+        var csp = string.Join(";", response.Headers.GetValues("Content-Security-Policy"));
+        // The permissive policy allows unsafe-inline for styles (SPA uses runtime
+        // style injection via shadcn/Vue). The oauth-scoped policy is stricter
+        // and does not permit unsafe-inline — see OauthPages_ReturnCspHeader.
+        csp.Should().Contain("default-src 'self'");
+        csp.Should().Contain("'unsafe-inline'", "SPA style-src needs unsafe-inline");
     }
 }
