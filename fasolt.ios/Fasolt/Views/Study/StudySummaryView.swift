@@ -8,55 +8,43 @@ struct StudySummaryView: View {
     var suspendedCount: Int = 0
     let onDone: () -> Void
 
-    private var isEmptySession: Bool {
-        cardsStudied == 0 && skippedCount == 0 && suspendedCount == 0
-    }
-
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
 
-            Image(systemName: isEmptySession ? "sparkles" : "checkmark.circle.fill")
+            Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 56))
-                .foregroundStyle(isEmptySession ? .blue : .green)
+                .foregroundStyle(.green)
 
-            Text(isEmptySession ? "All caught up!" : "Session Complete")
+            Text("Session Complete")
                 .font(.title2.bold())
 
-            if isEmptySession {
-                Text("No cards are due for review right now.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            } else {
-                VStack(spacing: 12) {
-                    HStack {
-                        Text("Cards studied")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text("\(cardsStudied)")
-                            .fontWeight(.semibold)
-                    }
-
-                    Divider()
-
-                    ratingRow("Again", count: ratingsCount["again"] ?? 0, color: .red)
-                    ratingRow("Hard", count: ratingsCount["hard"] ?? 0, color: .orange)
-                    ratingRow("Good", count: ratingsCount["good"] ?? 0, color: .green)
-                    ratingRow("Easy", count: ratingsCount["easy"] ?? 0, color: .blue)
-
-                    if skippedCount > 0 {
-                        ratingRow("Skipped", count: skippedCount, color: .gray)
-                    }
-
-                    if suspendedCount > 0 {
-                        ratingRow("Suspended", count: suspendedCount, color: .gray)
-                    }
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Cards studied")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(cardsStudied)")
+                        .fontWeight(.semibold)
                 }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+
+                Divider()
+
+                ratingRow("Again", count: ratingsCount["again"] ?? 0, color: .red)
+                ratingRow("Hard", count: ratingsCount["hard"] ?? 0, color: .orange)
+                ratingRow("Good", count: ratingsCount["good"] ?? 0, color: .green)
+                ratingRow("Easy", count: ratingsCount["easy"] ?? 0, color: .blue)
+
+                if skippedCount > 0 {
+                    ratingRow("Skipped", count: skippedCount, color: .gray)
+                }
+
+                if suspendedCount > 0 {
+                    ratingRow("Suspended", count: suspendedCount, color: .gray)
+                }
             }
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
 
             if failedRatings > 0 {
                 Label(

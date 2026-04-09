@@ -12,6 +12,7 @@ struct MainTabView: View {
     @State private var notificationService: NotificationService?
     @State private var showStudy = false
     @State private var studyDeckId: String?
+    @State private var selectedTab: Int = 0
     @State private var router = NavigationRouter.shared
 
     var body: some View {
@@ -23,13 +24,14 @@ struct MainTabView: View {
                     return vm
                 }
 
-                TabView {
+                TabView(selection: $selectedTab) {
                     DashboardView(
                         viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository)
                     )
                     .tabItem {
                         Label("Study", systemImage: "book.fill")
                     }
+                    .tag(0)
 
                     LibraryView(
                         deckListViewModel: DeckListViewModel(deckRepository: deckRepository),
@@ -44,6 +46,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Library", systemImage: "books.vertical.fill")
                     }
+                    .tag(1)
 
                     SettingsView(
                         viewModel: SettingsViewModel(apiClient: authService.apiClient),
@@ -54,6 +57,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
+                    .tag(2)
                 }
                 .fullScreenCover(isPresented: $showStudy, onDismiss: {
                     studyDeckId = nil
@@ -105,13 +109,8 @@ struct MainTabView: View {
         guard let deepLink = router.pendingDeepLink else { return }
         switch deepLink {
         case .study:
-            // Clear first so tapping the notification again after dismissing
-            // study can trigger another navigation.
             router.pendingDeepLink = nil
-            // Avoid re-presenting while a study session is already on screen.
-            guard !showStudy else { return }
-            studyDeckId = nil
-            showStudy = true
+            selectedTab = 0
         }
     }
 }

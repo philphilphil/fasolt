@@ -5,7 +5,7 @@ import os
 
 private let appLogger = Logger(subsystem: "com.fasolt.app", category: "AppDelegate")
 
-class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, @preconcurrency UNUserNotificationCenterDelegate {
     var onDeviceToken: ((Data) -> Void)?
 
     func application(_ application: UIApplication,
@@ -28,19 +28,19 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
     // Show notifications as banners even when app is in foreground.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification) async
-        -> UNNotificationPresentationOptions {
-        [.banner, .sound, .badge]
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound, .badge])
     }
 
     // Handle user tapping a notification — deep link into the study screen.
     func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse) async {
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        defer { completionHandler() }
         guard response.actionIdentifier == UNNotificationDefaultActionIdentifier else { return }
         appLogger.info("Notification tapped — requesting study view")
-        await MainActor.run {
-            NavigationRouter.shared.pendingDeepLink = .study
-        }
+        NavigationRouter.shared.pendingDeepLink = .study
     }
 }
 
