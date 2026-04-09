@@ -176,6 +176,51 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
+    public async Task Post_WithMalformedEmail_RendersFormWithError()
+    {
+        // Syntactically invalid email → Razor model validation rejects via
+        // [EmailAddress] attribute, PageModel sets ErrorMessage and returns
+        // Page(). Unlike the old endpoint (which redirected with ?error=),
+        // the new flow re-renders the form inline. Not a security regression:
+        // email format is knowable client-side without hitting the server,
+        // so distinguishing "valid format" from "invalid format" leaks nothing
+        // about account existence. This test pins the new behavior as intentional.
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var getResponse = await client.GetAsync("/oauth/forgot-password?returnUrl=%2F");
+        var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+        var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = csrfToken,
+            ["Input.Email"] = "not-an-email",
+            ["ReturnUrl"] = "/",
+        });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/forgot-password") { Content = content };
+        request.Headers.Add("Cookie", cookieHeader);
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Reset your password", "form re-renders on validation failure");
+        body.Should().Contain("Please enter a valid email address.", "banner message is surfaced");
+    }
+
+    [Fact]
+    public async Task Get_WithErrorQuery_RendersErrorBanner()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/oauth/forgot-password?returnUrl=%2F&error=Rate%20limit%20exceeded");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Rate limit exceeded");
+        body.Should().Contain("oauth-error");
+    }
+
+    [Fact]
     public async Task LegacyForgotPasswordPath_RedirectsToOAuthForgotPassword()
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
