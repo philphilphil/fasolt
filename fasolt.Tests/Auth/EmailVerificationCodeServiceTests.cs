@@ -186,6 +186,39 @@ public class EmailVerificationCodeServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task VerifyAsync_GivesFreshAttemptsAfterLockoutExpires_NotSingleShot()
+    {
+        // This is the real regression test for the re-lock-on-first-wrong-attempt
+        // bug: pre-fix, once Attempts hit 5 and LockedUntil passed, the very next
+        // wrong attempt would return LockedOut again (because Attempts was still 5
+        // and incremented to 6, immediately re-locking). The fix resets Attempts
+        // to 0 on lockout expiry so the user gets a genuine fresh 5-attempt window.
+        var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (service, ctx) = CreateService(time);
+        await using var _ = ctx;
+
+        await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+
+        // Lock the user out
+        for (var i = 0; i < 5; i++)
+            await service.VerifyAsync(_db.UserId, "000001", CancellationToken.None);
+
+        // Advance past the lockout window
+        time.Advance(TimeSpan.FromMinutes(11));
+
+        // A wrong code should return Incorrect (not LockedOut) — i.e. the user
+        // has fresh attempts. Pre-fix this would return LockedOut.
+        (await service.VerifyAsync(_db.UserId, "000001", CancellationToken.None))
+            .Should().Be(VerifyResult.Incorrect);
+
+        // And the row's Attempts should be 1 (fresh count), not 6
+        await using var read = _db.CreateDbContext();
+        var row = await read.EmailVerificationCodes.SingleAsync(r => r.UserId == _db.UserId);
+        row.Attempts.Should().Be(1);
+        row.LockedUntil.Should().BeNull();
+    }
+
+    [Fact]
     public async Task VerifyAsync_ReturnsNotFound_WhenNoRowExists()
     {
         var (service, ctx) = CreateService();
