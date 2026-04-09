@@ -740,33 +740,46 @@ public static class OAuthEndpoints
             if (error is not null)
                 return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(error)}");
 
-            // Check if email exists
+            // Enforce the password policy before touching the user lookup. If
+            // this ran after FindByEmailAsync, weak passwords + already-taken
+            // emails would short-circuit to the verify-email redirect while
+            // weak passwords + new emails would error — an enumeration oracle.
+            // Running it first makes the error response identical regardless of
+            // whether the email exists.
+            var passwordProbe = new AppUser { UserName = email, Email = email };
+            foreach (var validator in userManager.PasswordValidators)
+            {
+                var pwResult = await validator.ValidateAsync(userManager, passwordProbe, password);
+                if (!pwResult.Succeeded)
+                {
+                    var pwMsg = string.Join("; ", pwResult.Errors.Select(e => e.Description));
+                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(pwMsg)}");
+                }
+            }
+
+            // Check if email exists. We never reveal whether a given address is
+            // already registered (enumeration) and we never let an anonymous
+            // POST regenerate OTPs on behalf of an existing user (griefing).
+            // Both cases fall through to the same generic verify-email redirect
+            // as a fresh signup — indistinguishable from the attacker's side.
+            // If the real owner of an unconfirmed account lost their code, they
+            // can request a new one from the verify-email page, which is
+            // separately rate-limited and goes through CanResendAsync.
             var existing = await userManager.FindByEmailAsync(email);
-            AppUser user;
             if (existing is not null)
             {
-                if (existing.EmailConfirmed)
-                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("An account with this email already exists. Sign in instead.")}");
-
-                // Unconfirmed existing user — reuse the row, regenerate OTP.
-                // Guard against exceeding the per-session send cap — the service
-                // throws InvalidOperationException at SentCount >= 5, which
-                // would surface as a 500 without this check.
-                var canResend = await otpService.CanResendAsync(existing.Id, context.RequestAborted);
-                if (canResend == ResendResult.TooManyAttempts)
-                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("Too many verification emails sent for this address. Try again later.")}");
-
-                user = existing;
+                return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
             }
-            else
+
+            var user = new AppUser { UserName = email, Email = email };
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
             {
-                user = new AppUser { UserName = email, Email = email };
-                var createResult = await userManager.CreateAsync(user, password);
-                if (!createResult.Succeeded)
-                {
-                    var msg = string.Join("; ", createResult.Errors.Select(e => e.Description));
-                    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}");
-                }
+                // Should be rare now that PasswordValidators ran above, but
+                // CreateAsync also enforces User.* policies (e.g. invalid email
+                // characters) that we haven't pre-validated.
+                var msg = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}");
             }
 
             var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
@@ -993,8 +1006,10 @@ public static class OAuthEndpoints
             {
                 case ResendResult.TooSoon:
                     return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+                case ResendResult.LockedOut:
+                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
                 case ResendResult.TooManyAttempts:
-                    return Results.Redirect(ErrorRedirect("Too many codes sent. Please start over with 'Use a different email'."));
+                    return Results.Redirect(ErrorRedirect("Too many codes sent. Please wait and try again later."));
             }
 
             var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);

@@ -121,67 +121,19 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
     }
 
     [Fact]
-    public async Task Post_WhenUnconfirmedUserHasReachedSendCap_ReturnsError()
+    public async Task Post_WhenEmailAlreadyConfirmed_SilentlyRedirectsToVerify_AndSendsNoCode()
     {
-        var email = $"cap-test-{Guid.NewGuid():N}@example.com";
-        string userId;
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
-            var user = new AppUser { UserName = email, Email = email, EmailConfirmed = false };
-            await userManager.CreateAsync(user, "Abcdefg1");
-            userId = user.Id;
-
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            // Seed an OTP row at the session cap so the next generate would throw
-            db.EmailVerificationCodes.Add(new EmailVerificationCode
-            {
-                UserId = userId,
-                CodeHash = "dummy",
-                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15),
-                Attempts = 0,
-                SentCount = 5,
-                LastSentAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-                LockedUntil = null,
-            });
-            await db.SaveChangesAsync();
-        }
-
-        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
-        var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
-        var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
-
-        var content = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["password"] = "Abcdefg1",
-            ["confirmPassword"] = "Abcdefg1",
-            ["tosAccepted"] = "true",
-            ["returnUrl"] = "/",
-        });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
-        request.Headers.Add("Cookie", cookieHeader);
-
-        var response = await client.SendAsync(request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        var location = response.Headers.Location!.OriginalString;
-        location.Should().StartWith("/oauth/register");
-        location.Should().Contain("error=");
-        location.Should().Contain("Too");
-    }
-
-    [Fact]
-    public async Task Post_WhenEmailAlreadyConfirmed_RedirectsWithError()
-    {
+        // Enumeration resistance: an attacker probing for a registered email
+        // must see the same response as a fresh signup. We land on the
+        // verify-email page with no new OTP row for the victim.
         var email = $"confirmed-{Guid.NewGuid():N}@example.com";
+        string userId;
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
             var user = new AppUser { UserName = email, Email = email, EmailConfirmed = true };
             await userManager.CreateAsync(user, "Abcdefg1");
+            userId = user.Id;
         }
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -205,8 +157,75 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         var location = response.Headers.Location!.OriginalString;
-        location.Should().StartWith("/oauth/register");
-        location.Should().Contain("already");
+        location.Should().StartWith("/oauth/verify-email");
+        location.Should().Contain(Uri.EscapeDataString(email));
+        location.Should().NotContain("error=");
+        location.Should().NotContain("already");
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var codeRow = await db.EmailVerificationCodes.FirstOrDefaultAsync(r => r.UserId == userId);
+        codeRow.Should().BeNull("no OTP may be generated for an already-confirmed account");
+    }
+
+    [Fact]
+    public async Task Post_WhenUnconfirmedUserExists_RedirectsToVerify_WithoutRegeneratingCode()
+    {
+        // Griefing resistance: an anonymous POST must not trigger a new OTP
+        // send against an existing unconfirmed account. The real user can
+        // request a fresh code from the verify-email page instead.
+        var email = $"unconfirmed-{Guid.NewGuid():N}@example.com";
+        string userId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
+            var user = new AppUser { UserName = email, Email = email, EmailConfirmed = false };
+            await userManager.CreateAsync(user, "Abcdefg1");
+            userId = user.Id;
+
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.EmailVerificationCodes.Add(new EmailVerificationCode
+            {
+                UserId = userId,
+                CodeHash = "dummyhash",
+                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15),
+                Attempts = 0,
+                SentCount = 1,
+                LastSentAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+                LockedUntil = null,
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
+        var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+        var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = csrfToken,
+            ["email"] = email,
+            ["password"] = "Different9",
+            ["confirmPassword"] = "Different9",
+            ["tosAccepted"] = "true",
+            ["returnUrl"] = "/",
+        });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
+        request.Headers.Add("Cookie", cookieHeader);
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        var location = response.Headers.Location!.OriginalString;
+        location.Should().StartWith("/oauth/verify-email");
+        location.Should().NotContain("error=");
+
+        using var verifyScope = _factory.Services.CreateScope();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var codeRow = await verifyDb.EmailVerificationCodes.SingleAsync(r => r.UserId == userId);
+        codeRow.CodeHash.Should().Be("dummyhash", "the existing OTP row must not be regenerated");
+        codeRow.SentCount.Should().Be(1, "SentCount must not be incremented by anonymous POST");
     }
 
     [Fact]
