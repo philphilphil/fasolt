@@ -4,19 +4,21 @@ namespace Fasolt.Server.Application.Auth;
 
 public class AppleJwksCache
 {
+    public const string HttpClientName = "AppleJwks";
+
     private const string AppleJwksUrl = "https://appleid.apple.com/auth/keys";
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromHours(1);
 
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly TimeProvider _time;
     private readonly SemaphoreSlim _lock = new(1, 1);
 
     private JsonWebKeySet? _cached;
     private DateTimeOffset _expiresAt;
 
-    public AppleJwksCache(HttpClient httpClient, TimeProvider? time = null)
+    public AppleJwksCache(IHttpClientFactory httpClientFactory, TimeProvider? time = null)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
         _time = time ?? TimeProvider.System;
     }
 
@@ -33,7 +35,8 @@ public class AppleJwksCache
             if (_cached is not null && now < _expiresAt)
                 return _cached;
 
-            var json = await _httpClient.GetStringAsync(AppleJwksUrl, cancellationToken);
+            var client = _httpClientFactory.CreateClient(HttpClientName);
+            var json = await client.GetStringAsync(AppleJwksUrl, cancellationToken);
             var keys = new JsonWebKeySet(json);
             _cached = keys;
             _expiresAt = now.Add(CacheLifetime);

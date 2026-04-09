@@ -110,7 +110,8 @@ public class AppleTokenEndpointTests : IClassFixture<WebApplicationFactory<Progr
     private sealed class StubJwksCache : AppleJwksCache
     {
         private readonly JsonWebKeySet _keys;
-        public StubJwksCache(RSA rsa, string kid) : base(new HttpClient())
+        public StubJwksCache(RSA rsa, string kid)
+            : base(new StubHttpClientFactory(), TimeProvider.System)
         {
             var p = rsa.ExportParameters(false);
             var jwk = new JsonWebKey
@@ -123,5 +124,10 @@ public class AppleTokenEndpointTests : IClassFixture<WebApplicationFactory<Progr
             _keys.Keys.Add(jwk);
         }
         public override Task<JsonWebKeySet> GetKeysAsync(CancellationToken ct = default) => Task.FromResult(_keys);
+    }
+
+    private sealed class StubHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new();
     }
 }

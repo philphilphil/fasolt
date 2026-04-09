@@ -131,8 +131,11 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
-// Sign in with Apple
-builder.Services.AddHttpClient<Fasolt.Server.Application.Auth.AppleJwksCache>();
+// Sign in with Apple — JWKS cache must be singleton so the in-memory
+// cache survives across requests. Uses a named HttpClient so the
+// typed-client's transient lifetime doesn't leak.
+builder.Services.AddHttpClient(Fasolt.Server.Application.Auth.AppleJwksCache.HttpClientName);
+builder.Services.AddSingleton<Fasolt.Server.Application.Auth.AppleJwksCache>();
 builder.Services.AddScoped<Fasolt.Server.Application.Auth.AppleAuthService>();
 
 builder.Services.ConfigureApplicationCookie(options =>

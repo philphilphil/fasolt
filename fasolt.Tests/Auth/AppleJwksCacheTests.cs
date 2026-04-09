@@ -26,8 +26,8 @@ public class AppleJwksCacheTests
     public async Task GetKeysAsync_FetchesAndCachesJwks()
     {
         var handler = new StubHandler(SampleJwks);
-        var httpClient = new HttpClient(handler);
-        var cache = new AppleJwksCache(httpClient, TimeProvider.System);
+        var factory = new StubHttpClientFactory(handler);
+        var cache = new AppleJwksCache(factory, TimeProvider.System);
 
         var first = await cache.GetKeysAsync();
         var second = await cache.GetKeysAsync();
@@ -42,9 +42,9 @@ public class AppleJwksCacheTests
     public async Task GetKeysAsync_RefetchesAfterExpiry()
     {
         var handler = new StubHandler(SampleJwks);
-        var httpClient = new HttpClient(handler);
+        var factory = new StubHttpClientFactory(handler);
         var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
-        var cache = new AppleJwksCache(httpClient, time);
+        var cache = new AppleJwksCache(factory, time);
 
         await cache.GetKeysAsync();
         time.Advance(TimeSpan.FromHours(2));
@@ -76,5 +76,12 @@ public class AppleJwksCacheTests
         public FakeTimeProvider(DateTimeOffset now) => _now = now;
         public override DateTimeOffset GetUtcNow() => _now;
         public void Advance(TimeSpan amount) => _now = _now.Add(amount);
+    }
+
+    private sealed class StubHttpClientFactory : IHttpClientFactory
+    {
+        private readonly HttpMessageHandler _handler;
+        public StubHttpClientFactory(HttpMessageHandler handler) => _handler = handler;
+        public HttpClient CreateClient(string name) => new(_handler);
     }
 }
