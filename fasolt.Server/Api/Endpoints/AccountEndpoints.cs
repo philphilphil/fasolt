@@ -56,27 +56,43 @@ public static class AccountEndpoints
         return Results.Ok();
     }
 
-    private static IResult GetMe(ClaimsPrincipal principal)
+    private static async Task<IResult> GetMe(
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager)
     {
-        // Every field here comes straight from the Identity cookie claims —
-        // no DB hit. AppClaimsPrincipalFactory populates email_confirmed and
-        // external_provider at sign-in time; the base factory populates Email,
-        // Name, and Role claims. Tradeoff: a role promotion doesn't take
+        // Fast path for cookie auth: the Identity cookie has Email, Role,
+        // email_confirmed, and external_provider claims (populated by
+        // AppClaimsPrincipalFactory). No DB hit on the hot path that fires
+        // on every web page load. Tradeoff: a role promotion doesn't take
         // effect until the user signs out and back in. Admin authorization
         // enforcement lives on each admin endpoint via [Authorize] policies,
         // which also read the same role claim, so there's no staleness gap
-        // in the security path.
-        var email = principal.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrEmpty(email)) return Results.Unauthorized();
+        // in the security path — only in nav rendering.
+        var claimEmail = principal.FindFirstValue(ClaimTypes.Email);
+        if (!string.IsNullOrEmpty(claimEmail))
+        {
+            var externalProvider = principal.FindFirstValue("external_provider");
+            var displayName = externalProvider is not null
+                ? principal.FindFirstValue(ClaimTypes.Name)
+                : null;
+            return Results.Ok(new UserInfoResponse(
+                claimEmail,
+                principal.IsInRole("Admin"),
+                principal.FindFirstValue("email_confirmed") == "true",
+                externalProvider,
+                displayName));
+        }
 
-        var isAdmin = principal.IsInRole("Admin");
-        var emailConfirmed = principal.FindFirstValue("email_confirmed") == "true";
-        var externalProvider = principal.FindFirstValue("external_provider");
-        var displayName = externalProvider is not null
-            ? principal.FindFirstValue(ClaimTypes.Name)
-            : null;
-
-        return Results.Ok(new UserInfoResponse(email, isAdmin, emailConfirmed, externalProvider, displayName));
+        // Slow path for OAuth bearer tokens (iOS, MCP clients): access tokens
+        // issued by OpenIddict only include sub/NameIdentifier/name/email_confirmed
+        // (see OAuthEndpoints.cs SetDestinations blocks). No Email/Role/
+        // external_provider in the token, so we need a user lookup. Called
+        // roughly once per iOS app launch — one query is acceptable.
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
+        var dbDisplayName = user.ExternalProvider is not null ? user.UserName : null;
+        return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, dbDisplayName));
     }
 
     private static async Task<IResult> ChangeEmail(
