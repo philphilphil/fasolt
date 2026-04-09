@@ -11,6 +11,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using Fasolt.Server.Api.Helpers;
+using Fasolt.Server.Api.Helpers.OAuthPages;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
@@ -333,100 +334,11 @@ public static class OAuthEndpoints
             var error = context.Request.Query["error"].FirstOrDefault();
 
             var tokens = antiforgery.GetAndStoreTokens(context);
-            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
-            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
-
             var gitHubEnabled = !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]);
-            var gitHubReturnUrl = Uri.EscapeDataString(returnUrl);
-            var gitHubHtml = gitHubEnabled ? $$"""
-                <a href="/api/account/github-login?returnUrl={{gitHubReturnUrl}}" class="btn-github">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                    Continue with GitHub
-                </a>
-                <div class="or-divider"><span>or</span></div>
-            """ : "";
 
-            // Inline SVG logo so this page works regardless of static-file routing.
-            // Mirrors fasolt.client/public/favicon.svg.
-            const string logoSvg = """
-                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <g transform="rotate(-14 40 44)"><rect x="12" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/></g>
-                  <g transform="rotate(14 40 44)"><rect x="36" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/></g>
-                  <rect x="23" y="26" width="34" height="24" rx="5" fill="#dbeafe" stroke="#0969da" stroke-width="1.5"/>
-                  <line x1="30" y1="34" x2="50" y2="34" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="30" y1="39" x2="44" y2="39" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
-                  <line x1="34" y1="66" x2="50" y2="60" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
-                  <line x1="50" y1="60" x2="64" y2="52" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
-                  <circle cx="34" cy="66" r="2.5" fill="#0969da" opacity="0.4"/>
-                  <circle cx="50" cy="60" r="3" fill="#0969da" opacity="0.65"/>
-                  <circle cx="64" cy="52" r="3.5" fill="#3b82f6" opacity="0.92"/>
-                </svg>
-                """;
-
-            const string loginExtraStyles = """
-                            .or-divider {
-                                display: flex;
-                                align-items: center;
-                                gap: 12px;
-                                margin: 12px 0;
-                                color: #a1a1aa;
-                                font-size: 0.75rem;
-                            }
-                            .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
-                            .btn-github {
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 8px;
-                                width: 100%;
-                                padding: 11px;
-                                background: #24292f;
-                                color: white;
-                                border: none;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 0.9375rem;
-                                font-weight: 500;
-                                text-decoration: none;
-                                transition: background 0.15s;
-                            }
-                            .btn-github:hover { background: #32383f; }
-                            .btn-github:active { background: #1b1f23; }
-                            @media (prefers-color-scheme: dark) {
-                                .or-divider { color: #71717a; }
-                                .or-divider::before, .or-divider::after { background: #27272a; }
-                                .btn-github { background: #fafafa; color: #18181b; }
-                                .btn-github:hover { background: #e4e4e7; }
-                                .btn-github:active { background: #d4d4d8; }
-                            }
-                """;
-
-            var body = $$"""
-                <main class="card">
-                    <div class="header">
-                        {{logoSvg}}
-                        <h1>Sign in to fasolt</h1>
-                    </div>
-                    {{OAuthPageLayout.ErrorBlock(error)}}
-                    {{gitHubHtml}}
-                    <form method="post" action="/oauth/login">
-                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
-                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
-                        <div class="field">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required autofocus />
-                        </div>
-                        <div class="field">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password" autocomplete="current-password" required />
-                        </div>
-                        <button type="submit">Sign in</button>
-                    </form>
-                    <p class="footer">New to Fasolt? <a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Create an account</a></p>
-                </main>
-                """;
-
-            return Results.Content(OAuthPageLayout.Render("Sign in", body, loginExtraStyles), "text/html");
+            return Results.Content(
+                OAuthLoginPage.Render(tokens.RequestToken!, returnUrl, error, gitHubEnabled),
+                "text/html");
         });
 
         // OAuth Login Handler (POST)
@@ -507,93 +419,10 @@ public static class OAuthEndpoints
             var error = context.Request.Query["error"].FirstOrDefault();
 
             var tokens = antiforgery.GetAndStoreTokens(context);
-            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
-            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
 
-            const string registerExtraStyles = """
-                            .rules { margin-top: 6px; font-size: 0.75rem; color: #71717a; list-style: none; padding-left: 0; }
-                            .rules li { padding: 2px 0; }
-                            .rules li.ok { color: #059669; }
-                            .rules li.ok::before { content: "✓ "; }
-                            .rules li.pending::before { content: "○ "; }
-                            .mismatch { color: #b91c1c; font-size: 0.75rem; margin-top: 4px; }
-                            .tos { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0; font-size: 0.8125rem; color: #374151; }
-                            .tos input { margin-top: 2px; width: auto; }
-                            .tos a { color: #18181b; font-weight: 500; }
-                            @media (prefers-color-scheme: dark) {
-                                .tos { color: #d4d4d8; }
-                                .tos a { color: #fafafa; }
-                            }
-                """;
-
-            // NOTE: Keep the rule list below in sync with the password policy
-            // configured in Program.cs (IdentityOptions.Password). Drift here
-            // means the client-side checklist lies to the user. Issue #107
-            // non-goal — tracked separately.
-            var body = $$"""
-                <main class="card">
-                    <div class="header">
-                        <h1>Create your Fasolt account</h1>
-                    </div>
-                    {{OAuthPageLayout.ErrorBlock(error)}}
-                    <form method="post" action="/oauth/register" id="registerForm">
-                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
-                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
-                        <div class="field">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required autofocus />
-                        </div>
-                        <div class="field">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password" autocomplete="new-password" required />
-                            <ul class="rules" id="rules">
-                                <li class="pending" data-rule="length">At least 8 characters</li>
-                                <li class="pending" data-rule="upper">Uppercase letter</li>
-                                <li class="pending" data-rule="lower">Lowercase letter</li>
-                                <li class="pending" data-rule="digit">Number</li>
-                            </ul>
-                        </div>
-                        <div class="field">
-                            <label for="confirmPassword">Confirm password</label>
-                            <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" required />
-                            <div class="mismatch" id="mismatch" style="display:none">Passwords don't match</div>
-                        </div>
-                        <label class="tos">
-                            <input type="checkbox" name="tosAccepted" value="true" id="tos" required />
-                            <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a></span>
-                        </label>
-                        <button type="submit" id="submit">Create account</button>
-                    </form>
-                    <p class="footer">Already have an account? <a href="/oauth/login?returnUrl={{returnUrlEncoded}}">Sign in</a></p>
-                </main>
-                """;
-
-            const string registerScript = """
-                <script>
-                    const pwd = document.getElementById('password');
-                    const confirm = document.getElementById('confirmPassword');
-                    const rules = document.getElementById('rules');
-                    const mismatch = document.getElementById('mismatch');
-                    function evaluate() {
-                        const v = pwd.value;
-                        const checks = {
-                            length: v.length >= 8,
-                            upper: /[A-Z]/.test(v),
-                            lower: /[a-z]/.test(v),
-                            digit: /[0-9]/.test(v)
-                        };
-                        for (const li of rules.children) {
-                            const r = li.dataset.rule;
-                            li.className = checks[r] ? 'ok' : 'pending';
-                        }
-                        mismatch.style.display = (confirm.value && confirm.value !== v) ? 'block' : 'none';
-                    }
-                    pwd.addEventListener('input', evaluate);
-                    confirm.addEventListener('input', evaluate);
-                </script>
-                """;
-
-            return Results.Content(OAuthPageLayout.Render("Create account", body, registerExtraStyles, registerScript), "text/html");
+            return Results.Content(
+                OAuthRegisterPage.Render(tokens.RequestToken!, returnUrl, error),
+                "text/html");
         });
 
         // OAuth Register Handler (POST)
@@ -680,76 +509,10 @@ public static class OAuthEndpoints
             var error = context.Request.Query["error"].FirstOrDefault();
 
             var tokens = antiforgery.GetAndStoreTokens(context);
-            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
-            var emailEncoded = System.Web.HttpUtility.HtmlAttributeEncode(email);
-            var emailDisplay = System.Web.HttpUtility.HtmlEncode(email);
-            var returnUrlEncoded = System.Web.HttpUtility.HtmlAttributeEncode(returnUrl);
 
-            const string verifyExtraStyles = """
-                            .card { padding: 32px 24px; text-align: center; }
-                            .card h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; color: #18181b; }
-                            .card p { color: #71717a; font-size: 0.875rem; margin-bottom: 20px; }
-                            .card p strong { color: #18181b; }
-                            input[name=code] {
-                                padding: 14px;
-                                font-size: 1.5rem;
-                                text-align: center;
-                                letter-spacing: 0.5em;
-                                font-family: ui-monospace, "SF Mono", Menlo, monospace;
-                                border-radius: 10px;
-                            }
-                            button { margin-top: 16px; }
-                            .resend { margin-top: 16px; font-size: 0.8125rem; color: #71717a; }
-                            .resend a { color: #18181b; font-weight: 500; text-decoration: none; }
-                            .resend form { display: inline; }
-                            .resend-inline-button {
-                                display: inline;
-                                width: auto;
-                                padding: 0;
-                                margin: 0;
-                                background: transparent;
-                                color: #18181b;
-                                font-weight: 500;
-                                text-decoration: underline;
-                                border: none;
-                                cursor: pointer;
-                                font-size: inherit;
-                            }
-                            @media (prefers-color-scheme: dark) {
-                                .card h1 { color: #fafafa; }
-                                .card p { color: #a1a1aa; }
-                                .card p strong { color: #fafafa; }
-                                .resend { color: #a1a1aa; }
-                                .resend a, .resend-inline-button { color: #fafafa; }
-                            }
-                """;
-
-            var body = $$"""
-                <main class="card">
-                    <h1>Check your email</h1>
-                    <p>We sent a 6-digit code to <strong>{{emailDisplay}}</strong></p>
-                    {{OAuthPageLayout.ErrorBlock(error)}}
-                    <form method="post" action="/oauth/verify-email">
-                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
-                        <input type="hidden" name="email" value="{{emailEncoded}}" />
-                        <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
-                        <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus required />
-                        <button type="submit">Verify</button>
-                    </form>
-                    <div class="resend">
-                        Didn't get it?
-                        <form method="post" action="/oauth/verify-email/resend">
-                            <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
-                            <input type="hidden" name="email" value="{{emailEncoded}}" />
-                            <input type="hidden" name="returnUrl" value="{{returnUrlEncoded}}" />
-                            <button type="submit" class="resend-inline-button">Resend code</button>
-                        </form>
-                    </div>
-                    <p class="resend"><a href="/oauth/register?returnUrl={{returnUrlEncoded}}">Use a different email</a></p>
-                </main>
-                """;
-
-            return Results.Content(OAuthPageLayout.Render("Verify email", body, verifyExtraStyles), "text/html");
+            return Results.Content(
+                OAuthVerifyEmailPage.Render(tokens.RequestToken!, email, returnUrl, error),
+                "text/html");
         });
 
         // OAuth Verify Email Handler (POST)
@@ -871,81 +634,10 @@ public static class OAuthEndpoints
                 : clientId;
 
             var tokens = antiforgery.GetAndStoreTokens(context);
-            var csrfToken = System.Web.HttpUtility.HtmlAttributeEncode(tokens.RequestToken!);
 
-            var clientIdEncoded = System.Web.HttpUtility.HtmlAttributeEncode(clientId);
-            var clientNameEncoded = System.Web.HttpUtility.HtmlEncode(clientName);
-
-            const string consentExtraStyles = """
-                            .card { padding: 32px; border-radius: 12px; }
-                            .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: #18181b; }
-                            .subtitle { color: #71717a; font-size: 0.875rem; margin-top: 4px; }
-                            .divider { height: 1px; background: #e5e7eb; margin: 20px 0; }
-                            .app-name { font-weight: 600; color: #18181b; }
-                            .prompt { font-size: 0.875rem; color: #374151; text-align: center; margin-bottom: 16px; }
-                            .permissions { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
-                            .permissions-title { font-size: 0.75rem; font-weight: 500; color: #6b7280; margin-bottom: 8px; }
-                            .permissions ul { list-style: none; }
-                            .permissions li { font-size: 0.8125rem; color: #374151; padding: 3px 0; }
-                            .permissions li::before { content: "\2022"; color: #9ca3af; margin-right: 8px; }
-                            button[value=approve] { margin-top: 0; margin-bottom: 8px; }
-                            .btn-deny {
-                                width: 100%;
-                                padding: 11px;
-                                background: white;
-                                color: #374151;
-                                border: 1px solid #d1d5db;
-                                border-radius: 8px;
-                                cursor: pointer;
-                                font-size: 0.9375rem;
-                                font-weight: 500;
-                                transition: background 0.15s;
-                            }
-                            .btn-deny:hover { background: #f9fafb; }
-                            .btn-deny:active { background: #f3f4f6; }
-                            .footer { margin-top: 16px; }
-                            @media (prefers-color-scheme: dark) {
-                                .logo { color: #fafafa; }
-                                .subtitle { color: #a1a1aa; }
-                                .divider { background: #27272a; }
-                                .app-name { color: #fafafa; }
-                                .prompt { color: #d4d4d8; }
-                                .permissions { background: #0a0a0a; border-color: #27272a; }
-                                .permissions-title { color: #a1a1aa; }
-                                .permissions li { color: #d4d4d8; }
-                                .permissions li::before { color: #52525b; }
-                                .btn-deny { background: #18181b; color: #d4d4d8; border-color: #3f3f46; }
-                                .btn-deny:hover { background: #27272a; }
-                                .btn-deny:active { background: #0a0a0a; }
-                            }
-                """;
-
-            var body = $$"""
-                <main class="card">
-                    <div class="logo">fasolt</div>
-                    <p class="subtitle">Authorize application</p>
-                    <div class="divider"></div>
-                    <p class="prompt"><span class="app-name">{{clientNameEncoded}}</span> wants to access your account.</p>
-                    <div class="permissions">
-                        <div class="permissions-title">This will allow the application to:</div>
-                        <ul>
-                            <li>Read and create flashcards and decks</li>
-                            <li>View and manage sources</li>
-                            <li>Review cards and track study progress</li>
-                            <li>Stay signed in and refresh access</li>
-                        </ul>
-                    </div>
-                    <form method="post" action="/oauth/consent">
-                        <input type="hidden" name="__RequestVerificationToken" value="{{csrfToken}}" />
-                        <input type="hidden" name="client_id" value="{{clientIdEncoded}}" />
-                        <button type="submit" name="decision" value="approve">Authorize</button>
-                        <button type="submit" name="decision" value="deny" class="btn-deny">Deny</button>
-                    </form>
-                    <p class="footer">You'll be redirected back to your application.</p>
-                </main>
-                """;
-
-            return Results.Content(OAuthPageLayout.Render("Authorize", body, consentExtraStyles), "text/html");
+            return Results.Content(
+                OAuthConsentPage.Render(tokens.RequestToken!, clientId, clientName),
+                "text/html");
         });
 
         // OAuth Consent Handler (POST) — server-rendered form submission
