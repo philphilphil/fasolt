@@ -27,7 +27,7 @@ RUN groupadd --system fasolt && useradd --system --gid fasolt --no-create-home f
 WORKDIR /app
 COPY --from=backend /app/publish ./
 COPY --from=frontend /app/dist ./wwwroot/
-COPY --from=frontend /app/fasolt.Server/wwwroot/css/auth.css ./wwwroot/css/auth.css
+COPY --from=frontend /fasolt.Server/wwwroot/css/auth.css ./wwwroot/css/auth.css
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
