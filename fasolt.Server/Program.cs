@@ -591,6 +591,30 @@ app.MapGet("/.well-known/apple-app-site-association", [Microsoft.AspNetCore.Auth
 
 app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
+// Legacy auth routes — 301 to the new server-rendered OAuth pages.
+// These used to be Vue SPA routes; after the OTP refactor the canonical
+// register/verify surface is the server-rendered /oauth/* pages that both
+// the iOS popup and web browsers use. Endpoint routing runs before the
+// SPA fallback, so Vue never sees the stale paths.
+app.MapGet("/register", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
+app.MapGet("/verify-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    var email = ctx.Request.Query["email"].FirstOrDefault() ?? "";
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
+app.MapGet("/confirm-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext _) =>
+{
+    // Legacy URL-token confirmation is dead; point stale email links at a
+    // friendly error on the verify page. Not permanent — URL-token confirm
+    // was structurally a different flow and we don't want to cache.
+    return Results.Redirect("/oauth/verify-email?error=This+link+has+expired.+Please+request+a+new+code.", permanent: false);
+});
+
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");
 
