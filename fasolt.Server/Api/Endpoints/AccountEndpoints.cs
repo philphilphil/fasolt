@@ -23,7 +23,6 @@ public static class AccountEndpoints
         group.MapPut("/password", ChangePassword).RequireAuthorization("EmailVerified");
         group.MapPost("/forgot-password", ForgotPassword).RequireRateLimiting("auth");
         group.MapPost("/reset-password", ResetPassword).RequireRateLimiting("auth");
-        group.MapPost("/resend-verification", ResendVerification).RequireAuthorization().RequireRateLimiting("auth");
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
         group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
@@ -206,24 +205,6 @@ public static class AccountEndpoints
             {
                 [""] = ["Invalid or expired reset link."]
             });
-        return Results.Ok();
-    }
-
-    private static async Task<IResult> ResendVerification(
-        ClaimsPrincipal principal,
-        UserManager<AppUser> userManager,
-        IEmailSender<AppUser> emailSender,
-        IConfiguration configuration)
-    {
-        var user = await userManager.GetUserAsync(principal);
-        if (user is null) return Results.Unauthorized();
-        if (user.EmailConfirmed) return Results.Ok();
-
-        var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-        var baseUrl = configuration["App:BaseUrl"]!;
-        var confirmLink = $"{baseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
-        await emailSender.SendConfirmationLinkAsync(user, user.Email!, confirmLink);
-
         return Results.Ok();
     }
 

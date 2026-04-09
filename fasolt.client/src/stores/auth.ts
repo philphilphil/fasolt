@@ -76,10 +76,6 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
-  async function resendVerification() {
-    await apiFetch('/account/resend-verification', { method: 'POST' })
-  }
-
   async function deleteAccount(password?: string, confirmIdentity?: string) {
     await apiFetch('/account', {
       method: 'DELETE',
@@ -102,7 +98,6 @@ export const useAuthStore = defineStore('auth', () => {
     changePassword,
     forgotPassword,
     resetPassword,
-    resendVerification,
     deleteAccount,
   }
 })
