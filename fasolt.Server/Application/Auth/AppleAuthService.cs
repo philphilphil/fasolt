@@ -61,6 +61,13 @@ public sealed class AppleAuthService
                     throw new AppleAuthException(
                         "An account with this email already exists. Sign in with your password and link Apple from settings.");
 
+                // Refuse to overwrite an existing external provider link — the user
+                // must sign in with their original provider and link Apple from Settings
+                // (which doesn't exist yet; forward-compatible error message).
+                if (byEmail.ExternalProvider is not null && byEmail.ExternalProvider != ProviderName)
+                    throw new AppleAuthException(
+                        $"This email is already linked to {byEmail.ExternalProvider}. Sign in with {byEmail.ExternalProvider} and link Apple from settings.");
+
                 byEmail.ExternalProvider = ProviderName;
                 byEmail.ExternalProviderId = sub;
                 var update = await _userManager.UpdateAsync(byEmail);

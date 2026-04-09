@@ -181,6 +181,35 @@ public class AppleAuthServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ResolveUserAsync_RefusesClobberOfExistingProvider()
+    {
+        await using (var db = _db.CreateDbContext())
+        {
+            db.Users.Add(new AppUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = "github-user@example.com",
+                NormalizedUserName = "GITHUB-USER@EXAMPLE.COM",
+                Email = "github-user@example.com",
+                NormalizedEmail = "GITHUB-USER@EXAMPLE.COM",
+                EmailConfirmed = true,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                ExternalProvider = "GitHub",
+                ExternalProviderId = "gh-123",
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var token = CreateAppleToken(sub: "apple-sub-x", email: "github-user@example.com", emailVerified: true);
+        var (service, ctx) = CreateService();
+        await using var _ = ctx;
+
+        var act = async () => await service.ResolveUserAsync(token);
+        await act.Should().ThrowAsync<AppleAuthException>()
+            .WithMessage("*already linked to GitHub*");
+    }
+
+    [Fact]
     public async Task ResolveUserAsync_RejectsExpiredToken()
     {
         var token = CreateAppleToken(sub: "004", email: "x@x.com", emailVerified: true,
