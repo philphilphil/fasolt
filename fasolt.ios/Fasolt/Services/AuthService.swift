@@ -55,7 +55,7 @@ final class AuthService {
         keychain.retrieve("fasolt.serverURL") ?? Self.defaultServerURL
     }
 
-    func signIn(serverURL: String, providerHint: String? = nil) async {
+    func signIn(serverURL: String, providerHint: String? = nil, screenHint: String? = nil) async {
         isLoading = true
         errorMessage = nil
 
@@ -76,7 +76,8 @@ final class AuthService {
                 serverURL: serverURL,
                 clientId: clientId,
                 codeChallenge: codeChallenge,
-                providerHint: providerHint
+                providerHint: providerHint,
+                screenHint: screenHint
             )
             authLogger.info("Got auth code, exchanging for token")
 
@@ -106,41 +107,6 @@ final class AuthService {
                 keychain.delete("fasolt.serverURL")
             }
             errorMessage = "Could not connect. Check your server URL and try again."
-        }
-
-        isLoading = false
-    }
-
-    var registrationSuccess = false
-    /// Email of the most recently registered account, surfaced so the
-    /// onboarding screen can show a "check your email" view after RegisterView
-    /// has dismissed itself.
-    var lastRegisteredEmail: String?
-
-    func register(email: String, password: String, serverURL: String) async {
-        isLoading = true
-        errorMessage = nil
-        registrationSuccess = false
-        lastRegisteredEmail = nil
-
-        let previousServerURL = keychain.retrieve("fasolt.serverURL")
-        keychain.save(serverURL, forKey: "fasolt.serverURL")
-
-        do {
-            let body = RegisterRequest(email: email, password: password)
-            let endpoint = Endpoint(path: "/api/account/register", method: .post, body: body)
-            try await apiClient.unauthenticatedRequest(endpoint)
-
-            authLogger.info("Registration succeeded")
-            lastRegisteredEmail = email
-            registrationSuccess = true
-        } catch {
-            restoreServerURL(previous: previousServerURL)
-            if let apiError = error as? APIError {
-                errorMessage = Self.registrationErrorMessage(from: apiError)
-            } else {
-                errorMessage = "Registration failed. Please try again."
-            }
         }
 
         isLoading = false
@@ -181,39 +147,6 @@ final class AuthService {
         isLoading = false
     }
 
-    private static func registrationErrorMessage(from error: APIError) -> String {
-        switch error {
-        case .badRequest(let detail):
-            guard let detail else { return "Registration failed. Please try again." }
-            let lower = detail.lowercased()
-            if lower.contains("duplicate") || lower.contains("already taken") {
-                return "An account with this email already exists."
-            }
-            if lower.contains("too short") || lower.contains("too few") {
-                return "Password must be at least 8 characters."
-            }
-            if lower.contains("uppercase") {
-                return "Password must contain an uppercase letter."
-            }
-            if lower.contains("lowercase") {
-                return "Password must contain a lowercase letter."
-            }
-            if lower.contains("digit") || lower.contains("number") {
-                return "Password must contain a number."
-            }
-            if lower.contains("email") {
-                return "Please enter a valid email address."
-            }
-            return detail
-        case .serverError(_, let detail):
-            return detail ?? "Registration failed. Please try again."
-        case .networkError:
-            return "Could not connect. Check your internet connection."
-        default:
-            return "Registration failed. Please try again."
-        }
-    }
-
     private func restoreServerURL(previous: String?) {
         if let previous {
             keychain.save(previous, forKey: "fasolt.serverURL")
@@ -235,7 +168,8 @@ final class AuthService {
         serverURL: String,
         clientId: String,
         codeChallenge: String,
-        providerHint: String? = nil
+        providerHint: String? = nil,
+        screenHint: String? = nil
     ) async throws -> String {
         guard var components = URLComponents(string: serverURL + "/oauth/authorize") else {
             throw APIError.invalidURL
@@ -250,6 +184,9 @@ final class AuthService {
         ]
         if let providerHint {
             queryItems.append(URLQueryItem(name: "provider_hint", value: providerHint))
+        }
+        if let screenHint {
+            queryItems.append(URLQueryItem(name: "screen_hint", value: screenHint))
         }
         components.queryItems = queryItems
 
