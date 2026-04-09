@@ -41,10 +41,13 @@ public static class AccountEndpoints
         if (!result.Succeeded)
             return Results.Problem("Invalid email or password.", statusCode: 401);
 
-        // Re-sign-in with email_confirmed claim in cookie
+        // Re-sign-in so RememberMe (persistent cookie) is honored — the
+        // PasswordSignInAsync above always uses isPersistent: false.
+        // AppClaimsPrincipalFactory is what injects the email_confirmed and
+        // external_provider claims into the cookie; we don't need a wrapper.
         var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
         if (user is not null)
-            await SignInWithEmailClaimAsync(signInManager, user, request.RememberMe);
+            await signInManager.SignInAsync(user, request.RememberMe);
 
         return Results.Ok();
     }
@@ -147,7 +150,7 @@ public static class AccountEndpoints
         await userManager.UpdateAsync(user);
 
         // Refresh cookie — ChangeEmailAsync invalidates SecurityStamp
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+        await signInManager.SignInAsync(user, isPersistent: false);
 
         var isAdmin = await userManager.IsInRoleAsync(user, "Admin");
         return Results.Ok(new UserInfoResponse(user.Email!, isAdmin, user.EmailConfirmed, user.ExternalProvider, null));
@@ -206,12 +209,6 @@ public static class AccountEndpoints
                 [""] = ["Invalid or expired reset link."]
             });
         return Results.Ok();
-    }
-
-    internal static async Task SignInWithEmailClaimAsync(
-        SignInManager<AppUser> signInManager, AppUser user, bool isPersistent)
-    {
-        await signInManager.SignInAsync(user, isPersistent);
     }
 
     private static IResult GitHubLogin(HttpContext context, IConfiguration configuration)
@@ -290,7 +287,7 @@ public static class AccountEndpoints
         }
 
         // Sign in with the application cookie
-        await SignInWithEmailClaimAsync(signInManager, user, isPersistent: true);
+        await signInManager.SignInAsync(user, isPersistent: true);
         await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
         return Results.Redirect(returnUrl);

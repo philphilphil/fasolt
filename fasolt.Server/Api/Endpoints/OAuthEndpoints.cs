@@ -126,11 +126,16 @@ public static class OAuthEndpoints
                 return Results.Redirect($"{target}?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
             }
 
-            // Block unverified users from authorizing OAuth clients
+            // Block unverified users from authorizing OAuth clients. Send them
+            // to the server-rendered OTP page with the original authorize
+            // query preserved as returnUrl, so verifying resumes the flow.
             var emailConfirmed = result.Principal.FindFirstValue("email_confirmed");
             if (emailConfirmed != "true")
             {
-                return Results.Redirect("/verify-email");
+                var authorizeReturnUrl = "/oauth/authorize" + (context.Request.QueryString.Value ?? "");
+                var userEmail = result.Principal.FindFirstValue(ClaimTypes.Email) ?? "";
+                return Results.Redirect(
+                    $"/oauth/verify-email?email={Uri.EscapeDataString(userEmail)}&returnUrl={Uri.EscapeDataString(authorizeReturnUrl)}");
             }
 
             var user = result.Principal;
@@ -519,6 +524,8 @@ public static class OAuthEndpoints
         app.MapPost("/oauth/login", [AllowAnonymous] async (
             HttpContext context,
             SignInManager<AppUser> signInManager,
+            IEmailVerificationCodeService otpService,
+            IOtpEmailSender emailSender,
             IAntiforgery antiforgery) =>
         {
             if (!await antiforgery.IsRequestValidAsync(context))
@@ -527,15 +534,44 @@ public static class OAuthEndpoints
             var form = await context.Request.ReadFormAsync();
             var email = form["email"].FirstOrDefault() ?? "";
             var password = form["password"].FirstOrDefault() ?? "";
-            var returnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
+            var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
 
             var result = await signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: true);
             if (result.Succeeded)
             {
                 var user = await signInManager.UserManager.FindByEmailAsync(email);
-                if (user is not null)
-                    await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
-                return Results.Redirect(UrlHelpers.IsLocalUrl(returnUrl) ? returnUrl : "/");
+                if (user is null)
+                    return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString("Invalid email or password.")}");
+
+                // Unverified accounts must complete OTP verification before we
+                // hand out a cookie. Otherwise they can reach /oauth/authorize
+                // with an email_confirmed=false claim and bounce through the
+                // verify-email redirect loop, and they'd also be able to hit
+                // any non-EmailVerified-gated endpoint with a valid cookie.
+                // Sign them out of the PasswordSignIn, generate a fresh OTP
+                // (respecting the resend window), and send them to the OTP
+                // page — same UX as a fresh registration.
+                if (!user.EmailConfirmed)
+                {
+                    await signInManager.SignOutAsync();
+
+                    var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+                    if (canResend == ResendResult.Ok)
+                    {
+                        var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                        await emailSender.SendVerificationCodeAsync(user, user.Email!, code);
+                    }
+                    // If we can't resend (cooldown / cap / lockout), fall through
+                    // silently — the user still has whatever code we sent last
+                    // time, and the verify page will surface any lockout error
+                    // on its next submit.
+
+                    return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+                }
+
+                await signInManager.SignInAsync(user, isPersistent: false);
+                return Results.Redirect(returnUrl);
             }
 
             var error = result.IsLockedOut ? "Account locked. Try again later." : "Invalid email or password.";
@@ -964,7 +1000,7 @@ public static class OAuthEndpoints
                     var updateResult = await userManager.UpdateAsync(user);
                     if (!updateResult.Succeeded)
                         return Results.Redirect(ErrorRedirect("Something went wrong. Please try again."));
-                    await AccountEndpoints.SignInWithEmailClaimAsync(signInManager, user, isPersistent: false);
+                    await signInManager.SignInAsync(user, isPersistent: false);
                     return Results.Redirect(returnUrl);
                 case VerifyResult.Incorrect:
                     return Results.Redirect(ErrorRedirect("Incorrect code, try again."));
