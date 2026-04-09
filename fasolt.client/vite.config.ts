@@ -37,6 +37,8 @@ export default defineConfig({
       '/.well-known': 'http://localhost:8080',
       '/oauth/register': 'http://localhost:8080',
       '/oauth/verify-email': 'http://localhost:8080',
+      '/oauth/forgot-password': 'http://localhost:8080',
+      '/oauth/reset-password': 'http://localhost:8080',
       '/oauth/authorize': 'http://localhost:8080',
       '/oauth/token': 'http://localhost:8080',
       '/oauth/login': 'http://localhost:8080',
@@ -48,6 +50,8 @@ export default defineConfig({
       '/register': 'http://localhost:8080',
       '/verify-email': 'http://localhost:8080',
       '/confirm-email': 'http://localhost:8080',
+      '/forgot-password': 'http://localhost:8080',
+      '/reset-password': 'http://localhost:8080',
     },
   },
 })

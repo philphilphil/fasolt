@@ -800,32 +800,31 @@ public static class OAuthEndpoints
             var rawReturnUrl = form["returnUrl"].FirstOrDefault() ?? "/";
             var returnUrl = UrlHelpers.IsLocalUrl(rawReturnUrl) ? rawReturnUrl : "/";
 
-            string ErrorRedirect(string msg)
-                => $"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}&error={Uri.EscapeDataString(msg)}";
-
+            // Enumeration guard: every branch below must land on the same
+            // generic redirect so an attacker can't distinguish "unknown
+            // email" from "known email in cooldown" from "resend succeeded".
+            // That means NO error query param — a throttled real user sees
+            // the same page as an unknown email. The reset-password page
+            // already tells the user "We sent a 6-digit code to X", which is
+            // the only signal we can safely surface here. Rate limiting on
+            // this route keeps brute-force resend spam bounded.
             var user = await userManager.FindByEmailAsync(email);
-            if (user is null || user.ExternalProvider is not null || !user.EmailConfirmed)
-                return Results.Redirect($"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");
-
-            var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
-            switch (canResend)
+            if (user is not null && user.ExternalProvider is null && user.EmailConfirmed)
             {
-                case ResendResult.TooSoon:
-                    return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
-                case ResendResult.LockedOut:
-                    return Results.Redirect(ErrorRedirect("Too many failed attempts. Try again in 10 minutes."));
-                case ResendResult.TooManyAttempts:
-                    return Results.Redirect(ErrorRedirect("Too many codes sent. Please wait and try again later."));
-            }
-
-            try
-            {
-                var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
-                await emailSender.SendPasswordResetCodeAsync(user, user.Email!, code);
-            }
-            catch (InvalidOperationException)
-            {
-                return Results.Redirect(ErrorRedirect("Please wait before requesting another code."));
+                var canResend = await otpService.CanResendAsync(user.Id, context.RequestAborted);
+                if (canResend == ResendResult.Ok)
+                {
+                    try
+                    {
+                        var code = await otpService.GenerateAndStoreAsync(user.Id, context.RequestAborted);
+                        await emailSender.SendPasswordResetCodeAsync(user, user.Email!, code);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Lost a cap/cooldown race inside the advisory lock.
+                        // Swallow silently to preserve the uniform response.
+                    }
+                }
             }
 
             return Results.Redirect($"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}");

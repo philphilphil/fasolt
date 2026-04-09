@@ -240,6 +240,63 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
     }
 
     [Fact]
+    public async Task ResendPost_UnknownAndThrottledUsers_ProduceIdenticalRedirect()
+    {
+        // Enumeration guard: the /oauth/reset-password/resend endpoint must
+        // return the same response for (a) an unknown email and (b) a known
+        // confirmed user in active cooldown. Otherwise an attacker can tell
+        // which emails are registered by clicking "Resend" with each one.
+        var knownEmail = $"resend-{Guid.NewGuid():N}@example.com";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
+            var user = new AppUser { UserName = knownEmail, Email = knownEmail, EmailConfirmed = true };
+            (await userManager.CreateAsync(user, "Abcdefg1")).Succeeded.Should().BeTrue();
+
+            // Put the known user into cooldown state by issuing one code.
+            var otp = scope.ServiceProvider.GetRequiredService<IPasswordResetCodeService>();
+            await otp.GenerateAndStoreAsync(user.Id, CancellationToken.None);
+        }
+
+        var unknownEmail = $"nobody-{Guid.NewGuid():N}@example.com";
+
+        async Task<string> PostResendAndReturnLocation(string email)
+        {
+            // Fresh client per call so the antiforgery cookie comes back on
+            // the GET — a reused client would silently apply the cookie but
+            // not re-emit it in Set-Cookie, making extraction awkward.
+            var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            var getResponse = await client.GetAsync($"/oauth/reset-password?email={email}&returnUrl=%2F");
+            var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+            var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = csrfToken,
+                ["email"] = email,
+                ["returnUrl"] = "/",
+            });
+            var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password/resend") { Content = content };
+            request.Headers.Add("Cookie", cookieHeader);
+            var response = await client.SendAsync(request);
+            response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+            return response.Headers.Location!.OriginalString;
+        }
+
+        var knownLocation = await PostResendAndReturnLocation(knownEmail);
+        var unknownLocation = await PostResendAndReturnLocation(unknownEmail);
+
+        // Neither response may carry an error param — that's what leaked
+        // the existence distinction in the first place.
+        knownLocation.Should().NotContain("error=", "throttled real user must not see an error");
+        unknownLocation.Should().NotContain("error=", "unknown email must not see an error");
+
+        // Both should land on the same reset-password page shape.
+        knownLocation.Should().StartWith("/oauth/reset-password?email=");
+        unknownLocation.Should().StartWith("/oauth/reset-password?email=");
+    }
+
+    [Fact]
     public async Task LegacyResetPasswordPath_RedirectsToOAuthResetPassword()
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
