@@ -24,6 +24,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct FasoltApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var authService = AuthService()
+    @State private var featureFlags = FeatureFlagsService()
 
     @State private var networkMonitor = NetworkMonitor()
     @Environment(\.scenePhase) private var scenePhase
@@ -40,6 +41,9 @@ struct FasoltApp: App {
                 }
             }
             .animation(.default, value: authService.isAuthenticated)
+            .task {
+                await featureFlags.refresh(serverURL: authService.serverURL)
+            }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .active && oldPhase != .active {
                     let now = Date()
@@ -79,6 +83,7 @@ struct FasoltApp: App {
             }
         }
         .environment(authService)
+        .environment(featureFlags)
         .environment(networkMonitor)
         .modelContainer(for: [Card.self, CachedDeck.self, PendingReview.self])
     }

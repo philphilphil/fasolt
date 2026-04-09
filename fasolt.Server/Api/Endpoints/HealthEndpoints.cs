@@ -11,6 +11,7 @@ public static class HealthEndpoints
             features = new
             {
                 githubLogin = !string.IsNullOrEmpty(configuration["GITHUB_CLIENT_ID"]),
+                appleLogin = !string.IsNullOrEmpty(configuration["APPLE_BUNDLE_ID"]),
             },
         })).AllowAnonymous();
     }

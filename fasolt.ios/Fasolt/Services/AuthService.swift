@@ -55,7 +55,7 @@ final class AuthService {
         keychain.retrieve("fasolt.serverURL") ?? Self.defaultServerURL
     }
 
-    func signIn(serverURL: String) async {
+    func signIn(serverURL: String, providerHint: String? = nil) async {
         isLoading = true
         errorMessage = nil
 
@@ -75,7 +75,8 @@ final class AuthService {
             let authCode = try await openAuthSession(
                 serverURL: serverURL,
                 clientId: clientId,
-                codeChallenge: codeChallenge
+                codeChallenge: codeChallenge,
+                providerHint: providerHint
             )
             authLogger.info("Got auth code, exchanging for token")
 
@@ -111,21 +112,27 @@ final class AuthService {
     }
 
     var registrationSuccess = false
+    /// Email of the most recently registered account, surfaced so the
+    /// onboarding screen can show a "check your email" view after RegisterView
+    /// has dismissed itself.
+    var lastRegisteredEmail: String?
 
     func register(email: String, password: String, serverURL: String) async {
         isLoading = true
         errorMessage = nil
         registrationSuccess = false
+        lastRegisteredEmail = nil
 
         let previousServerURL = keychain.retrieve("fasolt.serverURL")
         keychain.save(serverURL, forKey: "fasolt.serverURL")
 
         do {
             let body = RegisterRequest(email: email, password: password)
-            let endpoint = Endpoint(path: "/api/identity/register", method: .post, body: body)
+            let endpoint = Endpoint(path: "/api/account/register", method: .post, body: body)
             try await apiClient.unauthenticatedRequest(endpoint)
 
             authLogger.info("Registration succeeded")
+            lastRegisteredEmail = email
             registrationSuccess = true
         } catch {
             restoreServerURL(previous: previousServerURL)
@@ -134,6 +141,41 @@ final class AuthService {
             } else {
                 errorMessage = "Registration failed. Please try again."
             }
+        }
+
+        isLoading = false
+    }
+
+    // MARK: - Apple Sign-In
+
+    func signInWithApple(identityToken: String, serverURL: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        let previousServerURL = keychain.retrieve("fasolt.serverURL")
+        keychain.save(serverURL, forKey: "fasolt.serverURL")
+
+        do {
+            let params: [String: String] = [
+                "grant_type": "urn:fasolt:apple",
+                "client_id": Self.firstPartyClientId,
+                "identity_token": identityToken,
+            ]
+
+            let tokenResponse: TokenResponse = try await apiClient.formPost("/oauth/token", params: params)
+            keychain.save(Self.firstPartyClientId, forKey: "fasolt.clientId")
+            keychain.save(tokenResponse.accessToken, forKey: "fasolt.accessToken")
+            if let refreshToken = tokenResponse.refreshToken {
+                keychain.save(refreshToken, forKey: "fasolt.refreshToken")
+            }
+            let expiry = Date.now.addingTimeInterval(TimeInterval(tokenResponse.expiresIn))
+            keychain.save(DateFormatters.formatISO8601(expiry), forKey: "fasolt.tokenExpiry")
+            authLogger.info("Apple sign-in complete")
+            isAuthenticated = true
+        } catch {
+            authLogger.error("Apple sign-in failed: \(error)")
+            restoreServerURL(previous: previousServerURL)
+            errorMessage = "Could not sign in with Apple. Please try again."
         }
 
         isLoading = false
@@ -192,12 +234,13 @@ final class AuthService {
     private func openAuthSession(
         serverURL: String,
         clientId: String,
-        codeChallenge: String
+        codeChallenge: String,
+        providerHint: String? = nil
     ) async throws -> String {
         guard var components = URLComponents(string: serverURL + "/oauth/authorize") else {
             throw APIError.invalidURL
         }
-        components.queryItems = [
+        var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "response_type", value: "code"),
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "redirect_uri", value: Self.redirectURI),
@@ -205,6 +248,10 @@ final class AuthService {
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "scope", value: "offline_access"),
         ]
+        if let providerHint {
+            queryItems.append(URLQueryItem(name: "provider_hint", value: providerHint))
+        }
+        components.queryItems = queryItems
 
         guard let authURL = components.url else {
             throw APIError.invalidURL
