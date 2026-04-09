@@ -1,7 +1,7 @@
 namespace Fasolt.Server.Application.Auth;
 
 public enum VerifyResult { Ok, Incorrect, Expired, LockedOut, NotFound }
-public enum ResendResult { Ok, TooSoon, TooManyAttempts }
+public enum ResendResult { Ok, TooSoon, TooManyAttempts, LockedOut }
 
 public interface IEmailVerificationCodeService
 {

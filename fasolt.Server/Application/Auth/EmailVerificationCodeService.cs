@@ -34,6 +34,16 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
         var existing = await _db.EmailVerificationCodes
             .FirstOrDefaultAsync(r => r.UserId == userId, cancellationToken);
 
+        // Expire a stale row: once the code has expired AND any active lockout
+        // has elapsed, the row is garbage from the user's point of view. Treat
+        // it as if no row existed so SentCount isn't a permanent dead-end.
+        if (existing is not null && IsStale(existing, now))
+        {
+            _db.EmailVerificationCodes.Remove(existing);
+            await _db.SaveChangesAsync(cancellationToken);
+            existing = null;
+        }
+
         if (existing is null)
         {
             _db.EmailVerificationCodes.Add(new EmailVerificationCode
@@ -122,6 +132,18 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
         if (row is null)
             return ResendResult.Ok;
 
+        // A stale row (expired code + lockout elapsed) is indistinguishable
+        // from a fresh session — let the caller resend. GenerateAndStoreAsync
+        // will clean up the row when it runs.
+        if (IsStale(row, now))
+            return ResendResult.Ok;
+
+        // Block resends while the user is in an active lockout window.
+        // Otherwise a locked-out user can still burn through SentCount on
+        // resend clicks, permanently stranding their session cap.
+        if (row.LockedUntil is { } lockedUntil && lockedUntil > now)
+            return ResendResult.LockedOut;
+
         if (row.SentCount >= MaxSendsPerSession)
             return ResendResult.TooManyAttempts;
 
@@ -129,6 +151,16 @@ public class EmailVerificationCodeService : IEmailVerificationCodeService
             return ResendResult.TooSoon;
 
         return ResendResult.Ok;
+    }
+
+    // A row is "stale" once the OTP has expired AND any lockout has passed.
+    // From the user's perspective there's nothing left to act on, so we can
+    // safely drop it and let them start a fresh verification session.
+    private static bool IsStale(EmailVerificationCode row, DateTimeOffset now)
+    {
+        if (row.ExpiresAt > now) return false;
+        if (row.LockedUntil is { } lockedUntil && lockedUntil > now) return false;
+        return true;
     }
 
     private static string GenerateCode()

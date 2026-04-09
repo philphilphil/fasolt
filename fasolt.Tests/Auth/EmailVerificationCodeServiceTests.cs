@@ -219,6 +219,79 @@ public class EmailVerificationCodeServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task CanResendAsync_ReturnsLockedOut_WhileLockoutIsActive()
+    {
+        // A locked-out user must not be able to burn SentCount by clicking
+        // Resend. Pre-fix, CanResendAsync ignored LockedUntil, so resend
+        // attempts would advance the session cap even though the code still
+        // wouldn't verify.
+        var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (service, ctx) = CreateService(time);
+        await using var _ = ctx;
+
+        await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+
+        // Lock the user out
+        for (var i = 0; i < 5; i++)
+            await service.VerifyAsync(_db.UserId, "000001", CancellationToken.None);
+
+        // Still within the lockout window
+        time.Advance(TimeSpan.FromMinutes(1));
+
+        var result = await service.CanResendAsync(_db.UserId, CancellationToken.None);
+        result.Should().Be(ResendResult.LockedOut);
+    }
+
+    [Fact]
+    public async Task GenerateAndStoreAsync_DropsStaleRow_AfterExpiryAndLockoutPassed()
+    {
+        // Session-cap recovery: once the code has expired AND any lockout
+        // window has passed, the existing row is garbage and a new generate
+        // must start from SentCount=1 instead of hitting the session cap.
+        var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (service, ctx) = CreateService(time);
+        await using var _ = ctx;
+
+        // Burn the full session cap
+        for (var i = 0; i < 5; i++)
+        {
+            await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+            time.Advance(TimeSpan.FromSeconds(31));
+        }
+
+        // Next call should throw — cap is reached
+        await FluentActions.Invoking(() => service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None))
+            .Should().ThrowAsync<InvalidOperationException>();
+
+        // Advance past the code expiry (15min from last send)
+        time.Advance(TimeSpan.FromMinutes(20));
+
+        // Row is now stale — a fresh session should be allowed
+        var newCode = await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+        newCode.Should().MatchRegex(@"^\d{6}$");
+
+        await using var read = _db.CreateDbContext();
+        var row = await read.EmailVerificationCodes.SingleAsync(r => r.UserId == _db.UserId);
+        row.SentCount.Should().Be(1, "stale row should be dropped and replaced with a fresh session");
+    }
+
+    [Fact]
+    public async Task CanResendAsync_ReturnsOk_WhenStaleRowExists()
+    {
+        var time = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var (service, ctx) = CreateService(time);
+        await using var _ = ctx;
+
+        await service.GenerateAndStoreAsync(_db.UserId, CancellationToken.None);
+
+        // Advance past code expiry
+        time.Advance(TimeSpan.FromMinutes(20));
+
+        var result = await service.CanResendAsync(_db.UserId, CancellationToken.None);
+        result.Should().Be(ResendResult.Ok);
+    }
+
+    [Fact]
     public async Task VerifyAsync_ReturnsNotFound_WhenNoRowExists()
     {
         var (service, ctx) = CreateService();
