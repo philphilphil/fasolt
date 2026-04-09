@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +16,6 @@ import { useDarkMode } from '@/composables/useDarkMode'
 
 const auth = useAuthStore()
 const { isDark, toggle } = useDarkMode()
-const router = useRouter()
 const searchInputRef = ref<InstanceType<typeof Input> | null>(null)
 const searchContainerRef = ref<HTMLDivElement | null>(null)
 
@@ -72,7 +70,7 @@ onUnmounted(() => {
 
 async function handleLogout() {
   await auth.logout()
-  router.push('/login')
+  window.location.href = '/oauth/login'
 }
 </script>
 

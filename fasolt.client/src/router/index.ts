@@ -11,13 +11,6 @@ function formatDocumentTitle(title?: string) {
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // Auth routes (public)
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/views/LoginView.vue'),
-      meta: { public: true, authRedirect: true, title: 'Log in' },
-    },
     // /forgot-password and /reset-password are handled by the backend: it
     // 301s to the server-rendered /oauth/forgot-password + /oauth/reset-password
     // OTP pages. No SPA routes needed — the backend redirect runs before the
@@ -27,12 +20,6 @@ const router = createRouter({
       name: 'confirm-email-change',
       component: () => import('@/views/ConfirmEmailChangeView.vue'),
       meta: { skipVerificationCheck: true, title: 'Confirm email change' },
-    },
-    {
-      path: '/oauth/consent',
-      name: 'oauth-consent',
-      component: () => import('@/views/OAuthConsentView.vue'),
-      meta: { public: true, title: 'Authorize app' },
     },
     // Landing page (public)
     {
@@ -95,7 +82,13 @@ router.beforeEach(async (to) => {
   const isPublic = to.meta.public === true
 
   if (!isPublic && !auth.isAuthenticated) {
-    return { name: 'login' }
+    // Full-page nav to the server-rendered Razor /oauth/login. SPA state
+    // is already unauthenticated-dead at this point, so there's nothing
+    // to preserve. window.location.href triggers a real browser navigation
+    // (not SPA routing), which is what we want — the Razor page is served
+    // by the backend, not the Vite dev server's fallback.
+    window.location.href = `/oauth/login?returnUrl=${encodeURIComponent(to.fullPath)}`
+    return false
   }
 
   if (to.meta.authRedirect && auth.isAuthenticated) {

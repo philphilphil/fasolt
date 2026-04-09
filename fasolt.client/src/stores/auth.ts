@@ -28,14 +28,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(email: string, password: string, rememberMe: boolean) {
-    await apiFetch('/account/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, rememberMe }),
-    })
-    await fetchUser()
-  }
-
   async function logout() {
     try {
       await apiFetch('/account/logout', {
@@ -78,7 +70,6 @@ export const useAuthStore = defineStore('auth', () => {
     isExternalAccount,
     isEmailConfirmed,
     fetchUser,
-    login,
     logout,
     changeEmail,
     changePassword,

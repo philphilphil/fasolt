@@ -15,7 +15,6 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/api/account");
 
-        group.MapPost("/login", Login).RequireRateLimiting("auth");
         group.MapPost("/logout", Logout).RequireAuthorization();
         group.MapGet("/me", GetMe).RequireAuthorization();
         group.MapPut("/email", ChangeEmail).RequireAuthorization("EmailVerified");
@@ -27,33 +26,6 @@ public static class AccountEndpoints
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
         group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
         group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
-    }
-
-    private static async Task<IResult> Login(
-        LoginRequest request,
-        SignInManager<AppUser> signInManager)
-    {
-        // Look up first so we can use CheckPasswordSignInAsync + a single
-        // SignInAsync. PasswordSignInAsync would also issue a cookie, and
-        // then we'd need a second SignInAsync to honor RememberMe — two
-        // Set-Cookie headers on one response. This avoids that.
-        var user = await signInManager.UserManager.FindByEmailAsync(request.Email);
-        if (user is null)
-            return Results.Problem("Invalid email or password.", statusCode: 401);
-
-        var result = await signInManager.CheckPasswordSignInAsync(
-            user, request.Password, lockoutOnFailure: true);
-
-        if (result.IsLockedOut)
-            return Results.Problem("Account locked. Try again later.", statusCode: 429);
-        if (!result.Succeeded)
-            return Results.Problem("Invalid email or password.", statusCode: 401);
-
-        // AppClaimsPrincipalFactory injects email_confirmed and
-        // external_provider claims into the cookie.
-        await signInManager.SignInAsync(user, request.RememberMe);
-
-        return Results.Ok();
     }
 
     private static async Task<IResult> Logout(SignInManager<AppUser> signInManager)
@@ -204,7 +176,7 @@ public static class AccountEndpoints
     {
         var result = await context.AuthenticateAsync(IdentityConstants.ExternalScheme);
         if (result?.Principal is null)
-            return Results.Redirect("/login?error=github_auth_failed");
+            return Results.Redirect("/oauth/login?error=github_auth_failed");
 
         var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
         if (!UrlHelpers.IsLocalUrl(returnUrl))
@@ -216,7 +188,7 @@ public static class AccountEndpoints
         if (string.IsNullOrEmpty(gitHubId) || string.IsNullOrEmpty(gitHubUsername))
         {
             await context.SignOutAsync(IdentityConstants.ExternalScheme);
-            return Results.Redirect("/login?error=github_auth_failed");
+            return Results.Redirect("/oauth/login?error=github_auth_failed");
         }
 
         // Look up by GitHub provider ID first
@@ -242,7 +214,7 @@ public static class AccountEndpoints
             if (!createResult.Succeeded)
             {
                 await context.SignOutAsync(IdentityConstants.ExternalScheme);
-                return Results.Redirect("/login?error=account_creation_failed");
+                return Results.Redirect("/oauth/login?error=account_creation_failed");
             }
         }
 
