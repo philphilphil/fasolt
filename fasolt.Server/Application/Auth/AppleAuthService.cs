@@ -42,7 +42,8 @@ public sealed class AppleAuthService
         var sub = principal.FindFirstValue("sub")
             ?? throw new AppleAuthException("Apple token is missing the 'sub' claim.");
         var email = principal.FindFirstValue("email");
-        var emailVerified = principal.FindFirstValue("email_verified") == "true";
+        var emailVerifiedRaw = principal.FindFirstValue("email_verified");
+        var emailVerified = bool.TryParse(emailVerifiedRaw, out var parsed) && parsed;
 
         // 1. Existing Apple user?
         var existing = await _userManager.Users

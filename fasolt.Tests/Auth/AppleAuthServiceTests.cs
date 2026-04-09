@@ -107,6 +107,52 @@ public class AppleAuthServiceTests : IAsyncLifetime
         user.ExternalProviderId.Should().Be("002");
     }
 
+    [Theory]
+    [InlineData("true")]
+    [InlineData("True")]
+    [InlineData("TRUE")]
+    public async Task ResolveUserAsync_LinksByVerifiedEmail_RegardlessOfClaimCasing(string verifiedValue)
+    {
+        var existingId = Guid.NewGuid().ToString();
+        // Fresh per-theory-case email so the three invocations don't collide
+        // in the shared TestDb. The verifiedValue is only used in the token,
+        // not the seed identity.
+        var unique = Guid.NewGuid().ToString("N")[..8];
+        var email = $"case-{unique}@example.com";
+        await using (var db = _db.CreateDbContext())
+        {
+            db.Users.Add(new AppUser
+            {
+                Id = existingId,
+                UserName = email,
+                NormalizedUserName = email.ToUpperInvariant(),
+                Email = email,
+                NormalizedEmail = email.ToUpperInvariant(),
+                EmailConfirmed = true,
+                SecurityStamp = Guid.NewGuid().ToString(),
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // Apple's docs allow email_verified to arrive as either a string or a
+        // boolean. In practice .NET 10 surfaces JSON booleans as lowercase
+        // "true"/"false", but Apple could theoretically send an uppercase
+        // string variant. bool.TryParse handles all cases; strict string
+        // comparison does not.
+        var token = CreateAppleTokenWithRawEmailVerified(
+            sub: $"sub-{unique}",
+            email: email,
+            rawEmailVerified: verifiedValue);
+        var (service, ctx) = CreateService();
+        await using var _ = ctx;
+
+        var user = await service.ResolveUserAsync(token);
+
+        user.Id.Should().Be(existingId);
+        user.ExternalProvider.Should().Be("Apple");
+        user.ExternalProviderId.Should().Be($"sub-{unique}");
+    }
+
     [Fact]
     public async Task ResolveUserAsync_RefusesLinkOnUnverifiedEmail()
     {
@@ -205,6 +251,25 @@ public class AppleAuthServiceTests : IAsyncLifetime
             claims: claims,
             notBefore: iat,
             expires: exp,
+            signingCredentials: creds);
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private string CreateAppleTokenWithRawEmailVerified(string sub, string email, string rawEmailVerified)
+    {
+        var creds = new SigningCredentials(new RsaSecurityKey(_signingKey) { KeyId = Kid }, SecurityAlgorithms.RsaSha256);
+        var claims = new List<Claim>
+        {
+            new("sub", sub),
+            new("email", email),
+            new("email_verified", rawEmailVerified),
+        };
+        var token = new JwtSecurityToken(
+            issuer: "https://appleid.apple.com",
+            audience: BundleId,
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddMinutes(10),
             signingCredentials: creds);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
