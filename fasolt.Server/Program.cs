@@ -511,7 +511,6 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'";
     await next();
 });
 
@@ -566,6 +565,9 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+app.UseWhen(
+    ctx => ctx.Request.Path.StartsWithSegments("/oauth"),
+    branch => branch.UseMiddleware<Fasolt.Server.Api.Middleware.ContentSecurityPolicyMiddleware>());
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
