@@ -42,7 +42,7 @@ if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
         queueLimitBytes: null,
         textFormatter: new CompactJsonFormatter(),
         httpClient: new AxiomHttpClient(axiomToken),
-        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning);
+        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
 }
 
 builder.Host.UseSerilog(loggerConfig.CreateLogger());
