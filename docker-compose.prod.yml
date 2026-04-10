@@ -3,7 +3,8 @@ services:
     build:
       context: .
       args:
-        VITE_BUGSINK_DSN: ${VITE_BUGSINK_DSN:-}
+        VITE_AXIOM_TOKEN: ${VITE_AXIOM_TOKEN:-}
+        VITE_AXIOM_DATASET: ${VITE_AXIOM_DATASET:-}
     restart: unless-stopped
     env_file: .env
     environment:
