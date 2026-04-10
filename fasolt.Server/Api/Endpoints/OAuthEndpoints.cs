@@ -120,9 +120,13 @@ public static class OAuthEndpoints
             {
                 var returnUrl = context.Request.QueryString.Value;
                 var openIddictReq = context.GetOpenIddictServerRequest();
-                var hint = openIddictReq?.GetParameter("screen_hint")?.ToString();
-                var target = hint == "signup" ? "/register" : "/login";
-                return Results.Redirect($"{target}?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
+                var screenHint = openIddictReq?.GetParameter("screen_hint")?.ToString();
+                var providerHint = openIddictReq?.GetParameter("provider_hint")?.ToString();
+                var target = screenHint == "signup" ? "/register" : "/login";
+                var redirectUrl = $"{target}?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}";
+                if (!string.IsNullOrEmpty(providerHint))
+                    redirectUrl += $"&provider_hint={Uri.EscapeDataString(providerHint)}";
+                return Results.Redirect(redirectUrl);
             }
 
             // Block unverified users from authorizing OAuth clients. Send them
