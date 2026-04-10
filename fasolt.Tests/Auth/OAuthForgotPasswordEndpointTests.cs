@@ -210,28 +210,6 @@ public class OAuthForgotPasswordEndpointTests
         body.Should().Contain("Please enter a valid email address.", "banner message is surfaced");
     }
 
-    [Fact]
-    public async Task Get_WithErrorQuery_RendersErrorBanner()
-    {
-        var client = _factory.CreateClient();
-        var response = await client.GetAsync("/oauth/forgot-password?returnUrl=%2F&error=Rate%20limit%20exceeded");
-
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadAsStringAsync();
-        body.Should().Contain("Rate limit exceeded");
-        body.Should().Contain("oauth-error");
-    }
-
-    [Fact]
-    public async Task LegacyForgotPasswordPath_RedirectsToOAuthForgotPassword()
-    {
-        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var response = await client.GetAsync("/forgot-password?returnUrl=%2F");
-
-        response.StatusCode.Should().Be(HttpStatusCode.MovedPermanently);
-        response.Headers.Location!.OriginalString.Should().StartWith("/oauth/forgot-password");
-    }
-
     private static string ExtractCsrfToken(string html)
     {
         // Razor emits <input name="__RequestVerificationToken" type="hidden" value="...">

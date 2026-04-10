@@ -298,16 +298,6 @@ public class OAuthResetPasswordEndpointTests
         unknownLocation.Should().StartWith("/oauth/reset-password?email=");
     }
 
-    [Fact]
-    public async Task LegacyResetPasswordPath_RedirectsToOAuthResetPassword()
-    {
-        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var response = await client.GetAsync("/reset-password?email=foo@example.com&token=abc");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().StartWith("/oauth/reset-password");
-    }
-
     private static string ExtractCsrfToken(string html)
     {
         var regex = new System.Text.RegularExpressions.Regex(

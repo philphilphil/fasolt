@@ -11,10 +11,6 @@ function formatDocumentTitle(title?: string) {
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // /forgot-password and /reset-password are handled by the backend: it
-    // 301s to the server-rendered /oauth/forgot-password + /oauth/reset-password
-    // OTP pages. No SPA routes needed — the backend redirect runs before the
-    // Vue router ever sees the path.
     {
       path: '/confirm-email-change',
       name: 'confirm-email-change',

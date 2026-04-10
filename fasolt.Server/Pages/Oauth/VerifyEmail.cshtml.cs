@@ -49,15 +49,9 @@ public class VerifyEmailModel : PageModel
         public string Code { get; set; } = "";
     }
 
-    public IActionResult OnGet(string? error)
+    public IActionResult OnGet()
     {
         ReturnUrl = UrlHelpers.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/";
-        // Only accept known error codes to prevent reflected content injection.
-        ErrorMessage = error switch
-        {
-            "expired" => "This link has expired. Please request a new code.",
-            _ => null,
-        };
         return Page();
     }
 
