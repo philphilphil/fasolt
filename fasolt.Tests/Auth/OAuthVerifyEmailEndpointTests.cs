@@ -81,8 +81,14 @@ public class OAuthVerifyEmailEndpointTests
 
         var response = await client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().Be("/");
+        // Successful verification renders a 200 page with a client-side
+        // meta-refresh redirect instead of a 302. This is intentional —
+        // ASWebAuthenticationSession on iOS can fail to intercept
+        // custom-scheme redirects at the end of a POST → 302 chain.
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Email verified");
+        body.Should().Contain("meta http-equiv=\"refresh\"");
 
         // Session should be persistent (isPersistent: true) — cookie has an expires attribute.
         // This assertion guards against a silent regression of the Task 4 convergence

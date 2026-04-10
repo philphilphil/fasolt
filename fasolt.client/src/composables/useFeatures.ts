@@ -3,6 +3,7 @@ import { apiFetch } from '@/api/client'
 
 interface Features {
   githubLogin: boolean
+  appleLogin: boolean
 }
 
 const features = ref<Features | null>(null)
@@ -13,7 +14,7 @@ async function load() {
     const res = await apiFetch<{ features: Features }>('/health')
     features.value = res.features
   } catch {
-    features.value = { githubLogin: false }
+    features.value = { githubLogin: false, appleLogin: false }
   }
 }
 

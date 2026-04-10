@@ -41,6 +41,7 @@ public class LoginModel : PageModel
     public string? ErrorMessage { get; set; }
 
     public bool GitHubEnabled => !string.IsNullOrEmpty(_configuration["GITHUB_CLIENT_ID"]);
+    public bool AppleEnabled => !string.IsNullOrEmpty(_configuration["APPLE_WEB_CLIENT_ID"]);
 
     public class InputModel
     {
@@ -73,11 +74,17 @@ public class LoginModel : PageModel
             return Redirect($"/api/account/github-login?returnUrl={Uri.EscapeDataString(ReturnUrl)}");
         }
 
+        if (providerHint == "apple" && AppleEnabled)
+        {
+            return Redirect($"/api/account/apple-login?returnUrl={Uri.EscapeDataString(ReturnUrl)}");
+        }
+
         // Friendly error mapping for GitHub OAuth callback failures. Matches
         // the map in the old SPA LoginView.vue so UX doesn't change.
         ErrorMessage = error switch
         {
             "github_auth_failed" => "GitHub authentication failed. Please try again.",
+            "apple_auth_failed" => "Apple authentication failed. Please try again.",
             "account_creation_failed" => "Could not create your account. Please try again.",
             _ => null,
         };

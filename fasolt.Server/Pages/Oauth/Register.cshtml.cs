@@ -18,16 +18,22 @@ public class RegisterModel : PageModel
     private readonly UserManager<AppUser> _userManager;
     private readonly IEmailVerificationCodeService _otpService;
     private readonly IOtpEmailSender _emailSender;
+    private readonly IConfiguration _configuration;
 
     public RegisterModel(
         UserManager<AppUser> userManager,
         IEmailVerificationCodeService otpService,
-        IOtpEmailSender emailSender)
+        IOtpEmailSender emailSender,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _otpService = otpService;
         _emailSender = emailSender;
+        _configuration = configuration;
     }
+
+    public bool GitHubEnabled => !string.IsNullOrEmpty(_configuration["GITHUB_CLIENT_ID"]);
+    public bool AppleEnabled => !string.IsNullOrEmpty(_configuration["APPLE_WEB_CLIENT_ID"]);
 
     [BindProperty]
     public InputModel Input { get; set; } = new();
