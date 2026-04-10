@@ -42,11 +42,11 @@ if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
         requestUri: $"https://api.axiom.co/v1/datasets/{axiomDataset}/ingest",
         queueLimitBytes: null,
         textFormatter: new CompactJsonFormatter(),
-        httpClient: new AxiomHttpClient(axiomToken),
-        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
+        httpClient: new AxiomHttpClient(axiomToken));
 }
 
-builder.Host.UseSerilog(loggerConfig.CreateLogger());
+Log.Logger = loggerConfig.CreateLogger();
+builder.Services.AddSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
