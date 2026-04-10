@@ -85,9 +85,13 @@ public sealed class AppleAuthService
         }
 
         // 3. Create a new user
+        // Use the email local part if available, otherwise a short hash of the sub
+        var username = !string.IsNullOrEmpty(email) && email.Contains('@')
+            ? email.Split('@')[0]
+            : $"apple-{sub[..8]}";
         var newUser = new AppUser
         {
-            UserName = $"apple-{sub}",
+            UserName = username,
             Email = email,
             EmailConfirmed = true,
             ExternalProvider = ProviderName,
