@@ -1,28 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.Abstractions;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Application.Services;
 
-public class AccountDataService(AppDbContext db)
+public class AccountDataService(AppDbContext db, IOpenIddictTokenManager tokenManager, IOpenIddictAuthorizationManager authorizationManager)
 {
     public async Task DeleteUserData(string userId)
     {
-        // Clean up OpenIddict tokens and authorizations (not cascade-deleted).
-        // These tables are registered by OpenIddict via UseOpenIddict() in Program.cs,
-        // not in AppDbContext directly, so they may not exist in test databases.
-        try
-        {
-            await db.Database.ExecuteSqlInterpolatedAsync(
-                $"""DELETE FROM "OpenIddictTokens" WHERE "Subject" = {userId}""");
-            await db.Database.ExecuteSqlInterpolatedAsync(
-                $"""DELETE FROM "OpenIddictAuthorizations" WHERE "Subject" = {userId}""");
-        }
-        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01")
-        {
-            // Table does not exist — nothing to clean up
-        }
+        // Revoke all OpenIddict tokens and authorizations (not cascade-deleted).
+        await tokenManager.RevokeBySubjectAsync(userId);
+        await authorizationManager.RevokeBySubjectAsync(userId);
 
         // Delete the user — cascade handles cards, decks, snapshots, consent grants, device tokens
         var user = await db.Users.FindAsync(userId);
