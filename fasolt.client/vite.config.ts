@@ -50,6 +50,7 @@ export default defineConfig({
       // so stale bookmarks still work. In dev, Vite needs to forward
       // them to the backend so the redirect actually fires (otherwise
       // Vite serves index.html and the SPA shows a 404).
+      '/login': 'http://localhost:8080',
       '/register': 'http://localhost:8080',
       '/verify-email': 'http://localhost:8080',
       '/confirm-email': 'http://localhost:8080',

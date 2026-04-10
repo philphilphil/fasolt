@@ -54,10 +54,9 @@ public class RegisterModel : PageModel
         public bool TosAccepted { get; set; }
     }
 
-    public IActionResult OnGet(string? error)
+    public IActionResult OnGet()
     {
         ReturnUrl = UrlHelpers.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/";
-        ErrorMessage = string.IsNullOrEmpty(error) ? null : error;
         return Page();
     }
 

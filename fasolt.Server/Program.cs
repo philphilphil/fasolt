@@ -621,6 +621,11 @@ app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("ap
 // register/verify surface is the server-rendered /oauth/* pages that both
 // the iOS popup and web browsers use. Endpoint routing runs before the
 // SPA fallback, so Vue never sees the stale paths.
+app.MapGet("/login", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+{
+    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+    return Results.Redirect($"/oauth/login?returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
+});
 app.MapGet("/register", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
 {
     var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
@@ -653,7 +658,7 @@ app.MapGet("/confirm-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     // Legacy URL-token confirmation is dead; point stale email links at a
     // friendly error on the verify page. Not permanent — URL-token confirm
     // was structurally a different flow and we don't want to cache.
-    return Results.Redirect("/oauth/verify-email?error=This+link+has+expired.+Please+request+a+new+code.", permanent: false);
+    return Results.Redirect("/oauth/verify-email?error=expired", permanent: false);
 });
 
 if (app.Environment.IsDevelopment())

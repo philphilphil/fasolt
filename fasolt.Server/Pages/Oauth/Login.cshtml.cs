@@ -57,6 +57,13 @@ public class LoginModel : PageModel
     {
         ReturnUrl = UrlHelpers.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/";
 
+        // Already authenticated — skip the login form and redirect straight
+        // to the target. Matches the old SPA's authRedirect behaviour.
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return Redirect(ReturnUrl);
+        }
+
         // Provider-hint redirect: if the caller passes ?provider_hint=github
         // and GitHub is configured, bounce straight into the GitHub OAuth
         // flow without rendering the login page. iOS relies on this to
@@ -72,8 +79,7 @@ public class LoginModel : PageModel
         {
             "github_auth_failed" => "GitHub authentication failed. Please try again.",
             "account_creation_failed" => "Could not create your account. Please try again.",
-            null or "" => null,
-            _ => error,
+            _ => null,
         };
 
         return Page();

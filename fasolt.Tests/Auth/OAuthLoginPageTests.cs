@@ -266,6 +266,105 @@ public class OAuthLoginPageTests
         body.Should().MatchRegex(@"class=""oauth-field-error[^""]*""[^>]*>\s*[^\s<][^<]*</span>");
     }
 
+    [Fact]
+    public async Task Post_RepeatedWrongPassword_TriggersLockout()
+    {
+        var email = $"lockout-{Guid.NewGuid():N}@example.com";
+        const string password = "Abcdefg1";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
+            var user = new AppUser { UserName = email, Email = email, EmailConfirmed = true };
+            (await userManager.CreateAsync(user, password)).Succeeded.Should().BeTrue();
+        }
+
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        // Identity default: 5 failed attempts triggers lockout.
+        string lastBody = "";
+        for (var i = 0; i < 6; i++)
+        {
+            var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+            var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+            var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+            var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = csrfToken,
+                ["Input.Email"] = email,
+                ["Input.Password"] = "wrong-password",
+                ["ReturnUrl"] = "/",
+            });
+            var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+            request.Headers.Add("Cookie", cookieHeader);
+
+            var response = await client.SendAsync(request);
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            lastBody = await response.Content.ReadAsStringAsync();
+        }
+
+        lastBody.Should().Contain("Account locked. Try again later.");
+    }
+
+    [Fact]
+    public async Task Get_UnknownErrorCode_DoesNotRenderArbitraryText()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync("/oauth/login?returnUrl=%2F&error=Your+account+is+compromised");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotContain("Your account is compromised",
+            "unknown error codes must be discarded to prevent reflected content injection");
+        body.Should().NotContain("oauth-error",
+            "no error banner should render for unknown error codes");
+    }
+
+    [Fact]
+    public async Task Get_AuthenticatedUser_RedirectsToReturnUrl()
+    {
+        var email = $"authed-{Guid.NewGuid():N}@example.com";
+        const string password = "Abcdefg1";
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
+            var user = new AppUser { UserName = email, Email = email, EmailConfirmed = true };
+            (await userManager.CreateAsync(user, password)).Succeeded.Should().BeTrue();
+        }
+
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        // Log in first
+        var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+        var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+        var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+        var loginContent = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = csrfToken,
+            ["Input.Email"] = email,
+            ["Input.Password"] = password,
+            ["ReturnUrl"] = "/",
+        });
+        var loginRequest = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = loginContent };
+        loginRequest.Headers.Add("Cookie", cookieHeader);
+        var loginResponse = await client.SendAsync(loginRequest);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
+
+        // Extract the auth cookie from the login response
+        var authCookies = loginResponse.Headers.GetValues("Set-Cookie");
+        var authCookie = authCookies.FirstOrDefault(c => c.Contains(".AspNetCore.Identity.Application")) ?? "";
+
+        // Now visit /oauth/login as an authenticated user
+        var authedRequest = new HttpRequestMessage(HttpMethod.Get, "/oauth/login?returnUrl=%2Fstudy");
+        authedRequest.Headers.Add("Cookie", authCookie);
+        var authedResponse = await client.SendAsync(authedRequest);
+
+        authedResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        authedResponse.Headers.Location!.OriginalString.Should().Be("/study",
+            "authenticated users visiting /oauth/login should be redirected to their target");
+    }
+
     private static string ExtractCsrfToken(string html)
     {
         // Try the pattern where name= and value= are adjacent (hand-rolled HTML)
