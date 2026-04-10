@@ -6,10 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class OAuthForgotPasswordEndpointTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 

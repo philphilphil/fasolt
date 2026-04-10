@@ -5,10 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class OAuthRegisterEndpointTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 

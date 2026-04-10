@@ -1,9 +1,11 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests;
 
-public class HealthEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class HealthEndpointsTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 
