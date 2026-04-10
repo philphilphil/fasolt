@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.RateLimiting;
+using OpenIddict.Abstractions;
 using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
@@ -18,15 +19,21 @@ public class ResetPasswordModel : PageModel
     private readonly UserManager<AppUser> _userManager;
     private readonly IPasswordResetCodeService _otpService;
     private readonly IOtpEmailSender _emailSender;
+    private readonly IOpenIddictTokenManager _tokenManager;
+    private readonly IOpenIddictAuthorizationManager _authorizationManager;
 
     public ResetPasswordModel(
         UserManager<AppUser> userManager,
         IPasswordResetCodeService otpService,
-        IOtpEmailSender emailSender)
+        IOtpEmailSender emailSender,
+        IOpenIddictTokenManager tokenManager,
+        IOpenIddictAuthorizationManager authorizationManager)
     {
         _userManager = userManager;
         _otpService = otpService;
         _emailSender = emailSender;
+        _tokenManager = tokenManager;
+        _authorizationManager = authorizationManager;
     }
 
     [BindProperty]
@@ -122,13 +129,8 @@ public class ResetPasswordModel : PageModel
 
         // OTP consumed. Rotate the password via Remove + Add so SecurityStamp
         // gets bumped and existing cookie sessions eventually invalidate
-        // (ValidateSecurityStampAsync interval).
-        //
-        // NOTE: If RemovePasswordAsync succeeds but AddPasswordAsync fails,
-        // the user is left without a password. Identity has no atomic swap.
-        // In practice the only Add failures post-Remove are validator
-        // rejections (already pre-checked above), so this window is narrow,
-        // but it's real — tracked in #111 as a session-management follow-up.
+        // (ValidateSecurityStampAsync interval). OAuth tokens are revoked
+        // separately below.
         var removeResult = await _userManager.RemovePasswordAsync(user);
         if (!removeResult.Succeeded)
         {
@@ -142,6 +144,11 @@ public class ResetPasswordModel : PageModel
             ErrorMessage = string.Join("; ", addResult.Errors.Select(e => e.Description));
             return Page();
         }
+
+        // Revoke all OpenIddict tokens and authorizations so OAuth clients
+        // (iOS, MCP) can't keep using old tokens after a password reset.
+        await _tokenManager.RevokeBySubjectAsync(user.Id);
+        await _authorizationManager.RevokeBySubjectAsync(user.Id);
 
         Success = true;
         return Page();

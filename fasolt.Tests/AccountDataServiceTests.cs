@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using NSubstitute;
+using OpenIddict.Abstractions;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Tests.Helpers;
@@ -75,7 +77,7 @@ public class AccountDataServiceTests : IAsyncLifetime
         }
 
         await using var ctx = _db.CreateDbContext();
-        var svc = new AccountDataService(ctx);
+        var svc = new AccountDataService(ctx, Substitute.For<IOpenIddictTokenManager>(), Substitute.For<IOpenIddictAuthorizationManager>());
 
         await svc.DeleteUserData(UserId);
 
@@ -152,7 +154,7 @@ public class AccountDataServiceTests : IAsyncLifetime
         }
 
         await using var ctx = _db.CreateDbContext();
-        var svc = new AccountDataService(ctx);
+        var svc = new AccountDataService(ctx, Substitute.For<IOpenIddictTokenManager>(), Substitute.For<IOpenIddictAuthorizationManager>());
         var user = await ctx.Users.FirstAsync(u => u.Id == UserId);
 
         var export = await svc.ExportUserData(user);
@@ -179,7 +181,7 @@ public class AccountDataServiceTests : IAsyncLifetime
     public async Task ExportUserData_WithNoData_ReturnsEmptyExport()
     {
         await using var ctx = _db.CreateDbContext();
-        var svc = new AccountDataService(ctx);
+        var svc = new AccountDataService(ctx, Substitute.For<IOpenIddictTokenManager>(), Substitute.For<IOpenIddictAuthorizationManager>());
         var user = await ctx.Users.FirstAsync(u => u.Id == UserId);
 
         var export = await svc.ExportUserData(user);
@@ -197,7 +199,7 @@ public class AccountDataServiceTests : IAsyncLifetime
     public async Task DeleteUserData_WithNonExistentUser_CompletesWithoutError()
     {
         await using var ctx = _db.CreateDbContext();
-        var svc = new AccountDataService(ctx);
+        var svc = new AccountDataService(ctx, Substitute.For<IOpenIddictTokenManager>(), Substitute.For<IOpenIddictAuthorizationManager>());
 
         var act = () => svc.DeleteUserData("nonexistent-user-id");
 
@@ -252,7 +254,7 @@ public class AccountDataServiceTests : IAsyncLifetime
         }
 
         await using var ctx = _db.CreateDbContext();
-        var svc = new AccountDataService(ctx);
+        var svc = new AccountDataService(ctx, Substitute.For<IOpenIddictTokenManager>(), Substitute.For<IOpenIddictAuthorizationManager>());
 
         await svc.DeleteUserData(UserId);
 
@@ -307,7 +309,7 @@ public class AccountDataServiceTests : IAsyncLifetime
         }
 
         await using var ctx = _db.CreateDbContext();
-        var svc = new AccountDataService(ctx);
+        var svc = new AccountDataService(ctx, Substitute.For<IOpenIddictTokenManager>(), Substitute.For<IOpenIddictAuthorizationManager>());
         var user = await ctx.Users.FirstAsync(u => u.Id == UserId);
 
         var export = await svc.ExportUserData(user);
