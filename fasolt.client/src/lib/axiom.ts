@@ -13,6 +13,10 @@ if (token && dataset) {
       new AxiomJSTransport({ axiom, dataset }),
       new ConsoleTransport(),
     ],
+    args: {
+      app: 'fasolt',
+      env: import.meta.env.MODE,
+    },
   })
 }
 

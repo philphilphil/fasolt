@@ -31,6 +31,8 @@ var loggerConfig = new LoggerConfiguration()
     .MinimumLevel.Warning()
     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
+    .Enrich.WithProperty("app", "fasolt")
+    .Enrich.WithProperty("env", builder.Environment.EnvironmentName)
     .WriteTo.Console();
 
 if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
