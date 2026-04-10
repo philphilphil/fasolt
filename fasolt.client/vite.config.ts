@@ -35,6 +35,8 @@ export default defineConfig({
         },
       },
       '/.well-known': 'http://localhost:8080',
+      '/css': 'http://localhost:8080',
+      '/js': 'http://localhost:8080',
       '/oauth/register': 'http://localhost:8080',
       '/oauth/verify-email': 'http://localhost:8080',
       '/oauth/forgot-password': 'http://localhost:8080',
