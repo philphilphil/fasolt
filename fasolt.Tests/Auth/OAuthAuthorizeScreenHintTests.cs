@@ -37,7 +37,7 @@ public class OAuthAuthorizeScreenHintTests
             "/oauth/authorize?response_type=code&client_id=fasolt-ios&redirect_uri=fasolt://oauth/callback&code_challenge=abc&code_challenge_method=S256&screen_hint=signup");
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().StartWith("/oauth/register");
+        response.Headers.Location!.OriginalString.Should().StartWith("/register");
     }
 
     [Fact]
@@ -52,6 +52,6 @@ public class OAuthAuthorizeScreenHintTests
             "/oauth/authorize?response_type=code&client_id=fasolt-ios&redirect_uri=fasolt://oauth/callback&code_challenge=abc&code_challenge_method=S256");
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().StartWith("/oauth/login");
+        response.Headers.Location!.OriginalString.Should().StartWith("/login");
     }
 }

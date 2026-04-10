@@ -26,8 +26,8 @@ public class OAuthCspHeaderTests
     }
 
     [Theory]
-    [InlineData("/oauth/login")]
-    [InlineData("/oauth/register")]
+    [InlineData("/login")]
+    [InlineData("/register")]
     [InlineData("/oauth/forgot-password")]
     [InlineData("/oauth/reset-password?email=foo@example.com")]
     public async Task OauthPages_ReturnCspHeader(string path)

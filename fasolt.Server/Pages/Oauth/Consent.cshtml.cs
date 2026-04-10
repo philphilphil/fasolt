@@ -43,7 +43,7 @@ public class ConsentModel : PageModel
     {
         var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (result?.Principal is null)
-            return Redirect("/oauth/login");
+            return Redirect("/login");
 
         var application = await _applicationManager.FindByClientIdAsync(ClientId);
         ClientName = application is not null
@@ -57,7 +57,7 @@ public class ConsentModel : PageModel
     {
         var authResult = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (authResult?.Principal is null)
-            return Redirect("/oauth/login");
+            return Redirect("/login");
 
         var userId = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
 

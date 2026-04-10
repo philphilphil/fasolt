@@ -570,7 +570,9 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseWhen(
-    ctx => ctx.Request.Path.StartsWithSegments("/oauth"),
+    ctx => ctx.Request.Path.StartsWithSegments("/oauth")
+        || ctx.Request.Path.StartsWithSegments("/login")
+        || ctx.Request.Path.StartsWithSegments("/register"),
     branch => branch.UseMiddleware<Fasolt.Server.Api.Middleware.ContentSecurityPolicyMiddleware>());
 app.UseAuthentication();
 app.UseAuthorization();

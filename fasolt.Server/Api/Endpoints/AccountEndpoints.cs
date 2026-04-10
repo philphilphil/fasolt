@@ -179,7 +179,7 @@ public static class AccountEndpoints
     {
         var result = await context.AuthenticateAsync(IdentityConstants.ExternalScheme);
         if (result?.Principal is null)
-            return Results.Redirect("/oauth/login?error=github_auth_failed");
+            return Results.Redirect("/login?error=github_auth_failed");
 
         var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
         if (!UrlHelpers.IsLocalUrl(returnUrl))
@@ -191,7 +191,7 @@ public static class AccountEndpoints
         if (string.IsNullOrEmpty(gitHubId) || string.IsNullOrEmpty(gitHubUsername))
         {
             await context.SignOutAsync(IdentityConstants.ExternalScheme);
-            return Results.Redirect("/oauth/login?error=github_auth_failed");
+            return Results.Redirect("/login?error=github_auth_failed");
         }
 
         // Look up by GitHub provider ID first
@@ -217,7 +217,7 @@ public static class AccountEndpoints
             if (!createResult.Succeeded)
             {
                 await context.SignOutAsync(IdentityConstants.ExternalScheme);
-                return Results.Redirect("/oauth/login?error=account_creation_failed");
+                return Results.Redirect("/login?error=account_creation_failed");
             }
         }
 
@@ -284,7 +284,7 @@ public static class AccountEndpoints
             returnUrl = "/";
 
         if (!string.IsNullOrEmpty(error) || string.IsNullOrEmpty(idToken))
-            return Results.Redirect($"/oauth/login?error=apple_auth_failed&returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return Results.Redirect($"/login?error=apple_auth_failed&returnUrl={Uri.EscapeDataString(returnUrl)}");
 
         AppUser user;
         try
@@ -293,7 +293,7 @@ public static class AccountEndpoints
         }
         catch (AppleAuthException)
         {
-            return Results.Redirect($"/oauth/login?error=apple_auth_failed&returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return Results.Redirect($"/login?error=apple_auth_failed&returnUrl={Uri.EscapeDataString(returnUrl)}");
         }
 
         await signInManager.SignInAsync(user, isPersistent: true);

@@ -12,7 +12,7 @@ const SEED_EMAIL = 'dev@fasolt.local'
 const SEED_PASSWORD = 'Dev1234!'
 
 test.describe('auth: login', () => {
-  test('anonymous visit to /study redirects to /oauth/login and back after login', async ({ page }) => {
+  test('anonymous visit to /study redirects to /login and back after login', async ({ page }) => {
     await page.goto('/study')
 
     // Full-page nav to the server-rendered Razor login page.
@@ -31,7 +31,7 @@ test.describe('auth: login', () => {
   })
 
   test('wrong password renders inline error and stays on login page', async ({ page }) => {
-    await page.goto('/oauth/login?returnUrl=%2F')
+    await page.goto('/login?returnUrl=%2F')
     await expect(page.locator('h1')).toContainText('Sign in to fasolt')
 
     await page.fill('input[name="Input.Email"]', SEED_EMAIL)
@@ -44,14 +44,14 @@ test.describe('auth: login', () => {
   })
 
   test('missing email shows field-level validation error', async ({ page }) => {
-    await page.goto('/oauth/login?returnUrl=%2F')
+    await page.goto('/login?returnUrl=%2F')
 
     // HTML5 required attribute would block a plain submit click. Bypass via JS
     // so we can verify the server-side [Required, EmailAddress] validators
     // also surface errors — the browser-side check is a nice-to-have, the
     // server-side check is the security contract.
     await page.evaluate(() => {
-      const form = document.querySelector('form[action="/oauth/login"]') as HTMLFormElement
+      const form = document.querySelector('form[action="/login"]') as HTMLFormElement
       const email = form.querySelector('input[name="Input.Email"]') as HTMLInputElement
       email.removeAttribute('required')
       email.value = ''
@@ -66,9 +66,9 @@ test.describe('auth: login', () => {
     await expect(page.locator('.oauth-field-error').first()).toBeVisible()
   })
 
-  test('logout from the TopBar dropdown redirects to /oauth/login', async ({ page }) => {
+  test('logout from the TopBar dropdown redirects to /login', async ({ page }) => {
     // Log in first via the server-rendered login page.
-    await page.goto('/oauth/login?returnUrl=%2F')
+    await page.goto('/login?returnUrl=%2F')
     await page.fill('input[name="Input.Email"]', SEED_EMAIL)
     await page.fill('input[name="Input.Password"]', SEED_PASSWORD)
     await page.click('button[type="submit"]')
@@ -88,16 +88,16 @@ test.describe('auth: login', () => {
     // DropdownMenuItem role.
     await page.getByRole('menuitem', { name: /log out/i }).click()
 
-    // handleLogout calls auth.logout() then window.location.href = '/oauth/login',
+    // handleLogout calls auth.logout() then window.location.href = '/login',
     // which is a full-page nav to the server-rendered Razor page.
     await expect(page).toHaveURL(/\/oauth\/login/)
     await expect(page.locator('h1')).toContainText('Sign in to fasolt')
   })
 
-  test('landing page "Log in" CTA navigates to /oauth/login', async ({ page }) => {
+  test('landing page "Log in" CTA navigates to /login', async ({ page }) => {
     await page.goto('/')
     // LandingView has two "Log in" CTAs (hero + footer). Click the first
-    // visible one. They're plain <a href="/oauth/login"> anchors after
+    // visible one. They're plain <a href="/login"> anchors after
     // Task 13 retired the SPA /login route.
     await page.getByRole('link', { name: /^log in$/i }).first().click()
     await expect(page).toHaveURL(/\/oauth\/login/)

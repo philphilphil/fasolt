@@ -30,7 +30,7 @@ const { isDark, toggle } = useDarkMode()
             <Sun v-if="isDark" :size="16" />
             <Moon v-else :size="16" />
           </button>
-          <a href="/oauth/login">
+          <a href="/login">
             <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
           </a>
         </div>
@@ -50,10 +50,10 @@ const { isDark, toggle } = useDarkMode()
           Study on the web or the iOS app. Free.
         </p>
         <div class="flex flex-wrap gap-3">
-          <a href="/oauth/register">
+          <a href="/register">
             <Button class="glow-accent">Get started</Button>
           </a>
-          <a href="/oauth/login">
+          <a href="/login">
             <Button variant="outline">Log in</Button>
           </a>
         </div>
@@ -177,7 +177,7 @@ const { isDark, toggle } = useDarkMode()
     <!-- CTA -->
     <section class="mx-auto max-w-5xl px-6 py-16 text-center">
       <p class="text-xs text-muted-foreground mb-4 uppercase tracking-[0.2em]">Free and open source</p>
-      <a href="/oauth/register">
+      <a href="/register">
         <Button class="glow-accent">Get started</Button>
       </a>
     </section>

@@ -32,7 +32,7 @@ public class OAuthProviderHintTests
             AllowAutoRedirect = false,
         });
 
-        var response = await client.GetAsync("/oauth/login?provider_hint=github&returnUrl=/");
+        var response = await client.GetAsync("/login?provider_hint=github&returnUrl=/");
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().StartWith("/api/account/github-login");
@@ -46,7 +46,7 @@ public class OAuthProviderHintTests
             AllowAutoRedirect = false,
         });
 
-        var response = await client.GetAsync("/oauth/login?returnUrl=/");
+        var response = await client.GetAsync("/login?returnUrl=/");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("<form");
@@ -60,7 +60,7 @@ public class OAuthProviderHintTests
             AllowAutoRedirect = false,
         });
 
-        var response = await client.GetAsync("/oauth/login?provider_hint=evilcorp&returnUrl=/");
+        var response = await client.GetAsync("/login?provider_hint=evilcorp&returnUrl=/");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -72,10 +72,10 @@ public class OAuthProviderHintTests
             AllowAutoRedirect = false,
         });
 
-        var response = await client.GetAsync("/oauth/login?returnUrl=/");
+        var response = await client.GetAsync("/login?returnUrl=/");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
-        body.Should().Contain("/oauth/register");
+        body.Should().Contain("/register");
         body.Should().Contain("Create an account");
     }
 }

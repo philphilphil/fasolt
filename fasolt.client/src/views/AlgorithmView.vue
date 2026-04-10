@@ -26,7 +26,7 @@ const { isDark, toggle } = useDarkMode()
             <Sun v-if="isDark" :size="16" />
             <Moon v-else :size="16" />
           </button>
-          <a href="/oauth/login">
+          <a href="/login">
             <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
           </a>
         </div>

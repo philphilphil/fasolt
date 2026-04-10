@@ -78,12 +78,12 @@ router.beforeEach(async (to) => {
   const isPublic = to.meta.public === true
 
   if (!isPublic && !auth.isAuthenticated) {
-    // Full-page nav to the server-rendered Razor /oauth/login. SPA state
+    // Full-page nav to the server-rendered Razor /login. SPA state
     // is already unauthenticated-dead at this point, so there's nothing
     // to preserve. window.location.href triggers a real browser navigation
     // (not SPA routing), which is what we want — the Razor page is served
     // by the backend, not the Vite dev server's fallback.
-    window.location.href = `/oauth/login?returnUrl=${encodeURIComponent(to.fullPath)}`
+    window.location.href = `/login?returnUrl=${encodeURIComponent(to.fullPath)}`
     return false
   }
 

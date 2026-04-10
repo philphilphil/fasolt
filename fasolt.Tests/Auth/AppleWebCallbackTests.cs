@@ -119,7 +119,7 @@ public class AppleWebCallbackTests
         var response = await client.PostAsync("/api/account/apple-callback", content);
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().Contain("/oauth/login");
+        response.Headers.Location!.OriginalString.Should().Contain("/login");
         response.Headers.Location!.OriginalString.Should().Contain("error=apple_auth_failed");
     }
 
@@ -136,7 +136,7 @@ public class AppleWebCallbackTests
         var response = await client.PostAsync("/api/account/apple-callback", content);
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().Contain("/oauth/login");
+        response.Headers.Location!.OriginalString.Should().Contain("/login");
         response.Headers.Location!.OriginalString.Should().Contain("error=apple_auth_failed");
     }
 

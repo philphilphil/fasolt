@@ -33,7 +33,7 @@ public class OAuthRegisterEndpointTests
     public async Task Get_RendersRegisterForm()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/oauth/register?returnUrl=%2Foauth%2Fauthorize%3F...");
+        var response = await client.GetAsync("/register?returnUrl=%2Foauth%2Fauthorize%3F...");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
@@ -54,7 +54,7 @@ public class OAuthRegisterEndpointTests
         });
 
         // Prime CSRF by GETting the form first
-        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/register?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -69,7 +69,7 @@ public class OAuthRegisterEndpointTests
             ["ReturnUrl"] = "/",
         });
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -96,7 +96,7 @@ public class OAuthRegisterEndpointTests
             AllowAutoRedirect = false,
         });
 
-        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/register?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -110,7 +110,7 @@ public class OAuthRegisterEndpointTests
             ["ReturnUrl"] = "/",
         });
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -138,7 +138,7 @@ public class OAuthRegisterEndpointTests
         }
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/register?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -151,7 +151,7 @@ public class OAuthRegisterEndpointTests
             ["Input.TosAccepted"] = "true",
             ["ReturnUrl"] = "/",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -199,7 +199,7 @@ public class OAuthRegisterEndpointTests
         }
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/register?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -212,7 +212,7 @@ public class OAuthRegisterEndpointTests
             ["Input.TosAccepted"] = "true",
             ["ReturnUrl"] = "/",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -233,7 +233,7 @@ public class OAuthRegisterEndpointTests
     public async Task Post_WithWeakPassword_ReturnsFormWithError()
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var getResponse = await client.GetAsync("/oauth/register?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/register?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -247,7 +247,7 @@ public class OAuthRegisterEndpointTests
             ["Input.TosAccepted"] = "true",
             ["ReturnUrl"] = "/",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
