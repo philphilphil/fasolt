@@ -42,6 +42,7 @@ public class VerifyEmailModel : PageModel
     public string ReturnUrl { get; set; } = "/";
 
     public string? ErrorMessage { get; set; }
+    public bool Verified { get; set; }
 
     public class InputModel
     {
@@ -93,7 +94,15 @@ public class VerifyEmailModel : PageModel
                 // for /oauth/login); auth pages default to persistent sessions
                 // per the modern SaaS norm.
                 await _signInManager.SignInAsync(user, isPersistent: true);
-                return Redirect(ReturnUrl);
+
+                // Render a page with a client-side redirect instead of a
+                // server-side 302. ASWebAuthenticationSession on iOS can
+                // fail to intercept custom-scheme redirects at the end of
+                // a POST → 302 → 302 → custom-scheme chain. A client-side
+                // redirect (meta refresh) breaks the chain and gives the
+                // web view a clean document load before the final navigate.
+                Verified = true;
+                return Page();
 
             case VerifyResult.Incorrect:
                 ErrorMessage = "Incorrect code, try again.";

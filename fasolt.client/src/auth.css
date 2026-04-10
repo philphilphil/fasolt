@@ -107,7 +107,7 @@
   .oauth-field input[type=text],
   .oauth-field input[type=email],
   .oauth-field input[type=password] {
-    @apply w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
   .oauth-field input[name="Input.Code"],
   .oauth-field input[name=code] {
