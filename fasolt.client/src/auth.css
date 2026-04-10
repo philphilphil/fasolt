@@ -116,6 +116,9 @@
   .oauth-btn {
     @apply mt-1 inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50;
   }
+  .oauth-btn-apple {
+    @apply mb-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black/85;
+  }
   .oauth-btn-github {
     @apply mb-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#24292f] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#32383f];
   }

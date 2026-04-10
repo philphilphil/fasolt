@@ -23,7 +23,7 @@ public sealed class AppleAuthService
 
     private readonly AppleJwksCache _jwksCache;
     private readonly UserManager<AppUser> _userManager;
-    private readonly string _audience;
+    private readonly List<string> _audiences;
     private readonly ILogger<AppleAuthService> _logger;
 
     public AppleAuthService(AppleJwksCache jwksCache, UserManager<AppUser> userManager, IConfiguration configuration, ILogger<AppleAuthService> logger)
@@ -31,8 +31,15 @@ public sealed class AppleAuthService
         _jwksCache = jwksCache;
         _userManager = userManager;
         _logger = logger;
-        _audience = configuration["APPLE_BUNDLE_ID"]
-            ?? throw new InvalidOperationException("APPLE_BUNDLE_ID is not configured");
+
+        // Accept tokens issued for either the iOS bundle ID or the web Services ID
+        _audiences = new List<string>();
+        var bundleId = configuration["APPLE_BUNDLE_ID"];
+        var webClientId = configuration["APPLE_WEB_CLIENT_ID"];
+        if (!string.IsNullOrEmpty(bundleId)) _audiences.Add(bundleId);
+        if (!string.IsNullOrEmpty(webClientId)) _audiences.Add(webClientId);
+        if (_audiences.Count == 0)
+            throw new InvalidOperationException("At least one of APPLE_BUNDLE_ID or APPLE_WEB_CLIENT_ID must be configured");
     }
 
     public async Task<AppUser> ResolveUserAsync(string identityToken, CancellationToken cancellationToken = default)
@@ -114,7 +121,7 @@ public sealed class AppleAuthService
             ValidateIssuer = true,
             ValidIssuer = AppleIssuer,
             ValidateAudience = true,
-            ValidAudience = _audience,
+            ValidAudiences = _audiences,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKeys = jwks.Keys,

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Services;
@@ -24,6 +25,8 @@ public static class AccountEndpoints
         // as an OTP flow (see OAuthEndpoints) — no JSON API surface.
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
         group.MapGet("/github-callback", GitHubCallback).RequireRateLimiting("auth");
+        group.MapGet("/apple-login", AppleLogin).RequireRateLimiting("auth");
+        group.MapPost("/apple-callback", AppleCallback).RequireRateLimiting("auth");
         group.MapGet("/export", ExportData).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
         group.MapDelete("/", DeleteAccount).RequireAuthorization("EmailVerified").RequireRateLimiting("auth");
     }
@@ -229,6 +232,71 @@ public static class AccountEndpoints
         await signInManager.SignInAsync(user, isPersistent: true);
         await context.SignOutAsync(IdentityConstants.ExternalScheme);
 
+        return Results.Redirect(returnUrl);
+    }
+
+    private static IResult AppleLogin(HttpContext context, IConfiguration configuration)
+    {
+        var webClientId = configuration["APPLE_WEB_CLIENT_ID"];
+        if (string.IsNullOrEmpty(webClientId))
+            return Results.NotFound();
+
+        var returnUrl = context.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
+        if (!UrlHelpers.IsLocalUrl(returnUrl))
+            returnUrl = "/";
+
+        // Build the redirect URI for Apple's callback (form_post back to our server)
+        var request = context.Request;
+        var redirectUri = $"{request.Scheme}://{request.Host}/api/account/apple-callback";
+
+        // Encode returnUrl into the state parameter so we can recover it after Apple's POST
+        var state = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(returnUrl));
+
+        var appleAuthUrl = "https://appleid.apple.com/auth/authorize" +
+            $"?client_id={Uri.EscapeDataString(webClientId)}" +
+            $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+            "&response_type=code id_token" +
+            "&response_mode=form_post" +
+            "&scope=email" +
+            $"&state={Uri.EscapeDataString(state)}";
+
+        return Results.Redirect(appleAuthUrl);
+    }
+
+    private static async Task<IResult> AppleCallback(
+        HttpContext context,
+        SignInManager<AppUser> signInManager,
+        AppleAuthService appleAuthService)
+    {
+        // Apple POSTs the response as form data (response_mode=form_post)
+        var form = await context.Request.ReadFormAsync();
+        var idToken = form["id_token"].FirstOrDefault();
+        var stateParam = form["state"].FirstOrDefault();
+        var error = form["error"].FirstOrDefault();
+
+        var returnUrl = "/";
+        if (!string.IsNullOrEmpty(stateParam))
+        {
+            try { returnUrl = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(stateParam)); }
+            catch { /* fall through to default */ }
+        }
+        if (!UrlHelpers.IsLocalUrl(returnUrl))
+            returnUrl = "/";
+
+        if (!string.IsNullOrEmpty(error) || string.IsNullOrEmpty(idToken))
+            return Results.Redirect($"/oauth/login?error=apple_auth_failed&returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+        AppUser user;
+        try
+        {
+            user = await appleAuthService.ResolveUserAsync(idToken);
+        }
+        catch (AppleAuthException)
+        {
+            return Results.Redirect($"/oauth/login?error=apple_auth_failed&returnUrl={Uri.EscapeDataString(returnUrl)}");
+        }
+
+        await signInManager.SignInAsync(user, isPersistent: true);
         return Results.Redirect(returnUrl);
     }
 
