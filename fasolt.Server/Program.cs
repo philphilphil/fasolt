@@ -30,6 +30,7 @@ var axiomDataset = builder.Configuration["AXIOM_DATASET"];
 var loggerConfig = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
     .Enrich.FromLogContext()
     .Enrich.WithProperty("app", "fasolt")
     .Enrich.WithProperty("env", builder.Environment.EnvironmentName)
