@@ -265,23 +265,36 @@ public static class OAuthEndpoints
             // OpenIddict scheme only works for the built-in flows (authorization_code / refresh_token).
             if (request.GrantType == AppleAuthService.GrantType)
             {
+                var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("AppleTokenEndpoint");
                 var identityToken = request.GetParameter("identity_token")?.ToString();
                 if (string.IsNullOrEmpty(identityToken))
+                {
+                    logger.LogWarning("Apple token request missing identity_token parameter");
                     return Results.Json(
                         new { error = Errors.InvalidRequest, error_description = "identity_token parameter is required." },
                         statusCode: StatusCodes.Status400BadRequest);
+                }
 
                 var appleService = context.RequestServices.GetRequiredService<AppleAuthService>();
                 AppUser appleUser;
                 try
                 {
                     appleUser = await appleService.ResolveUserAsync(identityToken);
+                    logger.LogInformation("Apple sign-in resolved user {UserId} ({Email})", appleUser.Id, appleUser.Email);
                 }
                 catch (AppleAuthException ex)
                 {
+                    logger.LogWarning("Apple sign-in failed: {Error}", ex.Message);
                     return Results.Json(
                         new { error = Errors.InvalidGrant, error_description = ex.Message },
                         statusCode: StatusCodes.Status400BadRequest);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Unexpected error during Apple sign-in");
+                    return Results.Json(
+                        new { error = Errors.ServerError, error_description = "An unexpected error occurred." },
+                        statusCode: StatusCodes.Status500InternalServerError);
                 }
 
                 var appleIdentity = new ClaimsIdentity(
