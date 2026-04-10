@@ -15,17 +15,9 @@ export DOTNET_ROOT=/usr/share/dotnet
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
 
-# --- PostgreSQL 17 ---
-apt-get install -y gnupg lsb-release curl ca-certificates
-echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
-  > /etc/apt/sources.list.d/pgdg.list
-curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-  | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
-apt-get update
-apt-get install -y postgresql-17
-
-# Start PostgreSQL and create the dev database
-pg_ctlcluster 17 main start
-su - postgres -c "psql -c \"CREATE USER fasolt WITH PASSWORD 'fasolt_dev';\"" || true
-su - postgres -c "psql -c \"CREATE DATABASE fasolt OWNER fasolt;\"" || true
-su - postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE fasolt TO fasolt;\"" || true
+# --- PostgreSQL 17 (via Docker) ---
+docker compose up -d db
+# Wait for PostgreSQL to be ready
+until docker compose exec db pg_isready -U fasolt -d fasolt 2>/dev/null; do
+  sleep 1
+done
