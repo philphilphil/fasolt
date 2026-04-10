@@ -1,10 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        VITE_AXIOM_TOKEN: ${VITE_AXIOM_TOKEN:-}
-        VITE_AXIOM_DATASET: ${VITE_AXIOM_DATASET:-}
+    build: .
     restart: unless-stopped
     env_file: .env
     environment:

@@ -12,10 +12,6 @@ COPY fasolt.client/ ./
 # fasolt.client/, which is also /app inside this stage). If WORKDIR ever
 # changes, update both ends of this path coupling together.
 COPY fasolt.Server/Pages/ ../fasolt.Server/Pages/
-ARG VITE_AXIOM_TOKEN=""
-ARG VITE_AXIOM_DATASET=""
-ENV VITE_AXIOM_TOKEN=$VITE_AXIOM_TOKEN
-ENV VITE_AXIOM_DATASET=$VITE_AXIOM_DATASET
 RUN npm run build
 RUN npm run build:auth
 
