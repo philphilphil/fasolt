@@ -15,9 +15,16 @@ export DOTNET_ROOT=/usr/share/dotnet
 curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
 
-# --- PostgreSQL 17 (via Docker) ---
-docker compose up -d db
+# --- PostgreSQL (local) ---
+# Docker daemon is not available in cloud sessions; use the system PostgreSQL.
+PG_VER=$(pg_lsclusters -h 2>/dev/null | awk '{print $1; exit}')
+if [ -z "$PG_VER" ]; then
+  apt-get install -y postgresql
+  PG_VER=$(pg_lsclusters -h | awk '{print $1; exit}')
+fi
+pg_ctlcluster "$PG_VER" main start || true
 # Wait for PostgreSQL to be ready
-until docker compose exec db pg_isready -U fasolt -d fasolt 2>/dev/null; do
-  sleep 1
-done
+until pg_isready -q 2>/dev/null; do sleep 1; done
+# Create role and database if they don't exist
+su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='fasolt'\" | grep -q 1 || psql -c \"CREATE USER fasolt WITH PASSWORD 'fasolt_dev';\""
+su - postgres -c "psql -tc \"SELECT 1 FROM pg_catalog.pg_database WHERE datname='fasolt'\" | grep -q 1 || psql -c \"CREATE DATABASE fasolt OWNER fasolt;\""
