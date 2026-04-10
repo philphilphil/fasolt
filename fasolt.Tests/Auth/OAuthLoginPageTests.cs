@@ -30,12 +30,12 @@ public class OAuthLoginPageTests
     public async Task Get_Anonymous_RendersLoginForm()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/oauth/login?returnUrl=%2F");
+        var response = await client.GetAsync("/login?returnUrl=%2F");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("<form");
-        body.Should().Contain("action=\"/oauth/login\"");
+        body.Should().Contain("action=\"/login\"");
         body.Should().Contain("name=\"Input.Email\"");
         body.Should().Contain("name=\"Input.Password\"");
         body.Should().Contain("Sign in to fasolt");
@@ -58,7 +58,7 @@ public class OAuthLoginPageTests
         });
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var response = await client.GetAsync("/oauth/login?provider_hint=github&returnUrl=%2F");
+        var response = await client.GetAsync("/login?provider_hint=github&returnUrl=%2F");
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().StartWith("/api/account/github-login");
@@ -70,7 +70,7 @@ public class OAuthLoginPageTests
     public async Task Get_WithErrorQuery_RendersMappedMessage(string errorCode, string expectedMessage)
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync($"/oauth/login?returnUrl=%2F&error={errorCode}");
+        var response = await client.GetAsync($"/login?returnUrl=%2F&error={errorCode}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
@@ -88,7 +88,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = "Abcdefg1",
         });
 
-        var response = await client.PostAsync("/oauth/login", content);
+        var response = await client.PostAsync("/login", content);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -106,7 +106,7 @@ public class OAuthLoginPageTests
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/login?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -117,7 +117,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = "wrong-password",
             ["ReturnUrl"] = "/",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -141,7 +141,7 @@ public class OAuthLoginPageTests
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2Fstudy");
+        var getResponse = await client.GetAsync("/login?returnUrl=%2Fstudy");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -152,7 +152,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = password,
             ["ReturnUrl"] = "/study",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -180,7 +180,7 @@ public class OAuthLoginPageTests
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var getResponse = await client.GetAsync("/oauth/login?returnUrl=https%3A%2F%2Fevil.com");
+        var getResponse = await client.GetAsync("/login?returnUrl=https%3A%2F%2Fevil.com");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -191,7 +191,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = password,
             ["ReturnUrl"] = "https://evil.com",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -215,7 +215,7 @@ public class OAuthLoginPageTests
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/login?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -226,7 +226,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = password,
             ["ReturnUrl"] = "/",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -241,7 +241,7 @@ public class OAuthLoginPageTests
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-        var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/login?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -252,7 +252,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = "Abcdefg1",
             ["ReturnUrl"] = "/",
         });
-        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
@@ -285,7 +285,7 @@ public class OAuthLoginPageTests
         string? cookieHeader = null;
         for (var i = 0; i < 6; i++)
         {
-            var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+            var getResponse = await client.GetAsync("/login?returnUrl=%2F");
             var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
             if (getResponse.Headers.TryGetValues("Set-Cookie", out var cookies))
                 cookieHeader = cookies.FirstOrDefault();
@@ -297,7 +297,7 @@ public class OAuthLoginPageTests
                 ["Input.Password"] = "wrong-password",
                 ["ReturnUrl"] = "/",
             });
-            var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
+            var request = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = content };
             if (cookieHeader is not null)
                 request.Headers.Add("Cookie", cookieHeader);
 
@@ -313,7 +313,7 @@ public class OAuthLoginPageTests
     public async Task Get_UnknownErrorCode_DoesNotRenderArbitraryText()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/oauth/login?returnUrl=%2F&error=Your+account+is+compromised");
+        var response = await client.GetAsync("/login?returnUrl=%2F&error=Your+account+is+compromised");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
@@ -338,7 +338,7 @@ public class OAuthLoginPageTests
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
         // Log in first
-        var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
+        var getResponse = await client.GetAsync("/login?returnUrl=%2F");
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
@@ -349,7 +349,7 @@ public class OAuthLoginPageTests
             ["Input.Password"] = password,
             ["ReturnUrl"] = "/",
         });
-        var loginRequest = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = loginContent };
+        var loginRequest = new HttpRequestMessage(HttpMethod.Post, "/login") { Content = loginContent };
         loginRequest.Headers.Add("Cookie", cookieHeader);
         var loginResponse = await client.SendAsync(loginRequest);
         loginResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
@@ -358,14 +358,14 @@ public class OAuthLoginPageTests
         var authCookies = loginResponse.Headers.GetValues("Set-Cookie");
         var authCookie = authCookies.FirstOrDefault(c => c.Contains(".AspNetCore.Identity.Application")) ?? "";
 
-        // Now visit /oauth/login as an authenticated user
-        var authedRequest = new HttpRequestMessage(HttpMethod.Get, "/oauth/login?returnUrl=%2Fstudy");
+        // Now visit /login as an authenticated user
+        var authedRequest = new HttpRequestMessage(HttpMethod.Get, "/login?returnUrl=%2Fstudy");
         authedRequest.Headers.Add("Cookie", authCookie);
         var authedResponse = await client.SendAsync(authedRequest);
 
         authedResponse.StatusCode.Should().Be(HttpStatusCode.Redirect);
         authedResponse.Headers.Location!.OriginalString.Should().Be("/study",
-            "authenticated users visiting /oauth/login should be redirected to their target");
+            "authenticated users visiting /login should be redirected to their target");
     }
 
     private static string ExtractCsrfToken(string html)

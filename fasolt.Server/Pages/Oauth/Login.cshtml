@@ -1,4 +1,4 @@
-@page "/oauth/login"
+@page "/login"
 @model LoginModel
 @{
     ViewData["Title"] = "Sign in";
@@ -35,7 +35,7 @@
         <div class="oauth-divider"><span>or</span></div>
     }
 
-    <form method="post" action="/oauth/login">
+    <form method="post" action="/login">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="ReturnUrl" />
         <div class="oauth-field">
@@ -52,7 +52,7 @@
     </form>
 
     <div class="oauth-footer">
-        <a href="/oauth/register?returnUrl=@Uri.EscapeDataString(Model.ReturnUrl)">Create an account</a>
+        <a href="/register?returnUrl=@Uri.EscapeDataString(Model.ReturnUrl)">Create an account</a>
         <a href="/oauth/forgot-password?returnUrl=@Uri.EscapeDataString(Model.ReturnUrl)">Forgot password?</a>
     </div>
 </main>

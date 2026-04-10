@@ -25,7 +25,7 @@ public class ContentSecurityPolicyMiddleware
         "script-src 'self'; " +
         "img-src 'self' data:; " +
         "connect-src 'self'; " +
-        "form-action 'self' https://github.com; " +
+        "form-action 'self' https://github.com https://appleid.apple.com; " +
         "frame-ancestors 'none'; " +
         "base-uri 'self'";
 

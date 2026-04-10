@@ -70,7 +70,7 @@ onUnmounted(() => {
 
 async function handleLogout() {
   await auth.logout()
-  window.location.href = '/oauth/login'
+  window.location.href = '/login'
 }
 </script>
 

@@ -121,7 +121,7 @@ public static class OAuthEndpoints
                 var returnUrl = context.Request.QueryString.Value;
                 var openIddictReq = context.GetOpenIddictServerRequest();
                 var hint = openIddictReq?.GetParameter("screen_hint")?.ToString();
-                var target = hint == "signup" ? "/oauth/register" : "/oauth/login";
+                var target = hint == "signup" ? "/register" : "/login";
                 return Results.Redirect($"{target}?returnUrl={Uri.EscapeDataString("/oauth/authorize" + returnUrl)}");
             }
 

@@ -33,8 +33,8 @@ async function fetchResetCode(email: string): Promise<string> {
 
 test.describe('auth: forgot password', () => {
   test('full reset flow: request code → enter code → new password → sign in', async ({ page }) => {
-    // 1. Start at /oauth/login and click "Forgot password?"
-    await page.goto('/oauth/login?returnUrl=%2F')
+    // 1. Start at /login and click "Forgot password?"
+    await page.goto('/login?returnUrl=%2F')
     await page.click('a[href*="/oauth/forgot-password"]')
     await expect(page).toHaveURL(/\/oauth\/forgot-password/)
     await expect(page.locator('h1')).toContainText('Reset your password')
@@ -68,7 +68,7 @@ test.describe('auth: forgot password', () => {
     // 6. Success screen
     await expect(page.locator('h1')).toContainText('Password updated')
 
-    // 7. Click "Go to sign in" → /oauth/login, then sign in with the new password
+    // 7. Click "Go to sign in" → /login, then sign in with the new password
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/oauth\/login/)
 
