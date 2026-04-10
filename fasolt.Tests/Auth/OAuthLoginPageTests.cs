@@ -282,11 +282,13 @@ public class OAuthLoginPageTests
 
         // Identity default: 5 failed attempts triggers lockout.
         string lastBody = "";
+        string? cookieHeader = null;
         for (var i = 0; i < 6; i++)
         {
             var getResponse = await client.GetAsync("/oauth/login?returnUrl=%2F");
             var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
-            var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+            if (getResponse.Headers.TryGetValues("Set-Cookie", out var cookies))
+                cookieHeader = cookies.FirstOrDefault();
 
             var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -296,7 +298,8 @@ public class OAuthLoginPageTests
                 ["ReturnUrl"] = "/",
             });
             var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/login") { Content = content };
-            request.Headers.Add("Cookie", cookieHeader);
+            if (cookieHeader is not null)
+                request.Headers.Add("Cookie", cookieHeader);
 
             var response = await client.SendAsync(request);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
