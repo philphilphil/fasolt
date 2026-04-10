@@ -3,6 +3,7 @@ namespace Fasolt.Server.Domain.Entities;
 public enum LogType
 {
     Notification,
+    Admin,
 }
 
 public class AppLog

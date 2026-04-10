@@ -48,6 +48,18 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
         return new LogListResponse(logs, total, page, pageSize);
     }
 
+    public async Task LogAdminAction(string message)
+    {
+        db.Logs.Add(new AppLog
+        {
+            Type = LogType.Admin,
+            Message = message,
+            Success = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+    }
+
     public async Task<PushResult?> TriggerPushForUser(string userId)
     {
         if (apnsService is null) return null;
