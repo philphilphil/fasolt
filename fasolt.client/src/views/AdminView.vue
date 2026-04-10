@@ -19,6 +19,7 @@ interface AdminUser {
   id: string
   email: string
   displayName: string | null
+  externalProvider: string | null
   cardCount: number
   deckCount: number
   isLockedOut: boolean
