@@ -20,6 +20,7 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
                 u.Id,
                 u.Email!,
                 u.ExternalProvider != null ? u.UserName : null,
+                u.ExternalProvider,
                 db.Cards.Count(c => c.UserId == u.Id),
                 db.Decks.Count(d => d.UserId == u.Id),
                 u.LockoutEnabled && u.LockoutEnd > DateTimeOffset.UtcNow,

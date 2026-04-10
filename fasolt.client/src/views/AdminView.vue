@@ -227,7 +227,7 @@ onMounted(() => {
               </span>
             </TableCell>
             <TableCell>
-              <Badge v-if="u.displayName" variant="secondary">GitHub</Badge>
+              <Badge v-if="u.externalProvider" variant="secondary">{{ u.externalProvider }}</Badge>
               <span v-else class="text-xs text-muted-foreground">Email</span>
             </TableCell>
             <TableCell class="text-right">{{ u.cardCount }}</TableCell>

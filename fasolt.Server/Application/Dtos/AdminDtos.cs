@@ -4,6 +4,7 @@ public record AdminUserDto(
     string Id,
     string Email,
     string? DisplayName,
+    string? ExternalProvider,
     int CardCount,
     int DeckCount,
     bool IsLockedOut,

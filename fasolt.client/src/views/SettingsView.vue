@@ -200,10 +200,15 @@ async function savePassword() {
             </div>
             <div class="flex items-center gap-2 text-xs">
               <span class="text-muted-foreground">Account type</span>
-              <span v-if="auth.isExternalAccount" class="inline-flex items-center gap-1 font-medium">
+              <span v-if="auth.user?.externalProvider === 'GitHub'" class="inline-flex items-center gap-1 font-medium">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
                 GitHub
               </span>
+              <span v-else-if="auth.user?.externalProvider === 'Apple'" class="inline-flex items-center gap-1 font-medium">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.02 8.93 8.76c1.28.07 2.17.72 2.91.77.93-.19 1.82-.87 2.83-.79 1.19.1 2.08.6 2.67 1.5-2.44 1.47-1.86 4.7.37 5.6-.44 1.16-1.01 2.3-2.66 4.44zM12.03 8.7c-.15-2.34 1.8-4.3 3.97-4.5.29 2.56-2.34 4.48-3.97 4.5z"/></svg>
+                Apple
+              </span>
+              <span v-else-if="auth.isExternalAccount" class="font-medium">{{ auth.user?.externalProvider }}</span>
               <span v-else class="font-medium">Email &amp; password</span>
             </div>
           </CardContent>
