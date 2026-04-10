@@ -38,6 +38,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseOpenIddict();
 });
 
+builder.Services.AddRazorPages();
+
 builder.Services
     .AddIdentityApiEndpoints<AppUser>(options =>
     {
@@ -224,6 +226,7 @@ if (!builder.Environment.IsDevelopment())
 }
 else
 {
+    builder.Services.AddSingleton<Fasolt.Server.Infrastructure.Services.TestEmailSink>();
     builder.Services.AddTransient<DevEmailSender>();
     builder.Services.AddTransient<IEmailSender<AppUser>>(sp => sp.GetRequiredService<DevEmailSender>());
     builder.Services.AddTransient<IOtpEmailSender>(sp => sp.GetRequiredService<DevEmailSender>());
@@ -280,7 +283,9 @@ builder.Services.AddRateLimiter(options =>
             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                // In development, use a high limit so E2E test suites don't exhaust
+                // the quota. Production keeps the real 10/min guard.
+                PermitLimit = builder.Environment.IsDevelopment() ? 100 : 10,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
             }));
@@ -564,6 +569,9 @@ app.Use(async (context, next) =>
     }
     await next();
 });
+app.UseWhen(
+    ctx => ctx.Request.Path.StartsWithSegments("/oauth"),
+    branch => branch.UseMiddleware<Fasolt.Server.Api.Middleware.ContentSecurityPolicyMiddleware>());
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
@@ -577,6 +585,7 @@ app.MapDeckEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapOAuthEndpoints();
+app.MapRazorPages();
 app.MapAdminEndpoints();
 app.MapNotificationEndpoints();
 app.MapSchedulingSettingsEndpoints();
@@ -607,45 +616,14 @@ app.MapGet("/.well-known/apple-app-site-association", [Microsoft.AspNetCore.Auth
 
 app.MapMcp("/mcp").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
 
-// Legacy auth routes — 301 to the new server-rendered OAuth pages.
-// These used to be Vue SPA routes; after the OTP refactor the canonical
-// register/verify surface is the server-rendered /oauth/* pages that both
-// the iOS popup and web browsers use. Endpoint routing runs before the
-// SPA fallback, so Vue never sees the stale paths.
-app.MapGet("/register", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
+if (app.Environment.IsDevelopment())
 {
-    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-    return Results.Redirect($"/oauth/register?returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
-});
-app.MapGet("/verify-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
-{
-    var email = ctx.Request.Query["email"].FirstOrDefault() ?? "";
-    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-    return Results.Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
-});
-app.MapGet("/forgot-password", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
-{
-    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-    return Results.Redirect($"/oauth/forgot-password?returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: true);
-});
-app.MapGet("/reset-password", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext ctx) =>
-{
-    // Legacy URL-token reset links get redirected to the new OTP entry page.
-    // Any ?token= param is dropped on the floor — the user will now receive
-    // a code in a fresh email (triggered via /oauth/forgot-password) and
-    // paste it into /oauth/reset-password. Not permanent: the old URL
-    // structure was meaningfully different, we don't want it cached.
-    var email = ctx.Request.Query["email"].FirstOrDefault() ?? "";
-    var returnUrl = ctx.Request.Query["returnUrl"].FirstOrDefault() ?? "/";
-    return Results.Redirect($"/oauth/reset-password?email={Uri.EscapeDataString(email)}&returnUrl={Uri.EscapeDataString(returnUrl)}", permanent: false);
-});
-app.MapGet("/confirm-email", [Microsoft.AspNetCore.Authorization.AllowAnonymous] (HttpContext _) =>
-{
-    // Legacy URL-token confirmation is dead; point stale email links at a
-    // friendly error on the verify page. Not permanent — URL-token confirm
-    // was structurally a different flow and we don't want to cache.
-    return Results.Redirect("/oauth/verify-email?error=This+link+has+expired.+Please+request+a+new+code.", permanent: false);
-});
+    app.MapGet("/api/test/last-email", (string email, Fasolt.Server.Infrastructure.Services.TestEmailSink sink) =>
+    {
+        var captured = sink.GetLast(email);
+        return captured is null ? Results.NotFound() : Results.Ok(captured);
+    }).AllowAnonymous();
+}
 
 // SPA fallback — serve index.html for client-side routes
 app.MapFallbackToFile("index.html");

@@ -1,10 +1,12 @@
 using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class OAuthAuthorizeScreenHintTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class OAuthAuthorizeScreenHintTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 

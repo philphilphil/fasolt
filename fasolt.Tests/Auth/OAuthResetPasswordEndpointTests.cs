@@ -6,10 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class OAuthResetPasswordEndpointTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -38,9 +40,9 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("foo@example.com");
         body.Should().Contain("autocomplete=\"one-time-code\"");
-        body.Should().Contain("name=\"code\"");
-        body.Should().Contain("name=\"password\"");
-        body.Should().Contain("name=\"confirmPassword\"");
+        body.Should().Contain("name=\"Input.Code\"");
+        body.Should().Contain("name=\"Input.Password\"");
+        body.Should().Contain("name=\"Input.ConfirmPassword\"");
     }
 
     [Fact]
@@ -72,11 +74,11 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["code"] = code,
-            ["password"] = newPassword,
-            ["confirmPassword"] = newPassword,
-            ["returnUrl"] = "/",
+            ["Email"] = email,
+            ["ReturnUrl"] = "/",
+            ["Input.Code"] = code,
+            ["Input.Password"] = newPassword,
+            ["Input.ConfirmPassword"] = newPassword,
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
@@ -127,21 +129,20 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["code"] = "000001",
-            ["password"] = "NewPass1B",
-            ["confirmPassword"] = "NewPass1B",
-            ["returnUrl"] = "/",
+            ["Email"] = email,
+            ["ReturnUrl"] = "/",
+            ["Input.Code"] = "000001",
+            ["Input.Password"] = "NewPass1B",
+            ["Input.ConfirmPassword"] = "NewPass1B",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().Contain("/oauth/reset-password");
-        response.Headers.Location!.OriginalString.Should().Contain("error=");
-        response.Headers.Location!.OriginalString.Should().Contain("Incorrect");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Incorrect code, try again.");
 
         using var verifyScope = _factory.Services.CreateScope();
         var userManagerPost = verifyScope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
@@ -171,19 +172,19 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["code"] = "123456",
-            ["password"] = "NewPass1A",
-            ["confirmPassword"] = "DifferentPass1B",
-            ["returnUrl"] = "/",
+            ["Email"] = email,
+            ["ReturnUrl"] = "/",
+            ["Input.Code"] = "123456",
+            ["Input.Password"] = "NewPass1A",
+            ["Input.ConfirmPassword"] = "DifferentPass1B",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        // The error flash gets percent-encoded, so the apostrophe in "don't" becomes %27.
-        response.Headers.Location!.OriginalString.Should().Contain("Passwords%20don");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Passwords don");
     }
 
     [Fact]
@@ -225,27 +226,28 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["code"] = "123456",
-            ["password"] = "NewPass1A",
-            ["confirmPassword"] = "NewPass1A",
-            ["returnUrl"] = "/",
+            ["Email"] = email,
+            ["ReturnUrl"] = "/",
+            ["Input.Code"] = "123456",
+            ["Input.Password"] = "NewPass1A",
+            ["Input.ConfirmPassword"] = "NewPass1A",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().Contain("error=");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("That code has expired. Request a new one.");
     }
 
     [Fact]
     public async Task ResendPost_UnknownAndThrottledUsers_ProduceIdenticalRedirect()
     {
-        // Enumeration guard: the /oauth/reset-password/resend endpoint must
-        // return the same response for (a) an unknown email and (b) a known
-        // confirmed user in active cooldown. Otherwise an attacker can tell
-        // which emails are registered by clicking "Resend" with each one.
+        // Enumeration guard: the resend handler must return the same response
+        // for (a) an unknown email and (b) a known confirmed user in active
+        // cooldown. Otherwise an attacker can tell which emails are registered
+        // by clicking "Resend" with each one.
         var knownEmail = $"resend-{Guid.NewGuid():N}@example.com";
         using (var scope = _factory.Services.CreateScope())
         {
@@ -273,10 +275,10 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
             var content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["__RequestVerificationToken"] = csrfToken,
-                ["email"] = email,
-                ["returnUrl"] = "/",
+                ["Email"] = email,
+                ["ReturnUrl"] = "/",
             });
-            var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password/resend") { Content = content };
+            var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/reset-password?handler=resend") { Content = content };
             request.Headers.Add("Cookie", cookieHeader);
             var response = await client.SendAsync(request);
             response.StatusCode.Should().Be(HttpStatusCode.Redirect);
@@ -296,23 +298,12 @@ public class OAuthResetPasswordEndpointTests : IClassFixture<WebApplicationFacto
         unknownLocation.Should().StartWith("/oauth/reset-password?email=");
     }
 
-    [Fact]
-    public async Task LegacyResetPasswordPath_RedirectsToOAuthResetPassword()
-    {
-        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var response = await client.GetAsync("/reset-password?email=foo@example.com&token=abc");
-
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().StartWith("/oauth/reset-password");
-    }
-
     private static string ExtractCsrfToken(string html)
     {
-        const string marker = "name=\"__RequestVerificationToken\" value=\"";
-        var idx = html.IndexOf(marker);
-        if (idx < 0) throw new InvalidOperationException("CSRF token not found");
-        var start = idx + marker.Length;
-        var end = html.IndexOf("\"", start);
-        return html.Substring(start, end - start);
+        var regex = new System.Text.RegularExpressions.Regex(
+            @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""|value=""([^""]+)""[^>]*name=""__RequestVerificationToken""");
+        var match = regex.Match(html);
+        if (!match.Success) throw new InvalidOperationException("CSRF token not found in HTML");
+        return match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
     }
 }

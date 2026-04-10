@@ -6,10 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class OAuthForgotPasswordEndpointTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -37,7 +39,7 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("<form");
-        body.Should().Contain("name=\"email\"");
+        body.Should().Contain("name=\"Input.Email\"");
         body.Should().Contain("action=\"/oauth/forgot-password\"");
         body.Should().Contain("Reset your password");
     }
@@ -46,7 +48,7 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
     public async Task Get_WithSent_RendersCheckYourEmailConfirmation()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/oauth/forgot-password?returnUrl=%2F&email=foo%40example.com&sent=1");
+        var response = await client.GetAsync("/oauth/forgot-password?returnUrl=%2F&email=foo%40example.com&sent=true");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
@@ -78,7 +80,7 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
+            ["Input.Email"] = email,
             ["returnUrl"] = "/",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/forgot-password") { Content = content };
@@ -88,7 +90,7 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.OriginalString.Should().Contain("/oauth/forgot-password");
-        response.Headers.Location!.OriginalString.Should().Contain("sent=1");
+        response.Headers.Location!.OriginalString.Should().Contain("sent=true");
 
         using var verifyScope = _factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -112,7 +114,7 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
+            ["Input.Email"] = email,
             ["returnUrl"] = "/",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/forgot-password") { Content = content };
@@ -121,7 +123,7 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
         var response = await client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        response.Headers.Location!.OriginalString.Should().Contain("sent=1");
+        response.Headers.Location!.OriginalString.Should().Contain("sent=true");
 
         using var verifyScope = _factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -160,14 +162,14 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
+            ["Input.Email"] = email,
             ["returnUrl"] = "/",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/forgot-password") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
-        response.Headers.Location!.OriginalString.Should().Contain("sent=1");
+        response.Headers.Location!.OriginalString.Should().Contain("sent=true");
 
         using var verifyScope = _factory.Services.CreateScope();
         var db = verifyScope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -176,22 +178,46 @@ public class OAuthForgotPasswordEndpointTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
-    public async Task LegacyForgotPasswordPath_RedirectsToOAuthForgotPassword()
+    public async Task Post_WithMalformedEmail_RendersFormWithError()
     {
+        // Syntactically invalid email → Razor model validation rejects via
+        // [EmailAddress] attribute, PageModel sets ErrorMessage and returns
+        // Page(). Unlike the old endpoint (which redirected with ?error=),
+        // the new flow re-renders the form inline. Not a security regression:
+        // email format is knowable client-side without hitting the server,
+        // so distinguishing "valid format" from "invalid format" leaks nothing
+        // about account existence. This test pins the new behavior as intentional.
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        var response = await client.GetAsync("/forgot-password?returnUrl=%2F");
 
-        response.StatusCode.Should().Be(HttpStatusCode.MovedPermanently);
-        response.Headers.Location!.OriginalString.Should().StartWith("/oauth/forgot-password");
+        var getResponse = await client.GetAsync("/oauth/forgot-password?returnUrl=%2F");
+        var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
+        var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
+
+        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = csrfToken,
+            ["Input.Email"] = "not-an-email",
+            ["ReturnUrl"] = "/",
+        });
+        var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/forgot-password") { Content = content };
+        request.Headers.Add("Cookie", cookieHeader);
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Reset your password", "form re-renders on validation failure");
+        body.Should().Contain("Please enter a valid email address.", "banner message is surfaced");
     }
 
     private static string ExtractCsrfToken(string html)
     {
-        const string marker = "name=\"__RequestVerificationToken\" value=\"";
-        var idx = html.IndexOf(marker);
-        if (idx < 0) throw new InvalidOperationException("CSRF token not found");
-        var start = idx + marker.Length;
-        var end = html.IndexOf("\"", start);
-        return html.Substring(start, end - start);
+        // Razor emits <input name="__RequestVerificationToken" type="hidden" value="...">
+        // with attributes in varying order, so match name=...value=... flexibly.
+        var regex = new System.Text.RegularExpressions.Regex(
+            @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""|value=""([^""]+)""[^>]*name=""__RequestVerificationToken""");
+        var match = regex.Match(html);
+        if (!match.Success) throw new InvalidOperationException("CSRF token not found in HTML");
+        return match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
     }
 }

@@ -30,9 +30,9 @@ const { isDark, toggle } = useDarkMode()
             <Sun v-if="isDark" :size="16" />
             <Moon v-else :size="16" />
           </button>
-          <RouterLink to="/login">
+          <a href="/oauth/login">
             <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
-          </RouterLink>
+          </a>
         </div>
       </div>
     </nav>
@@ -53,9 +53,9 @@ const { isDark, toggle } = useDarkMode()
           <a href="/oauth/register">
             <Button class="glow-accent">Get started</Button>
           </a>
-          <RouterLink to="/login">
+          <a href="/oauth/login">
             <Button variant="outline">Log in</Button>
-          </RouterLink>
+          </a>
         </div>
       </div>
     </section>

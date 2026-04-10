@@ -5,10 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class OAuthRegisterEndpointTests
 {
     private readonly WebApplicationFactory<Program> _factory;
 
@@ -36,10 +38,10 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("<form");
-        body.Should().Contain("name=\"email\"");
-        body.Should().Contain("name=\"password\"");
-        body.Should().Contain("name=\"confirmPassword\"");
-        body.Should().Contain("name=\"tosAccepted\"");
+        body.Should().Contain("name=\"Input.Email\"");
+        body.Should().Contain("name=\"Input.Password\"");
+        body.Should().Contain("name=\"Input.ConfirmPassword\"");
+        body.Should().Contain("name=\"Input.TosAccepted\"");
         body.Should().Contain("Already have an account?");
     }
 
@@ -60,11 +62,11 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["password"] = "Abcdefg1",
-            ["confirmPassword"] = "Abcdefg1",
-            ["tosAccepted"] = "true",
-            ["returnUrl"] = "/",
+            ["Input.Email"] = email,
+            ["Input.Password"] = "Abcdefg1",
+            ["Input.ConfirmPassword"] = "Abcdefg1",
+            ["Input.TosAccepted"] = "true",
+            ["ReturnUrl"] = "/",
         });
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
@@ -101,11 +103,11 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = "mismatch@example.com",
-            ["password"] = "Abcdefg1",
-            ["confirmPassword"] = "Different2",
-            ["tosAccepted"] = "true",
-            ["returnUrl"] = "/",
+            ["Input.Email"] = "mismatch@example.com",
+            ["Input.Password"] = "Abcdefg1",
+            ["Input.ConfirmPassword"] = "Different2",
+            ["Input.TosAccepted"] = "true",
+            ["ReturnUrl"] = "/",
         });
 
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
@@ -113,11 +115,10 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
 
         var response = await client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        var location = response.Headers.Location!.OriginalString;
-        location.Should().Contain("/oauth/register");
-        location.Should().Contain("error=");
-        location.Should().Contain("don%27t%20match").And.NotContain("verify-email");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("Passwords don");
+        body.Should().NotContain("verify-email");
     }
 
     [Fact]
@@ -144,11 +145,11 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["password"] = "Xyzwvut2",
-            ["confirmPassword"] = "Xyzwvut2",
-            ["tosAccepted"] = "true",
-            ["returnUrl"] = "/",
+            ["Input.Email"] = email,
+            ["Input.Password"] = "Xyzwvut2",
+            ["Input.ConfirmPassword"] = "Xyzwvut2",
+            ["Input.TosAccepted"] = "true",
+            ["ReturnUrl"] = "/",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
@@ -205,11 +206,11 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["password"] = "Different9",
-            ["confirmPassword"] = "Different9",
-            ["tosAccepted"] = "true",
-            ["returnUrl"] = "/",
+            ["Input.Email"] = email,
+            ["Input.Password"] = "Different9",
+            ["Input.ConfirmPassword"] = "Different9",
+            ["Input.TosAccepted"] = "true",
+            ["ReturnUrl"] = "/",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
@@ -240,21 +241,20 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
-            ["email"] = email,
-            ["password"] = "short", // too short, no digits, no uppercase
-            ["confirmPassword"] = "short",
-            ["tosAccepted"] = "true",
-            ["returnUrl"] = "/",
+            ["Input.Email"] = email,
+            ["Input.Password"] = "short", // too short, no digits, no uppercase
+            ["Input.ConfirmPassword"] = "short",
+            ["Input.TosAccepted"] = "true",
+            ["ReturnUrl"] = "/",
         });
         var request = new HttpRequestMessage(HttpMethod.Post, "/oauth/register") { Content = content };
         request.Headers.Add("Cookie", cookieHeader);
 
         var response = await client.SendAsync(request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
-        var location = response.Headers.Location!.OriginalString;
-        location.Should().StartWith("/oauth/register");
-        location.Should().Contain("error=");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("oauth-error");
 
         // Verify no user was created
         using var scope = _factory.Services.CreateScope();
@@ -265,11 +265,10 @@ public class OAuthRegisterEndpointTests : IClassFixture<WebApplicationFactory<Pr
 
     private static string ExtractCsrfToken(string html)
     {
-        const string marker = "name=\"__RequestVerificationToken\" value=\"";
-        var idx = html.IndexOf(marker);
-        if (idx < 0) throw new InvalidOperationException("CSRF token not found");
-        var start = idx + marker.Length;
-        var end = html.IndexOf("\"", start);
-        return html.Substring(start, end - start);
+        var regex = new System.Text.RegularExpressions.Regex(
+            @"name=""__RequestVerificationToken""[^>]*value=""([^""]+)""|value=""([^""]+)""[^>]*name=""__RequestVerificationToken""");
+        var match = regex.Match(html);
+        if (!match.Success) throw new InvalidOperationException("CSRF token not found");
+        return match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
     }
 }

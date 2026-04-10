@@ -8,6 +8,4 @@ public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 public record ConfirmEmailChangeRequest(string NewEmail, string Token);
 
-public record LoginRequest(string Email, string Password, bool RememberMe = false);
-
 public record DeleteAccountRequest(string? Password, string? ConfirmIdentity);

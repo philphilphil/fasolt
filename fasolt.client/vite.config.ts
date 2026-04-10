@@ -35,6 +35,8 @@ export default defineConfig({
         },
       },
       '/.well-known': 'http://localhost:8080',
+      '/css': 'http://localhost:8080',
+      '/js': 'http://localhost:8080',
       '/oauth/register': 'http://localhost:8080',
       '/oauth/verify-email': 'http://localhost:8080',
       '/oauth/forgot-password': 'http://localhost:8080',
@@ -42,16 +44,8 @@ export default defineConfig({
       '/oauth/authorize': 'http://localhost:8080',
       '/oauth/token': 'http://localhost:8080',
       '/oauth/login': 'http://localhost:8080',
+      '/oauth/consent': 'http://localhost:8080',
       '/oauth/clients/register': 'http://localhost:8080',
-      // Legacy auth paths — the server 301-redirects these to /oauth/*
-      // so stale bookmarks still work. In dev, Vite needs to forward
-      // them to the backend so the redirect actually fires (otherwise
-      // Vite serves index.html and the SPA shows a 404).
-      '/register': 'http://localhost:8080',
-      '/verify-email': 'http://localhost:8080',
-      '/confirm-email': 'http://localhost:8080',
-      '/forgot-password': 'http://localhost:8080',
-      '/reset-password': 'http://localhost:8080',
     },
   },
 })

@@ -8,10 +8,12 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Fasolt.Server.Application.Auth;
+using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests.Auth;
 
-public class AppleTokenEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(WebAppCollection.Name)]
+public class AppleTokenEndpointTests
 {
     private const string BundleId = "com.fasolt.app";
     private const string Kid = "test-kid";

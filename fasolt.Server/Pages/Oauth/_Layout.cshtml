@@ -1,0 +1,24 @@
+@{
+    var pageTitle = ViewData["Title"] as string ?? "fasolt";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>@pageTitle — fasolt</title>
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+</head>
+<body>
+    <div class="oauth-shell">
+        <div class="relative w-full max-w-sm">
+            <div class="oauth-brand">
+                <img src="~/logo.svg" alt="fasolt" />
+                <span>fasolt</span>
+            </div>
+            @RenderBody()
+        </div>
+    </div>
+</body>
+</html>

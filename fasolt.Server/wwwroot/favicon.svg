@@ -1,0 +1,20 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Side cards -->
+  <g transform="rotate(-14 40 44)">
+    <rect x="12" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/>
+  </g>
+  <g transform="rotate(14 40 44)">
+    <rect x="36" y="22" width="32" height="24" rx="5" fill="#e8f1fc" stroke="#93c5fd" stroke-width="1.5"/>
+  </g>
+  <!-- Center card -->
+  <rect x="23" y="26" width="34" height="24" rx="5" fill="#dbeafe" stroke="#0969da" stroke-width="1.5"/>
+  <line x1="30" y1="34" x2="50" y2="34" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="30" y1="39" x2="44" y2="39" stroke="#0969da" stroke-opacity="0.45" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Retention segments -->
+  <line x1="34" y1="66" x2="50" y2="60" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+  <line x1="50" y1="60" x2="64" y2="52" stroke="#0969da" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+  <!-- Dots: dim → bright = past → next review -->
+  <circle cx="34" cy="66" r="2.5" fill="#0969da" opacity="0.4"/>
+  <circle cx="50" cy="60" r="3" fill="#0969da" opacity="0.65"/>
+  <circle cx="64" cy="52" r="3.5" fill="#3b82f6" opacity="0.92"/>
+</svg>
