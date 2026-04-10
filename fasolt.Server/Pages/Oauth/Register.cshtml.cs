@@ -42,6 +42,7 @@ public class RegisterModel : PageModel
     public string ReturnUrl { get; set; } = "/";
 
     public string? ErrorMessage { get; set; }
+    public bool HideSocialButtons { get; set; }
 
     public class InputModel
     {
@@ -60,9 +61,10 @@ public class RegisterModel : PageModel
         public bool TosAccepted { get; set; }
     }
 
-    public IActionResult OnGet()
+    public IActionResult OnGet([FromQuery(Name = "provider_hint")] string? providerHint)
     {
         ReturnUrl = UrlHelpers.IsLocalUrl(ReturnUrl) ? ReturnUrl : "/";
+        HideSocialButtons = providerHint == "email";
         return Page();
     }
 

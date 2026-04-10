@@ -12,7 +12,7 @@
         <div class="oauth-error">@Model.ErrorMessage</div>
     }
 
-    @if (Model.GitHubEnabled || Model.AppleEnabled)
+    @if (!Model.HideSocialButtons && (Model.GitHubEnabled || Model.AppleEnabled))
     {
         @if (Model.AppleEnabled)
         {

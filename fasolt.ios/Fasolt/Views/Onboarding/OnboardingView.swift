@@ -98,7 +98,7 @@ struct OnboardingView: View {
                     // Email — single button that opens the web popup
                     Button {
                         Task {
-                            await authService.signIn(serverURL: serverURL, screenHint: "signup")
+                            await authService.signIn(serverURL: serverURL, providerHint: "email", screenHint: "signup")
                         }
                     } label: {
                         if authService.isLoading {

@@ -42,6 +42,7 @@ public class LoginModel : PageModel
 
     public bool GitHubEnabled => !string.IsNullOrEmpty(_configuration["GITHUB_CLIENT_ID"]);
     public bool AppleEnabled => !string.IsNullOrEmpty(_configuration["APPLE_WEB_CLIENT_ID"]);
+    public bool HideSocialButtons { get; set; }
 
     public class InputModel
     {
@@ -78,6 +79,10 @@ public class LoginModel : PageModel
         {
             return Redirect($"/api/account/apple-login?returnUrl={Uri.EscapeDataString(ReturnUrl)}");
         }
+
+        // iOS "Continue with email" — hide social buttons since the user
+        // already chose email on the native onboarding screen.
+        HideSocialButtons = providerHint == "email";
 
         // Friendly error mapping for GitHub OAuth callback failures. Matches
         // the map in the old SPA LoginView.vue so UX doesn't change.
