@@ -40,6 +40,7 @@ public sealed class AppleAuthService
         if (!string.IsNullOrEmpty(webClientId)) _audiences.Add(webClientId);
         if (_audiences.Count == 0)
             throw new InvalidOperationException("At least one of APPLE_BUNDLE_ID or APPLE_WEB_CLIENT_ID must be configured");
+        _logger.LogInformation("AppleAuthService configured with audiences: {Audiences}", string.Join(", ", _audiences));
     }
 
     public async Task<AppUser> ResolveUserAsync(string identityToken, CancellationToken cancellationToken = default)
