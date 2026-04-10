@@ -28,7 +28,7 @@ var axiomToken = builder.Configuration["AXIOM_TOKEN"];
 var axiomDataset = builder.Configuration["AXIOM_DATASET"];
 
 var loggerConfig = new LoggerConfiguration()
-    .MinimumLevel.Warning()
+    .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .Enrich.WithProperty("app", "fasolt")
@@ -41,7 +41,8 @@ if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
         requestUri: $"https://api.axiom.co/v1/datasets/{axiomDataset}/ingest",
         queueLimitBytes: null,
         textFormatter: new CompactJsonFormatter(),
-        httpClient: new AxiomHttpClient(axiomToken));
+        httpClient: new AxiomHttpClient(axiomToken),
+        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning);
 }
 
 builder.Host.UseSerilog(loggerConfig.CreateLogger());
