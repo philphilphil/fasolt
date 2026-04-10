@@ -57,6 +57,8 @@ const pageSize = 50
 const isLoading = ref(false)
 const lockDialogOpen = ref(false)
 const lockTargetUser = ref<AdminUser | null>(null)
+const deleteDialogOpen = ref(false)
+const deleteTargetUser = ref<AdminUser | null>(null)
 const errorMessage = ref<string | null>(null)
 
 const logs = ref<LogEntry[]>([])
@@ -131,6 +133,23 @@ async function pushToUser(user: AdminUser) {
     errorMessage.value = e.message ?? 'Failed to send push'
   } finally {
     pushingUserId.value = null
+  }
+}
+
+function confirmDelete(user: AdminUser) {
+  deleteTargetUser.value = user
+  deleteDialogOpen.value = true
+}
+
+async function deleteUser() {
+  if (!deleteTargetUser.value) return
+  try {
+    await apiFetch(`/admin/users/${deleteTargetUser.value.id}`, { method: 'DELETE' })
+    deleteDialogOpen.value = false
+    await fetchUsers()
+  } catch (e: any) {
+    errorMessage.value = e.message ?? 'Failed to delete user'
+    console.error('Failed to delete user', e)
   }
 }
 
@@ -251,6 +270,9 @@ onMounted(() => {
               <Button v-else variant="outline" size="sm" @click="unlockUser(u.id)">
                 Unlock
               </Button>
+              <Button variant="destructive" size="sm" @click="confirmDelete(u)">
+                Delete
+              </Button>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -344,6 +366,22 @@ onMounted(() => {
         <DialogFooter class="gap-2">
           <Button variant="outline" size="sm" @click="lockDialogOpen = false">Cancel</Button>
           <Button variant="destructive" size="sm" @click="lockUser">Lock Account</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Delete confirmation dialog -->
+    <Dialog v-model:open="deleteDialogOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete user account?</DialogTitle>
+          <DialogDescription>
+            This will permanently delete {{ deleteTargetUser?.displayName || deleteTargetUser?.email }} and all their data including cards, decks, review history, and notification tokens. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="gap-2">
+          <Button variant="outline" size="sm" @click="deleteDialogOpen = false">Cancel</Button>
+          <Button variant="destructive" size="sm" @click="deleteUser">Delete Account</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

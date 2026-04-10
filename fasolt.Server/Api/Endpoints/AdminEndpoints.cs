@@ -14,6 +14,7 @@ public static class AdminEndpoints
         group.MapGet("/users", ListUsers);
         group.MapPost("/users/{id}/lock", LockUser);
         group.MapPost("/users/{id}/unlock", UnlockUser);
+        group.MapDelete("/users/{id}", DeleteUser);
         group.MapGet("/logs", GetLogs);
         group.MapPost("/users/{id}/push", TriggerPushForUser);
     }
@@ -32,7 +33,8 @@ public static class AdminEndpoints
     private static async Task<IResult> LockUser(
         string id,
         ClaimsPrincipal principal,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        AdminService adminService)
     {
         var currentUser = await userManager.GetUserAsync(principal);
         if (currentUser is null) return Results.Unauthorized();
@@ -45,19 +47,22 @@ public static class AdminEndpoints
 
         await userManager.SetLockoutEnabledAsync(user, true);
         await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+        await adminService.LogAdminAction($"User locked: {user.Email}");
 
         return Results.Ok();
     }
 
     private static async Task<IResult> UnlockUser(
         string id,
-        UserManager<AppUser> userManager)
+        UserManager<AppUser> userManager,
+        AdminService adminService)
     {
         var user = await userManager.FindByIdAsync(id);
         if (user is null) return Results.NotFound();
 
         await userManager.SetLockoutEndDateAsync(user, null);
         await userManager.ResetAccessFailedCountAsync(user);
+        await adminService.LogAdminAction($"User unlocked: {user.Email}");
 
         return Results.Ok();
     }
@@ -72,6 +77,29 @@ public static class AdminEndpoints
         var ps = Math.Clamp(pageSize ?? 50, 1, 100);
         var result = await adminService.GetLogs(p, ps, type);
         return Results.Ok(result);
+    }
+
+    private static async Task<IResult> DeleteUser(
+        string id,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        AccountDataService accountDataService,
+        AdminService adminService)
+    {
+        var currentUser = await userManager.GetUserAsync(principal);
+        if (currentUser is null) return Results.Unauthorized();
+
+        if (currentUser.Id == id)
+            return Results.BadRequest(new { error = "Cannot delete your own account." });
+
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null) return Results.NotFound();
+
+        var email = user.Email;
+        await accountDataService.DeleteUserData(user.Id);
+        await adminService.LogAdminAction($"User deleted: {email}");
+
+        return Results.Ok();
     }
 
     private static async Task<IResult> TriggerPushForUser(
