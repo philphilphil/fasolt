@@ -41,7 +41,7 @@ if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
     loggerConfig.WriteTo.Http(
         requestUri: $"https://api.axiom.co/v1/datasets/{axiomDataset}/ingest",
         queueLimitBytes: null,
-        textFormatter: new CompactJsonFormatter(),
+        textFormatter: new RenderedCompactJsonFormatter(),
         httpClient: new AxiomHttpClient(axiomToken));
 }
 
