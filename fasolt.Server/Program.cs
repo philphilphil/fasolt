@@ -15,11 +15,34 @@ using FSRS.Core.Extensions;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using dotenv.net;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Fasolt.Server.Infrastructure.Logging;
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5));
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
+
+var axiomToken = builder.Configuration["AXIOM_TOKEN"];
+var axiomDataset = builder.Configuration["AXIOM_DATASET"];
+
+var loggerConfig = new LoggerConfiguration()
+    .MinimumLevel.Warning()
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console();
+
+if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
+{
+    loggerConfig.WriteTo.Http(
+        requestUri: $"https://api.axiom.co/v1/datasets/{axiomDataset}/ingest",
+        queueLimitBytes: null,
+        textFormatter: new CompactJsonFormatter(),
+        httpClient: new AxiomHttpClient(axiomToken));
+}
+
+builder.Host.UseSerilog(loggerConfig.CreateLogger());
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
