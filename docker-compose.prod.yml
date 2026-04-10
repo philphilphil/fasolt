@@ -1,9 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        VITE_BUGSINK_DSN: ${VITE_BUGSINK_DSN:-}
+    build: .
     restart: unless-stopped
     env_file: .env
     environment:

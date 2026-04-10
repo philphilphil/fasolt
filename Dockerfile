@@ -12,8 +12,6 @@ COPY fasolt.client/ ./
 # fasolt.client/, which is also /app inside this stage). If WORKDIR ever
 # changes, update both ends of this path coupling together.
 COPY fasolt.Server/Pages/ ../fasolt.Server/Pages/
-ARG VITE_BUGSINK_DSN=""
-ENV VITE_BUGSINK_DSN=$VITE_BUGSINK_DSN
 RUN npm run build
 RUN npm run build:auth
 

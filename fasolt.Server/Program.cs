@@ -15,22 +15,38 @@ using FSRS.Core.Extensions;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using dotenv.net;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Fasolt.Server.Infrastructure.Logging;
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5));
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
-var bugsinkDsn = builder.Configuration["BUGSINK_DSN"];
-if (!string.IsNullOrEmpty(bugsinkDsn))
+var axiomToken = builder.Configuration["AXIOM_TOKEN"];
+var axiomDataset = builder.Configuration["AXIOM_DATASET"];
+
+var loggerConfig = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("app", "fasolt")
+    .Enrich.WithProperty("env", builder.Environment.EnvironmentName)
+    .WriteTo.Console();
+
+if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
 {
-    builder.WebHost.UseSentry(o =>
-    {
-        o.Dsn = bugsinkDsn;
-        o.Environment = builder.Environment.EnvironmentName;
-        o.SendDefaultPii = false;
-    });
+    loggerConfig.WriteTo.Http(
+        requestUri: $"https://api.axiom.co/v1/datasets/{axiomDataset}/ingest",
+        queueLimitBytes: null,
+        textFormatter: new RenderedCompactJsonFormatter(),
+        httpClient: new AxiomHttpClient(axiomToken));
 }
+
+Log.Logger = loggerConfig.CreateLogger();
+builder.Services.AddSerilog();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -209,7 +225,7 @@ if (!builder.Environment.IsDevelopment())
 {
     // Fail fast: DevEmailSender logs codes and links to the application log.
     // In production that's a credential-in-logs finding — OTPs, confirmation
-    // links, and password reset tokens would all end up in Bugsink/Sentry and
+    // links, and password reset tokens would all end up in Axiom and
     // any aggregator with log-read access. Never allow the dev sender in prod.
     if (string.IsNullOrEmpty(plunkApiKey))
         throw new InvalidOperationException(
@@ -501,6 +517,7 @@ else
     }
 }
 
+app.UseSerilogRequestLogging();
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 if (!app.Environment.IsDevelopment())
