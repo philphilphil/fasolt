@@ -21,17 +21,6 @@ DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
-var bugsinkDsn = builder.Configuration["BUGSINK_DSN"];
-if (!string.IsNullOrEmpty(bugsinkDsn))
-{
-    builder.WebHost.UseSentry(o =>
-    {
-        o.Dsn = bugsinkDsn;
-        o.Environment = builder.Environment.EnvironmentName;
-        o.SendDefaultPii = false;
-    });
-}
-
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration["DATABASE_URL"]);
@@ -209,7 +198,7 @@ if (!builder.Environment.IsDevelopment())
 {
     // Fail fast: DevEmailSender logs codes and links to the application log.
     // In production that's a credential-in-logs finding — OTPs, confirmation
-    // links, and password reset tokens would all end up in Bugsink/Sentry and
+    // links, and password reset tokens would all end up in Axiom and
     // any aggregator with log-read access. Never allow the dev sender in prod.
     if (string.IsNullOrEmpty(plunkApiKey))
         throw new InvalidOperationException(
