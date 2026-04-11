@@ -149,6 +149,7 @@ actor APIClient {
             return try await session.data(for: request)
         } catch {
             apiLogger.error("Network error for \(request.url?.path ?? "?"): \(error)")
+            NotificationCenter.default.post(name: .backendDidBecomeUnreachable, object: nil)
             throw APIError.networkError(error.localizedDescription)
         }
     }
@@ -268,11 +269,20 @@ actor APIClient {
 
     private func validateResponse(_ response: URLResponse, data: Data? = nil) throws {
         guard let httpResponse = response as? HTTPURLResponse else { return }
-        guard (200...299).contains(httpResponse.statusCode) else {
-            let detail = data.flatMap { Self.extractErrorDetail($0) }
-            apiLogger.error("HTTP \(httpResponse.statusCode) for \(httpResponse.url?.path ?? "?"): \(detail ?? "no detail")")
-            throw APIError.fromStatus(httpResponse.statusCode, detail: detail)
+        if (200...299).contains(httpResponse.statusCode) {
+            NotificationCenter.default.post(name: .backendDidBecomeReachable, object: nil)
+            return
         }
+        let detail = data.flatMap { Self.extractErrorDetail($0) }
+        apiLogger.error("HTTP \(httpResponse.statusCode) for \(httpResponse.url?.path ?? "?"): \(detail ?? "no detail")")
+        // 5xx = backend is up but broken; treat as unreachable. 4xx = server
+        // responded with a client error, so the backend is still reachable.
+        if httpResponse.statusCode >= 500 {
+            NotificationCenter.default.post(name: .backendDidBecomeUnreachable, object: nil)
+        } else {
+            NotificationCenter.default.post(name: .backendDidBecomeReachable, object: nil)
+        }
+        throw APIError.fromStatus(httpResponse.statusCode, detail: detail)
     }
 
     private static func extractErrorDetail(_ data: Data) -> String? {

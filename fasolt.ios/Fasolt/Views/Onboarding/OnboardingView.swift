@@ -95,24 +95,38 @@ struct OnboardingView: View {
                         .padding(.horizontal)
                     }
 
-                    // Email — single button that opens the web popup
-                    Button {
-                        Task {
-                            await authService.signIn(serverURL: serverURL, providerHint: "email", screenHint: "signup")
+                    // Email — separate buttons for sign up vs sign in
+                    VStack(spacing: 10) {
+                        Button {
+                            Task {
+                                await authService.signIn(serverURL: serverURL, providerHint: "email", screenHint: "signup")
+                            }
+                        } label: {
+                            if authService.isLoading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 22)
+                            } else {
+                                Text("Sign up with email")
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
-                    } label: {
-                        if authService.isLoading {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 22)
-                        } else {
-                            Text("Continue with email")
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .disabled(authService.isLoading || serverURL.isEmpty)
+
+                        Button {
+                            Task {
+                                await authService.signIn(serverURL: serverURL, providerHint: "email", screenHint: "signin")
+                            }
+                        } label: {
+                            Text("Sign in with email")
                                 .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .disabled(authService.isLoading || serverURL.isEmpty)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(authService.isLoading || serverURL.isEmpty)
                     .padding(.horizontal)
 
                     if let error = authService.errorMessage {
@@ -138,6 +152,7 @@ struct OnboardingView: View {
                     Spacer().frame(height: 32)
                 }
             }
+            .offlineBanner()
         }
     }
 

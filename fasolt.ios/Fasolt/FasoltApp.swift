@@ -68,6 +68,7 @@ struct FasoltApp: App {
     @State private var featureFlags = FeatureFlagsService()
 
     @State private var networkMonitor = NetworkMonitor()
+    @State private var backendStatus = BackendStatusMonitor()
     @Environment(\.scenePhase) private var scenePhase
     @State private var lastRefresh: Date = .distantPast
     @State private var notificationService: NotificationService?
@@ -126,6 +127,7 @@ struct FasoltApp: App {
         .environment(authService)
         .environment(featureFlags)
         .environment(networkMonitor)
+        .environment(backendStatus)
         .modelContainer(for: [Card.self, CachedDeck.self, PendingReview.self])
     }
 }
@@ -134,4 +136,6 @@ extension Notification.Name {
     static let appDidBecomeActive = Notification.Name("appDidBecomeActive")
     static let studySessionEnded = Notification.Name("studySessionEnded")
     static let sessionDidInvalidate = Notification.Name("sessionDidInvalidate")
+    static let backendDidBecomeReachable = Notification.Name("backendDidBecomeReachable")
+    static let backendDidBecomeUnreachable = Notification.Name("backendDidBecomeUnreachable")
 }
