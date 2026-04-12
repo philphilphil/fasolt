@@ -36,6 +36,9 @@ var loggerConfig = new LoggerConfiguration()
 
 if (!string.IsNullOrEmpty(seqUrl))
 {
+    if (string.IsNullOrEmpty(seqApiKey))
+        Log.Warning("SEQ_URL is set but SEQ_API_KEY is empty — Seq may reject requests");
+
     loggerConfig.WriteTo.Seq(seqUrl, apiKey: seqApiKey);
 }
 
