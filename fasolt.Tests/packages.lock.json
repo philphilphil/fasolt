@@ -634,12 +634,13 @@
           "Serilog": "4.2.0"
         }
       },
-      "Serilog.Sinks.Http": {
+      "Serilog.Sinks.Seq": {
         "type": "Transitive",
-        "resolved": "9.2.1",
-        "contentHash": "sxc3GZSBsDFuRhcVKZMs66Mr7RfsGCPASSyiGG1Ew20a8kaeFbUL0tru352o0K0GLHjIcmxgkH2KrwoqjvJjjQ==",
+        "resolved": "9.0.0",
+        "contentHash": "aNU8A0K322q7+voPNmp1/qNPH+9QK8xvM1p72sMmCG0wGlshFzmtDW9QnVSoSYCj0MgQKcMOlgooovtBhRlNHw==",
         "dependencies": {
-          "Serilog.Sinks.File": "7.0.0"
+          "Serilog": "4.2.0",
+          "Serilog.Sinks.File": "6.0.0"
         }
       },
       "System.IdentityModel.Tokens.Jwt": {
@@ -706,8 +707,7 @@
           "OpenIddict.AspNetCore": "[7.4.0, )",
           "OpenIddict.EntityFrameworkCore": "[7.4.0, )",
           "Serilog.AspNetCore": "[10.0.0, )",
-          "Serilog.Formatting.Compact": "[3.0.0, )",
-          "Serilog.Sinks.Http": "[9.2.1, )",
+          "Serilog.Sinks.Seq": "[9.0.0, )",
           "System.IdentityModel.Tokens.Jwt": "[8.17.0, )",
           "dotenv.net": "[4.0.1, )"
         }
