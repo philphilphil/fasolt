@@ -16,16 +16,14 @@ using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using dotenv.net;
 using Serilog;
-using Serilog.Formatting.Compact;
-using Fasolt.Server.Infrastructure.Logging;
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5));
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
-var axiomToken = builder.Configuration["AXIOM_TOKEN"];
-var axiomDataset = builder.Configuration["AXIOM_DATASET"];
+var seqUrl = builder.Configuration["SEQ_URL"];
+var seqApiKey = builder.Configuration["SEQ_API_KEY"];
 
 var loggerConfig = new LoggerConfiguration()
     .MinimumLevel.Information()
@@ -36,13 +34,9 @@ var loggerConfig = new LoggerConfiguration()
     .Enrich.WithProperty("env", builder.Environment.EnvironmentName)
     .WriteTo.Console();
 
-if (!string.IsNullOrEmpty(axiomToken) && !string.IsNullOrEmpty(axiomDataset))
+if (!string.IsNullOrEmpty(seqUrl))
 {
-    loggerConfig.WriteTo.Http(
-        requestUri: $"https://api.axiom.co/v1/datasets/{axiomDataset}/ingest",
-        queueLimitBytes: null,
-        textFormatter: new RenderedCompactJsonFormatter(),
-        httpClient: new AxiomHttpClient(axiomToken));
+    loggerConfig.WriteTo.Seq(seqUrl, apiKey: seqApiKey);
 }
 
 Log.Logger = loggerConfig.CreateLogger();
@@ -225,7 +219,7 @@ if (!builder.Environment.IsDevelopment())
 {
     // Fail fast: DevEmailSender logs codes and links to the application log.
     // In production that's a credential-in-logs finding — OTPs, confirmation
-    // links, and password reset tokens would all end up in Axiom and
+    // links, and password reset tokens would all end up in Seq and
     // any aggregator with log-read access. Never allow the dev sender in prod.
     if (string.IsNullOrEmpty(plunkApiKey))
         throw new InvalidOperationException(
@@ -641,6 +635,11 @@ if (app.Environment.IsDevelopment())
     {
         var captured = sink.GetLast(email);
         return captured is null ? Results.NotFound() : Results.Ok(captured);
+    }).AllowAnonymous();
+
+    app.MapGet("/api/test/throw", () =>
+    {
+        throw new InvalidOperationException("Test exception for Seq logging");
     }).AllowAnonymous();
 }
 

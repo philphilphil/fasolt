@@ -140,22 +140,14 @@
           "Serilog.Sinks.File": "7.0.0"
         }
       },
-      "Serilog.Formatting.Compact": {
+      "Serilog.Sinks.Seq": {
         "type": "Direct",
-        "requested": "[3.0.0, )",
-        "resolved": "3.0.0",
-        "contentHash": "wQsv14w9cqlfB5FX2MZpNsTawckN4a8dryuNGbebB/3Nh1pXnROHZov3swtu3Nj5oNG7Ba+xdu7Et/ulAUPanQ==",
+        "requested": "[9.0.0, )",
+        "resolved": "9.0.0",
+        "contentHash": "aNU8A0K322q7+voPNmp1/qNPH+9QK8xvM1p72sMmCG0wGlshFzmtDW9QnVSoSYCj0MgQKcMOlgooovtBhRlNHw==",
         "dependencies": {
-          "Serilog": "4.0.0"
-        }
-      },
-      "Serilog.Sinks.Http": {
-        "type": "Direct",
-        "requested": "[9.2.1, )",
-        "resolved": "9.2.1",
-        "contentHash": "sxc3GZSBsDFuRhcVKZMs66Mr7RfsGCPASSyiGG1Ew20a8kaeFbUL0tru352o0K0GLHjIcmxgkH2KrwoqjvJjjQ==",
-        "dependencies": {
-          "Serilog.Sinks.File": "7.0.0"
+          "Serilog": "4.2.0",
+          "Serilog.Sinks.File": "6.0.0"
         }
       },
       "System.IdentityModel.Tokens.Jwt": {
@@ -638,6 +630,14 @@
         "contentHash": "vx0kABKl2dWbBhhqAfTOk53/i8aV/5VaT3a6il9gn72Wqs2pM7EK2OB6No6xdqK2IaY6Zf9gdjLuK9BVa2rT+Q==",
         "dependencies": {
           "Serilog": "4.2.0"
+        }
+      },
+      "Serilog.Formatting.Compact": {
+        "type": "Transitive",
+        "resolved": "3.0.0",
+        "contentHash": "wQsv14w9cqlfB5FX2MZpNsTawckN4a8dryuNGbebB/3Nh1pXnROHZov3swtu3Nj5oNG7Ba+xdu7Et/ulAUPanQ==",
+        "dependencies": {
+          "Serilog": "4.0.0"
         }
       },
       "Serilog.Settings.Configuration": {
