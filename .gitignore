@@ -36,6 +36,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+.claude/settings.local.json
 .superpowers/
 .worktrees/
 .playwright-mcp/
