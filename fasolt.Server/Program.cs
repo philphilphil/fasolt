@@ -351,7 +351,7 @@ if (apnsKeyReady)
     var apnsSettings = new ApnsSettings
     {
         KeyId = apnsKeyId!,
-        TeamId = builder.Configuration["APPLE_TEAM_ID"] ?? "",
+        TeamId = builder.Configuration["APNS_TEAM_ID"] ?? "",
         BundleId = builder.Configuration["APPLE_BUNDLE_ID"] ?? "com.fasolt.app",
         KeyBase64 = apnsKeyBase64,
         KeyPath = apnsKeyPath,
