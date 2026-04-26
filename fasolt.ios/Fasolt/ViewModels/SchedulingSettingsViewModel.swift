@@ -5,6 +5,8 @@ import Foundation
 final class SchedulingSettingsViewModel {
     var desiredRetention: Double = 0.9
     var maximumInterval: Int = 36500
+    var dayStartHour: Int = 4
+    var timeZone: String = "UTC"
     var isLoading = false
     var errorMessage: String?
     var successMessage: String?
@@ -13,6 +15,15 @@ final class SchedulingSettingsViewModel {
 
     init(apiClient: APIClient) {
         self.apiClient = apiClient
+    }
+
+    /// IANA timezone identifiers known to the device, sorted for display.
+    var availableTimeZones: [String] {
+        TimeZone.knownTimeZoneIdentifiers.sorted()
+    }
+
+    var deviceTimeZone: String {
+        TimeZone.current.identifier
     }
 
     func load() async {
@@ -24,6 +35,8 @@ final class SchedulingSettingsViewModel {
             let response: SchedulingSettingsResponse = try await apiClient.request(endpoint)
             desiredRetention = response.desiredRetention
             maximumInterval = response.maximumInterval
+            dayStartHour = response.dayStartHour
+            timeZone = response.timeZone
         } catch {
             errorMessage = "Could not load scheduling settings."
         }
@@ -41,7 +54,9 @@ final class SchedulingSettingsViewModel {
             method: .put,
             body: UpdateSchedulingSettingsRequest(
                 desiredRetention: desiredRetention,
-                maximumInterval: maximumInterval
+                maximumInterval: maximumInterval,
+                dayStartHour: dayStartHour,
+                timeZone: timeZone
             )
         )
 
@@ -49,6 +64,8 @@ final class SchedulingSettingsViewModel {
             let response: SchedulingSettingsResponse = try await apiClient.request(endpoint)
             desiredRetention = response.desiredRetention
             maximumInterval = response.maximumInterval
+            dayStartHour = response.dayStartHour
+            timeZone = response.timeZone
             successMessage = "Settings saved."
         } catch {
             errorMessage = "Could not save scheduling settings."
