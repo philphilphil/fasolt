@@ -8,6 +8,8 @@ public class AppUser : IdentityUser
     public DateTimeOffset? LastNotifiedAt { get; set; }
     public double? DesiredRetention { get; set; }
     public int? MaximumInterval { get; set; }
+    public int? DayStartHour { get; set; }
+    public string? TimeZone { get; set; }
     public string? ExternalProvider { get; set; }
     public string? ExternalProviderId { get; set; }
 }
