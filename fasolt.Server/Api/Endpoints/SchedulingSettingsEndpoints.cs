@@ -37,12 +37,19 @@ public static class SchedulingSettingsEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var result = await service.UpdateSettings(user.Id, request.DesiredRetention, request.MaximumInterval);
+        var result = await service.UpdateSettings(
+            user.Id,
+            request.DesiredRetention,
+            request.MaximumInterval,
+            request.DayStartHour,
+            request.TimeZone);
         if (result is null)
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
                 ["desiredRetention"] = ["Must be between 0.70 and 0.97."],
                 ["maximumInterval"] = ["Must be between 1 and 36500."],
+                ["dayStartHour"] = ["Must be between 0 and 23."],
+                ["timeZone"] = ["Must be a valid IANA timezone identifier."],
             });
 
         return Results.Ok(result);

@@ -36,7 +36,7 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider)
         _ => default,
     };
 
-    private async Task<IScheduler> CreateSchedulerForUser(string userId)
+    private async Task<(IScheduler Scheduler, int DayStartHour, TimeZoneInfo TimeZone)> CreateSchedulerForUser(string userId)
     {
         var user = await db.Users.FirstAsync(u => u.Id == userId);
         var options = new SchedulerOptions
@@ -45,7 +45,10 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider)
             MaximumInterval = user.MaximumInterval ?? 36500,
             EnableFuzzing = true,
         };
-        return new SchedulerFactory(options).CreateScheduler();
+        var scheduler = new SchedulerFactory(options).CreateScheduler();
+        var dayStartHour = user.DayStartHour ?? DueTimeRounder.DefaultDayStartHour;
+        var tz = DueTimeRounder.ResolveTimeZone(user.TimeZone);
+        return (scheduler, dayStartHour, tz);
     }
 
     public async Task<List<DueCardDto>> GetDueCards(string userId, int limit = 50, string? deckId = null)
@@ -95,14 +98,16 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider)
             };
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        var scheduler = await CreateSchedulerForUser(userId);
+        var (scheduler, dayStartHour, tz) = await CreateSchedulerForUser(userId);
         var (updated, _) = scheduler.ReviewCard(fsrsCard, fsrsRating, now, null);
+
+        var roundedDue = DueTimeRounder.RoundDueUtc(updated.Due, now, dayStartHour, tz);
 
         card.Stability = updated.Stability;
         card.Difficulty = updated.Difficulty;
         card.Step = updated.Step;
         card.State = MapState(updated.State);
-        card.DueAt = new DateTimeOffset(updated.Due, TimeSpan.Zero);
+        card.DueAt = new DateTimeOffset(roundedDue, TimeSpan.Zero);
         card.LastReviewedAt = timeProvider.GetUtcNow();
 
         await db.SaveChangesAsync();
