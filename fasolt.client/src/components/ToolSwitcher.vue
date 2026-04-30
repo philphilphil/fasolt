@@ -75,6 +75,17 @@ function runScript() {
 onMounted(runScript)
 onBeforeUnmount(clearTimers)
 watch(tab, runScript)
+
+const copied = ref(false)
+async function copyMcpUrl() {
+  try {
+    await navigator.clipboard.writeText('https://fasolt.app/mcp')
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 1500)
+  } catch {
+    // ignore
+  }
+}
 </script>
 
 <template>
@@ -183,10 +194,15 @@ watch(tab, runScript)
             <!-- Assistant response -->
             <div class="flex gap-3">
               <div
-                class="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-white text-[12px] font-bold mt-0.5"
-                style="background: #d97757; font-family: serif;"
+                class="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5"
+                style="background: #d97757;"
               >
-                C
+                <svg viewBox="0 0 100 100" width="16" height="16" fill="#ffffff" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="46" y="6" width="8" height="88" rx="4" />
+                  <rect x="6" y="46" width="88" height="8" rx="4" />
+                  <rect x="46" y="6" width="8" height="88" rx="4" transform="rotate(45 50 50)" />
+                  <rect x="46" y="6" width="8" height="88" rx="4" transform="rotate(-45 50 50)" />
+                </svg>
               </div>
               <div class="flex-1 leading-relaxed">
                 <div v-if="phase === 'thinking'" class="flex gap-1 items-center pt-1.5" style="color: #91918b">
@@ -222,9 +238,26 @@ watch(tab, runScript)
 
       <!-- Other / Developers -->
       <TabsContent value="other" class="mt-4">
+        <div class="mb-3 rounded-md border border-border/60 bg-card/60 px-4 py-3 font-mono text-[12px]">
+          <div class="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-accent/80">
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse"></span>
+            Connect your agent to the MCP
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-muted-foreground">$</span>
+            <code class="flex-1 select-all break-all text-foreground">https://fasolt.app/mcp</code>
+            <button
+              class="rounded border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:border-accent/50 transition-colors"
+              type="button"
+              @click="copyMcpUrl"
+            >
+              {{ copied ? 'copied' : 'copy' }}
+            </button>
+          </div>
+        </div>
         <TerminalDemo />
         <p class="mt-3 text-xs text-muted-foreground">
-          Works with Claude Code, Cursor, and any MCP-compatible client.
+          Streamable HTTP transport. Works with Claude Code, Cursor, and any MCP-compatible client.
         </p>
       </TabsContent>
     </Tabs>
