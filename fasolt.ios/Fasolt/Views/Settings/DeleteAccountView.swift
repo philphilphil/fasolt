@@ -6,19 +6,9 @@ struct DeleteAccountView: View {
 
     let viewModel: SettingsViewModel
 
-    @State private var password = ""
-    @State private var confirmIdentity = ""
     @State private var errorMessage: String?
     @State private var isDeleting = false
-
-    private var isExternal: Bool {
-        viewModel.externalProvider != nil
-    }
-
-    private var canSubmit: Bool {
-        if isDeleting { return false }
-        return isExternal ? !confirmIdentity.isEmpty : !password.isEmpty
-    }
+    @State private var showConfirmAlert = false
 
     var body: some View {
         NavigationStack {
@@ -33,29 +23,9 @@ struct DeleteAccountView: View {
                 }
 
                 Section {
-                    if isExternal {
-                        if let displayName = viewModel.displayName {
-                            Text("Type your username **\(displayName)** to confirm.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text("Type your username to confirm.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        TextField("Username", text: $confirmIdentity)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .submitLabel(.done)
-                    } else {
-                        Text("Enter your password to confirm.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        SecureField("Password", text: $password)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .submitLabel(.done)
-                    }
+                    Text("You'll be asked to confirm before anything is deleted.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
 
                 if let errorMessage {
@@ -68,7 +38,7 @@ struct DeleteAccountView: View {
 
                 Section {
                     Button(role: .destructive) {
-                        Task { await performDelete() }
+                        showConfirmAlert = true
                     } label: {
                         HStack {
                             Text("Delete my account")
@@ -78,7 +48,7 @@ struct DeleteAccountView: View {
                             }
                         }
                     }
-                    .disabled(!canSubmit)
+                    .disabled(isDeleting)
                 }
             }
             .navigationTitle("Delete Account")
@@ -92,6 +62,14 @@ struct DeleteAccountView: View {
                 }
             }
             .interactiveDismissDisabled(isDeleting)
+            .alert("Delete account?", isPresented: $showConfirmAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    Task { await performDelete() }
+                }
+            } message: {
+                Text("This will permanently delete your account and all your cards, decks, and study progress. This cannot be undone.")
+            }
         }
     }
 
@@ -101,26 +79,18 @@ struct DeleteAccountView: View {
         defer { isDeleting = false }
 
         do {
-            if isExternal {
-                try await viewModel.deleteAccount(confirmIdentity: confirmIdentity)
-            } else {
-                try await viewModel.deleteAccount(password: password)
-            }
-            // Server has revoked tokens and deleted data. Clear local state and
-            // bounce back to the sign-in screen.
+            try await viewModel.deleteAccount()
             await authService.signOut()
             dismiss()
         } catch let error as APIError {
-            errorMessage = Self.message(for: error, isExternal: isExternal)
+            errorMessage = Self.message(for: error)
         } catch {
             errorMessage = "Failed to delete account. Please try again."
         }
     }
 
-    private static func message(for error: APIError, isExternal: Bool) -> String {
+    private static func message(for error: APIError) -> String {
         switch error {
-        case .badRequest(let detail):
-            return detail ?? (isExternal ? "Username does not match your account." : "Password is incorrect.")
         case .unauthorized:
             return "Your session has expired. Please sign in again."
         case .networkError:

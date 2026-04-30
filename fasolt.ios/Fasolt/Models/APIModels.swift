@@ -141,13 +141,6 @@ struct UserInfoResponse: Decodable, Sendable {
     let displayName: String?
 }
 
-// MARK: - Account
-
-struct DeleteAccountRequest: Encodable, Sendable {
-    let password: String?
-    let confirmIdentity: String?
-}
-
 // MARK: - Notifications
 
 struct DeviceTokenRequest: Encodable, Sendable {

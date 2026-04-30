@@ -50,11 +50,10 @@ final class SettingsViewModel {
     }
 
     /// Permanently deletes the signed-in user's account on the server.
-    /// For external (GitHub/Apple) accounts pass `confirmIdentity`; for local accounts pass `password`.
-    /// Throws `APIError` so the caller can render server validation messages.
-    func deleteAccount(password: String? = nil, confirmIdentity: String? = nil) async throws {
-        let body = DeleteAccountRequest(password: password, confirmIdentity: confirmIdentity)
-        let endpoint = Endpoint(path: "/api/account", method: .delete, body: body)
+    /// The authenticated session is the gate — the iOS UI handles confirmation.
+    /// Throws `APIError` so the caller can render server messages.
+    func deleteAccount() async throws {
+        let endpoint = Endpoint(path: "/api/account", method: .delete)
         try await apiClient.request(endpoint)
         logger.info("Account deleted")
     }
