@@ -3,8 +3,10 @@ import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Moon, Sun, Bot, Layers, FileText, Brain, BarChart3, Image, Search, Server } from 'lucide-vue-next'
 import { useDarkMode } from '@/composables/useDarkMode'
-import TerminalDemo from '@/components/TerminalDemo.vue'
+import ToolSwitcher from '@/components/ToolSwitcher.vue'
+import FasoltStudyPreview from '@/components/FasoltStudyPreview.vue'
 import AppFooter from '@/components/AppFooter.vue'
+import { ArrowRight, ArrowDown } from 'lucide-vue-next'
 
 const { isDark, toggle } = useDarkMode()
 </script>
@@ -38,18 +40,18 @@ const { isDark, toggle } = useDarkMode()
     </nav>
 
     <!-- Hero -->
-    <section class="relative mx-auto max-w-5xl px-6 pt-20 pb-12 sm:pt-32 sm:pb-16">
+    <section class="relative mx-auto max-w-5xl px-6 pt-6 pb-12 sm:pt-10 sm:pb-16">
       <div class="max-w-2xl">
         <p class="mb-4 text-xs uppercase tracking-[0.2em] text-accent">spaced repetition</p>
         <h1 class="text-2xl sm:text-4xl font-bold tracking-tight leading-tight mb-5">
-          <span class="text-accent text-glow">MCP-first</span> spaced repetition<br class="hidden sm:block" />
-          powered by your AI.
+          Spaced repetition,<br class="hidden sm:block" />
+          powered by the <span class="text-accent text-glow">AI you already use</span>.
         </h1>
         <p class="text-sm text-muted-foreground mb-8 max-w-md leading-relaxed">
-          Your AI agent creates flashcards from your notes, a topic, or anything you want to learn.
+          Ask ChatGPT or Claude to make flashcards from your notes, a topic, or anything you want to learn.
           Study on the web or the iOS app. Free.
         </p>
-        <div class="flex flex-wrap gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <a href="/register">
             <Button class="glow-accent">Get started</Button>
           </a>
@@ -57,13 +59,32 @@ const { isDark, toggle } = useDarkMode()
             <Button variant="outline">Log in</Button>
           </a>
         </div>
+        <p class="mt-4 text-xs text-muted-foreground/80">
+          Works with ChatGPT, Claude, and any MCP-compatible AI.
+        </p>
       </div>
     </section>
 
-    <!-- Terminal demo -->
-    <section class="relative mx-auto max-w-5xl px-6 pb-20">
-      <div class="max-w-2xl">
-        <TerminalDemo />
+    <!-- Tool switcher demo + study preview -->
+    <section class="relative mx-auto max-w-6xl px-6 pb-20">
+      <div class="grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
+        <div class="flex min-w-0 flex-col">
+          <p class="mb-3 text-[10px] uppercase tracking-[0.2em] text-accent/70">1 — Ask your AI</p>
+          <ToolSwitcher />
+        </div>
+        <div class="hidden lg:flex items-center justify-center text-muted-foreground/60">
+          <ArrowRight :size="24" />
+        </div>
+        <div class="flex justify-center lg:hidden text-muted-foreground/60 -my-1">
+          <ArrowDown :size="18" />
+        </div>
+        <div class="flex min-w-0 flex-col">
+          <p class="mb-3 text-[10px] uppercase tracking-[0.2em] text-accent/70">2 — Study in fasolt</p>
+          <FasoltStudyPreview />
+          <p class="mt-3 text-xs text-muted-foreground">
+            Cards are scheduled with FSRS — the more you remember, the longer the gaps.
+          </p>
+        </div>
       </div>
     </section>
 
@@ -74,9 +95,9 @@ const { isDark, toggle } = useDarkMode()
         <div class="grid gap-10 sm:grid-cols-3">
           <div>
             <span class="text-xs text-accent/60 mb-2 block">01</span>
-            <h3 class="text-sm font-semibold mb-2">Connect your AI agent</h3>
+            <h3 class="text-sm font-semibold mb-2">Connect ChatGPT or Claude</h3>
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Add the fasolt MCP server to Claude, ChatGPT, or any MCP-compatible agent.
+              Add fasolt to ChatGPT, Claude, or any AI tool that supports connectors.
             </p>
           </div>
           <div>
@@ -103,8 +124,8 @@ const { isDark, toggle } = useDarkMode()
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <Bot :size="16" class="text-accent mb-2" />
-          <h3 class="text-sm font-semibold mb-1">MCP tools</h3>
-          <p class="text-xs text-muted-foreground leading-relaxed">AI agents create and manage cards via MCP.</p>
+          <h3 class="text-sm font-semibold mb-1">Bring your own AI</h3>
+          <p class="text-xs text-muted-foreground leading-relaxed">Use ChatGPT, Claude, or any MCP-compatible agent to create and manage cards.</p>
         </div>
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <Brain :size="16" class="text-accent mb-2" />
