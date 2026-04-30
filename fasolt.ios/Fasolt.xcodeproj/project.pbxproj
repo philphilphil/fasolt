@@ -38,6 +38,7 @@
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
 		A1B2C3D4E5F60718A9B0C1D2 /* SnapshotViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */; };
 		A1B2C3D4E5F60718A9B0C1D3 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */; };
+		A1B2C3D4E5F60718A9B0C1D4 /* DeleteAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C1B0A918070F6E5D4C3B2C /* DeleteAccountView.swift */; };
 		A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7A52B7D0A14767556278C /* CachedDeck.swift */; };
 		A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */; };
 		AA11223344556677889900AB /* StartStudyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB11223344556677889900AB /* StartStudyAction.swift */; };
@@ -125,6 +126,7 @@
 		CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D2C1B0A918070F6E5D4C3B2A /* SnapshotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotViewModel.swift; sourceTree = "<group>"; };
 		D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
+		D2C1B0A918070F6E5D4C3B2C /* DeleteAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountView.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
 		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -351,6 +353,7 @@
 		FE8B084DED433EFBAE5D318F /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				D2C1B0A918070F6E5D4C3B2C /* DeleteAccountView.swift */,
 				D2C1B0A918070F6E5D4C3B2B /* HelpView.swift */,
 				94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */,
 				CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */,
@@ -496,6 +499,7 @@
 				EE11223344556677889900CC /* LibraryView.swift in Sources */,
 				58A1B3892608093BF3282922 /* MainTabView.swift in Sources */,
 				A1B2C3D4E5F60718A9B0C1D3 /* HelpView.swift in Sources */,
+				A1B2C3D4E5F60718A9B0C1D4 /* DeleteAccountView.swift in Sources */,
 				51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */,
 				0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */,
 				BA01CCDDEEFF00112233BA02 /* BackendStatusMonitor.swift in Sources */,
