@@ -58,7 +58,7 @@ const router = createRouter({
     { path: '/decks/:id/snapshots', name: 'deck-snapshots', component: () => import('@/views/DeckSnapshotsView.vue'), meta: { title: 'Deck snapshots' } },
     { path: '/decks/:id/snapshots/:snapshotId/restore', name: 'restore-snapshot', component: () => import('@/views/RestoreSnapshotView.vue'), meta: { title: 'Restore snapshot' } },
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue'), meta: { title: 'Review' } },
-    { path: '/mcp-setup', name: 'mcp', component: () => import('@/views/McpView.vue'), meta: { title: 'MCP setup' } },
+    { path: '/mcp-setup', name: 'mcp', component: () => import('@/views/McpView.vue'), meta: { public: true, title: 'MCP setup' } },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: 'Settings' } },
     { path: '/admin', name: 'admin', component: () => import('@/views/AdminView.vue'), meta: { requiresAdmin: true, title: 'Admin' } },
     { path: '/dashboard', redirect: '/study' },

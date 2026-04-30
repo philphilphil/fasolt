@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Copy, Check } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Copy, Check, Moon, Sun } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { useDarkMode } from '@/composables/useDarkMode'
+import AppFooter from '@/components/AppFooter.vue'
 
+const auth = useAuthStore()
+const { isDark, toggle } = useDarkMode()
 const copiedStates = ref<Record<string, boolean>>({})
 const origin = computed(() => window.location.origin)
 const remoteClaudeCommand = computed(() =>
@@ -26,14 +33,40 @@ function copyToClipboard(text: string, key: string) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <h1 class="text-lg font-bold tracking-tight">MCP Setup</h1>
+  <div :class="auth.isAuthenticated ? '' : 'flex min-h-screen flex-col bg-background text-foreground'">
+    <nav v-if="!auth.isAuthenticated" class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+      <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <RouterLink to="/" class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
+          <img src="/logo.svg" alt="fasolt" class="h-10 object-contain" />
+          fasolt
+        </RouterLink>
+        <div class="flex items-center gap-2">
+          <button
+            class="rounded p-2 text-muted-foreground hover:text-foreground"
+            @click="toggle"
+          >
+            <Sun v-if="isDark" :size="16" />
+            <Moon v-else :size="16" />
+          </button>
+          <a href="/login">
+            <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
+          </a>
+          <a href="/register">
+            <Button size="sm" class="text-xs">Sign up</Button>
+          </a>
+        </div>
+      </div>
+    </nav>
 
-    <p class="text-xs text-muted-foreground leading-relaxed">
-      Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client.
-    </p>
+    <main :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'">
+      <div class="flex flex-col gap-6">
+        <h1 class="text-lg font-bold tracking-tight">MCP Setup</h1>
 
-    <Card class="border-border/60">
+        <p class="text-xs text-muted-foreground leading-relaxed">
+          Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client.
+        </p>
+
+        <Card class="border-border/60">
       <CardHeader>
         <CardTitle class="text-sm">Add to Your AI Client</CardTitle>
       </CardHeader>
@@ -123,7 +156,11 @@ function copyToClipboard(text: string, key: string) {
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+        </Card>
+      </div>
+    </main>
+
+    <AppFooter v-if="!auth.isAuthenticated" />
   </div>
 </template>
