@@ -22,7 +22,7 @@ const router = createRouter({
       path: '/',
       name: 'landing',
       component: () => import('@/views/LandingView.vue'),
-      meta: { public: true, authRedirect: true, landing: true, title: 'MCP-first spaced repetition for markdown notes' },
+      meta: { public: true, authRedirect: true, landing: true, title: 'Spaced repetition, powered by the AI you already use' },
     },
     {
       path: '/algorithm',
