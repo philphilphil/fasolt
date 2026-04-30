@@ -7,5 +7,3 @@ public record ChangeEmailRequest(string NewEmail, string CurrentPassword);
 public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 public record ConfirmEmailChangeRequest(string NewEmail, string Token);
-
-public record DeleteAccountRequest(string? Password, string? ConfirmIdentity);

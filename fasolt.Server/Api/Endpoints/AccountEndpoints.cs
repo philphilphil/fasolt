@@ -317,7 +317,6 @@ public static class AccountEndpoints
     }
 
     private static async Task<IResult> DeleteAccount(
-        [Microsoft.AspNetCore.Mvc.FromBody] DeleteAccountRequest request,
         ClaimsPrincipal principal,
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,
@@ -325,26 +324,6 @@ public static class AccountEndpoints
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
-
-        if (user.ExternalProvider is not null)
-        {
-            // GitHub accounts: confirm by username
-            if (string.IsNullOrEmpty(request.ConfirmIdentity) ||
-                !string.Equals(request.ConfirmIdentity, user.UserName, StringComparison.OrdinalIgnoreCase))
-                return Results.ValidationProblem(new Dictionary<string, string[]>
-                {
-                    ["confirmIdentity"] = ["Username does not match your account."]
-                });
-        }
-        else
-        {
-            // Local accounts: confirm by password
-            if (string.IsNullOrEmpty(request.Password) || !await userManager.CheckPasswordAsync(user, request.Password))
-                return Results.ValidationProblem(new Dictionary<string, string[]>
-                {
-                    ["password"] = ["Password is incorrect."]
-                });
-        }
 
         await accountDataService.DeleteUserData(user.Id);
         await signInManager.SignOutAsync();

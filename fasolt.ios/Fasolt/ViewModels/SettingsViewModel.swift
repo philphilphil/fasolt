@@ -48,4 +48,13 @@ final class SettingsViewModel {
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
         return "\(version) (\(build))"
     }
+
+    /// Permanently deletes the signed-in user's account on the server.
+    /// The authenticated session is the gate — the iOS UI handles confirmation.
+    /// Throws `APIError` so the caller can render server messages.
+    func deleteAccount() async throws {
+        let endpoint = Endpoint(path: "/api/account", method: .delete)
+        try await apiClient.request(endpoint)
+        logger.info("Account deleted")
+    }
 }

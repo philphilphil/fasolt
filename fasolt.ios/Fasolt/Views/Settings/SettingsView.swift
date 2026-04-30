@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var snapshotViewModel: SnapshotViewModel
     @State private var selectedSegment: SettingsSegment = .settings
     @State private var showSignOutConfirmation = false
+    @State private var showDeleteAccount = false
     @State private var showSnapshotSuccess = false
 
     init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel, snapshotViewModel: SnapshotViewModel) {
@@ -224,6 +225,18 @@ struct SettingsView: View {
                     showSignOutConfirmation = true
                 }
             }
+
+            Section {
+                Button("Delete Account", role: .destructive) {
+                    showDeleteAccount = true
+                }
+            } footer: {
+                Text("Permanently deletes your account and all associated data.")
+            }
+        }
+        .sheet(isPresented: $showDeleteAccount) {
+            DeleteAccountView(viewModel: viewModel)
+                .environment(authService)
         }
     }
 
