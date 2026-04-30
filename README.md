@@ -84,7 +84,7 @@ Agent: generates cards from its knowledge → creates deck via MCP → done
 Prerequisites: Docker, .NET 10 SDK, Node.js
 
 ```bash
-./dev.sh                                # starts everything
+make dev                                # starts everything (or: ./scripts/dev.sh)
 
 # or manually:
 docker compose up -d                    # Postgres on :5432

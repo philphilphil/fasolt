@@ -57,7 +57,8 @@ Endpoints use the static extension method pattern (e.g., `MapHealthEndpoints()`)
 docker-compose.yml          — Postgres container (dev)
 docker-compose.prod.yml     — production compose
 Dockerfile                  — production container build
-dev.sh                      — runs everything (docker + backend + frontend)
+Makefile                    — task shortcuts (`make dev`, `make deploy`, `make test`, …)
+scripts/dev.sh              — runs everything (docker + backend + frontend)
 fasolt.sln                  — .NET solution
 fasolt.Server/              — backend (includes remote MCP server)
 fasolt.client/              — frontend (Vue 3 SPA)
@@ -69,7 +70,7 @@ fasolt.ios/                 — iOS app (Swift/Xcode)
 
 ```bash
 # Full stack (requires Docker)
-./dev.sh
+make dev                    # or: ./scripts/dev.sh
 
 # Backend only
 dotnet run --project fasolt.Server
@@ -98,7 +99,7 @@ docker compose down          # stop Postgres
 - **UI Tests**: Use Playwright (via MCP) for end-to-end UI testing
 - **IMPORTANT**: Always run Playwright browser tests after implementing a feature. API-level curl tests are not sufficient — the UI must be tested in the browser to catch rendering issues, dialog flows, and navigation problems.
 - Test the full user flow: navigate to the feature, interact with it (create, edit, delete), verify the UI updates correctly.
-- Start the full stack before testing (`./dev.sh` or manually start backend + frontend).
+- Start the full stack before testing (`make dev` / `./scripts/dev.sh`, or manually start backend + frontend).
 - If the backend was rebuilt, restart it before testing — stale processes will return 404s on new endpoints.
 
 ## Pull Requests

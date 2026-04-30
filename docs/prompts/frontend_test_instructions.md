@@ -1,6 +1,6 @@
 # Frontend Test Instructions
 
-Test the entire frontend using Playwright MCP. Start the full stack (`./dev.sh`) before testing.
+Test the entire frontend using Playwright MCP. Start the full stack (`make dev`) before testing.
 
 **IMPORTANT: Never skip a test.** Every test in this document must be executed. If a test cannot be run due to missing data (e.g., pagination requires >20 cards), note it as N/A with a reason — do not silently skip it.
 
@@ -11,7 +11,7 @@ Test the entire frontend using Playwright MCP. Start the full stack (`./dev.sh`)
 ## Prerequisites
 
 ```
-1. Start full stack: ./dev.sh
+1. Start full stack: make dev
 2. Wait for backend health: curl http://localhost:8080/api/health
 3. Open browser: navigate to http://localhost:5173/login
 4. Log in as dev@fasolt.local / Dev1234!

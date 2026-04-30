@@ -1,14 +1,14 @@
 import { test, expect, request } from '@playwright/test'
 
 // Prerequisites:
-// - ./dev.sh running (backend on :8080, vite on :5173, postgres in docker)
+// - `make dev` (or ./scripts/dev.sh) running (backend on :8080, vite on :5173, postgres in docker)
 // - TestEmailSink registered (Dev only, see Program.cs)
 // - Dev seed user dev@fasolt.local / Dev1234! auto-created by the backend
 //
 // This test rotates the dev seed user's password. Running it twice in a
 // row from a fresh DB will fail because the password is no longer Dev1234!
 // after the first run. Either (a) reset the DB between runs
-// ('docker compose down -v && ./dev.sh'), or (b) run once, manually reset
+// ('docker compose down -v && make dev'), or (b) run once, manually reset
 // the password via another reset cycle, or (c) accept that this test is
 // a one-shot and ignore it on subsequent runs.
 //
@@ -82,7 +82,7 @@ test.describe('auth: forgot password', () => {
     // Cleanup note: the dev seed user's password is now NEW_PASSWORD.
     // Subsequent runs of this test will fail at step 5 above (sign in
     // with old password) because OLD_PASSWORD no longer works. Run
-    // 'docker compose down -v && ./dev.sh' between runs if repeated
+    // 'docker compose down -v && make dev' between runs if repeated
     // execution is needed.
     console.log(
       `[e2e cleanup] dev seed password rotated to ${NEW_PASSWORD}. ` +

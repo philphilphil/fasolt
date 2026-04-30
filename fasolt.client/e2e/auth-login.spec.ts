@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 // Prerequisites:
-// - ./dev.sh running (backend on :8080, vite on :5173, postgres in docker)
+// - `make dev` (or ./scripts/dev.sh) running (backend on :8080, vite on :5173, postgres in docker)
 // - dev seed user dev@fasolt.local / Dev1234! auto-created by the backend
 //
 // These tests rotate no state (they only log in and log out), so they can
