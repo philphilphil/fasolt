@@ -48,4 +48,14 @@ final class SettingsViewModel {
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
         return "\(version) (\(build))"
     }
+
+    /// Permanently deletes the signed-in user's account on the server.
+    /// For external (GitHub/Apple) accounts pass `confirmIdentity`; for local accounts pass `password`.
+    /// Throws `APIError` so the caller can render server validation messages.
+    func deleteAccount(password: String? = nil, confirmIdentity: String? = nil) async throws {
+        let body = DeleteAccountRequest(password: password, confirmIdentity: confirmIdentity)
+        let endpoint = Endpoint(path: "/api/account", method: .delete, body: body)
+        try await apiClient.request(endpoint)
+        logger.info("Account deleted")
+    }
 }
