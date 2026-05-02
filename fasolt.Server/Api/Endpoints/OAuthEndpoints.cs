@@ -148,31 +148,30 @@ public static class OAuthEndpoints
             // Check for existing consent grant
             var openIddictRequest = context.GetOpenIddictServerRequest();
             var clientId = openIddictRequest?.ClientId;
+            if (string.IsNullOrWhiteSpace(clientId))
+                return Results.BadRequest(new { error = Errors.InvalidRequest, error_description = "client_id is required." });
 
             // First-party clients auto-consent silently
             var firstPartyClientIds = new HashSet<string> { "fasolt-ios" };
 
-            if (clientId is not null)
+            var hasConsent = firstPartyClientIds.Contains(clientId)
+                || await db.ConsentGrants.AnyAsync(g => g.UserId == userId && g.ClientId == clientId);
+
+            if (!hasConsent)
             {
-                var hasConsent = firstPartyClientIds.Contains(clientId)
-                    || await db.ConsentGrants.AnyAsync(g => g.UserId == userId && g.ClientId == clientId);
+                // Store the original query string in an encrypted cookie for reconstruction after consent
+                var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
+                var encrypted = protector.Protect(context.Request.QueryString.Value ?? "");
 
-                if (!hasConsent)
+                context.Response.Cookies.Append("oauth_authorize_query", encrypted, new CookieOptions
                 {
-                    // Store the original query string in an encrypted cookie for reconstruction after consent
-                    var protector = dataProtection.CreateProtector("OAuthAuthorizeQuery");
-                    var encrypted = protector.Protect(context.Request.QueryString.Value ?? "");
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Strict,
+                    Secure = !context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
+                    MaxAge = TimeSpan.FromMinutes(10),
+                });
 
-                    context.Response.Cookies.Append("oauth_authorize_query", encrypted, new CookieOptions
-                    {
-                        HttpOnly = true,
-                        SameSite = SameSiteMode.Strict,
-                        Secure = !context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
-                        MaxAge = TimeSpan.FromMinutes(10),
-                    });
-
-                    return Results.Redirect($"/oauth/consent?client_id={Uri.EscapeDataString(clientId)}");
-                }
+                return Results.Redirect($"/oauth/consent?client_id={Uri.EscapeDataString(clientId)}");
             }
 
             var identity = new ClaimsIdentity(

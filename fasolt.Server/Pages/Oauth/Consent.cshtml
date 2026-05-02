@@ -20,7 +20,7 @@
 
     <form method="post" action="/oauth/consent">
         @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="ClientId" />
+        <input type="hidden" name="client_id" value="@Model.ClientId" />
         <button type="submit" name="Decision" value="approve" class="oauth-btn">Authorize</button>
         <button type="submit" name="Decision" value="deny" class="oauth-btn-secondary">Deny</button>
     </form>

@@ -31,7 +31,7 @@ public class ConsentModel : PageModel
         _db = db;
     }
 
-    [BindProperty(SupportsGet = true)]
+    [BindProperty(SupportsGet = true, Name = "client_id")]
     public string ClientId { get; set; } = "";
 
     public string ClientName { get; set; } = "";
@@ -44,6 +44,9 @@ public class ConsentModel : PageModel
         var result = await HttpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
         if (result?.Principal is null)
             return Redirect("/login");
+
+        if (string.IsNullOrWhiteSpace(ClientId))
+            return BadRequest("Missing client_id");
 
         var application = await _applicationManager.FindByClientIdAsync(ClientId);
         ClientName = application is not null
@@ -60,6 +63,9 @@ public class ConsentModel : PageModel
             return Redirect("/login");
 
         var userId = authResult.Principal.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        if (string.IsNullOrWhiteSpace(ClientId))
+            return BadRequest("Missing client_id");
 
         var application = await _applicationManager.FindByClientIdAsync(ClientId);
         if (application is null)
