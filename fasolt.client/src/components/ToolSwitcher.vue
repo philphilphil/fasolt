@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import TerminalDemo from '@/components/TerminalDemo.vue'
 
-type ToolKey = 'chatgpt' | 'claude' | 'other'
+type ToolKey = 'chatgpt' | 'claude' | 'mistral' | 'other'
 
 const tab = ref<ToolKey>('chatgpt')
 
@@ -94,6 +94,7 @@ async function copyMcpUrl() {
       <TabsList class="bg-card/60 border border-border/60 rounded-md p-1 gap-1">
         <TabsTrigger value="chatgpt" class="text-xs px-3">ChatGPT</TabsTrigger>
         <TabsTrigger value="claude" class="text-xs px-3">Claude</TabsTrigger>
+        <TabsTrigger value="mistral" class="text-xs px-3">Mistral</TabsTrigger>
         <TabsTrigger value="other" class="text-xs px-3 text-muted-foreground/70 data-[state=active]:text-foreground">Other</TabsTrigger>
       </TabsList>
 
@@ -228,6 +229,83 @@ async function copyMcpUrl() {
                   <p v-if="showFooter" class="text-[12px] sm:text-[13px]" style="color: #6b6a62;">
                     Created 7 cards in your “LLM Basics” deck —
                     <a href="#" class="underline" style="color: #d97757;">{{ studyUrl }}</a>
+                  </p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </TabsContent>
+
+      <!-- Mistral Le Chat -->
+      <TabsContent value="mistral" class="mt-4">
+        <div
+          class="flex flex-col overflow-hidden rounded-xl border border-border/60 shadow-2xl glow-accent-lg lg:h-[420px]"
+          style="background: #faf6f1; font-family: 'Inter', system-ui, -apple-system, sans-serif;"
+        >
+          <!-- Window chrome -->
+          <div class="flex items-center gap-2 px-4 py-3 border-b" style="border-color: #e9e1d4; background: #f3ede2;">
+            <span class="h-2.5 w-2.5 rounded-full" style="background: #ff5f57"></span>
+            <span class="h-2.5 w-2.5 rounded-full" style="background: #febc2e"></span>
+            <span class="h-2.5 w-2.5 rounded-full" style="background: #28c840"></span>
+            <span class="ml-3 text-[11px]" style="color: #8b7e6a">Mistral</span>
+          </div>
+
+          <!-- Body -->
+          <div class="flex flex-col px-5 py-5 sm:px-6 sm:py-6 text-[13.5px] sm:text-[14.5px] flex-1" style="color: #2a2520;">
+            <!-- User message -->
+            <div class="flex justify-end mb-4">
+              <div
+                class="rounded-2xl px-4 py-2.5 max-w-[85%]"
+                style="background: #f1e7d6; color: #2a2520;"
+              >
+                {{ userPrompt }}
+              </div>
+            </div>
+
+            <!-- Assistant response -->
+            <div class="flex gap-3">
+              <div
+                class="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5 p-1"
+                style="background: #ffffff; border: 1px solid #efe7d6;"
+              >
+                <svg viewBox="0 0 191 135" width="20" height="14" xmlns="http://www.w3.org/2000/svg" aria-label="Mistral">
+                  <path d="M54.32 0H27.15v27.09h27.17V0Z" fill="#FFD800"/>
+                  <path d="M162.98 0h-27.17v27.09h27.17V0Z" fill="#FFD800"/>
+                  <path d="M81.48 27.09H27.15v27.09h54.33V27.09Z" fill="#FFAF00"/>
+                  <path d="M162.99 27.09h-54.33v27.09h54.33V27.09Z" fill="#FFAF00"/>
+                  <path d="M162.97 54.17H27.15v27.09h135.82V54.17Z" fill="#FF8205"/>
+                  <path d="M54.32 81.26H27.15v27.09h27.17V81.26Z" fill="#FA500F"/>
+                  <path d="M108.66 81.26H81.49v27.09h27.17V81.26Z" fill="#FA500F"/>
+                  <path d="M162.98 81.26h-27.17v27.09h27.17V81.26Z" fill="#FA500F"/>
+                  <path d="M81.49 108.34H0v27.09h81.49v-27.09Z" fill="#E10500"/>
+                  <path d="M190.16 108.34h-81.5v27.09h81.5v-27.09Z" fill="#E10500"/>
+                </svg>
+              </div>
+              <div class="flex-1 leading-relaxed">
+                <div v-if="phase === 'thinking'" class="flex gap-1 items-center pt-1.5" style="color: #8b7e6a">
+                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #fa520f;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #fa520f; animation-delay: 0.15s;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #fa520f; animation-delay: 0.3s;"></span>
+                </div>
+                <template v-else>
+                  <p class="mb-3">Voilà — flashcards from your LLM basics notes:</p>
+                  <ul class="space-y-1.5 mb-3">
+                    <li
+                      v-for="(c, i) in cards"
+                      :key="i"
+                      v-show="i < visibleCards"
+                      class="gap-2 transition-opacity duration-300"
+                      :class="i < 2 ? 'flex' : (i < 4 ? 'hidden sm:flex' : 'hidden')"
+                      :style="{ opacity: i < visibleCards ? 1 : 0 }"
+                    >
+                      <span style="color: #fa520f;">✓</span>
+                      <span>{{ c }}</span>
+                    </li>
+                  </ul>
+                  <p v-if="showFooter" class="text-[12px] sm:text-[13px]" style="color: #6e6657;">
+                    7 cards added to your “LLM Basics” deck —
+                    <a href="#" class="underline" style="color: #fa520f;">{{ studyUrl }}</a>
                   </p>
                 </template>
               </div>

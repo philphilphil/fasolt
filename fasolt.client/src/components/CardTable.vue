@@ -51,7 +51,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         const source = row.original.sourceFile
         const hasSvg = row.original.frontSvg || row.original.backSvg
         const cardLink = props.deckContext
-          ? `/cards/${row.original.id}?deckId=${props.deckContext.id}&deckName=${encodeURIComponent(props.deckContext.name)}`
+          ? `/cards/${row.original.id}?deckId=${props.deckContext.id}`
           : `/cards/${row.original.id}`
         return h('div', { class: 'min-w-0' }, [
           h('div', { class: 'flex items-center gap-1.5' }, [
@@ -111,7 +111,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       const buttons = [
         h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px]', onClick: () => {
           const editLink = props.deckContext
-            ? `/cards/${card.id}?edit=true&deckId=${props.deckContext.id}&deckName=${encodeURIComponent(props.deckContext.name)}`
+            ? `/cards/${card.id}?edit=true&deckId=${props.deckContext.id}`
             : `/cards/${card.id}?edit=true`
           router.push(editLink)
         } }, () => 'Edit'),

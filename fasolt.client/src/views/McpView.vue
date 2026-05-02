@@ -115,6 +115,30 @@ function copyToClipboard(text: string, key: string) {
           </div>
 
           <div>
+            <h3 class="text-xs font-medium mb-2">Mistral Le Chat</h3>
+            <div class="rounded border border-border bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
+              <ol class="list-decimal list-inside space-y-1.5">
+                <li>Open Le Chat → <span class="font-medium text-foreground">Intelligence</span> → <span class="font-medium text-foreground">Connectors</span></li>
+                <li>Click <span class="font-medium text-foreground">+ Add Connector</span> → <span class="font-medium text-foreground">Custom MCP Connector</span></li>
+                <li>Set <span class="font-medium text-foreground">Connector name</span> to <code class="rounded border border-border bg-background px-1 py-0.5 text-[10px]">fasolt</code> and paste the server URL:
+                  <span class="inline-flex items-center gap-1.5 mt-1">
+                    <code class="rounded border border-border bg-background px-1.5 py-0.5 text-[10px]">{{ origin }}/mcp</code>
+                    <button
+                      class="rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                      @click="copyToClipboard(`${origin}/mcp`, 'mistral-url')"
+                    >
+                      <Check v-if="copiedStates['mistral-url']" class="h-3 w-3 text-success" />
+                      <Copy v-else class="h-3 w-3" />
+                    </button>
+                  </span>
+                </li>
+                <li>Click <span class="font-medium text-foreground">Connect</span> and authorize with your fasolt account</li>
+              </ol>
+              <p class="mt-2"><a href="https://docs.mistral.ai/le-chat/knowledge-integrations/connectors/mcp-connectors/" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">See documentation</a></p>
+            </div>
+          </div>
+
+          <div>
             <h3 class="text-xs font-medium mb-2">ChatGPT</h3>
             <p class="text-xs text-muted-foreground mb-1.5">Requires Pro, Team, Enterprise, or Edu plan.</p>
             <div class="rounded border border-border bg-secondary px-3 py-2.5 text-xs text-muted-foreground">

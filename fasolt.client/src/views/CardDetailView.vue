@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useCardsStore } from '@/stores/cards'
 import { useDecksStore } from '@/stores/decks'
 import { useMarkdown } from '@/composables/useMarkdown'
 import { sanitizeSvg } from '@/composables/useSvgSanitizer'
-import type { Card } from '@/types'
+import type { Card, DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import { formatDate } from '@/lib/formatDate'
 import { stripMarkdown } from '@/lib/utils'
@@ -24,6 +25,7 @@ const { render } = useMarkdown()
 
 const card = ref<Card | null>(null)
 const loading = ref(true)
+const deckCards = ref<DeckDetail | null>(null)
 
 const deleteOpen = ref(false)
 const editing = ref(false)
@@ -50,8 +52,11 @@ async function copyId() {
 
 const deckContext = computed(() => {
   const id = route.query.deckId as string | undefined
-  const name = route.query.deckName as string | undefined
-  return id && name ? { id, name } : null
+  if (!id) return null
+  const name =
+    card.value?.decks.find(d => d.id === id)?.name ??
+    decksStore.decks.find(d => d.id === id)?.name
+  return name ? { id, name } : null
 })
 
 const truncatedFront = computed(() => {
@@ -60,18 +65,73 @@ const truncatedFront = computed(() => {
   return plain.length > 60 ? plain.slice(0, 60) + '…' : plain
 })
 
-onMounted(async () => {
+const navIndex = computed(() => {
+  if (!deckCards.value || !card.value) return -1
+  return deckCards.value.cards.findIndex(c => c.id === card.value!.id)
+})
+
+const prevCardId = computed(() => {
+  if (navIndex.value <= 0) return null
+  return deckCards.value!.cards[navIndex.value - 1].id
+})
+
+const nextCardId = computed(() => {
+  if (navIndex.value < 0 || !deckCards.value) return null
+  if (navIndex.value >= deckCards.value.cards.length - 1) return null
+  return deckCards.value.cards[navIndex.value + 1].id
+})
+
+function navigateTo(id: string) {
+  if (!deckContext.value) return
+  router.push(`/cards/${id}?deckId=${deckContext.value.id}`)
+}
+
+function onKeyDown(e: KeyboardEvent) {
+  if (editing.value) return
+  const t = e.target as HTMLElement | null
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+  if (e.metaKey || e.ctrlKey || e.altKey) return
+  if (e.key === 'ArrowLeft' && prevCardId.value) {
+    e.preventDefault()
+    navigateTo(prevCardId.value)
+  } else if (e.key === 'ArrowRight' && nextCardId.value) {
+    e.preventDefault()
+    navigateTo(nextCardId.value)
+  }
+}
+
+async function loadCard(id: string) {
+  loading.value = true
   try {
-    card.value = await cardsStore.getCard(route.params.id as string)
+    card.value = await cardsStore.getCard(id)
   } catch {
     router.replace('/cards')
   } finally {
     loading.value = false
   }
+}
+
+onMounted(async () => {
+  await loadCard(route.params.id as string)
   decksStore.fetchDecks()
+  const deckId = route.query.deckId as string | undefined
+  if (deckId) {
+    decksStore.getDeckDetail(deckId).then(d => deckCards.value = d).catch(() => {})
+  }
   if (route.query.edit === 'true' && card.value) {
     startEdit()
   }
+  window.addEventListener('keydown', onKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeyDown)
+})
+
+watch(() => route.params.id, async (newId, oldId) => {
+  if (!newId || newId === oldId) return
+  editing.value = false
+  await loadCard(newId as string)
 })
 
 function startEdit() {
@@ -137,18 +197,46 @@ function onDeleted() {
   <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
 
   <div v-else-if="card" class="space-y-6">
-    <!-- Breadcrumb -->
-    <div class="text-[11px] text-muted-foreground">
-      <template v-if="deckContext">
-        <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
+    <!-- Breadcrumb + deck navigation -->
+    <div class="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+      <div class="min-w-0 truncate">
+        <template v-if="deckContext">
+          <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
+          <span class="mx-1.5">/</span>
+          <RouterLink :to="`/decks/${deckContext.id}`" class="hover:text-foreground transition-colors">{{ deckContext.name }}</RouterLink>
+        </template>
+        <template v-else>
+          <RouterLink to="/cards" class="hover:text-foreground transition-colors">Cards</RouterLink>
+        </template>
         <span class="mx-1.5">/</span>
-        <RouterLink :to="`/decks/${deckContext.id}`" class="hover:text-foreground transition-colors">{{ deckContext.name }}</RouterLink>
-      </template>
-      <template v-else>
-        <RouterLink to="/cards" class="hover:text-foreground transition-colors">Cards</RouterLink>
-      </template>
-      <span class="mx-1.5">/</span>
-      <span class="text-foreground">{{ truncatedFront }}</span>
+        <span class="text-foreground">{{ truncatedFront }}</span>
+      </div>
+      <div
+        v-if="deckContext && deckCards && navIndex >= 0 && deckCards.cards.length > 1"
+        class="flex shrink-0 items-center gap-1"
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          class="h-6 w-6 p-0"
+          :disabled="!prevCardId"
+          :title="'Previous card (←)'"
+          @click="prevCardId && navigateTo(prevCardId)"
+        >
+          <ChevronLeft class="size-3.5" />
+        </Button>
+        <span class="tabular-nums px-1">{{ navIndex + 1 }} / {{ deckCards.cards.length }}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          class="h-6 w-6 p-0"
+          :disabled="!nextCardId"
+          :title="'Next card (→)'"
+          @click="nextCardId && navigateTo(nextCardId)"
+        >
+          <ChevronRight class="size-3.5" />
+        </Button>
+      </div>
     </div>
 
     <!-- Header -->
