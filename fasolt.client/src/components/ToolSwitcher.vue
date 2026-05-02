@@ -94,7 +94,7 @@ async function copyMcpUrl() {
       <TabsList class="bg-card/60 border border-border/60 rounded-md p-1 gap-1">
         <TabsTrigger value="chatgpt" class="text-xs px-3">ChatGPT</TabsTrigger>
         <TabsTrigger value="claude" class="text-xs px-3">Claude</TabsTrigger>
-        <TabsTrigger value="mistral" class="text-xs px-3">Le Chat</TabsTrigger>
+        <TabsTrigger value="mistral" class="text-xs px-3">Mistral</TabsTrigger>
         <TabsTrigger value="other" class="text-xs px-3 text-muted-foreground/70 data-[state=active]:text-foreground">Other</TabsTrigger>
       </TabsList>
 
@@ -248,7 +248,7 @@ async function copyMcpUrl() {
             <span class="h-2.5 w-2.5 rounded-full" style="background: #ff5f57"></span>
             <span class="h-2.5 w-2.5 rounded-full" style="background: #febc2e"></span>
             <span class="h-2.5 w-2.5 rounded-full" style="background: #28c840"></span>
-            <span class="ml-3 text-[11px]" style="color: #8b7e6a">Le Chat</span>
+            <span class="ml-3 text-[11px]" style="color: #8b7e6a">Mistral</span>
           </div>
 
           <!-- Body -->
