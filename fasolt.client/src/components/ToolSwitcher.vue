@@ -266,10 +266,21 @@ async function copyMcpUrl() {
             <!-- Assistant response -->
             <div class="flex gap-3">
               <div
-                class="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5"
-                style="background: linear-gradient(135deg, #ffd11a 0%, #ff8205 50%, #fa520f 100%);"
+                class="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5 p-1"
+                style="background: #ffffff; border: 1px solid #efe7d6;"
               >
-                <span class="text-white text-[12px] font-bold leading-none" aria-hidden="true">M</span>
+                <svg viewBox="0 0 191 135" width="20" height="14" xmlns="http://www.w3.org/2000/svg" aria-label="Mistral">
+                  <path d="M54.32 0H27.15v27.09h27.17V0Z" fill="#FFD800"/>
+                  <path d="M162.98 0h-27.17v27.09h27.17V0Z" fill="#FFD800"/>
+                  <path d="M81.48 27.09H27.15v27.09h54.33V27.09Z" fill="#FFAF00"/>
+                  <path d="M162.99 27.09h-54.33v27.09h54.33V27.09Z" fill="#FFAF00"/>
+                  <path d="M162.97 54.17H27.15v27.09h135.82V54.17Z" fill="#FF8205"/>
+                  <path d="M54.32 81.26H27.15v27.09h27.17V81.26Z" fill="#FA500F"/>
+                  <path d="M108.66 81.26H81.49v27.09h27.17V81.26Z" fill="#FA500F"/>
+                  <path d="M162.98 81.26h-27.17v27.09h27.17V81.26Z" fill="#FA500F"/>
+                  <path d="M81.49 108.34H0v27.09h81.49v-27.09Z" fill="#E10500"/>
+                  <path d="M190.16 108.34h-81.5v27.09h81.5v-27.09Z" fill="#E10500"/>
+                </svg>
               </div>
               <div class="flex-1 leading-relaxed">
                 <div v-if="phase === 'thinking'" class="flex gap-1 items-center pt-1.5" style="color: #8b7e6a">
