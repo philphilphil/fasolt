@@ -48,7 +48,7 @@ const { isDark, toggle } = useDarkMode()
           powered by the <span class="text-accent text-glow">AI you already use</span>.
         </h1>
         <p class="text-sm text-muted-foreground mb-8 max-w-md leading-relaxed">
-          Ask ChatGPT or Claude to make flashcards from your notes, a topic, or anything you want to learn.
+          Ask ChatGPT, Claude, or Le Chat to make flashcards from your notes, a topic, or anything you want to learn.
           Study on the web or the iOS app. Free.
         </p>
         <div class="flex flex-wrap items-center gap-3">
@@ -60,7 +60,7 @@ const { isDark, toggle } = useDarkMode()
           </a>
         </div>
         <p class="mt-4 text-xs text-muted-foreground/80">
-          Works with ChatGPT, Claude, and any MCP-compatible AI.
+          Works with ChatGPT, Claude, Le Chat, and any MCP-compatible AI.
         </p>
       </div>
     </section>
@@ -95,9 +95,9 @@ const { isDark, toggle } = useDarkMode()
         <div class="grid gap-10 sm:grid-cols-3">
           <div>
             <span class="text-xs text-accent/60 mb-2 block">01</span>
-            <h3 class="text-sm font-semibold mb-2">Connect ChatGPT or Claude</h3>
+            <h3 class="text-sm font-semibold mb-2">Connect your AI</h3>
             <p class="text-xs text-muted-foreground leading-relaxed">
-              Add fasolt to ChatGPT, Claude, or any AI tool that supports connectors.
+              Add fasolt to ChatGPT, Claude, Le Chat, or any AI tool that supports connectors.
             </p>
           </div>
           <div>
@@ -125,7 +125,7 @@ const { isDark, toggle } = useDarkMode()
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <Bot :size="16" class="text-accent mb-2" />
           <h3 class="text-sm font-semibold mb-1">Bring your own AI</h3>
-          <p class="text-xs text-muted-foreground leading-relaxed">Use ChatGPT, Claude, or any MCP-compatible agent to create and manage cards.</p>
+          <p class="text-xs text-muted-foreground leading-relaxed">Use ChatGPT, Claude, Le Chat, or any MCP-compatible agent to create and manage cards.</p>
         </div>
         <div class="rounded border border-border/60 bg-card/50 p-4">
           <Brain :size="16" class="text-accent mb-2" />
