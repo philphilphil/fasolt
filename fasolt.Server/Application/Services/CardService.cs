@@ -305,20 +305,6 @@ public class CardService(AppDbContext db)
         return await ApplyCardFieldUpdates(userId, card, req);
     }
 
-    public async Task<UpdateCardResult> UpdateCardByNaturalKey(string userId, string sourceFile, string front, UpdateCardFieldsRequest req)
-    {
-        var card = await db.Cards
-            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.UserId == userId
-                && c.SourceFile != null
-                && c.SourceFile.ToLower() == sourceFile.ToLower()
-                && c.Front.ToLower() == front.ToLower());
-
-        if (card is null) return UpdateCardResult.NotFound();
-
-        return await ApplyCardFieldUpdates(userId, card, req);
-    }
-
     public async Task<List<BulkUpdateCardResult>> BulkUpdateCards(string userId, List<BulkUpdateCardItem> items)
     {
         var results = new List<BulkUpdateCardResult>();
@@ -326,23 +312,8 @@ public class CardService(AppDbContext db)
         foreach (var item in items)
         {
             var req = new UpdateCardFieldsRequest(item.NewFront, item.NewBack, item.NewSourceFile, item.NewSourceHeading, item.NewFrontSvg, item.NewBackSvg);
-
-            UpdateCardResult result;
-            if (item.CardId is not null)
-            {
-                result = await UpdateCardFields(userId, item.CardId, req);
-            }
-            else if (item.SourceFile is not null && item.Front is not null)
-            {
-                result = await UpdateCardByNaturalKey(userId, item.SourceFile, item.Front, req);
-            }
-            else
-            {
-                results.Add(new BulkUpdateCardResult(item.CardId, item.SourceFile, item.Front, UpdateCardStatus.NotFound));
-                continue;
-            }
-
-            results.Add(new BulkUpdateCardResult(item.CardId, item.SourceFile, item.Front, result.Status, result.Card));
+            var result = await UpdateCardFields(userId, item.CardId, req);
+            results.Add(new BulkUpdateCardResult(item.CardId, result.Status, result.Card));
         }
 
         return results;

@@ -223,23 +223,6 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UpdateCardByNaturalKey_CaseInsensitive()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "What is DNA?", "Deoxyribonucleic acid", "biology.md", "Basics");
-
-        // Look up with different casing
-        var result = await svc.UpdateCardByNaturalKey(UserId, "Biology.MD", "what is dna?",
-            new UpdateCardFieldsRequest(NewBack: "Updated answer"));
-
-        result.Status.Should().Be(UpdateCardStatus.Success);
-        result.Card!.Back.Should().Be("Updated answer");
-        result.Card.Front.Should().Be("What is DNA?"); // original casing preserved
-    }
-
-    [Fact]
     public async Task UpdateCardFields_RejectsCollision()
     {
         await using var db = _db.CreateDbContext();
@@ -365,27 +348,6 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task BulkUpdateCards_ByNaturalKey_UpdatesMultiple()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "NK-A", "Old A", "nk.md", null);
-        await svc.CreateCard(UserId, "NK-B", "Old B", "nk.md", null);
-
-        var results = await svc.BulkUpdateCards(UserId,
-        [
-            new BulkUpdateCardItem(SourceFile: "nk.md", Front: "NK-A", NewBack: "Updated A"),
-            new BulkUpdateCardItem(SourceFile: "nk.md", Front: "NK-B", NewBack: "Updated B"),
-        ]);
-
-        results.Should().HaveCount(2);
-        results.Should().AllSatisfy(r => r.Status.Should().Be(UpdateCardStatus.Success));
-        results[0].Card!.Back.Should().Be("Updated A");
-        results[1].Card!.Back.Should().Be("Updated B");
-    }
-
-    [Fact]
     public async Task BulkUpdateCards_MixedResults()
     {
         await using var db = _db.CreateDbContext();
@@ -397,13 +359,11 @@ public class CardServiceTests : IAsyncLifetime
         [
             new BulkUpdateCardItem(CardId: card.Id, NewBack: "Updated"),
             new BulkUpdateCardItem(CardId: "nonexistent", NewBack: "Nope"),
-            new BulkUpdateCardItem(SourceFile: null, Front: null, NewBack: "Invalid"),
         ]);
 
-        results.Should().HaveCount(3);
+        results.Should().HaveCount(2);
         results[0].Status.Should().Be(UpdateCardStatus.Success);
         results[1].Status.Should().Be(UpdateCardStatus.NotFound);
-        results[2].Status.Should().Be(UpdateCardStatus.NotFound);
     }
 
     [Fact]
