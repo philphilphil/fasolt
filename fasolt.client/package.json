@@ -16,10 +16,12 @@
   },
   "dependencies": {
     "@tanstack/vue-table": "^8.21.3",
+    "@types/katex": "^0.16.8",
     "@vueuse/core": "^14.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.3",
+    "katex": "^0.16.45",
     "lucide-vue-next": "^0.577.0",
     "markdown-it": "^14.1.1",
     "pinia": "^3.0.4",

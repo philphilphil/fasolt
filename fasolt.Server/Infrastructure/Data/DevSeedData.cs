@@ -482,6 +482,135 @@ public static class DevSeedData
             new DeckCard { DeckId = markdownDeck.Id, CardId = mdMixed.Id }
         );
 
+        // === Admin Deck — LaTeX Math Tests ===
+        var latexDeck = new Deck
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Name = "LaTeX Math Tests",
+            Description = "Cards exercising KaTeX inline/block math, mhchem, and physics macros",
+            CreatedAt = now,
+        };
+        db.Decks.Add(latexDeck);
+
+        var latexInline = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "What is the derivative of \\(\\sin(x)\\)?",
+            Back = "\\(\\cos(x)\\). In general, \\(\\dv{}{x}\\sin(x) = \\cos(x)\\).",
+            SourceFile = "calculus-notes.md",
+            SourceHeading = "Derivatives",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexEulerDollar = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "State Euler's identity using $...$ delimiters.",
+            Back = "$e^{i\\pi} + 1 = 0$\n\nCombines the five most important constants of mathematics: $e$, $i$, $\\pi$, $1$, and $0$.",
+            SourceFile = "calculus-notes.md",
+            SourceHeading = "Identities",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexGaussian = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "What is the value of the Gaussian integral?",
+            Back = "$$\\int_{-\\infty}^{\\infty} e^{-x^{2}}\\,dx = \\sqrt{\\pi}$$",
+            SourceFile = "calculus-notes.md",
+            SourceHeading = "Integrals",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexMatrix = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "Write the 2×2 identity matrix.",
+            Back = "\\[ I_{2} = \\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix} \\]",
+            SourceFile = "linear-algebra.md",
+            SourceHeading = "Matrices",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexChem = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "Balance the combustion of hydrogen.",
+            Back = "$$\\ce{2H2 + O2 -> 2H2O}$$\n\nReleases about \\(\\pu{286 kJ/mol}\\) — the reverse reaction is electrolysis.",
+            SourceFile = "chemistry-notes.md",
+            SourceHeading = "Combustion",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexPhysics = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "Write Schrödinger's time-dependent equation using the `\\pdv` shortcut.",
+            Back = "\\[ i\\hbar\\,\\pdv{\\psi}{t} = \\hat H\\,\\psi \\]\n\nThe magnitude of the wave function is \\(\\abs{\\psi}^{2}\\); a normalized state has \\(\\norm{\\psi} = 1\\).",
+            SourceFile = "physics-notes.md",
+            SourceHeading = "Quantum",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexLogic = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "Express \"there exists no x in the empty set\" symbolically.",
+            Back = "\\( \\nexists\\, x \\in \\emptyset \\). Equivalently, \\( \\forall x\\, (x \\notin \\emptyset) \\).",
+            SourceFile = "logic-notes.md",
+            SourceHeading = "Quantifiers",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        var latexMixed = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = NanoIdGenerator.New(),
+            UserId = adminUser.Id,
+            Front = "## Mixing markdown and math\n\nWhat is the **quadratic formula**?",
+            Back = "For \\( ax^{2} + bx + c = 0 \\) with \\( a \\ne 0 \\):\n\n$$ x = \\frac{-b \\pm \\sqrt{b^{2} - 4ac}}{2a} $$\n\n- The discriminant is \\( \\Delta = b^{2} - 4ac \\).\n- Two real roots when \\( \\Delta > 0 \\).\n- One repeated root when \\( \\Delta = 0 \\).\n- Two complex conjugate roots when \\( \\Delta < 0 \\).",
+            SourceFile = "algebra-notes.md",
+            SourceHeading = "Quadratics",
+            State = "new",
+            CreatedAt = now,
+        };
+
+        db.Cards.AddRange(latexInline, latexEulerDollar, latexGaussian, latexMatrix,
+            latexChem, latexPhysics, latexLogic, latexMixed);
+        db.DeckCards.AddRange(
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexInline.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexEulerDollar.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexGaussian.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexMatrix.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexChem.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexPhysics.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexLogic.Id },
+            new DeckCard { DeckId = latexDeck.Id, CardId = latexMixed.Id }
+        );
+
         // === Regular User Data ===
         var mathDeck = new Deck
         {

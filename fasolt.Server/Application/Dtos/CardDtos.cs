@@ -48,9 +48,9 @@ public record BulkUpdateCardItem(
     string? SourceFile = null,
     [property: Description("Lookup key part 2: existing front text (case-insensitive). Combine with `sourceFile`.")]
     string? Front = null,
-    [property: Description("New front of the card (question/prompt). Rendered as Markdown — supported: headings (#, ##, ###), **bold**, *italic*, ~~strikethrough~~, `inline code`, fenced code blocks, bullet/numbered lists, > blockquotes, tables, [links](url), and auto-linked URLs. Soft newlines are preserved as line breaks. HTML is escaped (not rendered). LaTeX/math (e.g. $...$) is NOT rendered. Example: \"What is the **capital** of France?\"")]
+    [property: Description("New front of the card (question/prompt). Rendered as Markdown — supported: headings (#, ##, ###), **bold**, *italic*, ~~strikethrough~~, `inline code`, fenced code blocks, bullet/numbered lists, > blockquotes, tables, [links](url), and auto-linked URLs. Soft newlines are preserved as line breaks. HTML is escaped (not rendered). LaTeX math IS rendered via KaTeX — use \\(...\\) or $...$ for inline and \\[...\\] or $$...$$ for block math; chemistry via mhchem (\\ce{H2O}, \\pu{1.21 GW}) and the physics-package shortcuts \\dv, \\pdv, \\abs, \\norm are preconfigured. Document-level LaTeX (\\documentclass, \\input, \\includegraphics, \\href) is NOT supported. Example: \"What is the derivative of \\(\\sin(x)\\)?\"")]
     string? NewFront = null,
-    [property: Description("New back of the card (answer/explanation). Same Markdown features as `newFront`. HTML and LaTeX are NOT rendered. Example: \"**Empiricism**: all knowledge stems from sense experience. *Tabula rasa* (Locke). Key figures: Locke, Berkeley, Hume.\"")]
+    [property: Description("New back of the card (answer/explanation). Same Markdown + KaTeX math features as `newFront`. Example: \"\\(\\cos(x)\\). In general, \\(\\dv{}{x}\\sin(x) = \\cos(x)\\).\"")]
     string? NewBack = null,
     string? NewSourceFile = null,
     string? NewSourceHeading = null,

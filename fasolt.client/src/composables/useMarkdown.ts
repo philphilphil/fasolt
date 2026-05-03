@@ -1,5 +1,6 @@
 import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
+import katexPlugin from '@/lib/markdownItKatex'
 
 const md = new MarkdownIt({
   html: false,
@@ -7,6 +8,8 @@ const md = new MarkdownIt({
   typographer: false,
   breaks: true,
 })
+
+md.use(katexPlugin)
 
 // Override image rendering to show alt-text placeholder
 md.renderer.rules.image = (tokens, idx) => {

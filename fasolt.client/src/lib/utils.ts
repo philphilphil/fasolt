@@ -10,6 +10,10 @@ export function cn(...inputs: ClassValue[]) {
 
 export function stripMarkdown(text: string): string {
   return text
+    .replace(/\$\$([\s\S]+?)\$\$/g, '$1') // block math $$…$$
+    .replace(/\\\[([\s\S]+?)\\\]/g, '$1') // block math \[…\]
+    .replace(/\\\(([\s\S]+?)\\\)/g, '$1') // inline math \(…\)
+    .replace(/(?<!\\)\$([^$\n]+?)(?<!\\)\$/g, '$1') // inline math $…$
     .replace(/^```\w*\n?/gm, '')       // code block fences (open)
     .replace(/\n?```$/gm, '')           // code block fences (close)
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1') // images → alt text

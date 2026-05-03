@@ -17,7 +17,7 @@ public static class DemoDeckEndpoints
         new("What can you do with decks and cards?",
             "**Decks** organize cards into focused study groups. You can **suspend** a deck to temporarily hide all its cards from review, or **suspend individual cards** you don't want to see right now. Suspended items keep their progress — unsuspend them anytime to pick up where you left off."),
         new("What formatting do cards support?",
-            "Cards fully support **markdown** — bold, italic, lists, headings, links, and more. You can also include fenced code blocks with syntax highlighting:\n\n```python\ndef hello(name: str) -> str:\n    return f\"Hello, {name}!\"\n```\n\nYour AI agent writes the markdown automatically when creating cards from your notes."),
+            "Cards fully support **markdown** — bold, italic, lists, headings, links, and more. You can also include fenced code blocks with syntax highlighting:\n\n```python\ndef hello(name: str) -> str:\n    return f\"Hello, {name}!\"\n```\n\n**LaTeX math** is rendered with KaTeX — inline like \\(e^{i\\pi} + 1 = 0\\) and block like:\n\n$$\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}$$\n\nChemistry via mhchem (\\(\\ce{2H2 + O2 -> 2H2O}\\)) and physics shortcuts (\\(\\pdv{\\psi}{t}\\)) are preconfigured."),
     ];
 
     public static void MapDemoDeckEndpoints(this WebApplication app)

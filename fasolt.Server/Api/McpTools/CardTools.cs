@@ -52,7 +52,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Each card can include SVG images for front and/or back (use a landscape viewBox like '0 0 400 250' for best display). Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
+    [McpServerTool, Description("Create one or more flashcards, optionally linked to a source file and/or deck. Card text is Markdown with KaTeX math support — emit \\(...\\) / $...$ for inline math and \\[...\\] / $$...$$ for block math (mhchem chemistry and \\dv/\\pdv/\\abs/\\norm physics shortcuts are preconfigured). Each card can also include SVG images for front and/or back (use a landscape viewBox like '0 0 400 250' for best display). Returns created cards, any skipped duplicates, and a deckUrl deep link if a deck was used.")]
     public async Task<string> CreateCards(
         [Description("Array of cards to create. Each card needs 'front' and 'back' text, plus optional 'sourceFile' and 'sourceHeading'.")] List<BulkCardItem> cards,
         [Description("Default source file name for all cards (individual cards can override)")] string? sourceFile = null,
@@ -98,7 +98,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Update one or more existing cards' text or source metadata. Preserves all review/SRS history. Each card can be looked up by cardId, or by sourceFile + front (case-insensitive natural key).")]
+    [McpServerTool, Description("Update one or more existing cards' text or source metadata. Preserves all review/SRS history. Each card can be looked up by cardId, or by sourceFile + front (case-insensitive natural key). Card text fields accept the same Markdown + KaTeX math (mhchem, physics shortcuts) as create_cards.")]
     public async Task<string> UpdateCards(
         [Description("Array of card updates. Each needs a lookup key (cardId, or sourceFile + front) and at least one field to update (newFront, newBack, newSourceFile, newSourceHeading, newFrontSvg, newBackSvg).")] List<BulkUpdateCardItem> cards)
     {
