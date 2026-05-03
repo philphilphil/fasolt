@@ -20,6 +20,6 @@ bump:
 	@sed -i.bak -E 's|<Version>[^<]+</Version>|<Version>$(VERSION)</Version>|' fasolt.Server/fasolt.Server.csproj && rm fasolt.Server/fasolt.Server.csproj.bak
 	@cd fasolt.client && npm version --no-git-tag-version $(VERSION) > /dev/null
 	@git commit -am "Bump version to v$(VERSION)"
-	@git tag v$(VERSION)
+	@git tag -a v$(VERSION) -m "v$(VERSION)"
 	@git push --follow-tags
 	@echo "Bumped to $(VERSION) and pushed."
