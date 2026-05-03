@@ -372,7 +372,39 @@ builder.Services.AddFSRS(options =>
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddMcpServer()
+builder.Services.AddMcpServer(options =>
+    {
+        options.ServerInstructions = """
+            Fasolt is a spaced-repetition flashcard app. Use these tools to create and
+            manage cards — either extracted from the user's notes (with sourceFile /
+            sourceHeading provenance) or generated directly. Users review the resulting
+            cards on the web/iOS app.
+
+            # Card text format
+            All card text fields (front, back, newFront, newBack) render as Markdown:
+            headings, **bold**, *italic*, ~~strike~~, `code`, fenced code blocks, lists,
+            blockquotes, tables, [links](url). Soft newlines are preserved. HTML is escaped
+            (not rendered). LaTeX/math is not currently supported.
+
+            # SVG images
+            All inline-SVG inputs (frontSvg, backSvg, newFrontSvg, newBackSvg, and the
+            svg parameter of add_svg_to_card) must start with <svg>. The server sanitizes input: <script>,
+            <style>, <foreignObject>, event handlers (on*), the style attribute, font-weight,
+            font-style, and external href values are stripped. For emphasis use fill, stroke,
+            or font-size attributes — CSS-based bold/italic will not survive sanitization.
+            Use a landscape viewBox like '0 0 400 250'; square/portrait may be clipped on
+            mobile. Max ~1MB.
+
+            # Recommended workflow
+            1. Call get_overview first to orient on the user's account.
+            2. Before bulk-creating cards, call search_cards to detect duplicates.
+            3. update_cards preserves SRS history; prefer it over delete + create.
+            4. Call create_snapshot before large or destructive bulk operations
+               (delete_cards, sweeping update_cards, deck deletes). Snapshots are
+               cheap — skipped if nothing changed — and let the user restore at
+               https://fasolt.app if the change was wrong.
+            """;
+    })
     .WithHttpTransport()
     .AddAuthorizationFilters()
     .WithToolsFromAssembly();
