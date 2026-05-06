@@ -38,6 +38,7 @@
     <form method="post" action="/register" id="registerForm">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" asp-for="Input.TimeZone" id="tz" />
         <div class="oauth-field">
             <label asp-for="Input.Email">Email</label>
             <input asp-for="Input.Email" type="email" placeholder="you@example.com" autocomplete="email" required autofocus />
@@ -72,3 +73,9 @@
 </main>
 
 <script src="~/js/password-rules.js" asp-append-version="true" defer></script>
+<script>
+    try {
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz) document.getElementById('tz').value = tz;
+    } catch (e) { /* leave blank, server falls back to UTC */ }
+</script>

@@ -5,6 +5,7 @@ import Foundation
 final class SchedulingSettingsViewModel {
     var desiredRetention: Double = 0.9
     var maximumInterval: Int = 36500
+    var dayStartHour: Int = 4
     var isLoading = false
     var errorMessage: String?
     var successMessage: String?
@@ -13,6 +14,10 @@ final class SchedulingSettingsViewModel {
 
     init(apiClient: APIClient) {
         self.apiClient = apiClient
+    }
+
+    private var deviceTimeZone: String {
+        TimeZone.current.identifier
     }
 
     func load() async {
@@ -24,6 +29,14 @@ final class SchedulingSettingsViewModel {
             let response: SchedulingSettingsResponse = try await apiClient.request(endpoint)
             desiredRetention = response.desiredRetention
             maximumInterval = response.maximumInterval
+            dayStartHour = response.dayStartHour
+
+            // First-time initialization: server has no time zone for this user
+            // (e.g. external OAuth signup that bypassed the registration form).
+            // Push the device zone so daily rollover is correct from day one.
+            if response.timeZone == nil {
+                try await pushSettings()
+            }
         } catch {
             errorMessage = "Could not load scheduling settings."
         }
@@ -36,24 +49,30 @@ final class SchedulingSettingsViewModel {
         errorMessage = nil
         successMessage = nil
 
-        let endpoint = Endpoint(
-            path: "/api/settings/scheduling",
-            method: .put,
-            body: UpdateSchedulingSettingsRequest(
-                desiredRetention: desiredRetention,
-                maximumInterval: maximumInterval
-            )
-        )
-
         do {
-            let response: SchedulingSettingsResponse = try await apiClient.request(endpoint)
-            desiredRetention = response.desiredRetention
-            maximumInterval = response.maximumInterval
+            try await pushSettings()
             successMessage = "Settings saved."
         } catch {
             errorMessage = "Could not save scheduling settings."
         }
 
         isLoading = false
+    }
+
+    private func pushSettings() async throws {
+        let endpoint = Endpoint(
+            path: "/api/settings/scheduling",
+            method: .put,
+            body: UpdateSchedulingSettingsRequest(
+                desiredRetention: desiredRetention,
+                maximumInterval: maximumInterval,
+                dayStartHour: dayStartHour,
+                timeZone: deviceTimeZone
+            )
+        )
+        let response: SchedulingSettingsResponse = try await apiClient.request(endpoint)
+        desiredRetention = response.desiredRetention
+        maximumInterval = response.maximumInterval
+        dayStartHour = response.dayStartHour
     }
 }

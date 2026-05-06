@@ -33,18 +33,68 @@ async function createSnapshot() {
   }
 }
 
+type SchedulingSettings = {
+  desiredRetention: number
+  maximumInterval: number
+  dayStartHour: number
+  timeZone: string | null
+}
+
 const desiredRetention = ref(0.9)
 const maximumInterval = ref(36500)
+const dayStartHour = ref(4)
 const schedulingSuccess = ref(false)
 const schedulingError = ref('')
 const schedulingLoading = ref(true)
 
+const browserTimeZone = (() => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  } catch {
+    return 'UTC'
+  }
+})()
+
+const hourOptions = Array.from({ length: 24 }, (_, i) => i)
+
+function formatHourLabel(h: number): string {
+  const hh = h.toString().padStart(2, '0')
+  return `${hh}:00`
+}
+
+async function pushSchedulingSettings() {
+  const settings = await apiFetch<SchedulingSettings>('/settings/scheduling', {
+    method: 'PUT',
+    body: JSON.stringify({
+      desiredRetention: desiredRetention.value,
+      maximumInterval: maximumInterval.value,
+      dayStartHour: dayStartHour.value,
+      timeZone: browserTimeZone,
+    }),
+  })
+  desiredRetention.value = settings.desiredRetention
+  maximumInterval.value = settings.maximumInterval
+  dayStartHour.value = settings.dayStartHour
+}
+
 async function loadSchedulingSettings() {
   schedulingLoading.value = true
   try {
-    const settings = await apiFetch<{ desiredRetention: number; maximumInterval: number }>('/settings/scheduling')
+    const settings = await apiFetch<SchedulingSettings>('/settings/scheduling')
     desiredRetention.value = settings.desiredRetention
     maximumInterval.value = settings.maximumInterval
+    dayStartHour.value = settings.dayStartHour
+
+    // First-time initialization: server has no time zone for this user
+    // (e.g. external OAuth signup that bypassed the registration form).
+    // Push the browser zone so daily rollover is correct from day one.
+    if (!settings.timeZone) {
+      try {
+        await pushSchedulingSettings()
+      } catch (e) {
+        console.warn('Failed to initialize time zone on first load', e)
+      }
+    }
   } catch {
     schedulingError.value = 'Failed to load scheduling settings.'
   } finally {
@@ -56,15 +106,7 @@ async function saveSchedulingSettings() {
   schedulingSuccess.value = false
   schedulingError.value = ''
   try {
-    const settings = await apiFetch<{ desiredRetention: number; maximumInterval: number }>('/settings/scheduling', {
-      method: 'PUT',
-      body: JSON.stringify({
-        desiredRetention: desiredRetention.value,
-        maximumInterval: maximumInterval.value,
-      }),
-    })
-    desiredRetention.value = settings.desiredRetention
-    maximumInterval.value = settings.maximumInterval
+    await pushSchedulingSettings()
     schedulingSuccess.value = true
   } catch (e) {
     if (isApiError(e) && e.errors) {
@@ -243,6 +285,20 @@ async function savePassword() {
                 <Input id="maximum-interval" v-model.number="maximumInterval" type="number" min="1" max="36500" step="1" required />
                 <p class="text-xs text-muted-foreground">
                   The longest gap allowed between reviews, in days. For example, 365 means you'll see every card at least once a year. The default (36500 days ≈ 100 years) means there's effectively no cap.
+                </p>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label for="day-start-hour" class="text-xs font-medium">Day starts at</label>
+                <select
+                  id="day-start-hour"
+                  v-model.number="dayStartHour"
+                  class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option v-for="h in hourOptions" :key="h" :value="h">{{ formatHourLabel(h) }}</option>
+                </select>
+                <p class="text-xs text-muted-foreground">
+                  Hour at which a new study day begins, in your browser's time zone ({{ browserTimeZone }}). Cards scheduled a day or more in advance become due all at once at this time, instead of trickling in throughout the day. Sub-day learning steps still fire at their exact times.
                 </p>
               </div>
 

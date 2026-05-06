@@ -163,11 +163,15 @@ struct EmptyResponse: Decodable, Sendable {}
 struct SchedulingSettingsResponse: Decodable, Sendable {
     let desiredRetention: Double
     let maximumInterval: Int
+    let dayStartHour: Int
+    let timeZone: String?
 }
 
 struct UpdateSchedulingSettingsRequest: Encodable, Sendable {
     let desiredRetention: Double
     let maximumInterval: Int
+    let dayStartHour: Int
+    let timeZone: String
 }
 
 // MARK: - Card Requests

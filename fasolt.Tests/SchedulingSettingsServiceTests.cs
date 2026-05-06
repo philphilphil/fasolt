@@ -22,6 +22,8 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
 
         result.DesiredRetention.Should().Be(0.9);
         result.MaximumInterval.Should().Be(36500);
+        result.DayStartHour.Should().Be(4);
+        result.TimeZone.Should().BeNull();
     }
 
     [Fact]
@@ -30,11 +32,13 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new SchedulingSettingsService(db);
 
-        var result = await svc.UpdateSettings(UserId, 0.85, 365);
+        var result = await svc.UpdateSettings(UserId, 0.85, 365, 6, "Europe/Berlin");
 
         result.Should().NotBeNull();
         result!.DesiredRetention.Should().Be(0.85);
         result.MaximumInterval.Should().Be(365);
+        result.DayStartHour.Should().Be(6);
+        result.TimeZone.Should().Be("Europe/Berlin");
     }
 
     [Fact]
@@ -42,7 +46,7 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
     {
         await using var db = _db.CreateDbContext();
         var svc = new SchedulingSettingsService(db);
-        await svc.UpdateSettings(UserId, 0.85, 365);
+        await svc.UpdateSettings(UserId, 0.85, 365, 6, "Europe/Berlin");
 
         await using var db2 = _db.CreateDbContext();
         var svc2 = new SchedulingSettingsService(db2);
@@ -50,6 +54,8 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
 
         result.DesiredRetention.Should().Be(0.85);
         result.MaximumInterval.Should().Be(365);
+        result.DayStartHour.Should().Be(6);
+        result.TimeZone.Should().Be("Europe/Berlin");
     }
 
     [Fact]
@@ -58,7 +64,7 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new SchedulingSettingsService(db);
 
-        var result = await svc.UpdateSettings(UserId, 0.5, 365);
+        var result = await svc.UpdateSettings(UserId, 0.5, 365, 4, "UTC");
 
         result.Should().BeNull();
     }
@@ -69,7 +75,7 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new SchedulingSettingsService(db);
 
-        var result = await svc.UpdateSettings(UserId, 0.99, 365);
+        var result = await svc.UpdateSettings(UserId, 0.99, 365, 4, "UTC");
 
         result.Should().BeNull();
     }
@@ -80,7 +86,7 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new SchedulingSettingsService(db);
 
-        var result = await svc.UpdateSettings(UserId, 0.9, 0);
+        var result = await svc.UpdateSettings(UserId, 0.9, 0, 4, "UTC");
 
         result.Should().BeNull();
     }
@@ -91,7 +97,40 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new SchedulingSettingsService(db);
 
-        var result = await svc.UpdateSettings(UserId, 0.9, 40000);
+        var result = await svc.UpdateSettings(UserId, 0.9, 40000, 4, "UTC");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateSettings_RejectsDayStartHourTooLow()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new SchedulingSettingsService(db);
+
+        var result = await svc.UpdateSettings(UserId, 0.9, 365, -1, "UTC");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateSettings_RejectsDayStartHourTooHigh()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new SchedulingSettingsService(db);
+
+        var result = await svc.UpdateSettings(UserId, 0.9, 365, 24, "UTC");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateSettings_RejectsInvalidTimeZone()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new SchedulingSettingsService(db);
+
+        var result = await svc.UpdateSettings(UserId, 0.9, 365, 4, "Not/A/RealZone");
 
         result.Should().BeNull();
     }

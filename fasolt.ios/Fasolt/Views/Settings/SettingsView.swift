@@ -178,6 +178,17 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
+                    VStack(alignment: .leading, spacing: 4) {
+                        Picker("Day starts at", selection: $schedulingViewModel.dayStartHour) {
+                            ForEach(0..<24) { hour in
+                                Text(String(format: "%02d:00", hour)).tag(hour)
+                            }
+                        }
+                        Text("Hour at which a new study day begins, in your device's time zone. Cards scheduled a day or more in advance become due all at once at this time. Sub-day learning steps still fire at their exact times.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     Button("Save") {
                         Task { await schedulingViewModel.save() }
                     }
