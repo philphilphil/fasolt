@@ -65,17 +65,7 @@ struct DeckDetailView: View {
                             Section("Cards") {
                                 ForEach(sortedCards(detail.cards, by: sortOrder), id: \.id) { card in
                                     NavigationLink {
-                                        CardDetailView(
-                                            card: card,
-                                            currentDeckId: viewModel.deckId,
-                                            availableDecks: availableDecks,
-                                            onSaveEdit: { request in
-                                                try await viewModel.updateCard(id: card.id, request)
-                                            },
-                                            onToggleSuspended: { isSuspended in
-                                                try await viewModel.setCardSuspended(id: card.id, isSuspended: isSuspended)
-                                            }
-                                        )
+                                        pagedDestination(for: card, in: detail)
                                     } label: {
                                         DeckCardRow(card: card, showSourceFile: true)
                                     }
@@ -247,4 +237,19 @@ struct DeckDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func pagedDestination(for card: DeckCardDTO, in detail: DeckDetailDTO) -> some View {
+        PagedCardDetailView(
+            cards: sortedCards(detail.cards, by: sortOrder),
+            initialCardId: card.id,
+            currentDeckId: viewModel.deckId,
+            availableDecks: availableDecks,
+            onSaveEdit: { id, request in
+                try await viewModel.updateCard(id: id, request)
+            },
+            onToggleSuspended: { id, isSuspended in
+                try await viewModel.setCardSuspended(id: id, isSuspended: isSuspended)
+            }
+        )
+    }
 }

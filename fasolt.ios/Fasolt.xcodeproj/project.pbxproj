@@ -29,6 +29,7 @@
 		6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB69B316FF51F7EC607EBD /* StudyView.swift */; };
 		6F1A4C6F09CB0E465B1CA3BD /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82812F20EB20898654E7FABF /* CardView.swift */; };
 		7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */; };
+		7F8E9D0C1B2A3948576655AA /* PagedCardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9D0C1B2A39485766554433 /* PagedCardDetailView.swift */; };
 		7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */; };
 		82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D826424A31F1413445EC6650 /* FasoltApp.swift */; };
 		8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */; };
@@ -132,6 +133,7 @@
 		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD44556677889900AABB11DD /* DeckFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckFormSheet.swift; sourceTree = "<group>"; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
+		8E9D0C1B2A39485766554433 /* PagedCardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PagedCardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
@@ -346,6 +348,7 @@
 				E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */,
 				E2686816B7E21E3DB2171066 /* CardHelpers.swift */,
 				69E947CBD44E199505935FEF /* OfflineBanner.swift */,
+				8E9D0C1B2A39485766554433 /* PagedCardDetailView.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -477,6 +480,7 @@
 				D578E86690C15FA330A7530A /* Card.swift in Sources */,
 				0E6689B273299365D24C6243 /* CardDetailSheet.swift in Sources */,
 				7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */,
+				7F8E9D0C1B2A3948576655AA /* PagedCardDetailView.swift in Sources */,
 				1F108C44139D54CBA1C25505 /* CardHelpers.swift in Sources */,
 				AA22334455667788990011BB /* CardFormSheet.swift in Sources */,
 				562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */,
