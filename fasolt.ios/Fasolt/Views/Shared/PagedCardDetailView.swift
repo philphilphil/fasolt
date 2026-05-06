@@ -8,6 +8,7 @@ struct PagedCardDetailView: View {
     let onToggleSuspended: (String, Bool) async throws -> Void
 
     @State private var selectedId: String
+    @State private var showEditSheet = false
 
     init(
         cards: [DeckCardDTO],
@@ -29,6 +30,10 @@ struct PagedCardDetailView: View {
         cards.firstIndex(where: { $0.id == selectedId }) ?? 0
     }
 
+    private var currentCard: DeckCardDTO? {
+        cards.first(where: { $0.id == selectedId })
+    }
+
     var body: some View {
         TabView(selection: $selectedId) {
             ForEach(cards, id: \.id) { card in
@@ -41,7 +46,8 @@ struct PagedCardDetailView: View {
                     },
                     onToggleSuspended: { isSuspended in
                         try await onToggleSuspended(card.id, isSuspended)
-                    }
+                    },
+                    showsEditButton: false
                 )
                 .tag(card.id)
             }
@@ -57,6 +63,42 @@ struct PagedCardDetailView: View {
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+                .disabled(currentCard == nil)
+            }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            if let card = currentCard {
+                CardFormSheet(
+                    mode: .edit(
+                        front: card.front,
+                        back: card.back,
+                        sourceFile: card.sourceFile,
+                        sourceHeading: card.sourceHeading,
+                        deckId: currentDeckId,
+                        isSuspended: card.isSuspended
+                    ),
+                    decks: availableDecks,
+                    onSave: { request, deckId in
+                        let updateRequest = UpdateCardRequest(
+                            front: request.front,
+                            back: request.back,
+                            sourceFile: request.sourceFile,
+                            sourceHeading: request.sourceHeading,
+                            deckIds: deckId.map { [$0] }
+                        )
+                        try await onSaveEdit(card.id, updateRequest)
+                    },
+                    onToggleSuspended: { isSuspended in
+                        try await onToggleSuspended(card.id, isSuspended)
+                    }
+                )
             }
         }
     }

@@ -8,6 +8,7 @@ struct CardDetailView: View {
     var availableDecks: [DeckDTO] = []
     var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
     var onToggleSuspended: ((Bool) async throws -> Void)?
+    var showsEditButton: Bool = true
 
     @State private var showEditSheet = false
 
@@ -120,7 +121,7 @@ struct CardDetailView: View {
         .navigationTitle("Card")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if onSaveEdit != nil {
+            if showsEditButton, onSaveEdit != nil {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showEditSheet = true
