@@ -91,8 +91,8 @@ async function loadSchedulingSettings() {
     if (!settings.timeZone) {
       try {
         await pushSchedulingSettings()
-      } catch {
-        // best-effort; user can still set it manually via Save
+      } catch (e) {
+        console.warn('Failed to initialize time zone on first load', e)
       }
     }
   } catch {

@@ -79,6 +79,60 @@ public class DueTimeRounderTests
     }
 
     [Fact]
+    public void RoundDueUtc_DstGap_StepsForwardToValidLocalTime()
+    {
+        // America/New_York spring-forward 2026: 02:00 EST → 03:00 EDT on 2026-03-08.
+        // Local 02:00 on that day does not exist.
+        var ny = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
+        var now = new DateTime(2026, 3, 6, 12, 0, 0, DateTimeKind.Utc);
+        // Due 2026-03-08 14:00 EDT = 18:00 UTC (after the transition).
+        var due = new DateTime(2026, 3, 8, 18, 0, 0, DateTimeKind.Utc);
+
+        var result = DueTimeRounder.RoundDueUtc(due, now, 2, ny);
+
+        // Boundary would be 2026-03-08 02:00 NY which falls in the DST gap;
+        // we step forward to 03:00 EDT = 07:00 UTC.
+        result.Should().Be(new DateTime(2026, 3, 8, 7, 0, 0, DateTimeKind.Utc));
+    }
+
+    [Fact]
+    public void RoundDueUtc_DstAmbiguous_RoundsToValidInstant()
+    {
+        // America/New_York fall-back 2026: 02:00 EDT → 01:00 EST on 2026-11-01.
+        // Local 01:30 happens twice; 04:00 is unambiguous so should just work.
+        var ny = TimeZoneInfo.FindSystemTimeZoneById("America/New_York");
+        var now = new DateTime(2026, 10, 30, 12, 0, 0, DateTimeKind.Utc);
+        var due = new DateTime(2026, 11, 1, 18, 0, 0, DateTimeKind.Utc); // 13:00 EST
+
+        var result = DueTimeRounder.RoundDueUtc(due, now, 4, ny);
+
+        // 2026-11-01 04:00 EST = 09:00 UTC (after fall-back, EST = UTC-5).
+        result.Should().Be(new DateTime(2026, 11, 1, 9, 0, 0, DateTimeKind.Utc));
+    }
+
+    [Fact]
+    public void ResolveTimeZone_NullOrEmpty_ReturnsUtc()
+    {
+        DueTimeRounder.ResolveTimeZone(null).Should().Be(TimeZoneInfo.Utc);
+        DueTimeRounder.ResolveTimeZone("").Should().Be(TimeZoneInfo.Utc);
+        DueTimeRounder.ResolveTimeZone("   ").Should().Be(TimeZoneInfo.Utc);
+    }
+
+    [Fact]
+    public void ResolveTimeZone_UnknownId_FallsBackToUtc()
+    {
+        DueTimeRounder.ResolveTimeZone("Not/A/Zone").Should().Be(TimeZoneInfo.Utc);
+    }
+
+    [Fact]
+    public void ResolveTimeZone_KnownIanaId_ReturnsZone()
+    {
+        var berlin = DueTimeRounder.ResolveTimeZone("Europe/Berlin");
+
+        berlin.Id.Should().Be("Europe/Berlin");
+    }
+
+    [Fact]
     public void IsValidTimeZoneId_AcceptsKnownIanaZone()
     {
         DueTimeRounder.IsValidTimeZoneId("Europe/Berlin").Should().BeTrue();

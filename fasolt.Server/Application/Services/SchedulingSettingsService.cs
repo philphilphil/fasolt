@@ -8,8 +8,6 @@ public class SchedulingSettingsService(AppDbContext db)
 {
     public const double DefaultRetention = 0.9;
     public const int DefaultMaxInterval = 36500;
-    public const int DefaultDayStartHour = DueTimeRounder.DefaultDayStartHour;
-    public const string DefaultTimeZone = DueTimeRounder.DefaultTimeZoneId;
 
     public async Task<SchedulingSettingsResponse> GetSettings(string userId)
     {
@@ -17,7 +15,7 @@ public class SchedulingSettingsService(AppDbContext db)
         return new SchedulingSettingsResponse(
             user.DesiredRetention ?? DefaultRetention,
             user.MaximumInterval ?? DefaultMaxInterval,
-            user.DayStartHour ?? DefaultDayStartHour,
+            user.DayStartHour ?? DueTimeRounder.DefaultDayStartHour,
             user.TimeZone);
     }
 

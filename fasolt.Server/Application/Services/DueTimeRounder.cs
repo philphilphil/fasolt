@@ -47,9 +47,16 @@ public static class DueTimeRounder
 
         var dueLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(dueUtc, DateTimeKind.Utc), tz);
         var shifted = dueLocal.AddHours(-dayStartHour);
-        var localBoundary = shifted.Date.AddHours(dayStartHour);
-        // Use unspecified kind so ConvertTimeToUtc treats it as wall-clock in the given tz.
-        var unspecified = DateTime.SpecifyKind(localBoundary, DateTimeKind.Unspecified);
-        return TimeZoneInfo.ConvertTimeToUtc(unspecified, tz);
+        var localBoundary = DateTime.SpecifyKind(shifted.Date.AddHours(dayStartHour), DateTimeKind.Unspecified);
+
+        // If the boundary falls in a DST spring-forward gap (local time doesn't exist),
+        // step forward one hour at a time until we land on a valid wall-clock instant.
+        // For ambiguous (fall-back) times, ConvertTimeToUtc picks the standard offset by default,
+        // which is fine — the boundary still lands within the intended local day.
+        var safeBoundary = localBoundary;
+        while (tz.IsInvalidTime(safeBoundary))
+            safeBoundary = safeBoundary.AddHours(1);
+
+        return TimeZoneInfo.ConvertTimeToUtc(safeBoundary, tz);
     }
 }
