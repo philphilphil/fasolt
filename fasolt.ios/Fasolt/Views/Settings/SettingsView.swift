@@ -184,24 +184,7 @@ struct SettingsView: View {
                                 Text(String(format: "%02d:00", hour)).tag(hour)
                             }
                         }
-                        Text("Hour at which a new study day begins. Cards scheduled a day or more in advance become due all at once at this time. Sub-day learning steps still fire at their exact times.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Picker("Time zone", selection: $schedulingViewModel.timeZone) {
-                            ForEach(schedulingViewModel.availableTimeZones, id: \.self) { tz in
-                                Text(tz).tag(tz)
-                            }
-                        }
-                        if schedulingViewModel.timeZone != schedulingViewModel.deviceTimeZone {
-                            Button("Use device time zone (\(schedulingViewModel.deviceTimeZone))") {
-                                schedulingViewModel.timeZone = schedulingViewModel.deviceTimeZone
-                            }
-                            .font(.caption)
-                        }
-                        Text("Your local time zone. The day-start hour is interpreted in this zone.")
+                        Text("Hour at which a new study day begins, in your device's time zone. Cards scheduled a day or more in advance become due all at once at this time. Sub-day learning steps still fire at their exact times.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
