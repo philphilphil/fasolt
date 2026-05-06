@@ -23,7 +23,7 @@ public class SchedulingSettingsServiceTests : IAsyncLifetime
         result.DesiredRetention.Should().Be(0.9);
         result.MaximumInterval.Should().Be(36500);
         result.DayStartHour.Should().Be(4);
-        result.TimeZone.Should().Be("UTC");
+        result.TimeZone.Should().BeNull();
     }
 
     [Fact]

@@ -37,7 +37,7 @@ type SchedulingSettings = {
   desiredRetention: number
   maximumInterval: number
   dayStartHour: number
-  timeZone: string
+  timeZone: string | null
 }
 
 const desiredRetention = ref(0.9)
@@ -84,6 +84,17 @@ async function loadSchedulingSettings() {
     desiredRetention.value = settings.desiredRetention
     maximumInterval.value = settings.maximumInterval
     dayStartHour.value = settings.dayStartHour
+
+    // First-time initialization: server has no time zone for this user
+    // (e.g. external OAuth signup that bypassed the registration form).
+    // Push the browser zone so daily rollover is correct from day one.
+    if (!settings.timeZone) {
+      try {
+        await pushSchedulingSettings()
+      } catch {
+        // best-effort; user can still set it manually via Save
+      }
+    }
   } catch {
     schedulingError.value = 'Failed to load scheduling settings.'
   } finally {

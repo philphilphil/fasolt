@@ -4,7 +4,7 @@ public record SchedulingSettingsResponse(
     double DesiredRetention,
     int MaximumInterval,
     int DayStartHour,
-    string TimeZone);
+    string? TimeZone);
 
 public record UpdateSchedulingSettingsRequest(
     double DesiredRetention,

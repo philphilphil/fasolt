@@ -18,7 +18,7 @@ public class SchedulingSettingsService(AppDbContext db)
             user.DesiredRetention ?? DefaultRetention,
             user.MaximumInterval ?? DefaultMaxInterval,
             user.DayStartHour ?? DefaultDayStartHour,
-            user.TimeZone ?? DefaultTimeZone);
+            user.TimeZone);
     }
 
     public async Task<SchedulingSettingsResponse?> UpdateSettings(

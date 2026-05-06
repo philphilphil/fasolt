@@ -164,7 +164,7 @@ struct SchedulingSettingsResponse: Decodable, Sendable {
     let desiredRetention: Double
     let maximumInterval: Int
     let dayStartHour: Int
-    let timeZone: String
+    let timeZone: String?
 }
 
 struct UpdateSchedulingSettingsRequest: Encodable, Sendable {

@@ -30,6 +30,13 @@ final class SchedulingSettingsViewModel {
             desiredRetention = response.desiredRetention
             maximumInterval = response.maximumInterval
             dayStartHour = response.dayStartHour
+
+            // First-time initialization: server has no time zone for this user
+            // (e.g. external OAuth signup that bypassed the registration form).
+            // Push the device zone so daily rollover is correct from day one.
+            if response.timeZone == nil {
+                try await pushSettings()
+            }
         } catch {
             errorMessage = "Could not load scheduling settings."
         }
