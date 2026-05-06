@@ -84,13 +84,6 @@ async function loadSchedulingSettings() {
     desiredRetention.value = settings.desiredRetention
     maximumInterval.value = settings.maximumInterval
     dayStartHour.value = settings.dayStartHour
-    if (settings.timeZone !== browserTimeZone) {
-      try {
-        await pushSchedulingSettings()
-      } catch {
-        // best-effort sync; user can still save manually
-      }
-    }
   } catch {
     schedulingError.value = 'Failed to load scheduling settings.'
   } finally {

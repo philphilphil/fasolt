@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.RateLimiting;
 using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Auth;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 
 namespace Fasolt.Server.Pages.Oauth;
@@ -59,6 +60,8 @@ public class RegisterModel : PageModel
         public string ConfirmPassword { get; set; } = "";
 
         public bool TosAccepted { get; set; }
+
+        public string? TimeZone { get; set; }
     }
 
     public IActionResult OnGet([FromQuery(Name = "provider_hint")] string? providerHint)
@@ -122,7 +125,14 @@ public class RegisterModel : PageModel
             return Redirect($"/oauth/verify-email?email={Uri.EscapeDataString(Input.Email)}&returnUrl={Uri.EscapeDataString(ReturnUrl)}");
         }
 
-        var user = new AppUser { UserName = Input.Email, Email = Input.Email };
+        var user = new AppUser
+        {
+            UserName = Input.Email,
+            Email = Input.Email,
+            TimeZone = !string.IsNullOrWhiteSpace(Input.TimeZone) && DueTimeRounder.IsValidTimeZoneId(Input.TimeZone)
+                ? Input.TimeZone
+                : null,
+        };
         var createResult = await _userManager.CreateAsync(user, Input.Password);
         if (!createResult.Succeeded)
         {

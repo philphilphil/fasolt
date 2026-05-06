@@ -30,10 +30,6 @@ final class SchedulingSettingsViewModel {
             desiredRetention = response.desiredRetention
             maximumInterval = response.maximumInterval
             dayStartHour = response.dayStartHour
-
-            if response.timeZone != deviceTimeZone {
-                try await pushSettings()
-            }
         } catch {
             errorMessage = "Could not load scheduling settings."
         }
