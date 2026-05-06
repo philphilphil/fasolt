@@ -47,7 +47,7 @@ struct PagedCardDetailView: View {
                     onToggleSuspended: { isSuspended in
                         try await onToggleSuspended(card.id, isSuspended)
                     },
-                    showsEditButton: false
+                    showsToolbarActions: false
                 )
                 .tag(card.id)
             }
@@ -63,6 +63,17 @@ struct PagedCardDetailView: View {
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    if let id = currentCard?.id {
+                        UIPasteboard.general.string = id
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                } label: {
+                    Label("Copy ID", systemImage: "doc.on.doc")
+                }
+                .disabled(currentCard == nil)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
