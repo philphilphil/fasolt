@@ -8,6 +8,7 @@ struct CardDetailView: View {
     var availableDecks: [DeckDTO] = []
     var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
     var onToggleSuspended: ((Bool) async throws -> Void)?
+    var showsToolbarActions: Bool = true
 
     @State private var showEditSheet = false
 
@@ -120,12 +121,22 @@ struct CardDetailView: View {
         .navigationTitle("Card")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if onSaveEdit != nil {
+            if showsToolbarActions {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showEditSheet = true
+                        UIPasteboard.general.string = card.id
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
                     } label: {
-                        Label("Edit", systemImage: "pencil")
+                        Label("Copy ID", systemImage: "doc.on.doc")
+                    }
+                }
+                if onSaveEdit != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
                     }
                 }
             }

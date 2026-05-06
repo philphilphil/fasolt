@@ -14,14 +14,12 @@ struct CardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
-
             Text(label)
                 .font(.caption2)
                 .textCase(.uppercase)
                 .tracking(1)
                 .foregroundStyle(.secondary)
-                .padding(.bottom, 12)
+                .padding(.bottom, 8)
 
             if let questionText {
                 StructuredText(markdown: questionText)
@@ -34,7 +32,7 @@ struct CardView: View {
             if let svg {
                 SvgView(svg: svg)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 300)
+                    .frame(height: 240)
                     .padding(.bottom, 8)
             }
 
@@ -43,10 +41,9 @@ struct CardView: View {
                     .font(.title3)
                     .foregroundStyle(.primary)
                     .padding(.horizontal, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .scrollBounceBehavior(.basedOnSize)
-
-            Spacer()
 
             VStack(alignment: .leading, spacing: 2) {
                 if let sourceFile {
@@ -75,11 +72,11 @@ struct CardView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .font(.caption2)
             .foregroundStyle(.tertiary)
-            .padding(.bottom, 4)
+            .padding(.top, 8)
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 16)
-        .padding(.vertical, 24)
+        .padding(.vertical, 14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)

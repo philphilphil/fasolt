@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - CardDisplayable Protocol
 
 protocol CardDisplayable {
+    var id: String { get }
     var front: String { get }
     var back: String { get }
     var sourceFile: String? { get }
