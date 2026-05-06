@@ -38,7 +38,7 @@ struct CardView: View {
 
             ScrollView {
                 StructuredText(markdown: text)
-                    .font(.title3)
+                    .font(.body)
                     .foregroundStyle(.primary)
                     .padding(.horizontal, 8)
                     .frame(maxWidth: .infinity, alignment: .leading)
