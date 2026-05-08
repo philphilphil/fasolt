@@ -13,7 +13,7 @@ configFiles:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "1.0.0"
+    MARKETING_VERSION: "1.7"
     CURRENT_PROJECT_VERSION: 1
 
 packages:
@@ -32,6 +32,8 @@ targets:
     info:
       path: Fasolt/Info.plist
       properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDisplayName: Fasolt
         CFBundleURLTypes:
           - CFBundleURLName: com.fasolt.oauth
@@ -43,10 +45,18 @@ targets:
           - remote-notification
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        ITSAppUsesNonExemptEncryption: false
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
     entitlements:
       path: Fasolt/Fasolt.entitlements
       properties:
         aps-environment: production
+        com.apple.developer.applesignin:
+          - Default
+        com.apple.developer.associated-domains:
+          - webcredentials:fasolt.app
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.fasolt.app
