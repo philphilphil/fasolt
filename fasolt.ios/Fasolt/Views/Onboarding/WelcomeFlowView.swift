@@ -86,7 +86,7 @@ private struct HowItWorksStep: View {
             VStack(alignment: .leading, spacing: 18) {
                 bulletRow(
                     icon: "sparkles",
-                    text: "Your AI creates flashcards — from your notes, or from scratch."
+                    text: "Your AI creates flashcards. From your notes or from scratch."
                 )
                 bulletRow(
                     icon: "arrow.triangle.2.circlepath",
@@ -133,12 +133,14 @@ private struct WhatYouNeedStep: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
-            Text("Fasolt connects to Claude, ChatGPT, GitHub Copilot, or any MCP-compatible client. Your AI does the work of creating and updating cards.")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 32)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                "Fasolt connects to Claude, ChatGPT, GitHub Copilot, or any MCP-compatible client. Your AI does the work of creating and updating cards."
+            )
+            .font(.body)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 32)
+            .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 10) {
                 clientChip("Claude")
@@ -207,12 +209,14 @@ private struct YouAreSetStep: View {
             VStack(spacing: 12) {
                 Text("You're ready to go.")
                     .font(.title.bold())
-                Text("Start creating cards through your AI client, or try a demo deck on the dashboard.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(
+                    "Start creating cards through your AI client, or try a demo deck on the dashboard."
+                )
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer()

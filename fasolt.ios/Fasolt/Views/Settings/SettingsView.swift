@@ -86,14 +86,6 @@ struct SettingsView: View {
         List {
             McpSetupSection(serverURL: authService.serverURL)
 
-            Section {
-                Button {
-                    hasSeenWelcomeFlow = false
-                } label: {
-                    Label("Show welcome again", systemImage: "sparkles")
-                }
-            }
-
             Section("Notifications") {
                 if notificationViewModel.isLoading {
                     HStack {
@@ -206,6 +198,11 @@ struct SettingsView: View {
 
             Section("About") {
                 LabeledContent("Version", value: viewModel.appVersion)
+                Button {
+                    hasSeenWelcomeFlow = false
+                } label: {
+                    Label("Show welcome again", systemImage: "sparkles")
+                }
             }
 
             Section("Account") {
