@@ -72,12 +72,22 @@ struct FasoltApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var lastRefresh: Date = .distantPast
     @State private var notificationService: NotificationService?
+    @AppStorage("hasSeenWelcomeFlow") private var hasSeenWelcomeFlow = false
 
     var body: some Scene {
         WindowGroup {
             Group {
                 if authService.isAuthenticated {
                     MainTabView()
+                        .fullScreenCover(isPresented: Binding(
+                            get: { !hasSeenWelcomeFlow },
+                            set: { newValue in
+                                if !newValue { hasSeenWelcomeFlow = true }
+                            }
+                        )) {
+                            WelcomeFlowView()
+                                .environment(authService)
+                        }
                 } else {
                     OnboardingView()
                 }

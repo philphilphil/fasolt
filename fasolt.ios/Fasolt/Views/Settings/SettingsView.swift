@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showSignOutConfirmation = false
     @State private var showDeleteAccount = false
     @State private var showSnapshotSuccess = false
+    @AppStorage("hasSeenWelcomeFlow") private var hasSeenWelcomeFlow = false
 
     init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel, snapshotViewModel: SnapshotViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -84,6 +85,14 @@ struct SettingsView: View {
     private var settingsContent: some View {
         List {
             McpSetupSection(serverURL: authService.serverURL)
+
+            Section {
+                Button {
+                    hasSeenWelcomeFlow = false
+                } label: {
+                    Label("Show welcome again", systemImage: "sparkles")
+                }
+            }
 
             Section("Notifications") {
                 if notificationViewModel.isLoading {
