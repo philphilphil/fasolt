@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showSignOutConfirmation = false
     @State private var showDeleteAccount = false
     @State private var showSnapshotSuccess = false
+    @AppStorage("hasSeenWelcomeFlow") private var hasSeenWelcomeFlow = false
 
     init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel, snapshotViewModel: SnapshotViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -197,6 +198,11 @@ struct SettingsView: View {
 
             Section("About") {
                 LabeledContent("Version", value: viewModel.appVersion)
+                Button {
+                    hasSeenWelcomeFlow = false
+                } label: {
+                    Label("Show welcome again", systemImage: "sparkles")
+                }
             }
 
             Section("Account") {

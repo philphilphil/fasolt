@@ -61,6 +61,7 @@
 		EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */; };
 		EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */; };
 		F25F9C83AEC5BAB8234EC7CF /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255992C65939E5C9FD7AA061 /* CardFormSheet.swift */; };
+		F6709588A0AD28AB778506BB /* WelcomeFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */; };
 		F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */; };
 		FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */; };
 		FE34695915FE433ECE4024E4 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B076BFAB05A25FB8E667D2F /* LibraryView.swift */; };
@@ -101,7 +102,7 @@
 		677A742A91B53D3636E21C5D /* BackendStatusMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendStatusMonitor.swift; sourceTree = "<group>"; };
 		69E947CBD44E199505935FEF /* OfflineBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineBanner.swift; sourceTree = "<group>"; };
 		6E62883F0B5DD8F6C4435FF1 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
-		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B6CF47C044AA109FC891AF /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
@@ -131,12 +132,13 @@
 		D7665BF816ACE732C7D17C84 /* SnapshotViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotViewModel.swift; sourceTree = "<group>"; };
 		D826424A31F1413445EC6650 /* FasoltApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltApp.swift; sourceTree = "<group>"; };
 		D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListViewModel.swift; sourceTree = "<group>"; };
-		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DB1B7BD816596315056373C3 /* FasoltTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FasoltTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF7282BB1B62D651A7025A8B /* FeatureFlagsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsService.swift; sourceTree = "<group>"; };
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
 		F0804C2A2961591877282737 /* DeleteAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountView.swift; sourceTree = "<group>"; };
+		F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeFlowView.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -308,6 +310,7 @@
 			isa = PBXGroup;
 			children = (
 				3794A93C12869786BF3468EE /* OnboardingView.swift */,
+				F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -523,6 +526,7 @@
 				49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */,
 				45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */,
 				A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */,
+				F6709588A0AD28AB778506BB /* WelcomeFlowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -619,7 +623,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.7;
+				MARKETING_VERSION = 1.7.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -641,7 +645,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -659,7 +662,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.7.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -720,7 +722,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.7;
+				MARKETING_VERSION = 1.7.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

@@ -2,7 +2,9 @@ import SwiftUI
 
 struct DashboardView: View {
     @Environment(\.startStudy) private var startStudy
+    @Environment(AuthService.self) private var authService
     @State private var viewModel: DashboardViewModel
+    @State private var showMcpSheet = false
 
     init(viewModel: DashboardViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -18,35 +20,27 @@ struct DashboardView: View {
                         stateBar
                     }
                     if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
-                        VStack(spacing: 12) {
-                            Text("New here? Create a demo deck to see how Fasolt works.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-
-                            Button {
-                                Task { await viewModel.createDemoDeck() }
-                            } label: {
-                                if viewModel.isCreatingDemo {
-                                    ProgressView()
-                                        .frame(maxWidth: .infinity)
-                                } else {
-                                    Text("Create demo deck")
-                                        .frame(maxWidth: .infinity)
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
-                            .disabled(viewModel.isCreatingDemo)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 32)
+                        emptyStatePrompt
                     }
                     if !dueDecks.isEmpty {
                         deckSection
                     }
                 }
                 .padding()
+            }
+            .sheet(isPresented: $showMcpSheet) {
+                NavigationStack {
+                    List {
+                        McpSetupSection(serverURL: authService.serverURL)
+                    }
+                    .navigationTitle("Connect your AI")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") { showMcpSheet = false }
+                        }
+                    }
+                }
             }
             .refreshable {
                 await viewModel.loadStats()
@@ -90,6 +84,53 @@ struct DashboardView: View {
 
     private var dueDecks: [DeckDTO] {
         viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }
+    }
+
+    private var emptyStatePrompt: some View {
+        VStack(spacing: 16) {
+            VStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.blue)
+
+                Text("Connect your AI")
+                    .font(.headline)
+
+                Text("Add Fasolt to Claude, ChatGPT, or another MCP client to start creating cards from your notes.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    showMcpSheet = true
+                } label: {
+                    Text("Set up now")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.top, 4)
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+
+            Button {
+                Task { await viewModel.createDemoDeck() }
+            } label: {
+                if viewModel.isCreatingDemo {
+                    ProgressView()
+                } else {
+                    Text("or — just try a demo deck")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.borderless)
+            .disabled(viewModel.isCreatingDemo)
+        }
+        .padding(.top, 8)
     }
 
     private var heroCard: some View {
