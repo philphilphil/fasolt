@@ -82,8 +82,11 @@ struct CardDetailView: View {
                         FSRSItem(label: "Due", value: formatISODate(card.dueAt) ?? "—")
                         FSRSItem(label: "Stability", value: card.stability.map { String(format: "%.1f", $0) } ?? "—")
                         FSRSItem(label: "Difficulty", value: card.difficulty.map { String(format: "%.1f", $0) } ?? "—")
-                        FSRSItem(label: "Step", value: card.step.map { "\($0)" } ?? "—")
                         FSRSItem(label: "Last Review", value: formatISODate(card.lastReviewedAt) ?? "Never")
+                        // Step only applies during learning/relearning; hide otherwise to avoid a permanent "—"
+                        if let step = card.step, card.state == "learning" || card.state == "relearning" {
+                            FSRSItem(label: "Step", value: "\(step)")
+                        }
                     }
                 }
 
