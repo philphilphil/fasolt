@@ -36,6 +36,14 @@ enum DateFormatters {
         return formatter
     }()
 
+    // Fallback for server timestamps without fractional seconds (e.g. DueAt rounded to
+    // the day boundary, which System.Text.Json serializes without ".fff").
+    nonisolated(unsafe) private static let _iso8601NoFraction: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
     private static let _mediumDateTime: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
@@ -51,7 +59,9 @@ enum DateFormatters {
 
     // Thread-safe ISO8601 access
     static func parseISO8601(_ string: String) -> Date? {
-        queue.sync { _iso8601.date(from: string) }
+        queue.sync {
+            _iso8601.date(from: string) ?? _iso8601NoFraction.date(from: string)
+        }
     }
 
     static func formatISO8601(_ date: Date) -> String {
