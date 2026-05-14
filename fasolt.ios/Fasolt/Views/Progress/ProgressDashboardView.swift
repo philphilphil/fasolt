@@ -125,28 +125,55 @@ struct ProgressDashboardView: View {
 
     // MARK: - Activity grid (GitHub-style)
 
+    private static let cellSize: CGFloat = 26
+    private static let cellSpacing: CGFloat = 4
+
     private func activityGrid(_ p: ProgressDTO) -> some View {
         let maxCount = max(1, p.dailyActivity.map { $0.count }.max() ?? 1)
-        let cols = Array(repeating: GridItem(.flexible(), spacing: 6), count: 6)
+        let cells = buildCells(p)
+        let cols = Array(repeating: GridItem(.fixed(Self.cellSize), spacing: Self.cellSpacing), count: 7)
+        let studiedDays = p.dailyActivity.filter { $0.count > 0 }.count
 
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("LAST 30 DAYS")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .tracking(0.6)
-
-            LazyVGrid(columns: cols, spacing: 6) {
-                ForEach(Array(p.dailyActivity.enumerated()), id: \.element.id) { idx, day in
-                    let isToday = idx == p.dailyActivity.count - 1
-                    activityCell(day: day, isToday: isToday, maxCount: maxCount)
-                }
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("LAST 30 DAYS")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .tracking(0.6)
+                Spacer()
+                Text("\(studiedDays) of \(p.dailyActivity.count) studied")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
 
-            HStack(spacing: 12) {
-                legendSwatch(color: cellFill(count: 1, hadDue: false, isToday: false, maxCount: 1), label: "Studied")
-                legendSwatch(color: cellFill(count: 0, hadDue: true, isToday: false, maxCount: 1), label: "Missed")
-                legendSwatch(color: cellFill(count: 0, hadDue: false, isToday: false, maxCount: 1), label: "Rest")
-                legendSwatch(color: .blue, label: "Today")
+            HStack {
+                Spacer(minLength: 0)
+                LazyVGrid(columns: cols, alignment: .center, spacing: Self.cellSpacing) {
+                    ForEach(cells) { cell in
+                        if let day = cell.day {
+                            activityCell(day: day, isToday: cell.isToday, maxCount: maxCount)
+                        } else {
+                            Color.clear.frame(width: Self.cellSize, height: Self.cellSize)
+                        }
+                    }
+                }
+                .fixedSize()
+                Spacer(minLength: 0)
+            }
+
+            HStack(spacing: 14) {
+                legendSwatch(color: studiedSwatchColor, label: "Studied")
+                legendSwatch(color: missedColor, label: "Missed")
+                legendSwatch(color: restColor, label: "Rest")
+                HStack(spacing: 4) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .stroke(Color.blue, lineWidth: 1.5)
+                        .frame(width: 10, height: 10)
+                    Text("Today")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
             }
         }
@@ -156,27 +183,32 @@ struct ProgressDashboardView: View {
 
     private func activityCell(day: DailyActivityDTO, isToday: Bool, maxCount: Int) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 6)
-                .fill(cellFill(count: day.count, hadDue: day.hadDue, isToday: isToday, maxCount: maxCount))
+            RoundedRectangle(cornerRadius: 5)
+                .fill(cellFill(count: day.count, hadDue: day.hadDue, maxCount: maxCount))
 
             if isToday {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 5)
                     .stroke(Color.blue, lineWidth: 1.5)
             }
 
             if day.count > 0 {
                 Text("\(day.count)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(cellTextColor(count: day.count, isToday: isToday))
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(cellTextColor(count: day.count, maxCount: maxCount))
                     .monospacedDigit()
             }
         }
-        .aspectRatio(1, contentMode: .fit)
+        .frame(width: Self.cellSize, height: Self.cellSize)
     }
 
-    private func cellFill(count: Int, hadDue: Bool, isToday: Bool, maxCount: Int) -> Color {
+    // Cell-color palette: greens for studied (4 stepped intensities),
+    // very subtle warm/neutral grays for missed/rest so the chart doesn't feel punishing.
+    private var restColor: Color { Color.gray.opacity(0.14) }
+    private var missedColor: Color { Color.orange.opacity(0.18) }
+    private var studiedSwatchColor: Color { Color.green.opacity(0.7) }
+
+    private func cellFill(count: Int, hadDue: Bool, maxCount: Int) -> Color {
         if count > 0 {
-            // 4 intensity steps mimic GitHub's heatmap
             let intensity = Double(count) / Double(maxCount)
             let opacity: Double
             switch intensity {
@@ -187,14 +219,13 @@ struct ProgressDashboardView: View {
             }
             return .green.opacity(opacity)
         }
-        if isToday { return .blue.opacity(0.12) }
-        if hadDue  { return .red.opacity(0.30) }
-        return .gray.opacity(0.18)
+        return hadDue ? missedColor : restColor
     }
 
-    private func cellTextColor(count: Int, isToday: Bool) -> Color {
-        // White on saturated green; on the lightest green keep contrast.
-        .white
+    private func cellTextColor(count: Int, maxCount: Int) -> Color {
+        // Use white only when the green is dark enough; otherwise fall back to a darker green.
+        let intensity = Double(count) / Double(maxCount)
+        return intensity >= 0.5 ? .white : Color(red: 0.15, green: 0.45, blue: 0.20)
     }
 
     private func legendSwatch(color: Color, label: String) -> some View {
@@ -206,6 +237,45 @@ struct ProgressDashboardView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    // Build cells with leading placeholders so the grid aligns to weekdays (Mon-first).
+    private struct ActivityCell: Identifiable {
+        let id: String
+        let day: DailyActivityDTO?
+        let isToday: Bool
+    }
+
+    private static let dateParser: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone.current
+        return f
+    }()
+
+    private func buildCells(_ p: ProgressDTO) -> [ActivityCell] {
+        guard let first = p.dailyActivity.first,
+              let firstDate = Self.dateParser.date(from: first.date) else {
+            return p.dailyActivity.enumerated().map { idx, day in
+                ActivityCell(id: day.id, day: day, isToday: idx == p.dailyActivity.count - 1)
+            }
+        }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.firstWeekday = 2 // Monday
+        let weekday = calendar.component(.weekday, from: firstDate) // Sun=1..Sat=7
+        let leadingEmpty = (weekday - calendar.firstWeekday + 7) % 7
+
+        var cells: [ActivityCell] = []
+        for i in 0..<leadingEmpty {
+            cells.append(ActivityCell(id: "pad-\(i)", day: nil, isToday: false))
+        }
+        let lastIdx = p.dailyActivity.count - 1
+        for (idx, day) in p.dailyActivity.enumerated() {
+            cells.append(ActivityCell(id: day.id, day: day, isToday: idx == lastIdx))
+        }
+        return cells
     }
 
     private var emptyHint: some View {
