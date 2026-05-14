@@ -50,6 +50,7 @@ const router = createRouter({
     },
     // App routes (require auth)
     { path: '/study', name: 'study', component: StudyView, meta: { title: 'Study' } },
+    { path: '/progress', name: 'progress', component: () => import('@/views/ProgressView.vue'), meta: { title: 'Progress' } },
     { path: '/sources', name: 'sources', component: () => import('@/views/SourcesView.vue'), meta: { title: 'Sources' } },
     { path: '/cards', name: 'cards', component: () => import('@/views/CardsView.vue'), meta: { title: 'Cards' } },
     { path: '/cards/:id', name: 'card-detail', component: () => import('@/views/CardDetailView.vue'), meta: { title: 'Card details' } },

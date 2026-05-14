@@ -16,6 +16,7 @@ public static class ReviewEndpoints
         group.MapGet("/stats", GetStats);
         group.MapGet("/overview", GetOverview);
         group.MapGet("/study-stats", GetStudyStats);
+        group.MapGet("/progress", GetProgress);
     }
 
     private static async Task<IResult> GetDueCards(
@@ -78,5 +79,16 @@ public static class ReviewEndpoints
 
         var stats = await studyStatsService.GetStats(user.Id);
         return Results.Ok(stats);
+    }
+
+    private static async Task<IResult> GetProgress(
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, StudyStatsService studyStatsService,
+        int days = 30)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var progress = await studyStatsService.GetProgress(user.Id, days);
+        return Results.Ok(progress);
     }
 }

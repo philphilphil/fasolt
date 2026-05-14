@@ -76,6 +76,22 @@ export interface StudyStats {
   answeredToday: number
 }
 
+export interface DailyActivity {
+  date: string
+  count: number
+  hadDue: boolean
+}
+
+export interface Progress {
+  currentStreak: number
+  bestStreak: number
+  totalAnswered: number
+  answeredToday: number
+  answeredThisWeek: number
+  answeredThisMonth: number
+  dailyActivity: DailyActivity[]
+}
+
 export interface SourceItem {
   sourceFile: string
   cardCount: number

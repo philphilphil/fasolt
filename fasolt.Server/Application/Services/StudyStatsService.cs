@@ -40,6 +40,98 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         }
     }
 
+    public async Task<ProgressDto> GetProgress(string userId, int days = 30)
+    {
+        var clampedDays = Math.Clamp(days, 7, 90);
+
+        var user = await db.Users.FirstAsync(u => u.Id == userId);
+        var tz = DueTimeRounder.ResolveTimeZone(user.TimeZone);
+        var dayStartHour = user.DayStartHour ?? DueTimeRounder.DefaultDayStartHour;
+
+        var now = timeProvider.GetUtcNow();
+        var (todayStart, todayEnd) = GetDayBoundaries(now, tz, dayStartHour);
+        var weekStart = GetWeekStart(todayStart, tz);
+        var monthStart = GetMonthStart(todayStart, tz, dayStartHour);
+
+        var totalAnswered = await db.ReviewLogs.CountAsync(r => r.UserId == userId);
+        var answeredToday = await db.ReviewLogs.CountAsync(r =>
+            r.UserId == userId && r.ReviewedAt >= todayStart && r.ReviewedAt < todayEnd);
+        var answeredThisWeek = await db.ReviewLogs.CountAsync(r =>
+            r.UserId == userId && r.ReviewedAt >= weekStart && r.ReviewedAt < todayEnd);
+        var answeredThisMonth = await db.ReviewLogs.CountAsync(r =>
+            r.UserId == userId && r.ReviewedAt >= monthStart && r.ReviewedAt < todayEnd);
+
+        var currentStreak = await ComputeCurrentStreak(userId, now, tz, dayStartHour);
+        var bestStreak = Math.Max(user.BestStreak, currentStreak);
+
+        var activity = await BuildDailyActivity(userId, todayStart, todayEnd, clampedDays, tz, dayStartHour);
+
+        return new ProgressDto(
+            currentStreak, bestStreak,
+            totalAnswered, answeredToday, answeredThisWeek, answeredThisMonth,
+            activity);
+    }
+
+    private async Task<List<DailyActivityDto>> BuildDailyActivity(
+        string userId, DateTimeOffset todayStart, DateTimeOffset todayEnd, int days,
+        TimeZoneInfo tz, int dayStartHour)
+    {
+        var windowStart = todayStart.AddDays(-(days - 1));
+
+        var reviewedAts = await db.ReviewLogs
+            .Where(r => r.UserId == userId && r.ReviewedAt >= windowStart && r.ReviewedAt < todayEnd)
+            .Select(r => r.ReviewedAt)
+            .ToListAsync();
+
+        var countsByDay = new Dictionary<DateTimeOffset, int>();
+        foreach (var rt in reviewedAts)
+        {
+            var dayStart = GetDayBoundaries(rt, tz, dayStartHour).Start;
+            countsByDay[dayStart] = countsByDay.GetValueOrDefault(dayStart) + 1;
+        }
+
+        // Pre-window due day check needs cards that existed before windowStart;
+        // ComputeDueDayStarts handles that based on its cutoff.
+        var dueDayStarts = await ComputeDueDayStarts(userId, windowStart, todayStart, tz, dayStartHour);
+
+        // Whether today itself has any due cards right now
+        var hasDueToday = await db.Cards.AnyAsync(c =>
+            c.UserId == userId && !c.IsSuspended &&
+            (!c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended)) &&
+            (c.DueAt == null || c.DueAt <= todayEnd));
+
+        var activity = new List<DailyActivityDto>(days);
+        for (var d = windowStart; d <= todayStart; d = d.AddDays(1))
+        {
+            var count = countsByDay.GetValueOrDefault(d, 0);
+            var hadDue = d == todayStart ? hasDueToday : dueDayStarts.Contains(d);
+
+            // Date label is the local calendar date the day-window starts on.
+            var localDate = TimeZoneInfo.ConvertTime(d, tz).Date;
+            activity.Add(new DailyActivityDto(DateOnly.FromDateTime(localDate), count, hadDue));
+        }
+
+        return activity;
+    }
+
+    private static DateTimeOffset GetWeekStart(DateTimeOffset todayStart, TimeZoneInfo tz)
+    {
+        // Week starts on Monday in the user's local time.
+        var localDay = TimeZoneInfo.ConvertTime(todayStart, tz);
+        var dow = (int)localDay.DayOfWeek; // Sun=0..Sat=6
+        var daysSinceMonday = (dow + 6) % 7; // Mon=0, Sun=6
+        return todayStart.AddDays(-daysSinceMonday);
+    }
+
+    private static DateTimeOffset GetMonthStart(DateTimeOffset todayStart, TimeZoneInfo tz, int dayStartHour)
+    {
+        var local = TimeZoneInfo.ConvertTime(todayStart, tz);
+        var firstLocal = DateTime.SpecifyKind(new DateTime(local.Year, local.Month, 1).AddHours(dayStartHour), DateTimeKind.Unspecified);
+        while (tz.IsInvalidTime(firstLocal))
+            firstLocal = firstLocal.AddHours(1);
+        return new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(firstLocal, tz));
+    }
+
     private async Task<int> ComputeCurrentStreak(string userId, DateTimeOffset now, TimeZoneInfo tz, int dayStartHour)
     {
         // Short-circuit: if user has no cards at all, return 0

@@ -48,6 +48,14 @@ struct MainTabView: View {
                     }
                     .tag(1)
 
+                    ProgressDashboardView(
+                        viewModel: ProgressViewModel(apiClient: authService.apiClient)
+                    )
+                    .tabItem {
+                        Label("Progress", systemImage: "chart.bar.fill")
+                    }
+                    .tag(2)
+
                     SettingsView(
                         viewModel: SettingsViewModel(apiClient: authService.apiClient),
                         notificationViewModel: NotificationSettingsViewModel(apiClient: authService.apiClient),
@@ -57,7 +65,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
-                    .tag(2)
+                    .tag(3)
                 }
                 .fullScreenCover(isPresented: $showStudy, onDismiss: {
                     studyDeckId = nil
