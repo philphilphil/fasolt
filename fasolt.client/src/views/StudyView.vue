@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
 import { apiFetch } from '@/api/client'
-import type { Deck } from '@/types'
+import type { Deck, StudyStats } from '@/types'
 import { Button } from '@/components/ui/button'
 
 const router = useRouter()
@@ -17,6 +17,7 @@ const dueCount = ref(0)
 const totalCards = ref(0)
 const studiedToday = ref(0)
 const creatingDemo = ref(false)
+const studyStats = ref<StudyStats>({ currentStreak: 0, bestStreak: 0, totalAnswered: 0, answeredToday: 0 })
 
 onMounted(async () => {
   try {
@@ -26,6 +27,11 @@ onMounted(async () => {
     studiedToday.value = stats.studiedToday
   } catch {
     // leave as 0
+  }
+  try {
+    studyStats.value = await reviewStore.fetchStudyStats()
+  } catch {
+    // leave as zeros — backend may not be deployed yet
   }
   decksStore.fetchDecks()
 })
@@ -61,6 +67,16 @@ async function createDemoDeck() {
     <div v-if="totalCards > 0" class="flex justify-center gap-7 text-sm text-muted-foreground">
       <div><span class="font-bold text-foreground">{{ totalCards }}</span> total</div>
       <div><span class="font-bold text-foreground">{{ studiedToday }}</span> today</div>
+    </div>
+
+    <!-- Study stats -->
+    <div v-if="studyStats.totalAnswered > 0" class="flex justify-center gap-7 text-sm text-muted-foreground">
+      <div v-if="studyStats.currentStreak > 0">
+        <span class="font-bold text-foreground">🔥 {{ studyStats.currentStreak }}</span> day streak
+      </div>
+      <div><span class="font-bold text-foreground">{{ studyStats.totalAnswered }}</span> answered</div>
+      <div><span class="font-bold text-foreground">{{ studyStats.answeredToday }}</span> today</div>
+      <div v-if="studyStats.bestStreak > 0"><span class="font-bold text-foreground">{{ studyStats.bestStreak }}</span> best</div>
     </div>
 
     <!-- Empty state -->

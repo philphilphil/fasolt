@@ -12,4 +12,5 @@ public class AppUser : IdentityUser
     public string? TimeZone { get; set; }
     public string? ExternalProvider { get; set; }
     public string? ExternalProviderId { get; set; }
+    public int BestStreak { get; set; } = 0;
 }

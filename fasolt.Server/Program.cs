@@ -335,6 +335,7 @@ builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<SourceService>();
 builder.Services.AddScoped<OverviewService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<StudyStatsService>();
 builder.Services.AddScoped<DeviceTokenService>();
 builder.Services.AddScoped<SchedulingSettingsService>();
 builder.Services.AddScoped<DeckSnapshotService>();

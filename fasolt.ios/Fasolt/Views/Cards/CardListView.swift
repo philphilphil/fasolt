@@ -51,6 +51,7 @@ struct CardListContent: View {
             await viewModel.loadCards()
         }
         .navigationTitle("Cards")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

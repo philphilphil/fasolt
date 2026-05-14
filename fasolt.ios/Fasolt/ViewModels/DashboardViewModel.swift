@@ -12,6 +12,7 @@ final class DashboardViewModel {
     var cardsByState: [String: Int] = [:]
     var totalDecks: Int = 0
     var decks: [DeckDTO] = []
+    var studyStats: StudyStatsDTO?
     var isLoading = false
     var errorMessage: String?
     var isCreatingDemo = false
@@ -44,8 +45,12 @@ final class DashboardViewModel {
             do { return .success(try await deckRepository.fetchDecks()) }
             catch { return .failure(error) }
         }()
+        async let studyStatsResult: Result<StudyStatsDTO, Error> = {
+            do { return .success(try await apiClient.request(Endpoint(path: "/api/review/study-stats", method: .get))) }
+            catch { return .failure(error) }
+        }()
 
-        let (stats, overview, decksFetched) = await (statsResult, overviewResult, decksResult)
+        let (stats, overview, decksFetched, studyStatsFetched) = await (statsResult, overviewResult, decksResult, studyStatsResult)
 
         var failed = false
         if case .success(let s) = stats {
@@ -62,6 +67,13 @@ final class DashboardViewModel {
         if case .success(let d) = decksFetched {
             decks = d
         } else { failed = true }
+
+        if case .success(let ss) = studyStatsFetched {
+            studyStats = ss
+        } else {
+            logger.error("Failed to load study stats")
+            failed = true
+        }
 
         if failed {
             logger.error("Partial loadStats failure")

@@ -14,8 +14,10 @@ struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    if (viewModel.studyStats?.totalAnswered ?? 0) > 0 {
+                        statsRow
+                    }
                     heroCard
-                    statsRow
                     if viewModel.totalCards > 0 {
                         stateBar
                     }
@@ -46,6 +48,7 @@ struct DashboardView: View {
                 await viewModel.loadStats()
             }
             .navigationTitle("Dashboard")
+            .navigationBarTitleDisplayMode(.inline)
             .overlay {
                 if viewModel.isLoading && viewModel.totalCards == 0 {
                     ProgressView()
@@ -174,24 +177,35 @@ struct DashboardView: View {
     }
 
     private var statsRow: some View {
-        HStack(spacing: 8) {
-            statPill("Total", value: "\(viewModel.totalCards)")
-            statPill("Today", value: "\(viewModel.studiedToday)")
-            statPill("Decks", value: "\(viewModel.totalDecks)")
+        HStack(spacing: 14) {
+            HStack(spacing: 5) {
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(.orange)
+                    .font(.subheadline)
+                Text("\(viewModel.studyStats?.currentStreak ?? 0)")
+                    .font(.subheadline.weight(.bold).monospacedDigit())
+                Text("day streak")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            inlineStat(value: viewModel.studyStats?.answeredToday ?? 0, label: "today")
+            inlineStat(value: viewModel.studyStats?.totalAnswered ?? 0, label: "total")
+            inlineStat(value: viewModel.studyStats?.bestStreak ?? 0, label: "best")
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
-    private func statPill(_ label: String, value: String) -> some View {
-        VStack(spacing: 4) {
+    private func inlineStat(value: Int, label: String) -> some View {
+        HStack(spacing: 3) {
+            Text("\(value)")
+                .font(.subheadline.weight(.semibold).monospacedDigit())
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
-            Text(value)
-                .font(.title3.weight(.semibold))
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var deckSection: some View {

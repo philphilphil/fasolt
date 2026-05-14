@@ -69,6 +69,13 @@ export interface ReviewStats {
   studiedToday: number
 }
 
+export interface StudyStats {
+  currentStreak: number
+  bestStreak: number
+  totalAnswered: number
+  answeredToday: number
+}
+
 export interface SourceItem {
   sourceFile: string
   cardCount: number
