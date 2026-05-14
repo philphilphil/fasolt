@@ -44,6 +44,7 @@ struct DeckListContent: View {
             .searchable(text: $searchText, prompt: "Search decks")
             .refreshable { await viewModel.loadDecks() }
             .navigationTitle("Decks")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
             .offlineBanner()

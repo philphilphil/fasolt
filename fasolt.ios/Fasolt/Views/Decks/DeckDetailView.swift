@@ -137,6 +137,7 @@ struct DeckDetailView: View {
             }
         }
         .navigationTitle(viewModel.deckName)
+        .navigationBarTitleDisplayMode(.inline)
         .offlineBanner()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

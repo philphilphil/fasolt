@@ -48,6 +48,7 @@ struct DashboardView: View {
                 await viewModel.loadStats()
             }
             .navigationTitle("Dashboard")
+            .navigationBarTitleDisplayMode(.inline)
             .overlay {
                 if viewModel.isLoading && viewModel.totalCards == 0 {
                     ProgressView()
