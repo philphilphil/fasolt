@@ -214,4 +214,114 @@ public class StudyStatsServiceTests : IAsyncLifetime
             stats.BestStreak.Should().Be(3);
         }
     }
+
+    // --- Progress: empty account ---
+
+    [Fact]
+    public async Task Progress_Empty_ReturnsZeros()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateStatsService(db);
+
+        var progress = await svc.GetProgress(UserId);
+
+        progress.CurrentStreak.Should().Be(0);
+        progress.BestStreak.Should().Be(0);
+        progress.TotalAnswered.Should().Be(0);
+        progress.AnsweredToday.Should().Be(0);
+        progress.AnsweredThisWeek.Should().Be(0);
+        progress.AnsweredThisMonth.Should().Be(0);
+        progress.DailyActivity.Should().HaveCount(30);
+        progress.DailyActivity.Should().OnlyContain(d => d.Count == 0);
+    }
+
+    // --- Progress: clamps days param ---
+
+    [Fact]
+    public async Task Progress_DaysParam_IsClamped()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateStatsService(db);
+
+        (await svc.GetProgress(UserId, 1)).DailyActivity.Should().HaveCount(7);
+        (await svc.GetProgress(UserId, 1000)).DailyActivity.Should().HaveCount(90);
+        (await svc.GetProgress(UserId, 14)).DailyActivity.Should().HaveCount(14);
+    }
+
+    // --- Progress: today is last entry, counts match ---
+
+    [Fact]
+    public async Task Progress_TodayCount_AndPositionInActivity()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        var day1 = _time.GetUtcNow();
+        var c1 = await CreateCardAt(db, day1.AddHours(-1), "Q1", "A1");
+        var c2 = await CreateCardAt(db, day1.AddHours(-1), "Q2", "A2");
+        await reviewSvc.RateCard(UserId, new RateCardRequest(c1, "good"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(c2, "good"));
+
+        var statsSvc = CreateStatsService(db);
+        var progress = await statsSvc.GetProgress(UserId, 14);
+
+        progress.AnsweredToday.Should().Be(2);
+        progress.TotalAnswered.Should().Be(2);
+        progress.AnsweredThisWeek.Should().BeGreaterThanOrEqualTo(2);
+        progress.AnsweredThisMonth.Should().BeGreaterThanOrEqualTo(2);
+        progress.DailyActivity.Should().HaveCount(14);
+        progress.DailyActivity.Last().Count.Should().Be(2);
+    }
+
+    // --- Progress: rest day (no due) marked hadDue=false ---
+
+    [Fact]
+    public async Task Progress_RestDay_HadDueFalse()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        // Day 1: rate "easy" so card scheduled far in the future
+        var day1 = _time.GetUtcNow();
+        var card1 = await CreateCardAt(db, day1.AddHours(-1));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(card1, "easy"));
+
+        // Day 3: create + review a new card so today != day1
+        _time.SetUtcNow(day1.AddDays(2));
+        var card2 = await CreateCardAt(db, _time.GetUtcNow().AddMinutes(-5));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(card2, "good"));
+
+        var statsSvc = CreateStatsService(db);
+        var progress = await statsSvc.GetProgress(UserId, 14);
+
+        // Day 2 (one day before today) should be a rest day: no count, no due
+        var dayBeforeToday = progress.DailyActivity[^2];
+        dayBeforeToday.Count.Should().Be(0);
+        dayBeforeToday.HadDue.Should().BeFalse();
+    }
+
+    // --- Progress: missed day (had due, no review) marked hadDue=true ---
+
+    [Fact]
+    public async Task Progress_MissedDay_HadDueTrue()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        var day1 = _time.GetUtcNow();
+        // Create a card on day1 but don't review it; it stays due
+        var unreviewed = await CreateCardAt(db, day1.AddMinutes(-10));
+
+        // Day 3: review something
+        _time.SetUtcNow(day1.AddDays(2));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(unreviewed, "good"));
+
+        var statsSvc = CreateStatsService(db);
+        var progress = await statsSvc.GetProgress(UserId, 14);
+
+        // Day 2 had a due card and no review → hadDue true, count zero
+        var dayBeforeToday = progress.DailyActivity[^2];
+        dayBeforeToday.Count.Should().Be(0);
+        dayBeforeToday.HadDue.Should().BeTrue();
+    }
 }

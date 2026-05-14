@@ -24,6 +24,7 @@
 		3ACCC3511CF87CD4B822DCB9 /* APIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF719E90B1C8994FA2DF749 /* APIClientTests.swift */; };
 		45496D9DB44175552F4CF5F0 /* SvgView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2AA8CE5802B5F6DF51E168 /* SvgView.swift */; };
 		49C2E07D3DCF0C59521569DE /* StudyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */; };
+		4C4F69AF41B4877D9FB8FE46 /* ProgressViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C2D320CE11AF4BF567C3E02 /* ProgressViewModel.swift */; };
 		51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D0EB8CB76642398AE3D02E /* McpSetupSection.swift */; };
 		562490CD564C9738BBDE48A4 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415F17F4DF4B1095517D8C18 /* CardListView.swift */; };
 		570C82CBFB83C91DEE161A25 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B6CF47C044AA109FC891AF /* HelpView.swift */; };
@@ -60,6 +61,7 @@
 		ED3719D2E6CD65DEEC9AED51 /* OfflineBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69E947CBD44E199505935FEF /* OfflineBanner.swift */; };
 		EF1996B122CCDD79E4666580 /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */; };
 		EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */; };
+		F16AC1D9B3D2F6CF999222BF /* ProgressDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A163B2F31F09E4E19D8EE2 /* ProgressDashboardView.swift */; };
 		F25F9C83AEC5BAB8234EC7CF /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255992C65939E5C9FD7AA061 /* CardFormSheet.swift */; };
 		F6709588A0AD28AB778506BB /* WelcomeFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */; };
 		F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */; };
@@ -83,6 +85,7 @@
 		1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViewModel.swift; sourceTree = "<group>"; };
 		22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckDetailView.swift; sourceTree = "<group>"; };
 		255992C65939E5C9FD7AA061 /* CardFormSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardFormSheet.swift; sourceTree = "<group>"; };
+		2C2D320CE11AF4BF567C3E02 /* ProgressViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressViewModel.swift; sourceTree = "<group>"; };
 		2D0AAFB02E0C2BFF48DB2D05 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		2D65B738225D8C139D5EBF33 /* CardDetailSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailSheet.swift; sourceTree = "<group>"; };
 		2E2E5EDB31357B7ECA46E216 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
@@ -105,6 +108,7 @@
 		700093CFB3F3D3AC18143F60 /* Fasolt.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fasolt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		71B6CF47C044AA109FC891AF /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationSettingsViewModel.swift; sourceTree = "<group>"; };
+		76A163B2F31F09E4E19D8EE2 /* ProgressDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressDashboardView.swift; sourceTree = "<group>"; };
 		79B6F34EDA5CF90A2BB274E7 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		7B076BFAB05A25FB8E667D2F /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		7B345BB03F3E3F753928DA72 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -180,6 +184,7 @@
 				1431B7D69EFF78F28160765D /* Decks */,
 				BC04DE35298B675BCA4DB36F /* Library */,
 				7AF40BD0302978F0FF2A037D /* Onboarding */,
+				67F6FFA3193A21E059FA69C8 /* Progress */,
 				FE8B084DED433EFBAE5D318F /* Settings */,
 				F1D58078FC886E6E5A609771 /* Shared */,
 				266F47F88EA11B7BDC6F4D02 /* Study */,
@@ -206,6 +211,7 @@
 				B8F8126761F4AADDF2DE7EE3 /* DeckDetailViewModel.swift */,
 				D98183FFAC718CAE841B5A49 /* DeckListViewModel.swift */,
 				71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */,
+				2C2D320CE11AF4BF567C3E02 /* ProgressViewModel.swift */,
 				BDA673C5F6C04762695D1CA7 /* SchedulingSettingsViewModel.swift */,
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				D7665BF816ACE732C7D17C84 /* SnapshotViewModel.swift */,
@@ -272,6 +278,14 @@
 				DB1B7BD816596315056373C3 /* FasoltTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		67F6FFA3193A21E059FA69C8 /* Progress */ = {
+			isa = PBXGroup;
+			children = (
+				76A163B2F31F09E4E19D8EE2 /* ProgressDashboardView.swift */,
+			);
+			path = Progress;
 			sourceTree = "<group>";
 		};
 		6D31D538DB43C59628F52F7B /* Repositories */ = {
@@ -515,6 +529,8 @@
 				DB2BDF517BB43B491288895C /* OnboardingView.swift in Sources */,
 				676843D6FA50B1E79076AE45 /* PagedCardDetailView.swift in Sources */,
 				B42CA516DA9815BD2AACA7A0 /* PendingReview.swift in Sources */,
+				F16AC1D9B3D2F6CF999222BF /* ProgressDashboardView.swift in Sources */,
+				4C4F69AF41B4877D9FB8FE46 /* ProgressViewModel.swift in Sources */,
 				1BFCED8F11D27AD357EF7E19 /* SchedulingSettingsViewModel.swift in Sources */,
 				DFB882F48768B6A96EFEF323 /* SettingsView.swift in Sources */,
 				0A1AC12D4EF38730EF9879CA /* SettingsViewModel.swift in Sources */,

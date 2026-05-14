@@ -33,6 +33,14 @@ struct MainTabView: View {
                     }
                     .tag(0)
 
+                    ProgressDashboardView(
+                        viewModel: ProgressViewModel(apiClient: authService.apiClient)
+                    )
+                    .tabItem {
+                        Label("Progress", systemImage: "chart.bar.fill")
+                    }
+                    .tag(3)
+
                     LibraryView(
                         deckListViewModel: DeckListViewModel(deckRepository: deckRepository),
                         cardListViewModel: CardListViewModel(

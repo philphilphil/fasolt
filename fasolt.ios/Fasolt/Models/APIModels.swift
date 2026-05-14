@@ -121,6 +121,26 @@ struct StudyStatsDTO: Decodable, Sendable {
     let answeredToday: Int
 }
 
+// MARK: - Progress
+
+struct DailyActivityDTO: Decodable, Sendable, Identifiable {
+    let date: String
+    let count: Int
+    let hadDue: Bool
+
+    var id: String { date }
+}
+
+struct ProgressDTO: Decodable, Sendable {
+    let currentStreak: Int
+    let bestStreak: Int
+    let totalAnswered: Int
+    let answeredToday: Int
+    let answeredThisWeek: Int
+    let answeredThisMonth: Int
+    let dailyActivity: [DailyActivityDTO]
+}
+
 // MARK: - Overview
 
 struct OverviewDTO: Decodable, Sendable {

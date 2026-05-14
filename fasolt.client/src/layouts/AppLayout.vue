@@ -15,6 +15,7 @@ const auth = useAuthStore()
 const tabs = computed(() => {
   const items: Array<{ label: string; value: string } | { separator: true }> = [
     { label: 'Study', value: '/study' },
+    { label: 'Progress', value: '/progress' },
     { label: 'Cards', value: '/cards' },
     { label: 'Decks', value: '/decks' },
     { label: 'Sources', value: '/sources' },

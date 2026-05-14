@@ -9,6 +9,7 @@ const auth = useAuthStore()
 const tabs = computed(() => {
   const items = [
     { name: 'Study', path: '/study', icon: '◉' },
+    { name: 'Progress', path: '/progress', icon: '▥' },
     { name: 'Cards', path: '/cards', icon: '▤' },
     { name: 'Decks', path: '/decks', icon: '⊞' },
     { name: 'Sources', path: '/sources', icon: '◫' },
