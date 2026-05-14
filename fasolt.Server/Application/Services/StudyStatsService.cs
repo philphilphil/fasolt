@@ -51,16 +51,6 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         if (earliestCardCreatedAt is null)
             return 0;
 
-        // Pre-load the set of distinct study-day start boundaries (UTC) the user has reviewed on
-        // We fetch all ReviewedAt timestamps and bucket them client-side for correctness with custom day boundaries
-        var allReviewedAts = await db.ReviewLogs
-            .Where(r => r.UserId == userId)
-            .Select(r => r.ReviewedAt)
-            .ToListAsync();
-
-        var studyDayStarts = new HashSet<DateTimeOffset>(
-            allReviewedAts.Select(r => GetDayBoundaries(r, tz, dayStartHour).Start));
-
         var (todayStart, _) = GetDayBoundaries(now, tz, dayStartHour);
         var (earliestStart, _) = GetDayBoundaries(earliestCardCreatedAt.Value, tz, dayStartHour);
 
@@ -68,6 +58,21 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         var cutoff = todayStart.AddDays(-365);
         if (earliestStart > cutoff)
             cutoff = earliestStart;
+
+        // Pre-load study-day boundaries from reviews in the walk window only.
+        // Bucketing is done client-side so custom per-user day boundaries are respected.
+        var windowStart = now.AddDays(-366);
+        var windowReviewedAts = await db.ReviewLogs
+            .Where(r => r.UserId == userId && r.ReviewedAt >= windowStart)
+            .Select(r => r.ReviewedAt)
+            .ToListAsync();
+
+        var studyDayStarts = new HashSet<DateTimeOffset>(
+            windowReviewedAts.Select(r => GetDayBoundaries(r, tz, dayStartHour).Start));
+
+        // Precompute the set of "due days" in the walk window with a single load,
+        // instead of a per-day SQL round-trip (avoids N+1 in the gap walk).
+        var dueDayStarts = await ComputeDueDayStarts(userId, cutoff, todayStart, tz, dayStartHour);
 
         var streak = 0;
 
@@ -84,14 +89,11 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
             {
                 streak++;
             }
-            else
+            else if (dueDayStarts.Contains(cursor))
             {
-                // No review on this day — check if it was a due day (missed = streak breaks)
-                var isDue = await IsDueDay(userId, cursor, tz, dayStartHour);
-                if (isDue)
-                    break;
-                // else: rest day (no due cards), streak preserved
+                break;
             }
+            // else: rest day (no due cards), streak preserved
 
             cursor = cursor.AddDays(-1);
         }
@@ -99,36 +101,75 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         return streak;
     }
 
-    private async Task<bool> IsDueDay(string userId, DateTimeOffset dayStart, TimeZoneInfo tz, int dayStartHour)
+    private async Task<HashSet<DateTimeOffset>> ComputeDueDayStarts(
+        string userId, DateTimeOffset cutoff, DateTimeOffset todayStart, TimeZoneInfo tz, int dayStartHour)
     {
-        var (_, dayEnd) = (dayStart, dayStart.AddDays(1));
-        // dayEnd is the exclusive end; for the "due as of end of day" check we use dayStart.AddDays(1)
-        // which is the start of next day = end of this day
-        var dayEndInclusive = dayStart.AddDays(1);
+        var todayEnd = todayStart.AddDays(1);
 
-        // A day is a "due day" if there exists a card created on/before day-end
-        // whose latest-known scheduled-due as of day-end <= day-end.
-        // "latest scheduled due as of T" = MAX(ScheduledDueAfter) from ReviewLogs where ReviewedAt <= T,
-        // or Card.CreatedAt if no such log row.
+        var cards = await db.Cards
+            .Where(c => c.UserId == userId && c.CreatedAt <= todayEnd)
+            .Select(c => new { c.Id, c.CreatedAt })
+            .ToListAsync();
 
-        // We check: does any card exist where:
-        //   card.CreatedAt <= dayEnd AND
-        //   (the max ScheduledDueAfter from logs with ReviewedAt <= dayEnd, or card.CreatedAt if none) <= dayEnd
+        if (cards.Count == 0)
+            return new HashSet<DateTimeOffset>();
 
-        // Implemented as: EXISTS a card c where:
-        //   c.UserId == userId
-        //   c.CreatedAt <= dayEndInclusive
-        //   effective_due(c, dayEndInclusive) <= dayEndInclusive
-        //
-        // effective_due = MAX log.ScheduledDueAfter (where log.CardId = c.Id AND log.ReviewedAt <= dayEndInclusive)
-        //                 OR c.CreatedAt if no such log
+        // For each card with logs before the walk window, fetch MAX(ScheduledDueAfter)
+        // to initialise effective-due at cutoff (matches original "MAX over all eligible logs" semantics).
+        var preWindowMaxByCard = await db.ReviewLogs
+            .Where(r => r.UserId == userId && r.ReviewedAt < cutoff && r.ScheduledDueAfter != null)
+            .GroupBy(r => r.CardId)
+            .Select(g => new { CardId = g.Key, MaxDue = g.Max(x => x.ScheduledDueAfter) })
+            .ToDictionaryAsync(x => x.CardId, x => x.MaxDue!.Value);
 
-        return await db.Cards
-            .Where(c => c.UserId == userId && c.CreatedAt <= dayEndInclusive)
-            .AnyAsync(c =>
-                (db.ReviewLogs
-                    .Where(l => l.CardId == c.Id && l.ReviewedAt <= dayEndInclusive && l.ScheduledDueAfter != null)
-                    .Max(l => (DateTimeOffset?)l.ScheduledDueAfter) ?? c.CreatedAt) <= dayEndInclusive);
+        var inWindowLogs = await db.ReviewLogs
+            .Where(r => r.UserId == userId && r.ReviewedAt >= cutoff && r.ScheduledDueAfter != null)
+            .OrderBy(r => r.ReviewedAt)
+            .Select(r => new { r.CardId, r.ReviewedAt, ScheduledDueAfter = r.ScheduledDueAfter!.Value })
+            .ToListAsync();
+
+        var logsByCard = inWindowLogs
+            .GroupBy(l => l.CardId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var dueDayStarts = new HashSet<DateTimeOffset>();
+
+        foreach (var card in cards)
+        {
+            var cardCreatedDay = GetDayBoundaries(card.CreatedAt, tz, dayStartHour).Start;
+            var startCursor = cardCreatedDay < cutoff ? cutoff : cardCreatedDay;
+            if (startCursor >= todayStart)
+                continue;
+
+            // Initial effective-due at startCursor: MAX of pre-window scheduled-dues, or CreatedAt if none.
+            // (Cards created within the window have no pre-window logs, so they start at CreatedAt.)
+            var effectiveDue = preWindowMaxByCard.TryGetValue(card.Id, out var preMax)
+                ? preMax
+                : card.CreatedAt;
+
+            var logs = logsByCard.TryGetValue(card.Id, out var l) ? l : null;
+            var logIdx = 0;
+
+            for (var cursor = startCursor; cursor < todayStart; cursor = cursor.AddDays(1))
+            {
+                var dayEnd = cursor.AddDays(1);
+
+                if (logs is not null)
+                {
+                    while (logIdx < logs.Count && logs[logIdx].ReviewedAt < dayEnd)
+                    {
+                        if (logs[logIdx].ScheduledDueAfter > effectiveDue)
+                            effectiveDue = logs[logIdx].ScheduledDueAfter;
+                        logIdx++;
+                    }
+                }
+
+                if (effectiveDue <= dayEnd)
+                    dueDayStarts.Add(cursor);
+            }
+        }
+
+        return dueDayStarts;
     }
 
     private static (DateTimeOffset Start, DateTimeOffset End) GetDayBoundaries(
