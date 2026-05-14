@@ -32,8 +32,8 @@ function dayClass(d: DailyActivity, isLast: boolean): string {
 
 function dayHeight(count: number): string {
   if (count === 0) return '6px'
-  const min = 8
-  const max = 56
+  const min = 22
+  const max = 64
   const pct = count / maxCount.value
   return `${Math.round(min + pct * (max - min))}px`
 }
@@ -113,15 +113,20 @@ function dayLabel(d: DailyActivity, isLast: boolean): string {
       <Card class="border-border/60">
         <CardContent class="p-4">
           <div class="text-[11px] uppercase tracking-wide text-muted-foreground mb-3">Last 30 days</div>
-          <div class="flex h-[64px] items-end gap-[3px]">
+          <div class="flex h-[72px] items-end gap-[3px]">
             <div
               v-for="(d, i) in progress.dailyActivity"
               :key="d.date"
-              class="flex-1 rounded-sm transition-colors"
+              class="relative flex-1 rounded-sm transition-colors flex items-center justify-center"
               :class="dayClass(d, i === progress.dailyActivity.length - 1)"
               :style="{ height: dayHeight(d.count) }"
               :title="dayLabel(d, i === progress.dailyActivity.length - 1)"
-            />
+            >
+              <span
+                v-if="d.count > 0"
+                class="text-[10px] font-semibold leading-none text-white tabular-nums"
+              >{{ d.count }}</span>
+            </div>
           </div>
           <div class="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
             <span class="flex items-center gap-1.5"><span class="inline-block h-2 w-2 rounded-sm bg-emerald-500" /> Studied</span>
