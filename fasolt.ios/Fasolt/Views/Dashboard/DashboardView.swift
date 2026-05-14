@@ -14,11 +14,10 @@ struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    heroCard
                     if (viewModel.studyStats?.totalAnswered ?? 0) > 0 {
-                        streakBanner
+                        statsRow
                     }
-                    statsRow
+                    heroCard
                     if viewModel.totalCards > 0 {
                         stateBar
                     }
@@ -177,57 +176,35 @@ struct DashboardView: View {
     }
 
     private var statsRow: some View {
-        HStack(spacing: 8) {
-            if let ss = viewModel.studyStats {
-                statPill("Answered", value: "\(ss.totalAnswered)")
-                statPill("Today", value: "\(ss.answeredToday)")
-                statPill("Best", value: "\(ss.bestStreak)")
-            } else {
-                statPill("Total", value: "\(viewModel.totalCards)")
-                statPill("Today", value: "\(viewModel.studiedToday)")
-                statPill("Decks", value: "\(viewModel.totalDecks)")
-            }
-        }
-    }
-
-    private var streakBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "flame.fill")
-                .foregroundStyle(.orange)
-                .font(.title2)
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 14) {
+            HStack(spacing: 5) {
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(.orange)
+                    .font(.subheadline)
                 Text("\(viewModel.studyStats?.currentStreak ?? 0)")
-                    .font(.title.weight(.bold).monospacedDigit())
+                    .font(.subheadline.weight(.bold).monospacedDigit())
                 Text("day streak")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("best")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text("\(viewModel.studyStats?.bestStreak ?? 0)")
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+            Spacer(minLength: 8)
+            inlineStat(value: viewModel.studyStats?.answeredToday ?? 0, label: "today")
+            inlineStat(value: viewModel.studyStats?.totalAnswered ?? 0, label: "total")
+            inlineStat(value: viewModel.studyStats?.bestStreak ?? 0, label: "best")
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
-    private func statPill(_ label: String, value: String) -> some View {
-        VStack(spacing: 4) {
+    private func inlineStat(value: Int, label: String) -> some View {
+        HStack(spacing: 3) {
+            Text("\(value)")
+                .font(.subheadline.weight(.semibold).monospacedDigit())
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
-            Text(value)
-                .font(.title3.weight(.semibold))
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private var deckSection: some View {
