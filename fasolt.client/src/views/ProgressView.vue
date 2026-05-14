@@ -39,7 +39,9 @@ function dayHeight(count: number): string {
 }
 
 function dayLabel(d: DailyActivity, isLast: boolean): string {
-  const dateStr = new Date(d.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  const [y, m, day] = d.date.split('-').map(Number)
+  const localDate = new Date(y, m - 1, day)
+  const dateStr = localDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
   if (isLast) return `Today — ${dateStr}: ${d.count} answered`
   if (d.count > 0) return `${dateStr}: ${d.count} answered`
   if (d.hadDue) return `${dateStr}: missed (had due cards)`

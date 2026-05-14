@@ -68,10 +68,9 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Only synthetic logs (no real review has ScheduledDueAfter null at this point in history).
-            migrationBuilder.Sql(@"
-                DELETE FROM ""ReviewLogs"" WHERE ""ScheduledDueAfter"" IS NULL;
-            ");
+            // Intentionally no-op: a blanket "delete synthetic rows" rollback risks destroying
+            // real review history if anything else ever writes a null ScheduledDueAfter.
+            // Roll back manually if ever needed.
         }
     }
 }
