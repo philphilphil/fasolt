@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     }
 
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+    public DbSet<ReviewLog> ReviewLogs => Set<ReviewLog>();
     public DbSet<Card> Cards => Set<Card>();
     public DbSet<Deck> Decks => Set<Deck>();
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
@@ -102,6 +103,17 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        builder.Entity<ReviewLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Rating).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.StateAfter).HasMaxLength(20).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.ReviewedAt });
+            entity.HasIndex(e => new { e.CardId, e.ReviewedAt });
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Card).WithMany().HasForeignKey(e => e.CardId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         builder.Entity<AppUser>(entity =>
         {
             entity.Property(e => e.NotificationIntervalHours).HasDefaultValue(8);
@@ -111,6 +123,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.Property(e => e.TimeZone).HasMaxLength(64);
             entity.Property(e => e.ExternalProvider).HasMaxLength(50);
             entity.Property(e => e.ExternalProviderId).HasMaxLength(255);
+            entity.Property(e => e.BestStreak).HasDefaultValue(0);
             entity.HasIndex(e => new { e.ExternalProvider, e.ExternalProviderId })
                 .IsUnique()
                 .HasFilter("\"ExternalProvider\" IS NOT NULL");

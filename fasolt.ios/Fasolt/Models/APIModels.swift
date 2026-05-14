@@ -114,6 +114,13 @@ struct ReviewStatsDTO: Decodable, Sendable {
     let studiedToday: Int
 }
 
+struct StudyStatsDTO: Decodable, Sendable {
+    let currentStreak: Int
+    let bestStreak: Int
+    let totalAnswered: Int
+    let answeredToday: Int
+}
+
 // MARK: - Overview
 
 struct OverviewDTO: Decodable, Sendable {

@@ -10,7 +10,7 @@ using FsrsCard = FSRS.Core.Models.Card;
 
 namespace Fasolt.Server.Application.Services;
 
-public class ReviewService(AppDbContext db, TimeProvider timeProvider)
+public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStatsService studyStatsService)
 {
     private static readonly Dictionary<string, Rating> ValidRatings = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -110,7 +110,19 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider)
         card.DueAt = new DateTimeOffset(roundedDue, TimeSpan.Zero);
         card.LastReviewedAt = timeProvider.GetUtcNow();
 
+        db.ReviewLogs.Add(new ReviewLog
+        {
+            UserId = userId,
+            CardId = card.Id,
+            Rating = request.Rating.ToLowerInvariant(),
+            ReviewedAt = timeProvider.GetUtcNow(),
+            ScheduledDueAfter = card.DueAt,
+            StateAfter = card.State,
+        });
+
         await db.SaveChangesAsync();
+        await studyStatsService.UpdateBestStreakIfNeeded(userId);
+
         return new RateCardResponse(card.PublicId, card.Stability, card.Difficulty, card.DueAt, card.State);
     }
 

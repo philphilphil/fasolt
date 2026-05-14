@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { DueCard, ReviewStats } from '@/types'
+import type { DueCard, ReviewStats, StudyStats } from '@/types'
 import { apiFetch } from '@/api/client'
 
 export const useReviewStore = defineStore('review', () => {
@@ -119,9 +119,13 @@ export const useReviewStore = defineStore('review', () => {
     return apiFetch<ReviewStats>('/review/stats')
   }
 
+  async function fetchStudyStats(): Promise<StudyStats> {
+    return apiFetch<StudyStats>('/review/study-stats')
+  }
+
   return {
     queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error,
     progress, sessionStats, sessionTime,
-    startSession, flipCard, skip, suspend, rate, endSession, fetchStats,
+    startSession, flipCard, skip, suspend, rate, endSession, fetchStats, fetchStudyStats,
   }
 })

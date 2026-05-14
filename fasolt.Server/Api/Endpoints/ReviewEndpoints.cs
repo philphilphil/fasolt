@@ -15,6 +15,7 @@ public static class ReviewEndpoints
         group.MapPost("/rate", RateCard);
         group.MapGet("/stats", GetStats);
         group.MapGet("/overview", GetOverview);
+        group.MapGet("/study-stats", GetStudyStats);
     }
 
     private static async Task<IResult> GetDueCards(
@@ -67,5 +68,15 @@ public static class ReviewEndpoints
 
         var overview = await overviewService.GetOverview(user.Id);
         return Results.Ok(overview);
+    }
+
+    private static async Task<IResult> GetStudyStats(
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, StudyStatsService studyStatsService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var stats = await studyStatsService.GetStats(user.Id);
+        return Results.Ok(stats);
     }
 }

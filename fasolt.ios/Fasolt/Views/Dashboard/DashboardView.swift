@@ -15,6 +15,9 @@ struct DashboardView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     heroCard
+                    if (viewModel.studyStats?.totalAnswered ?? 0) > 0 {
+                        streakBanner
+                    }
                     statsRow
                     if viewModel.totalCards > 0 {
                         stateBar
@@ -175,10 +178,43 @@ struct DashboardView: View {
 
     private var statsRow: some View {
         HStack(spacing: 8) {
-            statPill("Total", value: "\(viewModel.totalCards)")
-            statPill("Today", value: "\(viewModel.studiedToday)")
-            statPill("Decks", value: "\(viewModel.totalDecks)")
+            if let ss = viewModel.studyStats {
+                statPill("Answered", value: "\(ss.totalAnswered)")
+                statPill("Today", value: "\(ss.answeredToday)")
+                statPill("Best", value: "\(ss.bestStreak)")
+            } else {
+                statPill("Total", value: "\(viewModel.totalCards)")
+                statPill("Today", value: "\(viewModel.studiedToday)")
+                statPill("Decks", value: "\(viewModel.totalDecks)")
+            }
         }
+    }
+
+    private var streakBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "flame.fill")
+                .foregroundStyle(.orange)
+                .font(.title2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(viewModel.studyStats?.currentStreak ?? 0)")
+                    .font(.title.weight(.bold).monospacedDigit())
+                Text("day streak")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("best")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text("\(viewModel.studyStats?.bestStreak ?? 0)")
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func statPill(_ label: String, value: String) -> some View {

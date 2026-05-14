@@ -18,7 +18,7 @@ public class ReviewServiceTests : IAsyncLifetime
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
     private ReviewService CreateService(Server.Infrastructure.Data.AppDbContext db)
-        => new(db, _time);
+        => new(db, _time, new StudyStatsService(db, _time));
 
     private async Task<string> CreateCard(Server.Infrastructure.Data.AppDbContext db, string front, string back)
     {

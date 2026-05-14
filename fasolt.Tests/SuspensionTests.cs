@@ -16,7 +16,7 @@ public class SuspensionTests : IAsyncLifetime
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
     private ReviewService CreateReviewService(Server.Infrastructure.Data.AppDbContext db)
-        => new(db, _time);
+        => new(db, _time, new StudyStatsService(db, _time));
 
     // --- GetDueCards excludes suspended cards ---
 
