@@ -14,7 +14,7 @@ struct ProgressDashboardView: View {
                     if let progress = viewModel.progress {
                         statCards(progress)
                         periodStats(progress)
-                        activityChart(progress)
+                        activityGrid(progress)
                         if progress.totalAnswered == 0 {
                             emptyHint
                         }
@@ -53,28 +53,52 @@ struct ProgressDashboardView: View {
     }
 
     private func statCards(_ p: ProgressDTO) -> some View {
-        let cells: [(String, String, Color?)] = [
-            ("CURRENT STREAK", "\(p.currentStreak == 0 ? "" : "🔥 ")\(p.currentStreak)", nil),
-            ("BEST STREAK", "\(p.bestStreak)", nil),
-            ("TOTAL ANSWERED", "\(p.totalAnswered)", nil),
-            ("TODAY", "\(p.answeredToday)", nil),
-        ]
-        return LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-            ForEach(cells, id: \.0) { cell in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(cell.0)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .tracking(0.6)
-                    Text(cell.1)
+        LazyVGrid(
+            columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
+            spacing: 10
+        ) {
+            statCell(label: "CURRENT STREAK") {
+                HStack(spacing: 5) {
+                    if p.currentStreak > 0 {
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(.orange)
+                            .font(.title3)
+                    }
+                    Text("\(p.currentStreak)")
                         .font(.title2.weight(.bold))
                         .monospacedDigit()
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(14)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+            }
+            statCell(label: "BEST STREAK") {
+                Text("\(p.bestStreak)")
+                    .font(.title2.weight(.bold))
+                    .monospacedDigit()
+            }
+            statCell(label: "TOTAL ANSWERED") {
+                Text("\(p.totalAnswered)")
+                    .font(.title2.weight(.bold))
+                    .monospacedDigit()
+            }
+            statCell(label: "TODAY") {
+                Text("\(p.answeredToday)")
+                    .font(.title2.weight(.bold))
+                    .monospacedDigit()
             }
         }
+    }
+
+    @ViewBuilder
+    private func statCell<V: View>(label: String, @ViewBuilder content: () -> V) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .tracking(0.6)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
     private func periodStats(_ p: ProgressDTO) -> some View {
@@ -99,30 +123,30 @@ struct ProgressDashboardView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
-    private func activityChart(_ p: ProgressDTO) -> some View {
+    // MARK: - Activity grid (GitHub-style)
+
+    private func activityGrid(_ p: ProgressDTO) -> some View {
         let maxCount = max(1, p.dailyActivity.map { $0.count }.max() ?? 1)
+        let cols = Array(repeating: GridItem(.flexible(), spacing: 6), count: 6)
+
         return VStack(alignment: .leading, spacing: 10) {
             Text("LAST 30 DAYS")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .tracking(0.6)
 
-            HStack(alignment: .bottom, spacing: 3) {
+            LazyVGrid(columns: cols, spacing: 6) {
                 ForEach(Array(p.dailyActivity.enumerated()), id: \.element.id) { idx, day in
                     let isToday = idx == p.dailyActivity.count - 1
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(barColor(day, isToday: isToday))
-                        .frame(height: barHeight(day.count, max: maxCount))
-                        .frame(maxWidth: .infinity)
+                    activityCell(day: day, isToday: isToday, maxCount: maxCount)
                 }
             }
-            .frame(height: 64)
 
             HStack(spacing: 12) {
-                legendDot(color: .green, label: "Studied")
-                legendDot(color: .red.opacity(0.4), label: "Missed")
-                legendDot(color: .gray.opacity(0.4), label: "Rest")
-                legendDot(color: .blue, label: "Today")
+                legendSwatch(color: cellFill(count: 1, hadDue: false, isToday: false, maxCount: 1), label: "Studied")
+                legendSwatch(color: cellFill(count: 0, hadDue: true, isToday: false, maxCount: 1), label: "Missed")
+                legendSwatch(color: cellFill(count: 0, hadDue: false, isToday: false, maxCount: 1), label: "Rest")
+                legendSwatch(color: .blue, label: "Today")
                 Spacer()
             }
         }
@@ -130,26 +154,54 @@ struct ProgressDashboardView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 
-    private func barColor(_ day: DailyActivityDTO, isToday: Bool) -> Color {
-        if isToday { return .blue }
-        if day.count > 0 { return .green }
-        if day.hadDue { return .red.opacity(0.4) }
-        return .gray.opacity(0.25)
+    private func activityCell(day: DailyActivityDTO, isToday: Bool, maxCount: Int) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 6)
+                .fill(cellFill(count: day.count, hadDue: day.hadDue, isToday: isToday, maxCount: maxCount))
+
+            if isToday {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.blue, lineWidth: 1.5)
+            }
+
+            if day.count > 0 {
+                Text("\(day.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(cellTextColor(count: day.count, isToday: isToday))
+                    .monospacedDigit()
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
     }
 
-    private func barHeight(_ count: Int, max: Int) -> CGFloat {
-        if count == 0 { return 6 }
-        let minH: CGFloat = 10
-        let maxH: CGFloat = 56
-        let pct = CGFloat(count) / CGFloat(max)
-        return minH + pct * (maxH - minH)
+    private func cellFill(count: Int, hadDue: Bool, isToday: Bool, maxCount: Int) -> Color {
+        if count > 0 {
+            // 4 intensity steps mimic GitHub's heatmap
+            let intensity = Double(count) / Double(maxCount)
+            let opacity: Double
+            switch intensity {
+            case ..<0.25: opacity = 0.35
+            case ..<0.5:  opacity = 0.55
+            case ..<0.75: opacity = 0.75
+            default:      opacity = 1.0
+            }
+            return .green.opacity(opacity)
+        }
+        if isToday { return .blue.opacity(0.12) }
+        if hadDue  { return .red.opacity(0.30) }
+        return .gray.opacity(0.18)
     }
 
-    private func legendDot(color: Color, label: String) -> some View {
+    private func cellTextColor(count: Int, isToday: Bool) -> Color {
+        // White on saturated green; on the lightest green keep contrast.
+        .white
+    }
+
+    private func legendSwatch(color: Color, label: String) -> some View {
         HStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 2)
+            RoundedRectangle(cornerRadius: 3)
                 .fill(color)
-                .frame(width: 8, height: 8)
+                .frame(width: 10, height: 10)
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
