@@ -179,11 +179,6 @@ private struct ConnectAIStep: View {
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
-                Text("Copy your MCP URL and paste it into your AI client.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
             }
             .padding(.top, 12)
             .padding(.bottom, 4)

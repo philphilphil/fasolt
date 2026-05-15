@@ -118,7 +118,7 @@ function copyToClipboard(text: string, key: string) {
             <h3 class="text-xs font-medium mb-2">Mistral Le Chat</h3>
             <div class="rounded border border-border bg-secondary px-3 py-2.5 text-xs text-muted-foreground">
               <ol class="list-decimal list-inside space-y-1.5">
-                <li>Open Le Chat → <span class="font-medium text-foreground">Intelligence</span> → <span class="font-medium text-foreground">Connectors</span></li>
+                <li>Open Le Chat → <span class="font-medium text-foreground">Intelligence</span> → <a href="https://chat.mistral.ai/connections" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">Connectors</a></li>
                 <li>Click <span class="font-medium text-foreground">+ Add Connector</span> → <span class="font-medium text-foreground">Custom MCP Connector</span></li>
                 <li>Set <span class="font-medium text-foreground">Connector name</span> to <code class="rounded border border-border bg-background px-1 py-0.5 text-[10px]">fasolt</code> and paste the server URL:
                   <span class="inline-flex items-center gap-1.5 mt-1">

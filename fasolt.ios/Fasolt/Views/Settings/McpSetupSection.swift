@@ -11,9 +11,11 @@ struct McpSetupSection: View {
 
     var body: some View {
         Section {
-            Text("Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            Text(
+                "Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client."
+            )
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
@@ -54,9 +56,14 @@ struct McpSetupSection: View {
                     Text("2. Tap + then Add Custom Connector")
                     Text("3. Paste your MCP URL")
                     Text("4. Authorize with your Fasolt account")
-                    Link("See documentation",
-                         destination: URL(string: "https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp")!)
-                        .font(.caption)
+                    Link(
+                        "See documentation",
+                        destination: URL(
+                            string:
+                                "https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp"
+                        )!
+                    )
+                    .font(.caption)
                 }
                 .font(.subheadline)
                 .padding(.vertical, 4)
@@ -73,9 +80,14 @@ struct McpSetupSection: View {
                     Text("2. Click Create App")
                     Text("3. Paste your MCP URL")
                     Text("4. Authorize with your Fasolt account")
-                    Link("See documentation",
-                         destination: URL(string: "https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta")!)
-                        .font(.caption)
+                    Link(
+                        "See documentation",
+                        destination: URL(
+                            string:
+                                "https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta"
+                        )!
+                    )
+                    .font(.caption)
                 }
                 .font(.subheadline)
                 .padding(.vertical, 4)
@@ -85,19 +97,53 @@ struct McpSetupSection: View {
 
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 0) {
+                        Text("1. Open Le Chat → Intelligence → ")
+                        Link(
+                            "Connectors",
+                            destination: URL(string: "https://chat.mistral.ai/connections")!
+                        )
+                    }
+                    Text("2. Click + Add Connector → Custom MCP Connector")
+                    Text("3. Set Connector name to fasolt and paste the server URL:")
+                    HStack {
+                        Text(mcpURL)
+                            .font(.caption.monospaced())
+                            .textSelection(.enabled)
+                        Spacer()
+                        copyButton(text: mcpURL, id: "mistral")
+                    }
+                    Text("4. Click Connect and authorize with your fasolt account")
+                    Link(
+                        "See documentation",
+                        destination: URL(
+                            string:
+                                "https://docs.mistral.ai/le-chat/knowledge-integrations/connectors/mcp-connectors/"
+                        )!
+                    )
+                    .font(.caption)
+                }
+                .font(.subheadline)
+                .padding(.vertical, 4)
+            } label: {
+                Label("Mistral Le Chat", systemImage: "sparkles")
+            }
+
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Add to ~/.copilot/mcp-config.json:")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     let configJSON = """
-                    {
-                      "mcpServers": {
-                        "fasolt": {
-                          "type": "http",
-                          "url": "\(mcpURL)"
+                        {
+                          "mcpServers": {
+                            "fasolt": {
+                              "type": "http",
+                              "url": "\(mcpURL)"
+                            }
+                          }
                         }
-                      }
-                    }
-                    """
+                        """
                     HStack(alignment: .top) {
                         Text(configJSON)
                             .font(.caption.monospaced())
