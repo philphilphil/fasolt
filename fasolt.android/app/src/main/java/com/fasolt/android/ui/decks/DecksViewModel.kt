@@ -22,6 +22,9 @@ class DecksViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<DecksUiState>(DecksUiState.Loading)
     val uiState: StateFlow<DecksUiState> = _uiState.asStateFlow()
 
+    private val _createError = MutableStateFlow<String?>(null)
+    val createError: StateFlow<String?> = _createError.asStateFlow()
+
     init { refresh() }
 
     fun refresh() {
@@ -35,5 +38,28 @@ class DecksViewModel(application: Application) : AndroidViewModel(application) {
 
     fun signOut() {
         app.authRepository.signOut()
+    }
+
+    /**
+     * Creates a new deck. Invokes [onDone] with `true` if the call succeeded, `false` otherwise.
+     * On success the deck list is refreshed so the new deck appears.
+     */
+    fun createDeck(name: String, description: String?, onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            _createError.value = null
+            runCatching { app.deckRepository.create(name, description) }
+                .onSuccess {
+                    onDone(true)
+                    refresh()
+                }
+                .onFailure {
+                    _createError.value = it.message ?: "Failed to create deck"
+                    onDone(false)
+                }
+        }
+    }
+
+    fun clearCreateError() {
+        _createError.value = null
     }
 }
