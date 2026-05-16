@@ -27,7 +27,7 @@ class DecksViewModel(application: Application) : AndroidViewModel(application) {
     fun refresh() {
         _uiState.value = DecksUiState.Loading
         viewModelScope.launch {
-            runCatching { app.deckRepository.fetchDecks() }
+            runCatching { app.deckRepository.list() }
                 .onSuccess { _uiState.value = DecksUiState.Loaded(it) }
                 .onFailure { _uiState.value = DecksUiState.Error(it.message ?: "Failed to load decks") }
         }
