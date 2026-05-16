@@ -1,11 +1,16 @@
 package com.fasolt.android.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -29,12 +34,12 @@ import androidx.navigation.navArgument
 import com.fasolt.android.FasoltApplication
 import com.fasolt.android.ui.auth.LoginScreen
 import com.fasolt.android.ui.cards.CardFormScreen
-import com.fasolt.android.ui.cards.CardListScreen
 import com.fasolt.android.ui.dashboard.DashboardScreen
 import com.fasolt.android.ui.decks.DeckDetailScreen
-import com.fasolt.android.ui.decks.DecksScreen
+import com.fasolt.android.ui.library.LibraryScreen
 import com.fasolt.android.ui.progress.ProgressScreen
 import com.fasolt.android.ui.settings.DeleteAccountScreen
+import com.fasolt.android.ui.settings.HelpScreen
 import com.fasolt.android.ui.settings.McpSetupScreen
 import com.fasolt.android.ui.settings.NotificationSettingsScreen
 import com.fasolt.android.ui.settings.SchedulingSettingsScreen
@@ -71,11 +76,17 @@ fun AppNavigation() {
 
 private data class TabSpec(val route: String, val label: String, val icon: ImageVector)
 
+// Order matches iOS MainTabView: Study, Library, Progress, Settings.
 private val TABS = listOf(
-    TabSpec(Routes.DASHBOARD, "Home", Icons.Default.Dashboard),
-    TabSpec(Routes.DECKS, "Decks", Icons.Default.Style),
-    TabSpec("study", "Study", Icons.Default.PlayArrow),
+    TabSpec(Routes.DASHBOARD, "Study", Icons.Default.Book),
+    TabSpec(Routes.LIBRARY, "Library", Icons.AutoMirrored.Filled.LibraryBooks),
+    TabSpec(Routes.PROGRESS, "Progress", Icons.Default.BarChart),
     TabSpec(Routes.SETTINGS, "Settings", Icons.Default.Settings),
+)
+
+/** Routes that should hide the bottom tab bar (presented as fullscreen / modal). */
+private val FULLSCREEN_ROUTES = setOf(
+    Routes.STUDY.substringBefore('?'),
 )
 
 @Composable
@@ -84,13 +95,24 @@ private fun MainScaffold(onSignedOut: () -> Unit) {
     val app = LocalContext.current.applicationContext as FasoltApplication
     val authed by app.authRepository.isAuthenticated.collectAsState()
 
-    // Forced sign out (token refresh failure, account deletion, manual sign out) pops to login.
     LaunchedEffect(authed) {
         if (!authed) onSignedOut()
     }
 
+    val backStack by tabNav.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route?.substringBefore('?')
+    val showBottomBar = currentRoute !in FULLSCREEN_ROUTES
+
     Scaffold(
-        bottomBar = { FasoltBottomBar(tabNav) },
+        bottomBar = {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut(),
+            ) {
+                FasoltBottomBar(tabNav)
+            }
+        },
     ) { padding ->
         NavHost(
             navController = tabNav,
@@ -98,10 +120,10 @@ private fun MainScaffold(onSignedOut: () -> Unit) {
             modifier = Modifier.padding(padding),
         ) {
             dashboardGraph(tabNav)
-            decksGraph(tabNav)
-            cardsGraph(tabNav)
-            studyGraph(tabNav)
+            libraryGraph(tabNav)
+            progressGraph()
             settingsGraph(tabNav, onAccountDeleted = onSignedOut)
+            studyDestination(tabNav)
         }
     }
 }
@@ -113,7 +135,6 @@ private fun FasoltBottomBar(navController: NavHostController) {
 
     NavigationBar {
         TABS.forEach { tab ->
-            // Tab is selected if the current destination's route starts with the tab's root.
             val selected = currentRoute?.substringBefore('?')?.substringBefore('/') == tab.route
             NavigationBarItem(
                 selected = selected,
@@ -136,18 +157,19 @@ private fun FasoltBottomBar(navController: NavHostController) {
 private fun NavGraphBuilder.dashboardGraph(nav: NavHostController) {
     composable(Routes.DASHBOARD) {
         DashboardScreen(
-            onStartStudy = { nav.navigate("study") },
+            onStartStudy = { nav.navigate(Routes.study()) },
             onOpenProgress = { nav.navigate(Routes.PROGRESS) },
         )
     }
-    composable(Routes.PROGRESS) {
-        ProgressScreen()
-    }
 }
 
-private fun NavGraphBuilder.decksGraph(nav: NavHostController) {
-    composable(Routes.DECKS) {
-        DecksScreen(onDeckClick = { nav.navigate(Routes.deckDetail(it)) })
+private fun NavGraphBuilder.libraryGraph(nav: NavHostController) {
+    composable(Routes.LIBRARY) {
+        LibraryScreen(
+            onDeckClick = { nav.navigate(Routes.deckDetail(it)) },
+            onCardClick = { nav.navigate(Routes.cardEdit(it)) },
+            onCreateCard = { nav.navigate(Routes.CARD_CREATE) },
+        )
     }
     composable(
         route = Routes.DECK_DETAIL,
@@ -158,15 +180,6 @@ private fun NavGraphBuilder.decksGraph(nav: NavHostController) {
             deckId = deckId,
             onNavigateBack = { nav.popBackStack() },
             onCardClick = { nav.navigate(Routes.cardEdit(it)) },
-        )
-    }
-}
-
-private fun NavGraphBuilder.cardsGraph(nav: NavHostController) {
-    composable(Routes.CARDS) {
-        CardListScreen(
-            onCardClick = { nav.navigate(Routes.cardEdit(it)) },
-            onCreateCard = { nav.navigate(Routes.CARD_CREATE) },
         )
     }
     composable(Routes.CARD_CREATE) {
@@ -181,9 +194,15 @@ private fun NavGraphBuilder.cardsGraph(nav: NavHostController) {
     }
 }
 
-private fun NavGraphBuilder.studyGraph(nav: NavHostController) {
+private fun NavGraphBuilder.progressGraph() {
+    composable(Routes.PROGRESS) {
+        ProgressScreen()
+    }
+}
+
+private fun NavGraphBuilder.studyDestination(nav: NavHostController) {
     composable(
-        route = "study?deckId={deckId}",
+        route = Routes.STUDY,
         arguments = listOf(navArgument("deckId") {
             type = NavType.StringType
             nullable = true
@@ -204,6 +223,7 @@ private fun NavGraphBuilder.settingsGraph(nav: NavHostController, onAccountDelet
             onOpenScheduling = { nav.navigate(Routes.SETTINGS_SCHEDULING) },
             onOpenMcpSetup = { nav.navigate(Routes.SETTINGS_MCP) },
             onOpenDeleteAccount = { nav.navigate(Routes.SETTINGS_DELETE_ACCOUNT) },
+            onOpenHelp = { nav.navigate(Routes.SETTINGS_HELP) },
         )
     }
     composable(Routes.SETTINGS_NOTIFICATIONS) {
@@ -220,5 +240,8 @@ private fun NavGraphBuilder.settingsGraph(nav: NavHostController, onAccountDelet
             onBack = { nav.popBackStack() },
             onAccountDeleted = onAccountDeleted,
         )
+    }
+    composable(Routes.SETTINGS_HELP) {
+        HelpScreen(onBack = { nav.popBackStack() })
     }
 }

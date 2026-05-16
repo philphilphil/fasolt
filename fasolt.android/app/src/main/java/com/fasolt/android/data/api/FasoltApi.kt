@@ -15,7 +15,9 @@ import com.fasolt.android.data.api.models.RateCardRequest
 import com.fasolt.android.data.api.models.RateCardResponse
 import com.fasolt.android.data.api.models.ReviewStats
 import com.fasolt.android.data.api.models.SchedulingSettings
+import com.fasolt.android.data.api.models.CreateSnapshotResponse
 import com.fasolt.android.data.api.models.SetSuspendedRequest
+import com.fasolt.android.data.api.models.SnapshotDto
 import com.fasolt.android.data.api.models.SourceDto
 import com.fasolt.android.data.api.models.StudyStats
 import com.fasolt.android.data.api.models.TokenResponse
@@ -139,6 +141,13 @@ interface FasoltApi {
 
     @PUT("api/notifications/settings")
     suspend fun updateNotificationSettings(@Body request: UpdateNotificationSettingsRequest): NotificationSettings
+
+    // Snapshots
+    @POST("api/snapshots")
+    suspend fun createSnapshots(): CreateSnapshotResponse
+
+    @GET("api/snapshots/recent")
+    suspend fun recentSnapshots(): List<SnapshotDto>
 
     // Scheduling (FSRS)
     @GET("api/settings/scheduling")

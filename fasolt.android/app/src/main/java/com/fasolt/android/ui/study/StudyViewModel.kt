@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Top-level UI states for the Study flow — mirrors iOS StudyViewModel.SessionState. */
 sealed interface StudyUiState {
     data object Idle : StudyUiState
     data object Loading : StudyUiState
@@ -32,10 +31,11 @@ sealed interface StudyUiState {
         val cardsStudied: Int,
         val ratingsCount: Map<String, Int>,
         val failedRatings: Int,
+        val skippedCount: Int,
+        val suspendedCount: Int,
     ) : StudyUiState
 }
 
-/** Valid rating keys, matching the server's case-insensitive accept and iOS lowercase usage. */
 object StudyRatings {
     const val AGAIN = "again"
     const val HARD = "hard"
@@ -50,9 +50,14 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<StudyUiState>(StudyUiState.Idle)
     val uiState: StateFlow<StudyUiState> = _uiState.asStateFlow()
 
-    // Session-scoped tallies — kept here so rating submissions can update incrementally.
     private var cardsStudied = 0
     private var failedRatings = 0
+    private var skippedCount = 0
+    private var suspendedCount = 0
+
+    /** True when the session has any rated or skipped cards — used by the X button to decide
+     *  between showing the summary vs. dismissing outright (matches iOS behaviour). */
+    val hasProgress: Boolean get() = cardsStudied > 0 || skippedCount > 0
     private val ratingsCount = mutableMapOf(
         StudyRatings.AGAIN to 0,
         StudyRatings.HARD to 0,
@@ -67,7 +72,7 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
             runCatching { app.reviewRepository.due(deckId, 50) }
                 .onSuccess { cards ->
                     if (cards.isEmpty()) {
-                        _uiState.value = StudyUiState.Summary(0, ratingsCount.toMap(), 0)
+                        _uiState.value = summaryState()
                     } else {
                         _uiState.value = StudyUiState.Studying(
                             cards = cards,
@@ -97,16 +102,11 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         if (current.isRating || !current.isFlipped) return
         val card = current.currentCard ?: return
 
-        // Optimistic update — advance immediately so the UI feels responsive.
         ratingsCount[rating] = (ratingsCount[rating] ?: 0) + 1
         cardsStudied += 1
         val nextIndex = current.currentIndex + 1
         if (nextIndex >= current.cards.size) {
-            _uiState.value = StudyUiState.Summary(
-                cardsStudied = cardsStudied,
-                ratingsCount = ratingsCount.toMap(),
-                failedRatings = failedRatings,
-            )
+            _uiState.value = summaryState()
         } else {
             _uiState.value = current.copy(
                 currentIndex = nextIndex,
@@ -116,7 +116,6 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
-        // Submit in background.
         viewModelScope.launch {
             runCatching { app.reviewRepository.rate(card.id, rating) }
                 .onFailure {
@@ -140,12 +139,62 @@ class StudyViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Restart the session against the same deck (or all decks). */
+    fun skipCard() {
+        val current = _uiState.value as? StudyUiState.Studying ?: return
+        skippedCount += 1
+        val nextIndex = current.currentIndex + 1
+        if (nextIndex >= current.cards.size) {
+            _uiState.value = summaryState()
+        } else {
+            _uiState.value = current.copy(
+                currentIndex = nextIndex,
+                isFlipped = false,
+                ratingError = null,
+            )
+        }
+    }
+
+    fun suspendCard() {
+        val current = _uiState.value as? StudyUiState.Studying ?: return
+        val card = current.currentCard ?: return
+
+        suspendedCount += 1
+        val nextIndex = current.currentIndex + 1
+        if (nextIndex >= current.cards.size) {
+            _uiState.value = summaryState()
+        } else {
+            _uiState.value = current.copy(
+                currentIndex = nextIndex,
+                isFlipped = false,
+                ratingError = null,
+            )
+        }
+
+        viewModelScope.launch {
+            runCatching { app.reviewRepository.setCardSuspended(card.id, true) }
+        }
+    }
+
+    fun endSessionEarly() {
+        if (_uiState.value !is StudyUiState.Studying) return
+        _uiState.value = summaryState()
+    }
+
     fun studyAgain(deckId: String?) = startSession(deckId)
+
+    private fun summaryState() = StudyUiState.Summary(
+        cardsStudied = cardsStudied,
+        ratingsCount = ratingsCount.toMap(),
+        failedRatings = failedRatings,
+        skippedCount = skippedCount,
+        suspendedCount = suspendedCount,
+    )
 
     private fun resetTallies() {
         cardsStudied = 0
         failedRatings = 0
+        skippedCount = 0
+        suspendedCount = 0
         StudyRatings.ALL.forEach { ratingsCount[it] = 0 }
     }
 }

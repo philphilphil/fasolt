@@ -21,7 +21,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,16 +29,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/**
- * End-of-session summary. Mirrors iOS StudySummaryView: shows total studied,
- * breakdown by rating, and Study-again / Done actions.
- */
 @Composable
 fun StudySummaryScreen(
     cardsStudied: Int,
     ratingsCount: Map<String, Int>,
     failedRatings: Int,
-    onStudyAgain: () -> Unit,
+    skippedCount: Int,
+    suspendedCount: Int,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -83,12 +79,19 @@ fun StudySummaryScreen(
             RatingRow("Hard", ratingsCount[StudyRatings.HARD] ?: 0, Color(0xFFFF9500))
             RatingRow("Good", ratingsCount[StudyRatings.GOOD] ?: 0, Color(0xFF34C759))
             RatingRow("Easy", ratingsCount[StudyRatings.EASY] ?: 0, Color(0xFF007AFF))
+
+            if (skippedCount > 0) {
+                RatingRow("Skipped", skippedCount, Color(0xFF8E8E93))
+            }
+            if (suspendedCount > 0) {
+                RatingRow("Suspended", suspendedCount, Color(0xFF8E8E93))
+            }
         }
 
         if (failedRatings > 0) {
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "$failedRatings rating${if (failedRatings == 1) "" else "s"} may not have been saved.",
+                text = "$failedRatings rating${if (failedRatings == 1) "" else "s"} may not have been saved. They'll sync when you're back online.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(horizontal = 8.dp),
@@ -96,17 +99,6 @@ fun StudySummaryScreen(
         }
 
         Spacer(Modifier.height(32.dp))
-
-        if (cardsStudied > 0) {
-            OutlinedButton(
-                onClick = onStudyAgain,
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 12.dp),
-            ) {
-                Text("Study again")
-            }
-            Spacer(Modifier.height(12.dp))
-        }
 
         Button(
             onClick = onDone,

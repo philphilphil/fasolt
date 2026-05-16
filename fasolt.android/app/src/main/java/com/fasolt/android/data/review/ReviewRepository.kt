@@ -7,6 +7,7 @@ import com.fasolt.android.data.api.models.ProgressDto
 import com.fasolt.android.data.api.models.RateCardRequest
 import com.fasolt.android.data.api.models.RateCardResponse
 import com.fasolt.android.data.api.models.ReviewStats
+import com.fasolt.android.data.api.models.SetSuspendedRequest
 import com.fasolt.android.data.api.models.StudyStats
 
 class ReviewRepository(private val api: FasoltApi) {
@@ -15,6 +16,10 @@ class ReviewRepository(private val api: FasoltApi) {
 
     suspend fun rate(cardId: String, rating: String): RateCardResponse =
         api.rateCard(RateCardRequest(cardId, rating))
+
+    suspend fun setCardSuspended(cardId: String, suspended: Boolean) {
+        api.setCardSuspended(cardId, SetSuspendedRequest(suspended))
+    }
 
     suspend fun stats(): ReviewStats = api.reviewStats()
     suspend fun overview(): Overview = api.overview()

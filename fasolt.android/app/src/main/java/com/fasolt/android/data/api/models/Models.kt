@@ -226,6 +226,20 @@ data class UpdateSchedulingSettingsRequest(
     val timeZone: String,
 )
 
+// MARK: - Snapshots
+
+@Serializable
+data class SnapshotDto(
+    val id: String,
+    val deckName: String? = null,
+    val cardCount: Int,
+    val createdAt: String,
+    val contentChanges: Int? = null,
+)
+
+@Serializable
+data class CreateSnapshotResponse(val created: Int, val skipped: Int)
+
 // MARK: - Account
 
 @Serializable

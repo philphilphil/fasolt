@@ -1,6 +1,7 @@
 package com.fasolt.android.ui.study
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,10 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,16 +37,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-/**
- * Study (spaced-repetition review) screen — mirrors fasolt.ios StudyView.
- *
- * @param deckId optional deck to filter due cards by; null studies across all decks.
- * @param onExit invoked when the user dismisses the session or completes it.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudyScreen(
@@ -54,9 +52,8 @@ fun StudyScreen(
     viewModel: StudyViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val haptics = LocalHapticFeedback.current
 
-    // Kick off the session once on first composition. We key on deckId so a
-    // re-navigation to a different deck restarts the session.
     LaunchedEffect(deckId) {
         if (state is StudyUiState.Idle) {
             viewModel.startSession(deckId)
@@ -69,15 +66,52 @@ fun StudyScreen(
                 title = {
                     if (state is StudyUiState.Studying) {
                         val s = state as StudyUiState.Studying
-                        Text("${s.currentIndex + 1} / ${s.totalCards}")
-                    } else {
-                        Text("Study")
+                        Text(
+                            text = "${s.currentIndex + 1} / ${s.totalCards}",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    }
+                },
+                navigationIcon = {
+                    if (state is StudyUiState.Studying) {
+                        Row {
+                            IconButton(onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.suspendCard()
+                            }) {
+                                Icon(
+                                    Icons.Default.PauseCircle,
+                                    contentDescription = "Suspend card",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            TextButton(onClick = {
+                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                viewModel.skipCard()
+                            }) {
+                                Text(
+                                    text = "Skip",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 },
                 actions = {
                     if (state !is StudyUiState.Summary) {
-                        IconButton(onClick = onExit) {
-                            Icon(Icons.Default.Close, contentDescription = "Close")
+                        IconButton(onClick = {
+                            if (state is StudyUiState.Studying && viewModel.hasProgress) {
+                                viewModel.endSessionEarly()
+                            } else {
+                                onExit()
+                            }
+                        }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
                 },
@@ -111,14 +145,21 @@ fun StudyScreen(
                 }
                 is StudyUiState.Studying -> StudyingContent(
                     state = s,
-                    onFlip = viewModel::flip,
-                    onRate = viewModel::rate,
+                    onFlip = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        viewModel.flip()
+                    },
+                    onRate = { rating ->
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        viewModel.rate(rating)
+                    },
                 )
                 is StudyUiState.Summary -> StudySummaryScreen(
                     cardsStudied = s.cardsStudied,
                     ratingsCount = s.ratingsCount,
                     failedRatings = s.failedRatings,
-                    onStudyAgain = { viewModel.studyAgain(deckId) },
+                    skippedCount = s.skippedCount,
+                    suspendedCount = s.suspendedCount,
                     onDone = onExit,
                 )
             }
@@ -133,23 +174,14 @@ private fun StudyingContent(
     onRate: (String) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        // Progress bar
-        Row(
+        LinearProgressIndicator(
+            progress = { state.progress },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LinearProgressIndicator(
-                progress = { state.progress },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp),
-            )
-        }
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .height(4.dp),
+        )
 
-        // Card body — tap-to-flip when face down. We attach the click to a Box
-        // wrapper so the entire card area is the hit target.
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -158,12 +190,45 @@ private fun StudyingContent(
             contentAlignment = Alignment.Center,
         ) {
             val card = state.currentCard ?: return@Box
-            val flipModifier = if (!state.isFlipped) Modifier.clickable { onFlip() } else Modifier
-            CardDisplay(
-                card = card,
-                isFlipped = state.isFlipped,
-                modifier = flipModifier.fillMaxHeight(0.9f),
+
+            val targetRotation = if (state.isFlipped) 180f else 0f
+            val rotation by animateFloatAsState(
+                targetValue = targetRotation,
+                animationSpec = tween(durationMillis = 400),
+                label = "cardFlip",
             )
+            val showFront = rotation <= 90f
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight(0.9f)
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        rotationY = rotation
+                        cameraDistance = 12f * density
+                    }
+                    .then(if (!state.isFlipped) Modifier.clickable { onFlip() } else Modifier),
+            ) {
+                if (showFront) {
+                    CardDisplay(
+                        card = card,
+                        isFlipped = false,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer { rotationY = 180f },
+                    ) {
+                        CardDisplay(
+                            card = card,
+                            isFlipped = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
         }
 
         if (state.ratingError != null) {
@@ -182,7 +247,7 @@ private fun StudyingContent(
                 modifier = Modifier.padding(16.dp),
             )
         } else {
-            Button(
+            OutlinedButton(
                 onClick = onFlip,
                 modifier = Modifier
                     .fillMaxWidth()

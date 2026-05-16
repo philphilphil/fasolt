@@ -10,6 +10,7 @@ import com.fasolt.android.data.decks.DeckRepository
 import com.fasolt.android.data.notifications.NotificationRepository
 import com.fasolt.android.data.review.ReviewRepository
 import com.fasolt.android.data.settings.SchedulingRepository
+import com.fasolt.android.data.snapshots.SnapshotRepository
 import com.fasolt.android.data.sources.SourceRepository
 
 class FasoltApplication : Application() {
@@ -32,6 +33,8 @@ class FasoltApplication : Application() {
         private set
     lateinit var schedulingRepository: SchedulingRepository
         private set
+    lateinit var snapshotRepository: SnapshotRepository
+        private set
 
     override fun onCreate() {
         super.onCreate()
@@ -45,5 +48,6 @@ class FasoltApplication : Application() {
         sourceRepository = SourceRepository(apiFactory.fasoltApi)
         notificationRepository = NotificationRepository(apiFactory.fasoltApi)
         schedulingRepository = SchedulingRepository(apiFactory.fasoltApi)
+        snapshotRepository = SnapshotRepository(apiFactory.fasoltApi)
     }
 }
