@@ -24,12 +24,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Dev default: this machine's LAN IP — the emulator can reach it directly
+            // and a physical device on the same Wi-Fi can too. Switch networks → update.
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"http://192.168.178.103:8080\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://fasolt.app\"")
         }
     }
 

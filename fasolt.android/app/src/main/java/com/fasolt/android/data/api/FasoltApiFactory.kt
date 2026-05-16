@@ -59,6 +59,6 @@ class FasoltApiFactory(
     }
 
     companion object {
-        const val DEFAULT_SERVER_URL = "https://fasolt.app"
+        val DEFAULT_SERVER_URL: String = com.fasolt.android.BuildConfig.DEFAULT_SERVER_URL
     }
 }
