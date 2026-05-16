@@ -10,3 +10,5 @@
 local.properties
 **/build/
 app/release/
+.kotlin/
+gradle/gradle-daemon-jvm.properties

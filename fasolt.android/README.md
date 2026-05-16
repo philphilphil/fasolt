@@ -13,15 +13,16 @@ This is the **spike** scaffold for [issue #126](https://github.com/philphilphil/
 ## First-time setup
 
 1. Open the `fasolt.android/` directory in Android Studio
-2. Studio will prompt to **generate the Gradle wrapper** — accept (this repo does not check in `gradlew` / `gradle-wrapper.jar`)
-3. Let Studio sync — first sync downloads ~500MB of Gradle + Android SDK packages
-4. Run `app` configuration against an emulator or device
+2. Let Studio sync — first sync downloads ~500MB of Gradle + Android SDK packages
+3. Run `app` configuration against an emulator or device
 
-If Studio doesn't auto-generate the wrapper, run from the CLI once Gradle is on `PATH`:
+CLI build (from this directory):
 
 ```
-gradle wrapper --gradle-version 8.11.1
+./gradlew assembleDebug
 ```
+
+Verified against JDK 17 (Android Studio's bundled `jbr`) on macOS arm64.
 
 ## Running against local backend
 
