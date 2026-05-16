@@ -7,6 +7,7 @@ import com.fasolt.android.FasoltApplication
 import com.fasolt.android.data.api.models.Overview
 import com.fasolt.android.data.api.models.StudyStats
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,10 +38,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             _uiState.value = DashboardUiState.Loading
         }
         viewModelScope.launch {
+            // coroutineScope { } contains the async children — without it, an exception
+            // from either call would propagate to viewModelScope and crash the app
+            // before runCatching could see it.
             runCatching {
-                val overviewDeferred = async { app.reviewRepository.overview() }
-                val statsDeferred = async { app.reviewRepository.studyStats() }
-                DashboardData(overviewDeferred.await(), statsDeferred.await())
+                coroutineScope {
+                    val overviewDeferred = async { app.reviewRepository.overview() }
+                    val statsDeferred = async { app.reviewRepository.studyStats() }
+                    DashboardData(overviewDeferred.await(), statsDeferred.await())
+                }
             }
                 .onSuccess { _uiState.value = DashboardUiState.Loaded(it) }
                 .onFailure {
