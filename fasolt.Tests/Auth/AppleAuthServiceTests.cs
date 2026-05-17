@@ -256,7 +256,7 @@ public class AppleAuthServiceTests : IAsyncLifetime
             .AddInMemoryCollection(new Dictionary<string, string?> { ["APPLE_BUNDLE_ID"] = BundleId })
             .Build();
         var logger = NullLogger<AppleAuthService>.Instance;
-        return (new AppleAuthService(jwks, userManager, config, logger), db);
+        return (new AppleAuthService(jwks, userManager, db, config, logger), db);
     }
 
     private string CreateAppleToken(

@@ -7,6 +7,7 @@ using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Api.Endpoints;
 
@@ -175,7 +176,8 @@ public static class AccountEndpoints
     private static async Task<IResult> GitHubCallback(
         HttpContext context,
         UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager)
+        SignInManager<AppUser> signInManager,
+        AppDbContext db)
     {
         var result = await context.AuthenticateAsync(IdentityConstants.ExternalScheme);
         if (result?.Principal is null)
@@ -219,6 +221,15 @@ public static class AccountEndpoints
                 await context.SignOutAsync(IdentityConstants.ExternalScheme);
                 return Results.Redirect("/login?error=account_creation_failed");
             }
+
+            db.Logs.Add(new AppLog
+            {
+                Type = LogType.UserRegistered,
+                Message = $"New user registered: {gitHubUsername} (GitHub)",
+                Success = true,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync();
         }
 
         // Update username if changed on GitHub

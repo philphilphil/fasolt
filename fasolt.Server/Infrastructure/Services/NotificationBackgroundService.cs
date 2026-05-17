@@ -52,16 +52,9 @@ public class NotificationBackgroundService(
             if (eligibleUsers.Count == 0)
             {
                 var totalTokens = await db.DeviceTokens.CountAsync(stoppingToken);
-                db.Logs.Add(new AppLog
-                {
-                    Type = LogType.Notification,
-                    Message = totalTokens == 0
-                        ? "No devices registered for push"
-                        : $"{totalTokens} device(s) registered, none due for notification yet",
-                    Success = true,
-                    CreatedAt = now,
-                });
-                await db.SaveChangesAsync(stoppingToken);
+                logger.LogInformation(
+                    "Notification cycle: {TotalTokens} device(s) registered, none due yet",
+                    totalTokens);
                 return;
             }
 
@@ -92,14 +85,9 @@ public class NotificationBackgroundService(
 
             if (sent == 0 && failed == 0)
             {
-                db.Logs.Add(new AppLog
-                {
-                    Type = LogType.Notification,
-                    Message = $"Checked {eligibleUsers.Count} user(s), no cards due",
-                    Success = true,
-                    CreatedAt = now,
-                });
-                await db.SaveChangesAsync(stoppingToken);
+                logger.LogInformation(
+                    "Notification cycle: checked {Count} user(s), no cards due",
+                    eligibleUsers.Count);
             }
         }
         catch (Exception ex)

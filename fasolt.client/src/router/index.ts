@@ -61,7 +61,17 @@ const router = createRouter({
     { path: '/review/:deckId?', name: 'review', component: () => import('@/views/ReviewView.vue'), meta: { title: 'Review' } },
     { path: '/mcp-setup', name: 'mcp', component: () => import('@/views/McpView.vue'), meta: { public: true, title: 'MCP setup' } },
     { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue'), meta: { title: 'Settings' } },
-    { path: '/admin', name: 'admin', component: () => import('@/views/AdminView.vue'), meta: { requiresAdmin: true, title: 'Admin' } },
+    {
+      path: '/admin',
+      component: () => import('@/layouts/AdminLayout.vue'),
+      meta: { requiresAdmin: true, title: 'Admin' },
+      redirect: '/admin/overview',
+      children: [
+        { path: 'overview', name: 'admin-overview', component: () => import('@/views/admin/AdminOverviewView.vue'), meta: { requiresAdmin: true, title: 'Admin · Overview' } },
+        { path: 'users', name: 'admin-users', component: () => import('@/views/admin/AdminUsersView.vue'), meta: { requiresAdmin: true, title: 'Admin · Users' } },
+        { path: 'logs', name: 'admin-logs', component: () => import('@/views/admin/AdminLogsView.vue'), meta: { requiresAdmin: true, title: 'Admin · Activity' } },
+      ],
+    },
     { path: '/dashboard', redirect: '/study' },
     // Catch-all 404
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'), meta: { public: true, title: 'Page not found' } },

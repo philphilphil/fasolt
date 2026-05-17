@@ -16,3 +16,13 @@ public record AdminUserListResponse(
     int TotalCount,
     int Page,
     int PageSize);
+
+public record AdminStatsDto(
+    int TotalUsers,
+    int LockedUsers,
+    int UsersWithPush,
+    int TotalCards,
+    int TotalDecks,
+    int DueCards,
+    int RegistrationsLast7d,
+    int RegistrationsLast30d);

@@ -8,6 +8,7 @@ using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Auth;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Pages.Oauth;
 
@@ -20,17 +21,20 @@ public class RegisterModel : PageModel
     private readonly IEmailVerificationCodeService _otpService;
     private readonly IOtpEmailSender _emailSender;
     private readonly IConfiguration _configuration;
+    private readonly AppDbContext _db;
 
     public RegisterModel(
         UserManager<AppUser> userManager,
         IEmailVerificationCodeService otpService,
         IOtpEmailSender emailSender,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        AppDbContext db)
     {
         _userManager = userManager;
         _otpService = otpService;
         _emailSender = emailSender;
         _configuration = configuration;
+        _db = db;
     }
 
     public bool GitHubEnabled => !string.IsNullOrEmpty(_configuration["GITHUB_CLIENT_ID"]);
@@ -142,6 +146,15 @@ public class RegisterModel : PageModel
             ErrorMessage = string.Join("; ", createResult.Errors.Select(e => e.Description));
             return Page();
         }
+
+        _db.Logs.Add(new AppLog
+        {
+            Type = LogType.UserRegistered,
+            Message = $"New user registered: {user.Email} (Email)",
+            Success = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await _db.SaveChangesAsync(HttpContext.RequestAborted);
 
         var code = await _otpService.GenerateAndStoreAsync(user.Id, HttpContext.RequestAborted);
         await _emailSender.SendVerificationCodeAsync(user, user.Email!, code);

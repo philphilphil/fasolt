@@ -17,16 +17,27 @@ public static class AdminEndpoints
         group.MapDelete("/users/{id}", DeleteUser);
         group.MapGet("/logs", GetLogs);
         group.MapPost("/users/{id}/push", TriggerPushForUser);
+        group.MapGet("/stats", GetStats);
     }
 
     private static async Task<IResult> ListUsers(
         int? page,
         int? pageSize,
+        string? q,
+        string? provider,
+        bool? lockedOnly,
+        bool? hasPushOnly,
         AdminService adminService)
     {
         var p = page ?? 1;
         var ps = Math.Clamp(pageSize ?? 50, 1, 100);
-        var result = await adminService.ListUsers(p, ps);
+        var result = await adminService.ListUsers(p, ps, q, provider, lockedOnly, hasPushOnly);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> GetStats(AdminService adminService)
+    {
+        var result = await adminService.GetStats();
         return Results.Ok(result);
     }
 
@@ -71,11 +82,13 @@ public static class AdminEndpoints
         AdminService adminService,
         int? page,
         int? pageSize,
-        string? type)
+        string? type,
+        string? q,
+        bool? success)
     {
         var p = page ?? 1;
         var ps = Math.Clamp(pageSize ?? 50, 1, 100);
-        var result = await adminService.GetLogs(p, ps, type);
+        var result = await adminService.GetLogs(p, ps, type, q, success);
         return Results.Ok(result);
     }
 

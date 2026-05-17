@@ -8,11 +8,43 @@ namespace Fasolt.Server.Application.Services;
 
 public class AdminService(AppDbContext db, ApnsService? apnsService = null)
 {
-    public async Task<AdminUserListResponse> ListUsers(int page, int pageSize)
+    public async Task<AdminUserListResponse> ListUsers(
+        int page,
+        int pageSize,
+        string? q,
+        string? provider,
+        bool? lockedOnly,
+        bool? hasPushOnly)
     {
-        var totalCount = await db.Users.CountAsync();
+        var now = DateTimeOffset.UtcNow;
+        var query = db.Users.AsQueryable();
 
-        var users = await db.Users
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var pattern = $"%{q.Trim()}%";
+            query = query.Where(u =>
+                (u.Email != null && EF.Functions.ILike(u.Email, pattern)) ||
+                (u.UserName != null && EF.Functions.ILike(u.UserName, pattern)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(provider))
+        {
+            // "Email" sentinel means local (no external provider)
+            if (provider.Equals("Email", StringComparison.OrdinalIgnoreCase))
+                query = query.Where(u => u.ExternalProvider == null);
+            else
+                query = query.Where(u => u.ExternalProvider == provider);
+        }
+
+        if (lockedOnly == true)
+            query = query.Where(u => u.LockoutEnabled && u.LockoutEnd > now);
+
+        if (hasPushOnly == true)
+            query = query.Where(u => db.DeviceTokens.Any(d => d.UserId == u.Id));
+
+        var totalCount = await query.CountAsync();
+
+        var users = await query
             .OrderBy(u => u.Email)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -23,7 +55,7 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
                 u.ExternalProvider,
                 db.Cards.Count(c => c.UserId == u.Id),
                 db.Decks.Count(d => d.UserId == u.Id),
-                u.LockoutEnabled && u.LockoutEnd > DateTimeOffset.UtcNow,
+                u.LockoutEnabled && u.LockoutEnd > now,
                 db.DeviceTokens.Any(d => d.UserId == u.Id),
                 u.EmailConfirmed))
             .ToListAsync();
@@ -31,11 +63,52 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
         return new AdminUserListResponse(users, totalCount, page, pageSize);
     }
 
-    public async Task<LogListResponse> GetLogs(int page, int pageSize, string? type)
+    public async Task<AdminStatsDto> GetStats()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var sevenDaysAgo = now.AddDays(-7);
+        var thirtyDaysAgo = now.AddDays(-30);
+
+        var totalUsers = await db.Users.CountAsync();
+        var lockedUsers = await db.Users.CountAsync(u => u.LockoutEnabled && u.LockoutEnd > now);
+        var usersWithPush = await db.DeviceTokens.Select(d => d.UserId).Distinct().CountAsync();
+        var totalCards = await db.Cards.CountAsync();
+        var totalDecks = await db.Decks.CountAsync();
+        var dueCards = await db.Cards.CountAsync(c =>
+            !c.IsSuspended && c.DueAt != null && c.DueAt <= now);
+
+        var registrationsLast7d = await db.Logs.CountAsync(l =>
+            l.Type == LogType.UserRegistered && l.CreatedAt >= sevenDaysAgo);
+        var registrationsLast30d = await db.Logs.CountAsync(l =>
+            l.Type == LogType.UserRegistered && l.CreatedAt >= thirtyDaysAgo);
+
+        return new AdminStatsDto(
+            totalUsers,
+            lockedUsers,
+            usersWithPush,
+            totalCards,
+            totalDecks,
+            dueCards,
+            registrationsLast7d,
+            registrationsLast30d);
+    }
+
+    public async Task<LogListResponse> GetLogs(int page, int pageSize, string? type, string? q, bool? success)
     {
         var query = db.Logs.AsQueryable();
         if (!string.IsNullOrEmpty(type) && Enum.TryParse<LogType>(type, true, out var logType))
             query = query.Where(l => l.Type == logType);
+
+        if (success.HasValue)
+            query = query.Where(l => l.Success == success.Value);
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var pattern = $"%{q.Trim()}%";
+            query = query.Where(l =>
+                EF.Functions.ILike(l.Message, pattern) ||
+                (l.Detail != null && EF.Functions.ILike(l.Detail, pattern)));
+        }
 
         var total = await query.CountAsync();
         var logs = await query

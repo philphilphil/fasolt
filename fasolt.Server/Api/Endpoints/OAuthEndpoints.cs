@@ -202,6 +202,7 @@ public static class OAuthEndpoints
         // Token Endpoint
         app.MapPost("/oauth/token", async (HttpContext context, UserManager<AppUser> userManager) =>
         {
+
             var request = context.GetOpenIddictServerRequest();
             if (request is null)
                 return Results.BadRequest(new { error = Errors.InvalidRequest, error_description = "The OpenID Connect request cannot be retrieved." });

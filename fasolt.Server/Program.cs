@@ -408,7 +408,22 @@ builder.Services.AddMcpServer(options =>
     })
     .WithHttpTransport()
     .AddAuthorizationFilters()
-    .WithToolsFromAssembly();
+    .WithToolsFromAssembly()
+    .WithRequestFilters(filters =>
+    {
+        // Per-tool-call usage signal — sent to ILogger / Seq only, never
+        // to AppLog. Keeps GDPR-sensitive behavioural data out of the admin
+        // DB table (which has no retention policy) and into Seq, where
+        // retention is configurable and the data is queryable by tool name.
+        filters.AddCallToolFilter(next => async (context, cancellationToken) =>
+        {
+            var logger = context.Services?.GetService<ILogger<Program>>();
+            var toolName = context.Params?.Name ?? "(unknown)";
+            var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            logger?.LogInformation("MCP tool {Tool} called by user {UserId}", toolName, userId ?? "(anonymous)");
+            return await next(context, cancellationToken);
+        });
+    });
 
 builder.Services.AddOpenApi();
 

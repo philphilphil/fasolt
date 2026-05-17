@@ -4,6 +4,7 @@ public enum LogType
 {
     Notification,
     Admin,
+    UserRegistered,
 }
 
 public class AppLog

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Application.Auth;
 
@@ -23,13 +24,15 @@ public sealed class AppleAuthService
 
     private readonly AppleJwksCache _jwksCache;
     private readonly UserManager<AppUser> _userManager;
+    private readonly AppDbContext _db;
     private readonly List<string> _audiences;
     private readonly ILogger<AppleAuthService> _logger;
 
-    public AppleAuthService(AppleJwksCache jwksCache, UserManager<AppUser> userManager, IConfiguration configuration, ILogger<AppleAuthService> logger)
+    public AppleAuthService(AppleJwksCache jwksCache, UserManager<AppUser> userManager, AppDbContext db, IConfiguration configuration, ILogger<AppleAuthService> logger)
     {
         _jwksCache = jwksCache;
         _userManager = userManager;
+        _db = db;
         _logger = logger;
 
         // Accept tokens issued for either the iOS bundle ID or the web Services ID
@@ -106,6 +109,16 @@ public sealed class AppleAuthService
                 string.Join(", ", create.Errors.Select(e => e.Description)));
             throw new AppleAuthException("Failed to create account. Please try again.");
         }
+
+        _db.Logs.Add(new AppLog
+        {
+            Type = LogType.UserRegistered,
+            Message = $"New user registered: {newUser.Email ?? newUser.UserName} (Apple)",
+            Success = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+
         return newUser;
     }
 
