@@ -46,6 +46,12 @@ final class CardRepository {
         return card
     }
 
+    func fetchCard(id: String) async throws -> CardDTO {
+        let endpoint = Endpoint(path: "/api/cards/\(id)", method: .get)
+        let card: CardDTO = try await apiClient.request(endpoint)
+        return card
+    }
+
     func updateCard(id: String, _ request: UpdateCardRequest) async throws -> CardDTO {
         let endpoint = Endpoint(path: "/api/cards/\(id)", method: .put, body: request)
         let card: CardDTO = try await apiClient.request(endpoint)

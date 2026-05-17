@@ -8,9 +8,14 @@ struct CardDetailView: View {
     var availableDecks: [DeckDTO] = []
     var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
     var onToggleSuspended: ((Bool) async throws -> Void)?
+    var onAssignToDeck: ((String) async throws -> Void)?
+    var onDelete: (() async throws -> Void)?
     var showsToolbarActions: Bool = true
 
+    @Environment(\.dismiss) private var dismiss
     @State private var showEditSheet = false
+    @State private var showDeleteAlert = false
+    @State private var errorMessage: String?
 
     var body: some View {
         ScrollView {
@@ -126,20 +131,62 @@ struct CardDetailView: View {
         .toolbar {
             if showsToolbarActions {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        UIPasteboard.general.string = card.id
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    } label: {
-                        Label("Copy ID", systemImage: "doc.on.doc")
-                    }
-                }
-                if onSaveEdit != nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showEditSheet = true
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
+                    Menu {
+                        if onSaveEdit != nil {
+                            Button {
+                                showEditSheet = true
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+
+                            Divider()
                         }
+
+                        if onAssignToDeck != nil, !availableDecks.isEmpty {
+                            Menu {
+                                ForEach(availableDecks, id: \.id) { deck in
+                                    Button {
+                                        Task { await assignToDeck(deckId: deck.id) }
+                                    } label: {
+                                        Label(deck.name, systemImage: deck.id == currentDeckId ? "checkmark" : "rectangle.stack")
+                                    }
+                                }
+                            } label: {
+                                Label("Move to deck", systemImage: "rectangle.stack")
+                            }
+                        }
+
+                        if onToggleSuspended != nil {
+                            Button {
+                                Task { await toggleSuspended() }
+                            } label: {
+                                Label(
+                                    card.isSuspended ? "Unsuspend" : "Suspend",
+                                    systemImage: card.isSuspended ? "play.circle" : "pause.circle"
+                                )
+                            }
+                        }
+
+                        Divider()
+
+                        Button {
+                            UIPasteboard.general.string = card.id
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        } label: {
+                            Label("Copy ID", systemImage: "doc.on.doc")
+                        }
+
+                        if onDelete != nil {
+                            Divider()
+
+                            Button(role: .destructive) {
+                                showDeleteAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
                     }
                 }
             }
@@ -167,6 +214,45 @@ struct CardDetailView: View {
                 },
                 onToggleSuspended: onToggleSuspended
             )
+        }
+        .alert("Delete Card", isPresented: $showDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                Task { await delete() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This cannot be undone.")
+        }
+        .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+            Button("OK") { errorMessage = nil }
+        } message: {
+            Text(errorMessage ?? "")
+        }
+    }
+
+    private func assignToDeck(deckId: String) async {
+        do {
+            try await onAssignToDeck?(deckId)
+            dismiss()
+        } catch {
+            errorMessage = "Could not move card."
+        }
+    }
+
+    private func toggleSuspended() async {
+        do {
+            try await onToggleSuspended?(!card.isSuspended)
+        } catch {
+            errorMessage = "Could not update card."
+        }
+    }
+
+    private func delete() async {
+        do {
+            try await onDelete?()
+            dismiss()
+        } catch {
+            errorMessage = "Could not delete card."
         }
     }
 }

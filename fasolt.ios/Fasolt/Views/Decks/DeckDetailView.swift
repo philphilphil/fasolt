@@ -301,6 +301,15 @@ struct DeckDetailView: View {
             },
             onToggleSuspended: { id, isSuspended in
                 try await viewModel.setCardSuspended(id: id, isSuspended: isSuspended)
+            },
+            onAssignToDeck: { id, deckId in
+                try await viewModel.assignCardToDeck(cardId: id, deckId: deckId)
+            },
+            onRemoveFromDeck: { id, deckId in
+                try await viewModel.removeCardFromDeck(cardId: id, deckId: deckId)
+            },
+            onDelete: { id in
+                try await viewModel.deleteCard(id: id)
             }
         )
     }

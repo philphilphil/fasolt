@@ -21,18 +21,21 @@ struct StudyView: View {
             case .studying, .flipped:
                 cardContent
             case .summary:
-                if viewModel.mode == .cram {
-                    cramSummary
-                } else {
-                    StudySummaryView(
-                        cardsStudied: viewModel.cardsStudied,
-                        ratingsCount: viewModel.ratingsCount,
-                        failedRatings: viewModel.failedRatings,
-                        skippedCount: viewModel.skippedCount,
-                        suspendedCount: viewModel.suspendedCount,
-                        onDone: { dismiss() }
-                    )
-                }
+                // Cram sessions dismiss directly via .onChange below — never reaches here.
+                StudySummaryView(
+                    cardsStudied: viewModel.cardsStudied,
+                    ratingsCount: viewModel.ratingsCount,
+                    failedRatings: viewModel.failedRatings,
+                    skippedCount: viewModel.skippedCount,
+                    suspendedCount: viewModel.suspendedCount,
+                    onDone: { dismiss() }
+                )
+            }
+        }
+        .onChange(of: viewModel.state) { _, newState in
+            if newState == .summary && viewModel.mode == .cram {
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                dismiss()
             }
         }
         .toolbar {
@@ -53,18 +56,20 @@ struct StudyView: View {
                             Image(systemName: "pause.circle")
                                 .foregroundStyle(.secondary)
                         }
-                        Button {
-                            let generator = UIImpactFeedbackGenerator(style: .light)
-                            generator.impactOccurred()
-                            viewModel.skipCard()
-                            if viewModel.state == .summary {
-                                let notification = UINotificationFeedbackGenerator()
-                                notification.notificationOccurred(.success)
+                        if viewModel.mode != .cram {
+                            Button {
+                                let generator = UIImpactFeedbackGenerator(style: .light)
+                                generator.impactOccurred()
+                                viewModel.skipCard()
+                                if viewModel.state == .summary {
+                                    let notification = UINotificationFeedbackGenerator()
+                                    notification.notificationOccurred(.success)
+                                }
+                            } label: {
+                                Text("Skip")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
                             }
-                        } label: {
-                            Text("Skip")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -226,10 +231,6 @@ struct StudyView: View {
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred()
             viewModel.advance()
-            if viewModel.state == .summary {
-                let notification = UINotificationFeedbackGenerator()
-                notification.notificationOccurred(.success)
-            }
         } label: {
             Text("Next")
                 .font(.headline)
@@ -238,33 +239,6 @@ struct StudyView: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-    }
-
-    private var cramSummary: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.green)
-
-            Text("Session Complete")
-                .font(.title2.bold())
-
-            Text("\(viewModel.cardsStudied) card\(viewModel.cardsStudied == 1 ? "" : "s") reviewed")
-                .font(.body)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Button("Done") {
-                dismiss()
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .frame(maxWidth: .infinity)
-        }
-        .padding()
     }
 
     // MARK: - Rating Buttons

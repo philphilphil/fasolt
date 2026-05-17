@@ -129,6 +129,19 @@ struct CardListContent: View {
                         },
                         onToggleSuspended: { isSuspended in
                             try await viewModel.setSuspended(cardId: card.id, isSuspended: isSuspended)
+                        },
+                        onAssignToDeck: { deckId in
+                            let request = UpdateCardRequest(
+                                front: card.front,
+                                back: card.back,
+                                sourceFile: card.sourceFile,
+                                sourceHeading: card.sourceHeading,
+                                deckIds: [deckId]
+                            )
+                            try await viewModel.updateCard(id: card.id, request)
+                        },
+                        onDelete: {
+                            try await viewModel.deleteCard(id: card.id)
                         }
                     )
                 } label: {
