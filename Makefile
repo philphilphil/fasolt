@@ -1,6 +1,6 @@
 .PHONY: dev deploy test down logs bump ios ios-clean ios-archive
 
-IOS_SIMULATOR ?= iPhone 17
+IOS_SIMULATOR ?= iPhone 17 Pro
 IOS_BUNDLE_ID := com.fasolt.app
 IOS_DERIVED   := fasolt.ios/build
 IOS_APP       := $(IOS_DERIVED)/Build/Products/Debug-iphonesimulator/Fasolt.app

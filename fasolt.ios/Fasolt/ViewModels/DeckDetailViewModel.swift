@@ -65,6 +65,13 @@ final class DeckDetailViewModel {
         await loadDetail()
     }
 
+    /// Fetches a card's current deck assignments — used to seed the multi-deck picker in the edit sheet
+    /// (the paged context only has `DeckCardDTO`, which doesn't carry the deck list).
+    func fetchCardDeckIds(cardId: String) async throws -> [String] {
+        let card = try await cardRepository.fetchCard(id: cardId)
+        return card.decks.map(\.id)
+    }
+
     func createCard(_ request: CreateCardRequest) async throws {
         let finalRequest = CreateCardRequest(
             front: request.front,
