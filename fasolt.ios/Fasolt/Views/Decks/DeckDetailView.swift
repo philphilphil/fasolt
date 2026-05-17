@@ -109,30 +109,16 @@ struct DeckDetailView: View {
                         }
                     }
 
-                    if !detail.isSuspended && detail.cardCount > 0 {
-                        VStack(spacing: 8) {
-                            if detail.dueCount > 0 {
-                                Button {
-                                    startStudy(deckId: viewModel.deckId)
-                                } label: {
-                                    Text("Study This Deck")
-                                        .font(.headline)
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
-                                }
-                                .buttonStyle(.borderedProminent)
-                            }
-
-                            Button {
-                                startStudy(deckId: viewModel.deckId, mode: .cram)
-                            } label: {
-                                Text("Custom study")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                            }
-                            .buttonStyle(.bordered)
+                    if detail.dueCount > 0 && !detail.isSuspended {
+                        Button {
+                            startStudy(deckId: viewModel.deckId)
+                        } label: {
+                            Text("Study This Deck")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
                         }
+                        .buttonStyle(.borderedProminent)
                         .padding()
                     }
                 }
@@ -169,9 +155,21 @@ struct DeckDetailView: View {
                         Label("Edit", systemImage: "pencil")
                     }
 
-                    Picker("Sort", selection: $sortOrder) {
-                        ForEach(CardSortOrder.allCases, id: \.self) { order in
-                            Text(order.rawValue).tag(order)
+                    Menu {
+                        Picker("Sort cards by", selection: $sortOrder) {
+                            ForEach(CardSortOrder.allCases, id: \.self) { order in
+                                Text(order.rawValue).tag(order)
+                            }
+                        }
+                    } label: {
+                        Label("Sort cards by", systemImage: "arrow.up.arrow.down")
+                    }
+
+                    if let detail = viewModel.detail, !detail.isSuspended, detail.cardCount > 0 {
+                        Button {
+                            startStudy(deckId: viewModel.deckId, mode: .cram)
+                        } label: {
+                            Label("Custom study", systemImage: "rectangle.stack.badge.play")
                         }
                     }
 
