@@ -81,10 +81,6 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
             l.Type == LogType.UserRegistered && l.CreatedAt >= sevenDaysAgo);
         var registrationsLast30d = await db.Logs.CountAsync(l =>
             l.Type == LogType.UserRegistered && l.CreatedAt >= thirtyDaysAgo);
-        var mcpLoginsLast7d = await db.Logs.CountAsync(l =>
-            l.Type == LogType.McpLogin && l.CreatedAt >= sevenDaysAgo);
-        var mcpLoginsLast30d = await db.Logs.CountAsync(l =>
-            l.Type == LogType.McpLogin && l.CreatedAt >= thirtyDaysAgo);
 
         return new AdminStatsDto(
             totalUsers,
@@ -94,9 +90,7 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
             totalDecks,
             dueCards,
             registrationsLast7d,
-            registrationsLast30d,
-            mcpLoginsLast7d,
-            mcpLoginsLast30d);
+            registrationsLast30d);
     }
 
     public async Task<LogListResponse> GetLogs(int page, int pageSize, string? type, string? q, bool? success)

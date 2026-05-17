@@ -106,7 +106,6 @@ function formatDate(iso: string) {
 function typeLabel(t: string) {
   switch (t) {
     case 'UserRegistered': return 'Sign-up'
-    case 'McpLogin': return 'MCP login'
     case 'Notification': return 'Notification'
     case 'Admin': return 'Admin'
     default: return t
@@ -141,7 +140,6 @@ onMounted(fetchLogs)
         >
           <option value="">All types</option>
           <option value="UserRegistered">Sign-ups</option>
-          <option value="McpLogin">MCP logins</option>
           <option value="Notification">Notifications</option>
           <option value="Admin">Admin actions</option>
         </select>

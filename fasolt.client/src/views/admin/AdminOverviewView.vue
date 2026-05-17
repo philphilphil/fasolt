@@ -13,8 +13,6 @@ interface AdminStats {
   dueCards: number
   registrationsLast7d: number
   registrationsLast30d: number
-  mcpLoginsLast7d: number
-  mcpLoginsLast30d: number
 }
 
 const stats = ref<AdminStats | null>(null)
@@ -59,7 +57,6 @@ const groups = computed(() => {
       title: 'Activity',
       cards: [
         { label: 'Sign-ups · 7 days', value: s.registrationsLast7d, sub: `${s.registrationsLast30d} in 30 days` },
-        { label: 'MCP logins · 7 days', value: s.mcpLoginsLast7d, sub: `${s.mcpLoginsLast30d} in 30 days` },
       ],
     },
   ] as Array<{

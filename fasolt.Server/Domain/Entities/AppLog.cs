@@ -5,7 +5,6 @@ public enum LogType
     Notification,
     Admin,
     UserRegistered,
-    McpLogin,
 }
 
 public class AppLog

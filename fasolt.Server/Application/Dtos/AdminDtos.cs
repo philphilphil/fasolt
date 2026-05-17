@@ -25,6 +25,4 @@ public record AdminStatsDto(
     int TotalDecks,
     int DueCards,
     int RegistrationsLast7d,
-    int RegistrationsLast30d,
-    int McpLoginsLast7d,
-    int McpLoginsLast30d);
+    int RegistrationsLast30d);

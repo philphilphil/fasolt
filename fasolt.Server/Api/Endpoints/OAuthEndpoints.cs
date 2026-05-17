@@ -200,14 +200,8 @@ public static class OAuthEndpoints
         });
 
         // Token Endpoint
-        app.MapPost("/oauth/token", async (HttpContext context, UserManager<AppUser> userManager, AppDbContext db) =>
+        app.MapPost("/oauth/token", async (HttpContext context, UserManager<AppUser> userManager) =>
         {
-            // Clients we ship ourselves — their token traffic isn't interesting
-            // for the admin "MCP login" feed (it's just routine app refresh).
-            // Anything outside this set is an external MCP client (Claude.ai,
-            // Cursor, ChatGPT, etc.) and worth surfacing.
-            static bool IsFirstPartyClient(string? clientId) =>
-                clientId is "fasolt-ios" or "fasolt-android";
 
             var request = context.GetOpenIddictServerRequest();
             if (request is null)
@@ -265,19 +259,6 @@ public static class OAuthEndpoints
                     "email_confirmed" => [Destinations.AccessToken],
                     _ => [Destinations.AccessToken],
                 });
-
-                // Only log fresh logins (authorization_code), not silent refreshes
-                if (request.IsAuthorizationCodeGrantType() && !IsFirstPartyClient(request.ClientId))
-                {
-                    db.Logs.Add(new AppLog
-                    {
-                        Type = LogType.McpLogin,
-                        Message = $"MCP login: {user.Email ?? user.UserName} via {request.ClientId ?? "unknown client"}",
-                        Success = true,
-                        CreatedAt = DateTimeOffset.UtcNow,
-                    });
-                    await db.SaveChangesAsync();
-                }
 
                 return Results.SignIn(new ClaimsPrincipal(identity),
                     properties: null,
