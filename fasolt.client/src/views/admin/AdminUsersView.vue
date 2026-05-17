@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { apiFetch } from '@/api/client'
 import {
   Table,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
@@ -34,51 +35,58 @@ interface AdminUserListResponse {
   pageSize: number
 }
 
-interface LogEntry {
-  id: number
-  type: string
-  message: string
-  detail: string | null
-  success: boolean
-  createdAt: string
-}
-
-interface LogListResponse {
-  logs: LogEntry[]
-  totalCount: number
-  page: number
-  pageSize: number
-}
-
 const users = ref<AdminUser[]>([])
 const totalCount = ref(0)
 const page = ref(1)
 const pageSize = 50
 const isLoading = ref(false)
+const errorMessage = ref<string | null>(null)
+
+const search = ref('')
+const providerFilter = ref<string>('')
+const lockedOnly = ref(false)
+const hasPushOnly = ref(false)
+let searchDebounce: number | undefined
+
 const lockDialogOpen = ref(false)
 const lockTargetUser = ref<AdminUser | null>(null)
 const deleteDialogOpen = ref(false)
 const deleteTargetUser = ref<AdminUser | null>(null)
-const errorMessage = ref<string | null>(null)
-
-const logs = ref<LogEntry[]>([])
-const logsTotal = ref(0)
-const logsPage = ref(1)
-const logsLoading = ref(false)
 const pushingUserId = ref<string | null>(null)
 
 async function fetchUsers() {
   isLoading.value = true
   try {
-    const data = await apiFetch<AdminUserListResponse>(
-      `/admin/users?page=${page.value}&pageSize=${pageSize}`,
-    )
+    const params = new URLSearchParams({
+      page: String(page.value),
+      pageSize: String(pageSize),
+    })
+    if (search.value.trim()) params.set('q', search.value.trim())
+    if (providerFilter.value) params.set('provider', providerFilter.value)
+    if (lockedOnly.value) params.set('lockedOnly', 'true')
+    if (hasPushOnly.value) params.set('hasPushOnly', 'true')
+    const data = await apiFetch<AdminUserListResponse>(`/admin/users?${params.toString()}`)
     users.value = data.users
     totalCount.value = data.totalCount
+  } catch (e: any) {
+    errorMessage.value = e.message ?? 'Failed to load users'
   } finally {
     isLoading.value = false
   }
 }
+
+watch([providerFilter, lockedOnly, hasPushOnly], () => {
+  page.value = 1
+  fetchUsers()
+})
+
+watch(search, () => {
+  if (searchDebounce) window.clearTimeout(searchDebounce)
+  searchDebounce = window.setTimeout(() => {
+    page.value = 1
+    fetchUsers()
+  }, 250)
+})
 
 function confirmLock(user: AdminUser) {
   lockTargetUser.value = user
@@ -93,7 +101,6 @@ async function lockUser() {
     await fetchUsers()
   } catch (e: any) {
     errorMessage.value = e.message ?? 'Failed to lock user'
-    console.error('Failed to lock user', e)
   }
 }
 
@@ -103,7 +110,34 @@ async function unlockUser(id: string) {
     await fetchUsers()
   } catch (e: any) {
     errorMessage.value = e.message ?? 'Failed to unlock user'
-    console.error('Failed to unlock user', e)
+  }
+}
+
+function confirmDelete(user: AdminUser) {
+  deleteTargetUser.value = user
+  deleteDialogOpen.value = true
+}
+
+async function deleteUser() {
+  if (!deleteTargetUser.value) return
+  try {
+    await apiFetch(`/admin/users/${deleteTargetUser.value.id}`, { method: 'DELETE' })
+    deleteDialogOpen.value = false
+    await fetchUsers()
+  } catch (e: any) {
+    errorMessage.value = e.message ?? 'Failed to delete user'
+  }
+}
+
+async function pushToUser(user: AdminUser) {
+  pushingUserId.value = user.id
+  try {
+    await apiFetch<{ message: string }>(`/admin/users/${user.id}/push`, { method: 'POST' })
+    errorMessage.value = null
+  } catch (e: any) {
+    errorMessage.value = e.message ?? 'Failed to send push'
+  } finally {
+    pushingUserId.value = null
   }
 }
 
@@ -123,85 +157,65 @@ function prevPage() {
   }
 }
 
-async function pushToUser(user: AdminUser) {
-  pushingUserId.value = user.id
-  try {
-    await apiFetch<{ message: string }>(`/admin/users/${user.id}/push`, { method: 'POST' })
-    errorMessage.value = null
-    await fetchLogs()
-  } catch (e: any) {
-    errorMessage.value = e.message ?? 'Failed to send push'
-  } finally {
-    pushingUserId.value = null
-  }
+function clearFilters() {
+  search.value = ''
+  providerFilter.value = ''
+  lockedOnly.value = false
+  hasPushOnly.value = false
 }
 
-function confirmDelete(user: AdminUser) {
-  deleteTargetUser.value = user
-  deleteDialogOpen.value = true
-}
+const hasActiveFilters = () =>
+  !!(search.value || providerFilter.value || lockedOnly.value || hasPushOnly.value)
 
-async function deleteUser() {
-  if (!deleteTargetUser.value) return
-  try {
-    await apiFetch(`/admin/users/${deleteTargetUser.value.id}`, { method: 'DELETE' })
-    deleteDialogOpen.value = false
-    await fetchUsers()
-  } catch (e: any) {
-    errorMessage.value = e.message ?? 'Failed to delete user'
-    console.error('Failed to delete user', e)
-  }
-}
-
-async function fetchLogs() {
-  logsLoading.value = true
-  try {
-    const data = await apiFetch<LogListResponse>(
-      `/admin/logs?page=${logsPage.value}&pageSize=${pageSize}`,
-    )
-    logs.value = data.logs
-    logsTotal.value = data.totalCount
-  } finally {
-    logsLoading.value = false
-  }
-}
-
-const logsTotalPages = () => Math.ceil(logsTotal.value / pageSize)
-
-function logsNextPage() {
-  if (logsPage.value < logsTotalPages()) {
-    logsPage.value++
-    fetchLogs()
-  }
-}
-
-function logsPrevPage() {
-  if (logsPage.value > 1) {
-    logsPage.value--
-    fetchLogs()
-  }
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString()
-}
-
-onMounted(() => {
-  fetchUsers()
-  fetchLogs()
-})
+onMounted(fetchUsers)
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight">Admin</h1>
-      <p class="text-muted-foreground">Manage users and monitor usage.</p>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-semibold tracking-tight">Users</h2>
+        <p class="text-sm text-muted-foreground">{{ totalCount }} total</p>
+      </div>
     </div>
 
     <div v-if="errorMessage" class="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
       {{ errorMessage }}
       <button class="ml-2 underline" @click="errorMessage = null">Dismiss</button>
+    </div>
+
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="flex flex-col gap-1 flex-1 min-w-[200px]">
+        <label class="text-xs font-medium text-muted-foreground" for="user-search">Search</label>
+        <Input
+          id="user-search"
+          v-model="search"
+          type="search"
+          placeholder="Email or username..."
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs font-medium text-muted-foreground" for="user-provider">Provider</label>
+        <select
+          id="user-provider"
+          v-model="providerFilter"
+          class="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <option value="">All</option>
+          <option value="Email">Email</option>
+          <option value="GitHub">GitHub</option>
+          <option value="Apple">Apple</option>
+        </select>
+      </div>
+      <label class="flex h-10 items-center gap-2 text-sm">
+        <input v-model="lockedOnly" type="checkbox" class="h-4 w-4 rounded border-input" />
+        Locked only
+      </label>
+      <label class="flex h-10 items-center gap-2 text-sm">
+        <input v-model="hasPushOnly" type="checkbox" class="h-4 w-4 rounded border-input" />
+        Push enabled
+      </label>
+      <Button v-if="hasActiveFilters()" variant="ghost" size="sm" @click="clearFilters">Clear</Button>
     </div>
 
     <div class="rounded-md border">
@@ -219,14 +233,10 @@ onMounted(() => {
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading">
-            <TableCell :colspan="7" class="text-center text-muted-foreground">
-              Loading...
-            </TableCell>
+            <TableCell :colspan="7" class="text-center text-muted-foreground">Loading…</TableCell>
           </TableRow>
           <TableRow v-else-if="users.length === 0">
-            <TableCell :colspan="7" class="text-center text-muted-foreground">
-              No users found.
-            </TableCell>
+            <TableCell :colspan="7" class="text-center text-muted-foreground">No users match the current filters.</TableCell>
           </TableRow>
           <TableRow v-for="u in users" :key="u.id">
             <TableCell class="font-medium">
@@ -250,8 +260,8 @@ onMounted(() => {
               <Badge v-if="u.externalProvider" variant="secondary">{{ u.externalProvider }}</Badge>
               <span v-else class="text-xs text-muted-foreground">Email</span>
             </TableCell>
-            <TableCell class="text-right">{{ u.cardCount }}</TableCell>
-            <TableCell class="text-right">{{ u.deckCount }}</TableCell>
+            <TableCell class="text-right tabular-nums">{{ u.cardCount }}</TableCell>
+            <TableCell class="text-right tabular-nums">{{ u.deckCount }}</TableCell>
             <TableCell>
               <Badge v-if="u.hasPush" variant="secondary">Yes</Badge>
               <span v-else class="text-muted-foreground">—</span>
@@ -262,17 +272,11 @@ onMounted(() => {
             </TableCell>
             <TableCell class="text-right flex gap-1 justify-end">
               <Button v-if="u.hasPush" variant="outline" size="sm" :disabled="pushingUserId === u.id" @click="pushToUser(u)">
-                {{ pushingUserId === u.id ? 'Sending...' : 'Push' }}
+                {{ pushingUserId === u.id ? 'Sending…' : 'Push' }}
               </Button>
-              <Button v-if="!u.isLockedOut" variant="destructive" size="sm" @click="confirmLock(u)">
-                Lock
-              </Button>
-              <Button v-else variant="outline" size="sm" @click="unlockUser(u.id)">
-                Unlock
-              </Button>
-              <Button variant="destructive" size="sm" @click="confirmDelete(u)">
-                Delete
-              </Button>
+              <Button v-if="!u.isLockedOut" variant="destructive" size="sm" @click="confirmLock(u)">Lock</Button>
+              <Button v-else variant="outline" size="sm" @click="unlockUser(u.id)">Unlock</Button>
+              <Button variant="destructive" size="sm" @click="confirmDelete(u)">Delete</Button>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -281,80 +285,14 @@ onMounted(() => {
 
     <div v-if="totalPages() > 1" class="flex items-center justify-between">
       <p class="text-sm text-muted-foreground">
-        Page {{ page }} of {{ totalPages() }} ({{ totalCount }} users)
+        Page {{ page }} of {{ totalPages() }}
       </p>
       <div class="flex gap-2">
-        <Button variant="outline" size="sm" :disabled="page <= 1" @click="prevPage">
-          Previous
-        </Button>
-        <Button variant="outline" size="sm" :disabled="page >= totalPages()" @click="nextPage">
-          Next
-        </Button>
+        <Button variant="outline" size="sm" :disabled="page <= 1" @click="prevPage">Previous</Button>
+        <Button variant="outline" size="sm" :disabled="page >= totalPages()" @click="nextPage">Next</Button>
       </div>
     </div>
 
-    <!-- Logs -->
-    <div class="pt-4 flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold tracking-tight">Logs</h2>
-        <p class="text-sm text-muted-foreground">Recent system activity.</p>
-      </div>
-      <Button variant="outline" size="sm" :disabled="logsLoading" @click="fetchLogs">
-        Refresh
-      </Button>
-    </div>
-
-    <div class="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Time</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Message</TableHead>
-            <TableHead>Detail</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow v-if="logsLoading">
-            <TableCell :colspan="5" class="text-center text-muted-foreground">
-              Loading...
-            </TableCell>
-          </TableRow>
-          <TableRow v-else-if="logs.length === 0">
-            <TableCell :colspan="5" class="text-center text-muted-foreground">
-              No logs yet.
-            </TableCell>
-          </TableRow>
-          <TableRow v-for="l in logs" :key="l.id">
-            <TableCell class="whitespace-nowrap text-sm">{{ formatDate(l.createdAt) }}</TableCell>
-            <TableCell><Badge variant="outline">{{ l.type }}</Badge></TableCell>
-            <TableCell>{{ l.message }}</TableCell>
-            <TableCell class="text-muted-foreground text-sm">{{ l.detail ?? '—' }}</TableCell>
-            <TableCell>
-              <Badge v-if="l.success" variant="secondary">OK</Badge>
-              <Badge v-else variant="destructive">Error</Badge>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
-
-    <div v-if="logsTotalPages() > 1" class="flex items-center justify-between">
-      <p class="text-sm text-muted-foreground">
-        Page {{ logsPage }} of {{ logsTotalPages() }} ({{ logsTotal }} entries)
-      </p>
-      <div class="flex gap-2">
-        <Button variant="outline" size="sm" :disabled="logsPage <= 1" @click="logsPrevPage">
-          Previous
-        </Button>
-        <Button variant="outline" size="sm" :disabled="logsPage >= logsTotalPages()" @click="logsNextPage">
-          Next
-        </Button>
-      </div>
-    </div>
-
-    <!-- Lock confirmation dialog -->
     <Dialog v-model:open="lockDialogOpen">
       <DialogContent>
         <DialogHeader>
@@ -370,7 +308,6 @@ onMounted(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- Delete confirmation dialog -->
     <Dialog v-model:open="deleteDialogOpen">
       <DialogContent>
         <DialogHeader>
