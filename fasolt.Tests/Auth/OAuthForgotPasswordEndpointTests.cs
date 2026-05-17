@@ -11,9 +11,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthForgotPasswordEndpointTests
+public class OAuthForgotPasswordEndpointTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthForgotPasswordEndpointTests(WebApplicationFactory<Program> factory)
     {

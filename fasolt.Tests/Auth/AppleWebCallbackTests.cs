@@ -12,13 +12,16 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class AppleWebCallbackTests
+public class AppleWebCallbackTests : IAsyncLifetime
 {
     private const string WebClientId = "app.fasolt.web";
     private const string Kid = "test-kid";
 
     private readonly WebApplicationFactory<Program> _factory;
     private readonly RSA _signingKey;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public AppleWebCallbackTests(WebApplicationFactory<Program> factory)
     {

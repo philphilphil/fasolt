@@ -11,9 +11,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthConsentPageTests
+public class OAuthConsentPageTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthConsentPageTests(WebApplicationFactory<Program> factory)
     {

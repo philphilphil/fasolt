@@ -10,9 +10,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthRegisterEndpointTests
+public class OAuthRegisterEndpointTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthRegisterEndpointTests(WebApplicationFactory<Program> factory)
     {

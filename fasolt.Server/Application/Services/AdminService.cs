@@ -44,21 +44,48 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
 
         var totalCount = await query.CountAsync();
 
-        var users = await query
+        var rows = await query
             .OrderBy(u => u.Email)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(u => new AdminUserDto(
+            .Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.UserName,
+                u.ExternalProvider,
+                u.LockoutEnabled,
+                u.LockoutEnd,
+                u.EmailConfirmed,
+                CardCount = db.Cards.Count(c => c.UserId == u.Id),
+                DeckCount = db.Decks.Count(d => d.UserId == u.Id),
+                HasPush = db.DeviceTokens.Any(d => d.UserId == u.Id),
+                LastReviewAt = db.ReviewLogs.Where(r => r.UserId == u.Id).Max(r => (DateTimeOffset?)r.ReviewedAt),
+                LastCardCreatedAt = db.Cards.Where(c => c.UserId == u.Id).Max(c => (DateTimeOffset?)c.CreatedAt),
+                LastDeckCreatedAt = db.Decks.Where(d => d.UserId == u.Id).Max(d => (DateTimeOffset?)d.CreatedAt),
+                u.LastLoginAt,
+            })
+            .ToListAsync();
+
+        var users = rows.Select(u =>
+        {
+            var times = new[] { u.LastReviewAt, u.LastCardCreatedAt, u.LastDeckCreatedAt, u.LastLoginAt }
+                .Where(t => t.HasValue)
+                .Select(t => t!.Value)
+                .ToList();
+            DateTimeOffset? lastActivity = times.Count > 0 ? times.Max() : null;
+            return new AdminUserDto(
                 u.Id,
                 u.Email!,
                 u.ExternalProvider != null ? u.UserName : null,
                 u.ExternalProvider,
-                db.Cards.Count(c => c.UserId == u.Id),
-                db.Decks.Count(d => d.UserId == u.Id),
+                u.CardCount,
+                u.DeckCount,
                 u.LockoutEnabled && u.LockoutEnd > now,
-                db.DeviceTokens.Any(d => d.UserId == u.Id),
-                u.EmailConfirmed))
-            .ToListAsync();
+                u.HasPush,
+                u.EmailConfirmed,
+                lastActivity);
+        }).ToList();
 
         return new AdminUserListResponse(users, totalCount, page, pageSize);
     }

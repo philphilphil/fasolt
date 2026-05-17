@@ -69,7 +69,8 @@ builder.Services
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>();
+    .AddClaimsPrincipalFactory<AppClaimsPrincipalFactory>()
+    .AddSignInManager<TrackingSignInManager>();
 
 var gitHubClientId = builder.Configuration["GITHUB_CLIENT_ID"];
 var gitHubClientSecret = builder.Configuration["GITHUB_CLIENT_SECRET"];

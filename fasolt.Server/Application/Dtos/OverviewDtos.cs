@@ -6,3 +6,8 @@ public record OverviewDto(
     Dictionary<string, int> CardsByState,
     int TotalDecks,
     int TotalSources);
+
+public record OverviewIdentityDto(
+    string Email,
+    string? DisplayName,
+    string? ExternalProvider);

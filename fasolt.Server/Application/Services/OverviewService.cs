@@ -42,4 +42,15 @@ public class OverviewService(AppDbContext db)
 
         return new OverviewDto(totalCards, dueCards, cardsByState, totalDecks, totalSources);
     }
+
+    public async Task<OverviewIdentityDto?> GetIdentity(string userId)
+    {
+        return await db.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new OverviewIdentityDto(
+                u.Email!,
+                u.ExternalProvider != null ? u.UserName : null,
+                u.ExternalProvider))
+            .FirstOrDefaultAsync();
+    }
 }
