@@ -5,21 +5,21 @@ struct CardFormSheet: View {
 
     let mode: Mode
     let decks: [DeckDTO]
-    let onSave: (CreateCardRequest, String?) async throws -> Void
+    let onSave: (CreateCardRequest, [String]) async throws -> Void
     var onToggleSuspended: ((Bool) async throws -> Void)?
 
     @State private var front = ""
     @State private var back = ""
     @State private var sourceFile = ""
     @State private var sourceHeading = ""
-    @State private var selectedDeckId: String?
+    @State private var selectedDeckIds: Set<String> = []
     @State private var isSuspended = false
     @State private var isSaving = false
     @State private var errorMessage: String?
 
     enum Mode {
-        case create
-        case edit(front: String, back: String, sourceFile: String?, sourceHeading: String?, deckId: String?, isSuspended: Bool)
+        case create(initialDeckIds: [String] = [])
+        case edit(front: String, back: String, sourceFile: String?, sourceHeading: String?, deckIds: [String], isSuspended: Bool)
 
         var title: String {
             switch self {
@@ -27,23 +27,28 @@ struct CardFormSheet: View {
             case .edit: return "Edit Card"
             }
         }
+
+        var isCreate: Bool {
+            if case .create = self { return true }
+            return false
+        }
     }
 
-    init(mode: Mode, decks: [DeckDTO], onSave: @escaping (CreateCardRequest, String?) async throws -> Void, onToggleSuspended: ((Bool) async throws -> Void)? = nil) {
+    init(mode: Mode, decks: [DeckDTO], onSave: @escaping (CreateCardRequest, [String]) async throws -> Void, onToggleSuspended: ((Bool) async throws -> Void)? = nil) {
         self.mode = mode
         self.decks = decks
         self.onSave = onSave
         self.onToggleSuspended = onToggleSuspended
 
         switch mode {
-        case .create:
-            break
-        case .edit(let front, let back, let sourceFile, let sourceHeading, let deckId, let isSuspended):
+        case .create(let initialDeckIds):
+            _selectedDeckIds = State(initialValue: Set(initialDeckIds))
+        case .edit(let front, let back, let sourceFile, let sourceHeading, let deckIds, let isSuspended):
             _front = State(initialValue: front)
             _back = State(initialValue: back)
             _sourceFile = State(initialValue: sourceFile ?? "")
             _sourceHeading = State(initialValue: sourceHeading ?? "")
-            _selectedDeckId = State(initialValue: deckId)
+            _selectedDeckIds = State(initialValue: Set(deckIds))
             _isSuspended = State(initialValue: isSuspended)
         }
     }
@@ -51,6 +56,13 @@ struct CardFormSheet: View {
     private var canSave: Bool {
         !front.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !back.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var deckSectionFooter: String {
+        if mode.isCreate {
+            return "Card will be added to all selected decks. The first selection is used for the initial create."
+        }
+        return "A card can be assigned to multiple decks."
     }
 
     var body: some View {
@@ -69,13 +81,27 @@ struct CardFormSheet: View {
                 }
 
                 if !decks.isEmpty {
-                    Section("Deck (Optional)") {
-                        Picker("Deck", selection: $selectedDeckId) {
-                            Text("None").tag(String?.none)
-                            ForEach(decks, id: \.id) { deck in
-                                Text(deck.name).tag(Optional(deck.id))
+                    Section {
+                        ForEach(decks, id: \.id) { deck in
+                            Button {
+                                toggleDeck(deck.id)
+                            } label: {
+                                HStack {
+                                    Text(deck.name)
+                                        .foregroundStyle(.primary)
+                                    Spacer()
+                                    if selectedDeckIds.contains(deck.id) {
+                                        Image(systemName: "checkmark")
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
+                                .contentShape(Rectangle())
                             }
                         }
+                    } header: {
+                        Text("Decks")
+                    } footer: {
+                        Text(deckSectionFooter)
                     }
                 }
 
@@ -111,6 +137,14 @@ struct CardFormSheet: View {
         }
     }
 
+    private func toggleDeck(_ id: String) {
+        if selectedDeckIds.contains(id) {
+            selectedDeckIds.remove(id)
+        } else {
+            selectedDeckIds.insert(id)
+        }
+    }
+
     private func save() async {
         isSaving = true
         errorMessage = nil
@@ -124,7 +158,9 @@ struct CardFormSheet: View {
         )
 
         do {
-            try await onSave(request, selectedDeckId)
+            // Preserve deck order matching `decks` so the first selection is stable.
+            let ordered = decks.map(\.id).filter { selectedDeckIds.contains($0) }
+            try await onSave(request, ordered)
             if case .edit(_, _, _, _, _, let wasSuspended) = mode, wasSuspended != isSuspended {
                 try await onToggleSuspended?(isSuspended)
             }

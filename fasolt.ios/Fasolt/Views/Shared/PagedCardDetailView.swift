@@ -6,13 +6,13 @@ struct PagedCardDetailView: View {
     let availableDecks: [DeckDTO]
     let onSaveEdit: (String, UpdateCardRequest) async throws -> Void
     let onToggleSuspended: (String, Bool) async throws -> Void
-    let onAssignToDeck: (String, String) async throws -> Void
-    let onRemoveFromDeck: (String, String) async throws -> Void
+    let onLoadDeckIds: (String) async throws -> [String]
     let onDelete: (String) async throws -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedId: String
-    @State private var showEditSheet = false
+    @State private var editingDeckIds: [String]?
+    @State private var isLoadingEdit = false
     @State private var showDeleteAlert = false
     @State private var errorMessage: String?
 
@@ -23,8 +23,7 @@ struct PagedCardDetailView: View {
         availableDecks: [DeckDTO],
         onSaveEdit: @escaping (String, UpdateCardRequest) async throws -> Void,
         onToggleSuspended: @escaping (String, Bool) async throws -> Void,
-        onAssignToDeck: @escaping (String, String) async throws -> Void,
-        onRemoveFromDeck: @escaping (String, String) async throws -> Void,
+        onLoadDeckIds: @escaping (String) async throws -> [String],
         onDelete: @escaping (String) async throws -> Void
     ) {
         self.cards = cards
@@ -32,8 +31,7 @@ struct PagedCardDetailView: View {
         self.availableDecks = availableDecks
         self.onSaveEdit = onSaveEdit
         self.onToggleSuspended = onToggleSuspended
-        self.onAssignToDeck = onAssignToDeck
-        self.onRemoveFromDeck = onRemoveFromDeck
+        self.onLoadDeckIds = onLoadDeckIds
         self.onDelete = onDelete
         _selectedId = State(initialValue: initialCardId)
     }
@@ -51,14 +49,8 @@ struct PagedCardDetailView: View {
             ForEach(cards, id: \.id) { card in
                 CardDetailView(
                     card: card,
-                    currentDeckId: currentDeckId,
+                    currentDeckIds: currentDeckId.map { [$0] } ?? [],
                     availableDecks: availableDecks,
-                    onSaveEdit: { request in
-                        try await onSaveEdit(card.id, request)
-                    },
-                    onToggleSuspended: { isSuspended in
-                        try await onToggleSuspended(card.id, isSuspended)
-                    },
                     showsToolbarActions: false
                 )
                 .tag(card.id)
@@ -77,37 +69,19 @@ struct PagedCardDetailView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button {
-                        showEditSheet = true
-                    } label: {
+                Button {
+                    Task { await openEditSheet() }
+                } label: {
+                    if isLoadingEdit {
+                        ProgressView()
+                    } else {
                         Label("Edit", systemImage: "pencil")
                     }
-
-                    Divider()
-
-                    Menu {
-                        ForEach(availableDecks, id: \.id) { deck in
-                            Button {
-                                guard let id = currentCard?.id else { return }
-                                Task { await assignToDeck(cardId: id, deckId: deck.id) }
-                            } label: {
-                                Label(deck.name, systemImage: deck.id == currentDeckId ? "checkmark" : "rectangle.stack")
-                            }
-                        }
-                    } label: {
-                        Label("Move to deck", systemImage: "rectangle.stack")
-                    }
-
-                    if let deckId = currentDeckId {
-                        Button {
-                            guard let id = currentCard?.id else { return }
-                            Task { await removeFromDeck(cardId: id, deckId: deckId) }
-                        } label: {
-                            Label("Remove from this deck", systemImage: "rectangle.stack.badge.minus")
-                        }
-                    }
-
+                }
+                .disabled(currentCard == nil || isLoadingEdit)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
                     Button {
                         guard let card = currentCard else { return }
                         Task { await toggleSuspended(card: card) }
@@ -117,8 +91,6 @@ struct PagedCardDetailView: View {
                             systemImage: currentCard?.isSuspended == true ? "play.circle" : "pause.circle"
                         )
                     }
-
-                    Divider()
 
                     Button {
                         if let id = currentCard?.id {
@@ -142,25 +114,28 @@ struct PagedCardDetailView: View {
                 .disabled(currentCard == nil)
             }
         }
-        .sheet(isPresented: $showEditSheet) {
-            if let card = currentCard {
+        .sheet(isPresented: Binding(
+            get: { editingDeckIds != nil },
+            set: { if !$0 { editingDeckIds = nil } }
+        )) {
+            if let card = currentCard, let deckIds = editingDeckIds {
                 CardFormSheet(
                     mode: .edit(
                         front: card.front,
                         back: card.back,
                         sourceFile: card.sourceFile,
                         sourceHeading: card.sourceHeading,
-                        deckId: currentDeckId,
+                        deckIds: deckIds,
                         isSuspended: card.isSuspended
                     ),
                     decks: availableDecks,
-                    onSave: { request, deckId in
+                    onSave: { request, deckIds in
                         let updateRequest = UpdateCardRequest(
                             front: request.front,
                             back: request.back,
                             sourceFile: request.sourceFile,
                             sourceHeading: request.sourceHeading,
-                            deckIds: deckId.map { [$0] }
+                            deckIds: deckIds
                         )
                         try await onSaveEdit(card.id, updateRequest)
                     },
@@ -186,21 +161,14 @@ struct PagedCardDetailView: View {
         }
     }
 
-    private func assignToDeck(cardId: String, deckId: String) async {
+    private func openEditSheet() async {
+        guard let id = currentCard?.id else { return }
+        isLoadingEdit = true
+        defer { isLoadingEdit = false }
         do {
-            try await onAssignToDeck(cardId, deckId)
-            dismiss()
+            editingDeckIds = try await onLoadDeckIds(id)
         } catch {
-            errorMessage = "Could not move card."
-        }
-    }
-
-    private func removeFromDeck(cardId: String, deckId: String) async {
-        do {
-            try await onRemoveFromDeck(cardId, deckId)
-            dismiss()
-        } catch {
-            errorMessage = "Could not remove card from deck."
+            errorMessage = "Could not load card."
         }
     }
 

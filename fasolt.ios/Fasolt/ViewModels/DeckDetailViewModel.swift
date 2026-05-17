@@ -65,33 +65,11 @@ final class DeckDetailViewModel {
         await loadDetail()
     }
 
-    /// Replaces the card's deck assignment with a single deck (matches edit-sheet behavior).
-    func assignCardToDeck(cardId: String, deckId: String) async throws {
+    /// Fetches a card's current deck assignments — used to seed the multi-deck picker in the edit sheet
+    /// (the paged context only has `DeckCardDTO`, which doesn't carry the deck list).
+    func fetchCardDeckIds(cardId: String) async throws -> [String] {
         let card = try await cardRepository.fetchCard(id: cardId)
-        let request = UpdateCardRequest(
-            front: card.front,
-            back: card.back,
-            sourceFile: card.sourceFile,
-            sourceHeading: card.sourceHeading,
-            deckIds: [deckId]
-        )
-        _ = try await cardRepository.updateCard(id: cardId, request)
-        await loadDetail()
-    }
-
-    /// Removes the card from a single deck, preserving any other deck assignments.
-    func removeCardFromDeck(cardId: String, deckId: String) async throws {
-        let card = try await cardRepository.fetchCard(id: cardId)
-        let remaining = card.decks.map(\.id).filter { $0 != deckId }
-        let request = UpdateCardRequest(
-            front: card.front,
-            back: card.back,
-            sourceFile: card.sourceFile,
-            sourceHeading: card.sourceHeading,
-            deckIds: remaining
-        )
-        _ = try await cardRepository.updateCard(id: cardId, request)
-        await loadDetail()
+        return card.decks.map(\.id)
     }
 
     func createCard(_ request: CreateCardRequest) async throws {

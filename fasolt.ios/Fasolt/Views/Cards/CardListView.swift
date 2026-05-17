@@ -90,8 +90,9 @@ struct CardListContent: View {
             Task { await viewModel.loadCards() }
         }
         .sheet(isPresented: $showCreateSheet) {
-            CardFormSheet(mode: .create, decks: viewModel.availableDecks) { request, deckId in
-                try await viewModel.createCard(request, deckId: deckId)
+            CardFormSheet(mode: .create(), decks: viewModel.availableDecks) { request, deckIds in
+                // Server's create endpoint takes a single deckId; use the first selection.
+                try await viewModel.createCard(request, deckId: deckIds.first)
             }
         }
         .alert("Delete Card", isPresented: $showDeleteAlert, presenting: cardToDelete) { card in
@@ -122,23 +123,13 @@ struct CardListContent: View {
                     CardDetailView(
                         card: card,
                         deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name),
-                        currentDeckId: card.decks.first?.id,
+                        currentDeckIds: card.decks.map(\.id),
                         availableDecks: viewModel.availableDecks,
                         onSaveEdit: { request in
                             try await viewModel.updateCard(id: card.id, request)
                         },
                         onToggleSuspended: { isSuspended in
                             try await viewModel.setSuspended(cardId: card.id, isSuspended: isSuspended)
-                        },
-                        onAssignToDeck: { deckId in
-                            let request = UpdateCardRequest(
-                                front: card.front,
-                                back: card.back,
-                                sourceFile: card.sourceFile,
-                                sourceHeading: card.sourceHeading,
-                                deckIds: [deckId]
-                            )
-                            try await viewModel.updateCard(id: card.id, request)
                         },
                         onDelete: {
                             try await viewModel.deleteCard(id: card.id)

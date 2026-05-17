@@ -219,7 +219,8 @@ struct DeckDetailView: View {
             }
         }
         .sheet(isPresented: $showCreateCardSheet) {
-            CardFormSheet(mode: .create, decks: []) { request, _ in
+            CardFormSheet(mode: .create(initialDeckIds: [viewModel.deckId]), decks: availableDecks) { request, _ in
+                // Create stays anchored to this deck; multi-deck create can be done later via Edit.
                 try await viewModel.createCard(request)
             }
         }
@@ -302,11 +303,8 @@ struct DeckDetailView: View {
             onToggleSuspended: { id, isSuspended in
                 try await viewModel.setCardSuspended(id: id, isSuspended: isSuspended)
             },
-            onAssignToDeck: { id, deckId in
-                try await viewModel.assignCardToDeck(cardId: id, deckId: deckId)
-            },
-            onRemoveFromDeck: { id, deckId in
-                try await viewModel.removeCardFromDeck(cardId: id, deckId: deckId)
+            onLoadDeckIds: { id in
+                try await viewModel.fetchCardDeckIds(cardId: id)
             },
             onDelete: { id in
                 try await viewModel.deleteCard(id: id)

@@ -4,11 +4,10 @@ import Textual
 struct CardDetailView: View {
     let card: any CardDisplayable
     var deckNames: [String]?
-    var currentDeckId: String?
+    var currentDeckIds: [String] = []
     var availableDecks: [DeckDTO] = []
     var onSaveEdit: ((UpdateCardRequest) async throws -> Void)?
     var onToggleSuspended: ((Bool) async throws -> Void)?
-    var onAssignToDeck: ((String) async throws -> Void)?
     var onDelete: (() async throws -> Void)?
     var showsToolbarActions: Bool = true
 
@@ -130,32 +129,17 @@ struct CardDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if showsToolbarActions {
+                if onSaveEdit != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        if onSaveEdit != nil {
-                            Button {
-                                showEditSheet = true
-                            } label: {
-                                Label("Edit", systemImage: "pencil")
-                            }
-
-                            Divider()
-                        }
-
-                        if onAssignToDeck != nil, !availableDecks.isEmpty {
-                            Menu {
-                                ForEach(availableDecks, id: \.id) { deck in
-                                    Button {
-                                        Task { await assignToDeck(deckId: deck.id) }
-                                    } label: {
-                                        Label(deck.name, systemImage: deck.id == currentDeckId ? "checkmark" : "rectangle.stack")
-                                    }
-                                }
-                            } label: {
-                                Label("Move to deck", systemImage: "rectangle.stack")
-                            }
-                        }
-
                         if onToggleSuspended != nil {
                             Button {
                                 Task { await toggleSuspended() }
@@ -166,8 +150,6 @@ struct CardDetailView: View {
                                 )
                             }
                         }
-
-                        Divider()
 
                         Button {
                             UIPasteboard.general.string = card.id
@@ -198,17 +180,17 @@ struct CardDetailView: View {
                     back: card.back,
                     sourceFile: card.sourceFile,
                     sourceHeading: card.sourceHeading,
-                    deckId: currentDeckId,
+                    deckIds: currentDeckIds,
                     isSuspended: card.isSuspended
                 ),
                 decks: availableDecks,
-                onSave: { request, deckId in
+                onSave: { request, deckIds in
                     let updateRequest = UpdateCardRequest(
                         front: request.front,
                         back: request.back,
                         sourceFile: request.sourceFile,
                         sourceHeading: request.sourceHeading,
-                        deckIds: deckId.map { [$0] }
+                        deckIds: deckIds
                     )
                     try await onSaveEdit?(updateRequest)
                 },
@@ -227,15 +209,6 @@ struct CardDetailView: View {
             Button("OK") { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
-        }
-    }
-
-    private func assignToDeck(deckId: String) async {
-        do {
-            try await onAssignToDeck?(deckId)
-            dismiss()
-        } catch {
-            errorMessage = "Could not move card."
         }
     }
 
