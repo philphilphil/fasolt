@@ -12,9 +12,7 @@ struct MainTabView: View {
     @State private var notificationService: NotificationService?
     @State private var deckListViewModel: DeckListViewModel?
     @State private var cardListViewModel: CardListViewModel?
-    @State private var showStudy = false
-    @State private var studyDeckId: String?
-    @State private var studyMode: StudyMode = .normal
+    @State private var studySession: StudySession?
     @State private var selectedTab: Int = 0
     @State private var router = NavigationRouter.shared
 
@@ -67,19 +65,15 @@ struct MainTabView: View {
                     }
                     .tag(3)
                 }
-                .fullScreenCover(isPresented: $showStudy, onDismiss: {
-                    studyDeckId = nil
-                    studyMode = .normal
+                .fullScreenCover(item: $studySession, onDismiss: {
                     NotificationCenter.default.post(name: .studySessionEnded, object: nil)
-                }) {
+                }) { session in
                     NavigationStack {
-                        StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId, mode: studyMode)
+                        StudyView(viewModel: studyViewModelFactory(), deckId: session.deckId, mode: session.mode)
                     }
                 }
                 .environment(\.startStudy, StartStudyAction { deckId, mode in
-                    studyDeckId = deckId
-                    studyMode = mode
-                    showStudy = true
+                    studySession = StudySession(deckId: deckId, mode: mode)
                 })
                 .onAppear {
                     handlePendingDeepLink()
