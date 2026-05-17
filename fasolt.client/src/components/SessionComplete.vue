@@ -2,11 +2,12 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-defineProps<{
+withDefaults(defineProps<{
   totalCards: number
   ratingCounts: { again: number; hard: number; good: number; easy: number }
   skippedCount?: number
-}>()
+  mode?: 'normal' | 'cram'
+}>(), { mode: 'normal' })
 
 defineEmits<{ done: [] }>()
 </script>
@@ -19,7 +20,7 @@ defineEmits<{ done: [] }>()
       </div>
       <div class="text-xs text-muted-foreground uppercase tracking-[0.15em]">cards reviewed</div>
     </div>
-    <Card class="w-full max-w-xs border-border/60">
+    <Card v-if="mode !== 'cram'" class="w-full max-w-xs border-border/60">
       <CardContent class="grid grid-cols-4 gap-2 p-4 text-center">
         <div>
           <div class="text-sm font-bold text-destructive">{{ ratingCounts.again }}</div>
@@ -42,6 +43,6 @@ defineEmits<{ done: [] }>()
     <div v-if="skippedCount" class="text-xs text-muted-foreground">
       {{ skippedCount }} skipped
     </div>
-    <Button @click="$emit('done')">Back to study</Button>
+    <Button @click="$emit('done')">{{ mode === 'cram' ? 'Done' : 'Back to study' }}</Button>
   </div>
 </template>

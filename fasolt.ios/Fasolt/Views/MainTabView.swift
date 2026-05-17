@@ -10,14 +10,18 @@ struct MainTabView: View {
     @State private var cardRepository: CardRepository?
     @State private var deckRepository: DeckRepository?
     @State private var notificationService: NotificationService?
+    @State private var deckListViewModel: DeckListViewModel?
+    @State private var cardListViewModel: CardListViewModel?
     @State private var showStudy = false
     @State private var studyDeckId: String?
+    @State private var studyMode: StudyMode = .normal
     @State private var selectedTab: Int = 0
     @State private var router = NavigationRouter.shared
 
     var body: some View {
         Group {
-            if let cardRepository, let deckRepository, let notificationService {
+            if let cardRepository, let deckRepository, let notificationService,
+               let deckListViewModel, let cardListViewModel {
                 let studyViewModelFactory: () -> StudyViewModel = {
                     let vm = StudyViewModel(cardRepository: cardRepository)
                     vm.notificationService = notificationService
@@ -34,12 +38,8 @@ struct MainTabView: View {
                     .tag(0)
 
                     LibraryView(
-                        deckListViewModel: DeckListViewModel(deckRepository: deckRepository),
-                        cardListViewModel: CardListViewModel(
-                            apiClient: authService.apiClient,
-                            cardRepository: cardRepository,
-                            deckRepository: deckRepository
-                        ),
+                        deckListViewModel: deckListViewModel,
+                        cardListViewModel: cardListViewModel,
                         deckRepository: deckRepository,
                         cardRepository: cardRepository
                     )
@@ -69,14 +69,16 @@ struct MainTabView: View {
                 }
                 .fullScreenCover(isPresented: $showStudy, onDismiss: {
                     studyDeckId = nil
+                    studyMode = .normal
                     NotificationCenter.default.post(name: .studySessionEnded, object: nil)
                 }) {
                     NavigationStack {
-                        StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId)
+                        StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId, mode: studyMode)
                     }
                 }
-                .environment(\.startStudy, StartStudyAction { deckId in
+                .environment(\.startStudy, StartStudyAction { deckId, mode in
                     studyDeckId = deckId
+                    studyMode = mode
                     showStudy = true
                 })
                 .onAppear {
@@ -91,17 +93,32 @@ struct MainTabView: View {
         }
         .task {
             let apiClient = authService.apiClient
-            cardRepository = CardRepository(
+            let cards = CardRepository(
                 apiClient: apiClient,
                 networkMonitor: networkMonitor,
                 modelContext: modelContext
             )
-            deckRepository = DeckRepository(
+            let decks = DeckRepository(
                 apiClient: apiClient,
                 networkMonitor: networkMonitor,
                 modelContext: modelContext
             )
+            cardRepository = cards
+            deckRepository = decks
             notificationService = NotificationService(apiClient: apiClient)
+
+            // Persist long-lived viewModels in @State so they survive MainTabView body
+            // re-evaluations (which happen on every fullScreenCover toggle).
+            if deckListViewModel == nil {
+                deckListViewModel = DeckListViewModel(deckRepository: decks)
+            }
+            if cardListViewModel == nil {
+                cardListViewModel = CardListViewModel(
+                    apiClient: apiClient,
+                    cardRepository: cards,
+                    deckRepository: decks
+                )
+            }
 
             let service = SyncService(
                 apiClient: apiClient,

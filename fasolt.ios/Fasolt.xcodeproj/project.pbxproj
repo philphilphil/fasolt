@@ -34,6 +34,7 @@
 		6158F7086E448D8D1D00D777 /* StudyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02DB69B316FF51F7EC607EBD /* StudyView.swift */; };
 		65733E77D42D45BE9F603624 /* StartStudyAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4028F964F7D3532D52F3B543 /* StartStudyAction.swift */; };
 		676843D6FA50B1E79076AE45 /* PagedCardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33022DC5174C12EB77D96207 /* PagedCardDetailView.swift */; };
+		6826595D4B22180DDAF5FE32 /* StudyViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F05788634721D2A006D68497 /* StudyViewModelTests.swift */; };
 		6F1A4C6F09CB0E465B1CA3BD /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82812F20EB20898654E7FABF /* CardView.swift */; };
 		7A76E15518841EAEC7BC1AB7 /* CardDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */; };
 		7BCD4493139B55A2D9620DE0 /* DeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22CCAF32BF109E57F03DF3E8 /* DeckDetailView.swift */; };
@@ -141,6 +142,7 @@
 		E11E2D8B1C02F8D7A23A3F6E /* CardDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardDetailView.swift; sourceTree = "<group>"; };
 		E1F0E793E14821102B85EE20 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		E2686816B7E21E3DB2171066 /* CardHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardHelpers.swift; sourceTree = "<group>"; };
+		F05788634721D2A006D68497 /* StudyViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViewModelTests.swift; sourceTree = "<group>"; };
 		F0804C2A2961591877282737 /* DeleteAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountView.swift; sourceTree = "<group>"; };
 		F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeFlowView.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 				B11CE9B38A861E5101458984 /* FasoltTests.swift */,
 				63A881609787DFFE078B49DC /* KeychainHelperTests.swift */,
 				C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */,
+				F05788634721D2A006D68497 /* StudyViewModelTests.swift */,
 			);
 			path = FasoltTests;
 			sourceTree = "<group>";
@@ -483,6 +486,7 @@
 				AD02868CF44F8352E6CC10AE /* FasoltTests.swift in Sources */,
 				345B1EAE7BFC27DA2F03E0C3 /* KeychainHelperTests.swift in Sources */,
 				F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */,
+				6826595D4B22180DDAF5FE32 /* StudyViewModelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -661,7 +665,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.8.0;
+				MARKETING_VERSION = 1.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -679,7 +683,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.8.0;
+				MARKETING_VERSION = 1.9.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

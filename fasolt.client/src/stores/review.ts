@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import type { DueCard, ReviewStats, StudyStats } from '@/types'
 import { apiFetch } from '@/api/client'
 
+export type ReviewMode = 'normal' | 'cram'
+
 export const useReviewStore = defineStore('review', () => {
   const queue = ref<DueCard[]>([])
   const currentIndex = ref(0)
@@ -10,6 +12,7 @@ export const useReviewStore = defineStore('review', () => {
   const isActive = ref(false)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const mode = ref<ReviewMode>('normal')
 
   const sessionStats = ref({
     reviewed: 0,
@@ -39,16 +42,27 @@ export const useReviewStore = defineStore('review', () => {
     return Math.round((Date.now() - sessionStats.value.startTime) / 1000)
   })
 
-  async function startSession(deckId?: string) {
+  async function startSession(deckId?: string, sessionMode: ReviewMode = 'normal') {
     loading.value = true
     error.value = null
     try {
-      const params = deckId ? `?deckId=${deckId}` : ''
-      const cards = await apiFetch<DueCard[]>(`/review/due${params}`)
+      let endpoint: string
+      if (sessionMode === 'cram') {
+        if (!deckId) {
+          error.value = 'Custom study requires a deck.'
+          return
+        }
+        endpoint = `/review/custom?deckId=${deckId}`
+      } else {
+        const params = deckId ? `?deckId=${deckId}` : ''
+        endpoint = `/review/due${params}`
+      }
+      const cards = await apiFetch<DueCard[]>(endpoint)
       queue.value = cards
       currentIndex.value = 0
       isFlipped.value = false
       isActive.value = true
+      mode.value = sessionMode
       sessionStats.value = { reviewed: 0, again: 0, hard: 0, good: 0, easy: 0, skipped: 0, suspended: 0, startTime: Date.now() }
     } catch {
       error.value = 'Failed to load review session. Please try again.'
@@ -108,11 +122,19 @@ export const useReviewStore = defineStore('review', () => {
     isFlipped.value = false
   }
 
+  function advance() {
+    if (!currentCard.value) return
+    sessionStats.value.reviewed++
+    currentIndex.value++
+    isFlipped.value = false
+  }
+
   function endSession() {
     isActive.value = false
     queue.value = []
     currentIndex.value = 0
     isFlipped.value = false
+    mode.value = 'normal'
   }
 
   async function fetchStats(): Promise<ReviewStats> {
@@ -124,8 +146,8 @@ export const useReviewStore = defineStore('review', () => {
   }
 
   return {
-    queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error,
+    queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error, mode,
     progress, sessionStats, sessionTime,
-    startSession, flipCard, skip, suspend, rate, endSession, fetchStats, fetchStudyStats,
+    startSession, flipCard, skip, suspend, rate, advance, endSession, fetchStats, fetchStudyStats,
   }
 })

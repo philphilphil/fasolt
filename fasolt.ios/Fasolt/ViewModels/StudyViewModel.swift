@@ -1,6 +1,16 @@
 import Foundation
 
 @MainActor
+protocol StudyCardSource: AnyObject {
+    func fetchDueCards(deckId: String?, limit: Int) async throws -> [DueCardDTO]
+    func fetchCustomCards(deckId: String) async throws -> [DueCardDTO]
+    func setSuspended(cardId: String, isSuspended: Bool) async throws
+    func rateCard(cardId: String, rating: String) async throws -> RateCardResponse?
+}
+
+extension CardRepository: StudyCardSource {}
+
+@MainActor
 @Observable
 final class StudyViewModel {
     enum SessionState {
@@ -18,6 +28,7 @@ final class StudyViewModel {
     var failedRatings: Int = 0
     var skippedCount: Int = 0
     var suspendedCount: Int = 0
+    var mode: StudyMode = .normal
     private(set) var isRating = false
 
     var notificationService: NotificationService?
@@ -27,9 +38,9 @@ final class StudyViewModel {
         set { UserDefaults.standard.set(newValue, forKey: "hasRequestedNotificationPermission") }
     }
 
-    private let cardRepository: CardRepository
+    private let cardRepository: any StudyCardSource
 
-    init(cardRepository: CardRepository) {
+    init(cardRepository: any StudyCardSource) {
         self.cardRepository = cardRepository
     }
 
@@ -45,11 +56,22 @@ final class StudyViewModel {
 
     var totalCards: Int { cards.count }
 
-    func startSession(deckId: String? = nil) async {
+    func startSession(deckId: String? = nil, mode: StudyMode = .normal) async {
         state = .loading
         errorMessage = nil
+        self.mode = mode
         do {
-            cards = try await cardRepository.fetchDueCards(deckId: deckId)
+            switch mode {
+            case .normal:
+                cards = try await cardRepository.fetchDueCards(deckId: deckId, limit: 50)
+            case .cram:
+                guard let deckId else {
+                    errorMessage = "A deck is required for custom study."
+                    state = .idle
+                    return
+                }
+                cards = try await cardRepository.fetchCustomCards(deckId: deckId)
+            }
             if cards.isEmpty {
                 state = .summary
             } else {
@@ -65,6 +87,17 @@ final class StudyViewModel {
         } catch {
             errorMessage = "Could not load cards. Check your connection."
             state = .idle
+        }
+    }
+
+    func advance() {
+        cardsStudied += 1
+        currentIndex += 1
+        isFlipped = false
+        if currentIndex >= cards.count {
+            state = .summary
+        } else {
+            state = .studying
         }
     }
 

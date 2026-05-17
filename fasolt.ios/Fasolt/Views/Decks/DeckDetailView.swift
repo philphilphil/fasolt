@@ -3,11 +3,13 @@ import UIKit
 
 struct DeckDetailView: View {
     @Environment(\.startStudy) private var startStudy
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: DeckDetailViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
     @State private var showEditSheet = false
     @State private var cardToDelete: DeckCardDTO?
     @State private var showDeleteCardAlert = false
+    @State private var showDeleteDeckAlert = false
     @State private var availableDecks: [DeckDTO] = []
     @State private var showCreateCardSheet = false
     @State private var errorMessage: String?
@@ -148,31 +150,51 @@ struct DeckDetailView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Picker("Sort", selection: $sortOrder) {
-                        ForEach(CardSortOrder.allCases, id: \.self) { order in
-                            Text(order.rawValue).tag(order)
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Menu {
+                        Picker("Sort cards by", selection: $sortOrder) {
+                            ForEach(CardSortOrder.allCases, id: \.self) { order in
+                                Text(order.rawValue).tag(order)
+                            }
+                        }
+                    } label: {
+                        Label("Sort cards by", systemImage: "arrow.up.arrow.down")
+                    }
+
+                    Divider()
+
+                    if let detail = viewModel.detail, !detail.isSuspended, detail.cardCount > 0 {
+                        Button {
+                            startStudy(deckId: viewModel.deckId, mode: .cram)
+                        } label: {
+                            Label("Custom study", systemImage: "rectangle.stack.badge.play")
                         }
                     }
+
+                    Button {
+                        Task { await viewModel.toggleSuspended() }
+                    } label: {
+                        Label(
+                            viewModel.detail?.isSuspended == true ? "Unsuspend" : "Suspend",
+                            systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
+                        )
+                    }
+
+                    Divider()
+
+                    Button(role: .destructive) {
+                        showDeleteDeckAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
                 } label: {
-                    Label("Sort", systemImage: "arrow.up.arrow.down")
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await viewModel.toggleSuspended() }
-                } label: {
-                    Label(
-                        viewModel.detail?.isSuspended == true ? "Unsuspend" : "Suspend",
-                        systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
-                    )
+                    Label("More", systemImage: "ellipsis.circle")
                 }
             }
         }
@@ -214,6 +236,35 @@ struct DeckDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: { _ in
             Text("This cannot be undone.")
+        }
+        .alert("Delete Deck", isPresented: $showDeleteDeckAlert) {
+            Button("Delete Deck Only", role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.deleteDeck(deleteCards: false)
+                        dismiss()
+                    } catch {
+                        errorMessage = "Failed to delete deck."
+                    }
+                }
+            }
+            Button("Delete Deck and Cards", role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.deleteDeck(deleteCards: true)
+                        dismiss()
+                    } catch {
+                        errorMessage = "Failed to delete deck."
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let detail = viewModel.detail {
+                Text("This deck has \(detail.cardCount) cards. What would you like to do?")
+            } else {
+                Text("This cannot be undone.")
+            }
         }
         .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") { errorMessage = nil }

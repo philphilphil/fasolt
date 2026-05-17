@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import type { ReviewRating } from '@/types'
+import { Button } from '@/components/ui/button'
 import ProgressMeter from '@/components/ProgressMeter.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
 import RatingButtons from '@/components/RatingButtons.vue'
@@ -19,14 +20,23 @@ const { register, cleanup } = useKeyboardShortcuts()
 onMounted(async () => {
   if (!review.isActive) {
     const deckId = route.query.deckId as string | undefined
-    await review.startSession(deckId)
+    const mode = route.query.mode === 'cram' ? 'cram' : 'normal'
+    await review.startSession(deckId, mode)
   }
   register({
-    ' ': () => { if (!review.isFlipped && !review.isComplete) review.flipCard() },
-    '1': () => { if (review.isFlipped) review.rate('again') },
-    '2': () => { if (review.isFlipped) review.rate('hard') },
-    '3': () => { if (review.isFlipped) review.rate('good') },
-    '4': () => { if (review.isFlipped) review.rate('easy') },
+    ' ': () => {
+      if (review.isComplete) return
+      if (!review.isFlipped) {
+        review.flipCard()
+      } else if (review.mode === 'cram') {
+        review.advance()
+      }
+    },
+    'n': () => { if (review.mode === 'cram' && review.isFlipped) review.advance() },
+    '1': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('again') },
+    '2': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('hard') },
+    '3': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('good') },
+    '4': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('easy') },
     's': () => { if (!review.isComplete) review.skip() },
     'x': () => { if (!review.isComplete) review.suspend() },
     'Escape': () => { review.endSession(); router.push('/study') },
@@ -53,13 +63,14 @@ function onDone() {
       <!-- Context bar -->
       <div class="mb-4 flex items-center justify-between text-xs text-muted-foreground">
         <div class="flex items-center gap-2">
-          <span class="text-accent text-[10px] uppercase tracking-[0.15em]">Review</span>
+          <span class="text-accent text-[10px] uppercase tracking-[0.15em]">{{ review.mode === 'cram' ? 'Custom study' : 'Review' }}</span>
           <span class="text-border">|</span>
           <span>{{ review.sessionStats.reviewed }} reviewed</span>
         </div>
         <div class="hidden items-center gap-3 sm:flex">
           <span class="flex items-center gap-1"><KbdHint keys="space" /> flip</span>
-          <span class="flex items-center gap-1"><KbdHint keys="1-4" /> rate</span>
+          <span v-if="review.mode === 'cram'" class="flex items-center gap-1"><KbdHint keys="n" /> next</span>
+          <span v-else class="flex items-center gap-1"><KbdHint keys="1-4" /> rate</span>
           <span class="flex items-center gap-1"><KbdHint keys="s" /> skip</span>
           <span class="flex items-center gap-1"><KbdHint keys="x" /> suspend</span>
         </div>
@@ -67,6 +78,11 @@ function onDone() {
 
       <!-- Progress meter -->
       <ProgressMeter :total="100" :current="review.progress" class="mb-6" />
+
+      <!-- Cram mode notice -->
+      <div v-if="review.mode === 'cram'" class="mb-3 text-center text-xs text-muted-foreground">
+        Custom study — FSRS not adjusted
+      </div>
 
       <!-- Card wrapper -->
       <div class="flex flex-1 flex-col items-center justify-center">
@@ -82,9 +98,17 @@ function onDone() {
       <!-- Rating error -->
       <div v-if="review.error" class="mt-3 text-center text-xs text-destructive">{{ review.error }}</div>
 
-      <!-- Rating buttons -->
+      <!-- Rating buttons (or Next in cram mode) -->
       <div v-if="review.isFlipped" class="mt-5">
-        <RatingButtons @rate="onRate" />
+        <Button
+          v-if="review.mode === 'cram'"
+          class="w-full"
+          data-testid="next-button"
+          @click="review.advance()"
+        >
+          Next
+        </Button>
+        <RatingButtons v-else @rate="onRate" />
         <div class="mt-3 flex justify-center gap-3">
           <button class="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors" @click="review.skip()">Skip</button>
           <button class="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors" @click="review.suspend()">Suspend</button>
@@ -118,6 +142,7 @@ function onDone() {
       :total-cards="review.sessionStats.reviewed"
       :rating-counts="review.sessionStats"
       :skipped-count="review.sessionStats.skipped"
+      :mode="review.mode"
       @done="onDone"
     />
 

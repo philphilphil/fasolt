@@ -29,6 +29,7 @@ struct DeckListView: View {
 }
 
 struct DeckListContent: View {
+    @Environment(\.startStudy) private var startStudy
     var viewModel: DeckListViewModel
     @State private var searchText = ""
     @State private var sortOrder: DeckSortOrder = .name
@@ -49,7 +50,7 @@ struct DeckListContent: View {
             .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
             .offlineBanner()
             .task { if viewModel.decks.isEmpty { await viewModel.loadDecks() } }
-            .onAppear { if !viewModel.decks.isEmpty { Task { await viewModel.loadDecks() } } }
+            .onAppear { Task { await viewModel.loadDecks() } }
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
                 Task { await viewModel.loadDecks() }
             }
@@ -128,13 +129,22 @@ struct DeckListContent: View {
                 } label: {
                     deckRow(deck)
                 }
-                .swipeActions(edge: .leading) {
+                .swipeActions(edge: .leading, allowsFullSwipe: false) {
                     Button {
                         UIPasteboard.general.string = deck.id
                     } label: {
                         Label("Copy ID", systemImage: "doc.on.doc")
                     }
                     .tint(.blue)
+
+                    if !deck.isSuspended && deck.cardCount > 0 {
+                        Button {
+                            startStudy(deckId: deck.id, mode: .cram)
+                        } label: {
+                            Label("Custom study", systemImage: "rectangle.stack.badge.play")
+                        }
+                        .tint(.orange)
+                    }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
@@ -177,13 +187,13 @@ struct DeckListContent: View {
         }
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Picker("Sort", selection: $sortOrder) {
+                Picker("Sort decks by", selection: $sortOrder) {
                     ForEach(DeckSortOrder.allCases, id: \.self) { order in
                         Text(order.rawValue).tag(order)
                     }
                 }
             } label: {
-                Label("Sort", systemImage: "arrow.up.arrow.down")
+                Label("Sort decks by", systemImage: "arrow.up.arrow.down")
             }
         }
     }

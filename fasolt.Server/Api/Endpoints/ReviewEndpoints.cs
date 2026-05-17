@@ -12,6 +12,7 @@ public static class ReviewEndpoints
     {
         var group = app.MapGroup("/api/review").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
         group.MapGet("/due", GetDueCards);
+        group.MapGet("/custom", GetCustomStudyCards);
         group.MapPost("/rate", RateCard);
         group.MapGet("/stats", GetStats);
         group.MapGet("/overview", GetOverview);
@@ -27,6 +28,18 @@ public static class ReviewEndpoints
         if (user is null) return Results.Unauthorized();
 
         var cards = await reviewService.GetDueCards(user.Id, limit, deckId);
+        if (cards is null) return Results.NotFound();
+        return Results.Ok(cards);
+    }
+
+    private static async Task<IResult> GetCustomStudyCards(
+        ClaimsPrincipal principal, UserManager<AppUser> userManager, ReviewService reviewService,
+        string deckId)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var cards = await reviewService.GetCustomStudyCards(user.Id, deckId);
         if (cards is null) return Results.NotFound();
         return Results.Ok(cards);
     }

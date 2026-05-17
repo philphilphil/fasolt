@@ -82,4 +82,8 @@ final class DeckDetailViewModel {
         deckName = updated.name
         await loadDetail()
     }
+
+    func deleteDeck(deleteCards: Bool) async throws {
+        try await deckRepository.deleteDeck(id: deckId, deleteCards: deleteCards)
+    }
 }
