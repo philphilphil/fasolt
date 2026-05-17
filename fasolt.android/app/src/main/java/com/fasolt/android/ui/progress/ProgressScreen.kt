@@ -19,9 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -129,7 +128,7 @@ private fun StreakCardsGrid(progress: ProgressDto) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatCell(
-                label = "CURRENT STREAK",
+                label = "Current streak",
                 value = progress.currentStreak.toString(),
                 modifier = Modifier.weight(1f),
                 leading = if (progress.currentStreak > 0) {
@@ -137,7 +136,7 @@ private fun StreakCardsGrid(progress: ProgressDto) {
                         Icon(
                             imageVector = Icons.Default.LocalFireDepartment,
                             contentDescription = null,
-                            tint = Color(0xFFFF9500),
+                            tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(Modifier.width(4.dp))
@@ -145,19 +144,19 @@ private fun StreakCardsGrid(progress: ProgressDto) {
                 } else null,
             )
             StatCell(
-                label = "BEST STREAK",
+                label = "Best streak",
                 value = progress.bestStreak.toString(),
                 modifier = Modifier.weight(1f),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatCell(
-                label = "TOTAL ANSWERED",
+                label = "Total answered",
                 value = progress.totalAnswered.toString(),
                 modifier = Modifier.weight(1f),
             )
             StatCell(
-                label = "TODAY",
+                label = "Today",
                 value = progress.answeredToday.toString(),
                 modifier = Modifier.weight(1f),
             )
@@ -172,27 +171,21 @@ private fun StatCell(
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
 ) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
+    ElevatedCard(modifier = modifier) {
         Column(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (leading != null) leading()
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineMedium,
                 )
             }
         }
@@ -203,12 +196,12 @@ private fun StatCell(
 private fun PeriodStatsRow(progress: ProgressDto) {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         StatCell(
-            label = "THIS WEEK",
+            label = "This week",
             value = progress.answeredThisWeek.toString(),
             modifier = Modifier.weight(1f),
         )
         StatCell(
-            label = "THIS MONTH",
+            label = "This month",
             value = progress.answeredThisMonth.toString(),
             modifier = Modifier.weight(1f),
         )
@@ -217,9 +210,6 @@ private fun PeriodStatsRow(progress: ProgressDto) {
 
 // MARK: - Heatmap
 
-private val RestColor = Color(0xFF222222).copy(alpha = 0.14f)
-private val MissedColor = Color(0xFFFF9500).copy(alpha = 0.22f)
-private val StudiedBase = Color(0xFF34C759)
 private val DateParser: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
 private data class HeatCell(
@@ -235,12 +225,7 @@ private fun ActivityHeatmap(progress: ProgressDto) {
     val studiedDays = activity.count { it.count > 0 }
     val cells = remember(activity) { buildCells(activity) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -252,14 +237,14 @@ private fun ActivityHeatmap(progress: ProgressDto) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "LAST ${activity.size} DAYS",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "Last ${activity.size} days",
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = "$studiedDays of ${activity.size} studied",
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -295,21 +280,27 @@ private fun HeatGrid(cells: List<HeatCell>, maxCount: Int) {
 @Composable
 private fun HeatBox(cell: HeatCell, maxCount: Int) {
     val day = cell.day
-    val accent = MaterialTheme.colorScheme.primary
+    val primary = MaterialTheme.colorScheme.primary
+    val tertiary = MaterialTheme.colorScheme.tertiary
+    val restColor = MaterialTheme.colorScheme.surfaceVariant
+    val onPrimary = MaterialTheme.colorScheme.onPrimary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+
+    val studiedAlpha: Float? = if (day != null && day.count > 0) {
+        val intensity = day.count.toFloat() / maxCount.toFloat()
+        when {
+            intensity < 0.25f -> 0.4f
+            intensity < 0.5f -> 0.6f
+            intensity < 0.75f -> 0.8f
+            else -> 1.0f
+        }
+    } else null
+
     val fill = when {
         day == null -> Color.Transparent
-        day.count > 0 -> {
-            val intensity = day.count.toFloat() / maxCount.toFloat()
-            val alpha = when {
-                intensity < 0.25f -> 0.35f
-                intensity < 0.5f -> 0.55f
-                intensity < 0.75f -> 0.75f
-                else -> 1.0f
-            }
-            StudiedBase.copy(alpha = alpha)
-        }
-        day.hadDue -> MissedColor
-        else -> RestColor
+        studiedAlpha != null -> primary.copy(alpha = studiedAlpha)
+        day.hadDue -> tertiary.copy(alpha = 0.5f)
+        else -> restColor
     }
 
     var boxModifier: Modifier = Modifier
@@ -318,16 +309,15 @@ private fun HeatBox(cell: HeatCell, maxCount: Int) {
         .background(fill)
     if (cell.isToday && day != null) {
         boxModifier = boxModifier.border(
-            width = 1.5.dp,
-            color = accent,
+            width = 2.dp,
+            color = primary,
             shape = RoundedCornerShape(5.dp),
         )
     }
 
     Box(modifier = boxModifier, contentAlignment = Alignment.Center) {
         if (day != null && day.count > 0) {
-            val intensity = day.count.toFloat() / maxCount.toFloat()
-            val textColor = if (intensity >= 0.5f) Color.White else Color(0xFF1A4D26)
+            val textColor = if (studiedAlpha == 1.0f) onPrimary else onSurface
             Text(
                 text = day.count.toString(),
                 style = MaterialTheme.typography.labelSmall,
@@ -344,9 +334,18 @@ private fun LegendRow() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        LegendSwatch(color = StudiedBase.copy(alpha = 0.7f), label = "Studied")
-        LegendSwatch(color = MissedColor, label = "Missed")
-        LegendSwatch(color = RestColor, label = "Rest")
+        LegendSwatch(
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+            label = "Studied",
+        )
+        LegendSwatch(
+            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.5f),
+            label = "Missed",
+        )
+        LegendSwatch(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            label = "Rest",
+        )
         LegendOutline(color = MaterialTheme.colorScheme.primary, label = "Today")
     }
 }

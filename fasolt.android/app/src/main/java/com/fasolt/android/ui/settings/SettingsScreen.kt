@@ -12,27 +12,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -44,7 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -184,18 +189,27 @@ private fun SettingsContent(
             SettingsRow(
                 title = "Notifications",
                 subtitle = "How often Fasolt checks for due cards",
+                leadingIcon = {
+                    Icon(Icons.Outlined.Notifications, contentDescription = null)
+                },
                 onClick = onOpenNotifications,
             )
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SettingsRow(
                 title = "Scheduling (FSRS)",
                 subtitle = "Retention, max interval, day start",
+                leadingIcon = {
+                    Icon(Icons.Outlined.Schedule, contentDescription = null)
+                },
                 onClick = onOpenScheduling,
             )
-            HorizontalDivider()
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SettingsRow(
                 title = "MCP setup",
                 subtitle = "Connect your AI agent",
+                leadingIcon = {
+                    Icon(Icons.Outlined.Hub, contentDescription = null)
+                },
                 onClick = onOpenMcpSetup,
             )
         }
@@ -333,7 +347,7 @@ private fun SnapshotRow(snapshot: SnapshotDto) {
             )
         }
         Text(
-            "${snapshot.cardCount} cards",
+            if (snapshot.cardCount == 1) "1 card" else "${snapshot.cardCount} cards",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -361,17 +375,26 @@ private fun AccountCard(
     onDeleteAccountClick: () -> Unit,
 ) {
     SectionCard {
-        Column(Modifier.padding(16.dp)) {
-            Text("Account", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(8.dp))
+        Text(
+            "Account",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
 
-            when {
-                isLoading -> {
-                    Box(Modifier.fillMaxWidth().padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.height(20.dp))
-                    }
+        when {
+            isLoading -> {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.height(20.dp))
                 }
-                errorMessage != null && user == null -> {
+            }
+            errorMessage != null && user == null -> {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Text(
                         errorMessage,
                         color = MaterialTheme.colorScheme.error,
@@ -379,31 +402,48 @@ private fun AccountCard(
                     )
                     TextButton(onClick = onRetry) { Text("Retry") }
                 }
-                user != null -> {
-                    LabelValueRow(
-                        label = if (user.displayName != null) "Signed in as" else "Email",
-                        value = user.displayName ?: user.email,
+            }
+            user != null -> {
+                ListItem(
+                    headlineContent = { Text(user.displayName ?: user.email) },
+                    supportingContent = {
+                        Text(if (user.displayName != null) "Signed in as" else "Email")
+                    },
+                    leadingContent = {
+                        Icon(Icons.Outlined.Email, contentDescription = null)
+                    },
+                    trailingContent = if (user.isAdmin) {
+                        {
+                            AssistChip(
+                                onClick = {},
+                                label = { Text("Admin") },
+                            )
+                        }
+                    } else null,
+                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                )
+                ListItem(
+                    headlineContent = { Text(user.externalProvider ?: "Email & password") },
+                    supportingContent = { Text("Account type") },
+                    leadingContent = {
+                        Icon(Icons.Outlined.Lock, contentDescription = null)
+                    },
+                    colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                )
+                if (!serverUrl.isNullOrBlank()) {
+                    ListItem(
+                        headlineContent = { Text(serverUrl) },
+                        supportingContent = { Text("Server") },
+                        leadingContent = {
+                            Icon(Icons.Outlined.Cloud, contentDescription = null)
+                        },
+                        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                     )
-                    LabelValueRow(
-                        label = "Account type",
-                        value = user.externalProvider ?: "Email & password",
-                    )
-                    if (user.isAdmin) {
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Admin",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                    if (!serverUrl.isNullOrBlank()) {
-                        LabelValueRow(label = "Server", value = serverUrl)
-                    }
                 }
             }
         }
 
-        HorizontalDivider()
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         SettingsRow(
             title = "Sign out",
@@ -412,11 +452,19 @@ private fun AccountCard(
             },
             onClick = onSignOutClick,
         )
-        HorizontalDivider()
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         SettingsRow(
             title = "Delete account",
             subtitle = "Permanently deletes your account and data",
             titleColor = MaterialTheme.colorScheme.error,
+            subtitleColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            leadingIcon = {
+                Icon(
+                    Icons.Outlined.DeleteForever,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                )
+            },
             onClick = onDeleteAccountClick,
         )
     }
@@ -443,9 +491,8 @@ private fun LabelValueRow(label: String, value: String) {
 
 @Composable
 private fun SectionCard(content: @Composable () -> Unit) {
-    Card(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column { content() }
     }
@@ -456,40 +503,23 @@ private fun SettingsRow(
     title: String,
     subtitle: String? = null,
     titleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
+    subtitleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
     leadingIcon: (@Composable () -> Unit)? = null,
     onClick: () -> Unit,
 ) {
-    Surface(
+    ListItem(
+        headlineContent = {
+            Text(title, color = titleColor)
+        },
+        supportingContent = if (subtitle != null) {
+            {
+                Text(subtitle, color = subtitleColor)
+            }
+        } else null,
+        leadingContent = leadingIcon,
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(0.dp))
             .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        androidx.compose.foundation.layout.Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (leadingIcon != null) {
-                leadingIcon()
-                Spacer(Modifier.height(0.dp))
-                Spacer(Modifier.padding(start = 12.dp))
-            }
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.bodyLarge, color = titleColor)
-                if (subtitle != null) {
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+    )
 }

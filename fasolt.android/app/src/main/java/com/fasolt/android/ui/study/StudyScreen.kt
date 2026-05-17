@@ -9,14 +9,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PauseCircle
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,11 +28,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -69,6 +72,7 @@ fun StudyScreen(
                         Text(
                             text = "${s.currentIndex + 1} / ${s.totalCards}",
                             style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
@@ -80,7 +84,7 @@ fun StudyScreen(
                                 viewModel.suspendCard()
                             }) {
                                 Icon(
-                                    Icons.Default.PauseCircle,
+                                    Icons.Filled.Pause,
                                     contentDescription = "Suspend card",
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -108,13 +112,16 @@ fun StudyScreen(
                             }
                         }) {
                             Icon(
-                                Icons.Default.Close,
+                                Icons.Outlined.Close,
                                 contentDescription = "Close",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
         },
     ) { padding ->
@@ -173,6 +180,8 @@ private fun StudyingContent(
     onFlip: () -> Unit,
     onRate: (String) -> Unit,
 ) {
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Column(modifier = Modifier.fillMaxSize()) {
         LinearProgressIndicator(
             progress = { state.progress },
@@ -180,6 +189,8 @@ private fun StudyingContent(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .height(4.dp),
+            color = MaterialTheme.colorScheme.primary,
+            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
         )
 
         Box(
@@ -244,17 +255,30 @@ private fun StudyingContent(
             RatingButtons(
                 isRating = state.isRating,
                 onRate = onRate,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 12.dp + navBarPadding,
+                ),
             )
         } else {
-            OutlinedButton(
+            Button(
                 onClick = onFlip,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                contentPadding = PaddingValues(vertical = 14.dp),
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 12.dp + navBarPadding,
+                    )
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.large,
             ) {
-                Text("Show Answer")
+                Text(
+                    text = "Show Answer",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }
@@ -270,10 +294,42 @@ private fun RatingButtons(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        RatingButton("Again", StudyRatings.AGAIN, Color(0xFFFF3B30), isRating, onRate, Modifier.weight(1f))
-        RatingButton("Hard", StudyRatings.HARD, Color(0xFFFF9500), isRating, onRate, Modifier.weight(1f))
-        RatingButton("Good", StudyRatings.GOOD, Color(0xFF34C759), isRating, onRate, Modifier.weight(1f))
-        RatingButton("Easy", StudyRatings.EASY, Color(0xFF007AFF), isRating, onRate, Modifier.weight(1f))
+        RatingButton(
+            label = "Again",
+            rating = StudyRatings.AGAIN,
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+            isRating = isRating,
+            onRate = onRate,
+            modifier = Modifier.weight(1f),
+        )
+        RatingButton(
+            label = "Hard",
+            rating = StudyRatings.HARD,
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            isRating = isRating,
+            onRate = onRate,
+            modifier = Modifier.weight(1f),
+        )
+        RatingButton(
+            label = "Good",
+            rating = StudyRatings.GOOD,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            isRating = isRating,
+            onRate = onRate,
+            modifier = Modifier.weight(1f),
+        )
+        RatingButton(
+            label = "Easy",
+            rating = StudyRatings.EASY,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            isRating = isRating,
+            onRate = onRate,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -281,22 +337,27 @@ private fun RatingButtons(
 private fun RatingButton(
     label: String,
     rating: String,
-    tint: Color,
+    containerColor: Color,
+    contentColor: Color,
     isRating: Boolean,
     onRate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedButton(
+    Button(
         onClick = { onRate(rating) },
         enabled = !isRating,
-        modifier = modifier,
-        contentPadding = PaddingValues(vertical = 12.dp),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = tint),
+        modifier = modifier.height(56.dp),
+        shape = MaterialTheme.shapes.medium,
+        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 4.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+        ),
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }

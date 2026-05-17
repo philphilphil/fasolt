@@ -4,20 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,74 +40,88 @@ fun StudySummaryScreen(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .padding(horizontal = 24.dp),
     ) {
-        Icon(
-            imageVector = Icons.Filled.CheckCircle,
-            contentDescription = null,
-            tint = Color(0xFF34C759),
-            modifier = Modifier.size(64.dp),
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = if (cardsStudied == 0) "No cards due" else "Session Complete",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Spacer(Modifier.height(24.dp))
-
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(12.dp),
-                )
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .weight(1f)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            SummaryRow("Cards studied", cardsStudied.toString())
-            HorizontalDivider()
-            RatingRow("Again", ratingsCount[StudyRatings.AGAIN] ?: 0, Color(0xFFFF3B30))
-            RatingRow("Hard", ratingsCount[StudyRatings.HARD] ?: 0, Color(0xFFFF9500))
-            RatingRow("Good", ratingsCount[StudyRatings.GOOD] ?: 0, Color(0xFF34C759))
-            RatingRow("Easy", ratingsCount[StudyRatings.EASY] ?: 0, Color(0xFF007AFF))
-
-            if (skippedCount > 0) {
-                RatingRow("Skipped", skippedCount, Color(0xFF8E8E93))
-            }
-            if (suspendedCount > 0) {
-                RatingRow("Suspended", suspendedCount, Color(0xFF8E8E93))
-            }
-        }
-
-        if (failedRatings > 0) {
-            Spacer(Modifier.height(12.dp))
-            Text(
-                text = "$failedRatings rating${if (failedRatings == 1) "" else "s"} may not have been saved. They'll sync when you're back online.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 8.dp),
+            Icon(
+                imageVector = Icons.Outlined.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(72.dp),
             )
-        }
 
-        Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                text = if (cardsStudied == 0) "No cards due" else "Session complete",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    SummaryRow("Cards studied", cardsStudied.toString())
+                    HorizontalDivider()
+                    RatingRow("Again", ratingsCount[StudyRatings.AGAIN] ?: 0, MaterialTheme.colorScheme.error)
+                    RatingRow("Hard", ratingsCount[StudyRatings.HARD] ?: 0, MaterialTheme.colorScheme.tertiary)
+                    RatingRow("Good", ratingsCount[StudyRatings.GOOD] ?: 0, MaterialTheme.colorScheme.primary)
+                    RatingRow("Easy", ratingsCount[StudyRatings.EASY] ?: 0, MaterialTheme.colorScheme.secondary)
+
+                    if (skippedCount > 0) {
+                        RatingRow("Skipped", skippedCount, MaterialTheme.colorScheme.outline)
+                    }
+                    if (suspendedCount > 0) {
+                        RatingRow("Suspended", suspendedCount, MaterialTheme.colorScheme.outline)
+                    }
+                }
+            }
+
+            if (failedRatings > 0) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    text = "$failedRatings rating${if (failedRatings == 1) "" else "s"} may not have been saved. They'll sync when you're back online.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
+        }
 
         Button(
             onClick = onDone,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(),
-            contentPadding = PaddingValues(vertical = 14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp + navBarPadding)
+                .height(56.dp),
+            shape = MaterialTheme.shapes.large,
         ) {
-            Text("Done")
+            Text(
+                text = "Done",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
@@ -127,6 +142,7 @@ private fun SummaryRow(label: String, value: String) {
             text = value,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -153,6 +169,7 @@ private fun RatingRow(label: String, count: Int, tint: Color) {
             text = count.toString(),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

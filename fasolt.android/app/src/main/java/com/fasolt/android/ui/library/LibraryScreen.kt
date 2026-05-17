@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +38,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -60,11 +66,36 @@ fun LibraryScreen(
     onCreateCard: () -> Unit,
 ) {
     var selected by remember { mutableStateOf(LibrarySegment.Decks) }
+    val decksViewModel: DecksViewModel = viewModel()
+    var showCreateDeckSheet by remember { mutableStateOf(false) }
+    val createDeckError by decksViewModel.createError.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Library") })
         },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    when (selected) {
+                        LibrarySegment.Decks -> showCreateDeckSheet = true
+                        LibrarySegment.Cards -> onCreateCard()
+                    }
+                },
+                modifier = Modifier.padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = when (selected) {
+                        LibrarySegment.Decks -> "New deck"
+                        LibrarySegment.Cards -> "New card"
+                    },
+                )
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End,
     ) { padding ->
         Column(
             modifier = Modifier
@@ -90,25 +121,41 @@ fun LibraryScreen(
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when (selected) {
-                    LibrarySegment.Decks -> DecksBody(onDeckClick = onDeckClick)
+                    LibrarySegment.Decks -> DecksBody(
+                        onDeckClick = onDeckClick,
+                        viewModel = decksViewModel,
+                    )
                     LibrarySegment.Cards -> CardsBody(
                         onCardClick = onCardClick,
-                        onCreateCard = onCreateCard,
                     )
                 }
             }
         }
+    }
+
+    if (showCreateDeckSheet) {
+        DeckFormSheet(
+            title = "New Deck",
+            errorMessage = createDeckError,
+            onSubmit = { name, description ->
+                decksViewModel.createDeck(name, description) { success ->
+                    if (success) showCreateDeckSheet = false
+                }
+            },
+            onDismiss = {
+                showCreateDeckSheet = false
+                decksViewModel.clearCreateError()
+            },
+        )
     }
 }
 
 @Composable
 private fun DecksBody(
     onDeckClick: (String) -> Unit,
-    viewModel: DecksViewModel = viewModel(),
+    viewModel: DecksViewModel,
 ) {
     val state by viewModel.uiState.collectAsState()
-    val createError by viewModel.createError.collectAsState()
-    var showCreateSheet by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val s = state) {
@@ -120,15 +167,21 @@ private fun DecksBody(
             )
             is DecksUiState.Loaded -> {
                 if (s.decks.isEmpty()) {
-                    Text(
-                        "No decks yet — tap + to create one",
+                    EmptyState(
+                        icon = Icons.Outlined.Folder,
+                        message = "No decks yet — tap + to create one",
                         modifier = Modifier.align(Alignment.Center),
                     )
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            end = 16.dp,
+                            top = 12.dp,
+                            bottom = 88.dp,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         items(s.decks, key = { it.id }) { deck ->
                             DeckRow(deck = deck, onClick = { onDeckClick(deck.id) })
@@ -137,38 +190,12 @@ private fun DecksBody(
                 }
             }
         }
-
-        FloatingActionButton(
-            onClick = { showCreateSheet = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "New deck")
-        }
-
-        if (showCreateSheet) {
-            DeckFormSheet(
-                title = "New Deck",
-                errorMessage = createError,
-                onSubmit = { name, description ->
-                    viewModel.createDeck(name, description) { success ->
-                        if (success) showCreateSheet = false
-                    }
-                },
-                onDismiss = {
-                    showCreateSheet = false
-                    viewModel.clearCreateError()
-                },
-            )
-        }
     }
 }
 
 @Composable
 private fun CardsBody(
     onCardClick: (String) -> Unit,
-    onCreateCard: () -> Unit,
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as FasoltApplication
@@ -208,15 +235,21 @@ private fun CardsBody(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(24.dp).align(Alignment.Center),
             )
-            cards.isEmpty() -> Text(
-                "No cards yet — tap + to create one",
+            cards.isEmpty() -> EmptyState(
+                icon = Icons.Outlined.Inbox,
+                message = "No cards yet — tap + to create one",
                 modifier = Modifier.align(Alignment.Center),
             )
             else -> LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 12.dp,
+                    bottom = 88.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(cards, key = { it.id }) { card ->
                     CardRow(
@@ -230,21 +263,41 @@ private fun CardsBody(
                 }
                 if (isLoadingMore) {
                     item {
-                        Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                        Box(
+                            Modifier.fillMaxWidth().padding(16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
                             CircularProgressIndicator()
                         }
                     }
                 }
             }
         }
+    }
+}
 
-        FloatingActionButton(
-            onClick = onCreateCard,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "New card")
-        }
+@Composable
+private fun EmptyState(
+    icon: ImageVector,
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(48.dp),
+        )
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }

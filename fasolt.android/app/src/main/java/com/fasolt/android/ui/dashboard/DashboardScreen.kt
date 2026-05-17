@@ -26,6 +26,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +45,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fasolt.android.data.api.models.Overview
 import com.fasolt.android.data.api.models.StudyStats
@@ -146,9 +146,11 @@ private fun DashboardContent(
 
 @Composable
 private fun DueHeroCard(dueCount: Int, onStartStudy: () -> Unit) {
-    val primary = MaterialTheme.colorScheme.primary
     val gradient = Brush.linearGradient(
-        colors = listOf(primary, primary.copy(alpha = 0.78f)),
+        colors = listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.tertiary,
+        ),
     )
 
     Box(
@@ -156,7 +158,7 @@ private fun DueHeroCard(dueCount: Int, onStartStudy: () -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(gradient)
-            .padding(vertical = 28.dp, horizontal = 20.dp),
+            .padding(vertical = 24.dp, horizontal = 20.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(
@@ -165,21 +167,22 @@ private fun DueHeroCard(dueCount: Int, onStartStudy: () -> Unit) {
         ) {
             Text(
                 text = "Cards due",
-                color = Color.White.copy(alpha = 0.85f),
-                style = MaterialTheme.typography.titleSmall,
+                color = Color.White.copy(alpha = 0.70f),
+                style = MaterialTheme.typography.titleMedium,
             )
             Text(
                 text = dueCount.toString(),
                 color = Color.White,
-                fontSize = 56.sp,
+                style = MaterialTheme.typography.displayLarge,
                 fontWeight = FontWeight.Bold,
             )
             if (dueCount > 0) {
                 Button(
                     onClick = onStartStudy,
+                    shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White.copy(alpha = 0.22f),
-                        contentColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.onPrimary,
+                        contentColor = MaterialTheme.colorScheme.primary,
                     ),
                 ) { Text("Start studying") }
             } else {
@@ -209,12 +212,7 @@ private fun StatTilesRow(overview: Overview) {
 
 @Composable
 private fun StatTile(label: String, value: Int, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
+    ElevatedCard(modifier = modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -222,13 +220,13 @@ private fun StatTile(label: String, value: Int, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = label.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
+                text = label,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = value.toString(),
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -248,12 +246,7 @@ private fun CardsByStateCard(byState: Map<String, Int>, total: Int) {
         StateBucket("relearning", "Relearn", MaterialTheme.colorScheme.error),
     )
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -261,8 +254,8 @@ private fun CardsByStateCard(byState: Map<String, Int>, total: Int) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(
-                text = "BY STATE",
-                style = MaterialTheme.typography.labelSmall,
+                text = "By state",
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
@@ -327,13 +320,10 @@ private fun StateLegend(label: String, count: Int, color: Color) {
 
 @Composable
 private fun StatsRow(stats: StudyStats, onClick: () -> Unit) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
     ) {
         Row(
             modifier = Modifier
@@ -346,18 +336,18 @@ private fun StatsRow(stats: StudyStats, onClick: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.LocalFireDepartment,
                     contentDescription = null,
-                    tint = Color(0xFFFF9500),
+                    tint = MaterialTheme.colorScheme.tertiary,
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
                     text = stats.currentStreak.toString(),
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.labelLarge,
                 )
                 Spacer(Modifier.width(4.dp))
                 Text(
                     text = "day streak",
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -380,7 +370,7 @@ private fun InlineStat(value: Int, label: String) {
         Spacer(Modifier.width(3.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
