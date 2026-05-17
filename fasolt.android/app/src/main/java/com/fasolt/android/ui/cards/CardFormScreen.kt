@@ -12,9 +12,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -107,7 +112,13 @@ fun CardFormScreen(
                     }
                 },
                 actions = {
-                    if (viewModel.isEdit) {
+                    if (viewModel.isEdit && cardId != null) {
+                        IconButton(onClick = {
+                            copyToClipboard(context, label = "Card ID", text = cardId)
+                            Toast.makeText(context, "Card ID copied", Toast.LENGTH_SHORT).show()
+                        }) {
+                            Icon(Icons.Outlined.ContentCopy, contentDescription = "Copy card ID")
+                        }
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete card")
                         }
@@ -231,4 +242,9 @@ fun CardFormScreen(
             )
         }
     }
+}
+
+private fun copyToClipboard(context: Context, label: String, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
 }

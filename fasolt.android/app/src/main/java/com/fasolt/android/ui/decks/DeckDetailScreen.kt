@@ -1,6 +1,12 @@
 package com.fasolt.android.ui.decks
 
 import android.app.Application
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +27,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -113,6 +120,15 @@ fun DeckDetailScreen(
                                 onClick = {
                                     menuExpanded = false
                                     showEditSheet = true
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Copy deck ID") },
+                                leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) },
+                                onClick = {
+                                    menuExpanded = false
+                                    copyToClipboard(context, "Deck ID", deckId)
+                                    Toast.makeText(context, "Deck ID copied", Toast.LENGTH_SHORT).show()
                                 },
                             )
                             DropdownMenuItem(
@@ -313,7 +329,10 @@ private fun DeckDetailBody(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(detail.cards, key = { it.id }) { card: DeckCardDto ->
-                    DeckDetailCardRow(card = card, onClick = { onCardClick(card.id) })
+                    DeckDetailCardRow(
+                        card = card,
+                        onClick = { onCardClick(card.id) },
+                    )
                 }
             }
         }
@@ -345,14 +364,22 @@ private fun StatHalf(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DeckDetailCardRow(
     card: DeckCardDto,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
+    var menuExpanded by remember { mutableStateOf(false) }
+
     ElevatedCard(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { menuExpanded = true },
+            ),
     ) {
         Row(
             modifier = Modifier
@@ -379,8 +406,30 @@ private fun DeckDetailCardRow(
                 )
             }
             CardStateBadge(state = card.state)
+
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Copy ID") },
+                    leadingIcon = {
+                        Icon(Icons.Outlined.ContentCopy, contentDescription = null)
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        copyToClipboard(context, "Card ID", card.id)
+                        Toast.makeText(context, "Card ID copied", Toast.LENGTH_SHORT).show()
+                    },
+                )
+            }
         }
     }
+}
+
+private fun copyToClipboard(context: Context, label: String, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
 }
 
 @Composable

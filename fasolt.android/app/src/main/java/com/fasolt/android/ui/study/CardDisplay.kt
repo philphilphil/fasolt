@@ -51,8 +51,8 @@ fun CardDisplay(
                 .padding(24.dp),
         ) {
             if (!questionHint.isNullOrBlank()) {
-                Text(
-                    text = questionHint.stripMarkdown(),
+                MarkdownText(
+                    text = questionHint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
@@ -73,8 +73,8 @@ fun CardDisplay(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
-                Text(
-                    text = text.stripMarkdown(),
+                MarkdownText(
+                    text = text,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),

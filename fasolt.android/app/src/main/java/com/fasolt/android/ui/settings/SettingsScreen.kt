@@ -24,7 +24,6 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -187,6 +186,15 @@ private fun SettingsContent(
 
         SectionCard {
             SettingsRow(
+                title = "MCP setup",
+                subtitle = "Connect your AI agent",
+                leadingIcon = {
+                    Icon(Icons.Outlined.Hub, contentDescription = null)
+                },
+                onClick = onOpenMcpSetup,
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            SettingsRow(
                 title = "Notifications",
                 subtitle = "How often Fasolt checks for due cards",
                 leadingIcon = {
@@ -202,15 +210,6 @@ private fun SettingsContent(
                     Icon(Icons.Outlined.Schedule, contentDescription = null)
                 },
                 onClick = onOpenScheduling,
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            SettingsRow(
-                title = "MCP setup",
-                subtitle = "Connect your AI agent",
-                leadingIcon = {
-                    Icon(Icons.Outlined.Hub, contentDescription = null)
-                },
-                onClick = onOpenMcpSetup,
             )
         }
 
@@ -412,14 +411,6 @@ private fun AccountCard(
                     leadingContent = {
                         Icon(Icons.Outlined.Email, contentDescription = null)
                     },
-                    trailingContent = if (user.isAdmin) {
-                        {
-                            AssistChip(
-                                onClick = {},
-                                label = { Text("Admin") },
-                            )
-                        }
-                    } else null,
                     colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
                 )
                 ListItem(
