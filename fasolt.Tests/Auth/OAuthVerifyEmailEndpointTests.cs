@@ -11,9 +11,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthVerifyEmailEndpointTests
+public class OAuthVerifyEmailEndpointTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthVerifyEmailEndpointTests(WebApplicationFactory<Program> factory)
     {
@@ -47,7 +50,7 @@ public class OAuthVerifyEmailEndpointTests
     [Fact]
     public async Task Post_WithCorrectCode_ConfirmsEmail_AndRedirectsToReturnUrl()
     {
-        var email = $"verify-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         string code;
         string userId;
 
@@ -111,7 +114,7 @@ public class OAuthVerifyEmailEndpointTests
     [Fact]
     public async Task Post_WithWrongCode_ShowsErrorInline()
     {
-        var email = $"wrong-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();

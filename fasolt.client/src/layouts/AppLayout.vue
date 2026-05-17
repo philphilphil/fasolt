@@ -61,7 +61,7 @@ const activeTab = computed(() => {
       </Tabs>
     </nav>
     <main class="flex-1 px-4 pb-20 pt-6 sm:px-5 sm:pb-6">
-      <div class="mx-auto max-w-[1200px]">
+      <div :class="route.meta.fullWidth ? '' : 'mx-auto max-w-[1200px]'">
         <slot />
       </div>
     </main>

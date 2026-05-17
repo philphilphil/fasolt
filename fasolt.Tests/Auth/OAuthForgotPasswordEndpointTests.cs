@@ -11,9 +11,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthForgotPasswordEndpointTests
+public class OAuthForgotPasswordEndpointTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthForgotPasswordEndpointTests(WebApplicationFactory<Program> factory)
     {
@@ -61,7 +64,7 @@ public class OAuthForgotPasswordEndpointTests
     [Fact]
     public async Task Post_ForExistingConfirmedUser_CreatesResetCode_AndRedirectsToSent()
     {
-        var email = $"reset-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         string userId;
         using (var scope = _factory.Services.CreateScope())
         {
@@ -110,7 +113,7 @@ public class OAuthForgotPasswordEndpointTests
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
-        var email = $"does-not-exist-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
@@ -137,7 +140,7 @@ public class OAuthForgotPasswordEndpointTests
     {
         // GitHub/Apple users have no password to reset. Must not create a
         // dangling OTP row and must not reveal that the account is external.
-        var email = $"gh-{Guid.NewGuid():N}@users.noreply.github.com";
+        var email = TestEmail.Create("users.noreply.github.com");
         string userId;
         using (var scope = _factory.Services.CreateScope())
         {

@@ -64,7 +64,7 @@ const router = createRouter({
     {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
-      meta: { requiresAdmin: true, title: 'Admin' },
+      meta: { requiresAdmin: true, title: 'Admin', fullWidth: true },
       redirect: '/admin/overview',
       children: [
         { path: 'overview', name: 'admin-overview', component: () => import('@/views/admin/AdminOverviewView.vue'), meta: { requiresAdmin: true, title: 'Admin · Overview' } },

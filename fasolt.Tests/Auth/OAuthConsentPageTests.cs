@@ -11,9 +11,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthConsentPageTests
+public class OAuthConsentPageTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthConsentPageTests(WebApplicationFactory<Program> factory)
     {
@@ -33,7 +36,7 @@ public class OAuthConsentPageTests
     [Fact]
     public async Task Get_WithSnakeCaseClientId_RendersConsentPage()
     {
-        var email = $"consent-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         var clientId = $"test-client-{Guid.NewGuid():N}";
 

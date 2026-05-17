@@ -7,9 +7,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthLoginPageTests
+public class OAuthLoginPageTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthLoginPageTests(WebApplicationFactory<Program> factory)
     {
@@ -96,7 +99,7 @@ public class OAuthLoginPageTests
     [Fact]
     public async Task Post_InvalidPassword_RendersFormWithError()
     {
-        var email = $"wrong-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
@@ -130,7 +133,7 @@ public class OAuthLoginPageTests
     [Fact]
     public async Task Post_ValidCredentials_RedirectsToReturnUrlAndSetsCookie()
     {
-        var email = $"ok-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         using (var scope = _factory.Services.CreateScope())
         {
@@ -169,7 +172,7 @@ public class OAuthLoginPageTests
     [Fact]
     public async Task Post_MaliciousReturnUrl_RedirectsToRootNotEvilDomain()
     {
-        var email = $"redirect-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         using (var scope = _factory.Services.CreateScope())
         {
@@ -204,7 +207,7 @@ public class OAuthLoginPageTests
     [Fact]
     public async Task Post_UnverifiedUser_RedirectsToVerifyEmail()
     {
-        var email = $"unverified-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         using (var scope = _factory.Services.CreateScope())
         {
@@ -269,7 +272,7 @@ public class OAuthLoginPageTests
     [Fact]
     public async Task Post_RepeatedWrongPassword_TriggersLockout()
     {
-        var email = $"lockout-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         using (var scope = _factory.Services.CreateScope())
         {
@@ -326,7 +329,7 @@ public class OAuthLoginPageTests
     [Fact]
     public async Task Get_AuthenticatedUser_RedirectsToReturnUrl()
     {
-        var email = $"authed-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         using (var scope = _factory.Services.CreateScope())
         {

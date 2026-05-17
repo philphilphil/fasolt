@@ -26,6 +26,7 @@ interface AdminUser {
   isLockedOut: boolean
   hasPush: boolean
   emailConfirmed: boolean
+  lastActivityAt: string | null
 }
 
 interface AdminUserListResponse {
@@ -167,6 +168,18 @@ function clearFilters() {
 const hasActiveFilters = () =>
   !!(search.value || providerFilter.value || lockedOnly.value || hasPushOnly.value)
 
+function formatLastActivity(iso: string | null): string {
+  if (!iso) return '—'
+  const then = new Date(iso).getTime()
+  const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000))
+  if (diffSec < 60) return 'just now'
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`
+  if (diffSec < 86400 * 30) return `${Math.floor(diffSec / 86400)}d ago`
+  if (diffSec < 86400 * 365) return `${Math.floor(diffSec / (86400 * 30))}mo ago`
+  return `${Math.floor(diffSec / (86400 * 365))}y ago`
+}
+
 onMounted(fetchUsers)
 </script>
 
@@ -228,15 +241,16 @@ onMounted(fetchUsers)
             <TableHead class="text-right">Decks</TableHead>
             <TableHead>Push</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Last active</TableHead>
             <TableHead class="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading">
-            <TableCell :colspan="7" class="text-center text-muted-foreground">Loading…</TableCell>
+            <TableCell :colspan="8" class="text-center text-muted-foreground">Loading…</TableCell>
           </TableRow>
           <TableRow v-else-if="users.length === 0">
-            <TableCell :colspan="7" class="text-center text-muted-foreground">No users match the current filters.</TableCell>
+            <TableCell :colspan="8" class="text-center text-muted-foreground">No users match the current filters.</TableCell>
           </TableRow>
           <TableRow v-for="u in users" :key="u.id">
             <TableCell class="font-medium">
@@ -269,6 +283,12 @@ onMounted(fetchUsers)
             <TableCell>
               <Badge v-if="u.isLockedOut" variant="destructive">Locked</Badge>
               <Badge v-else variant="secondary">Active</Badge>
+            </TableCell>
+            <TableCell
+              class="whitespace-nowrap text-sm text-muted-foreground"
+              :title="u.lastActivityAt ? new Date(u.lastActivityAt).toLocaleString() : ''"
+            >
+              {{ formatLastActivity(u.lastActivityAt) }}
             </TableCell>
             <TableCell class="text-right flex gap-1 justify-end">
               <Button v-if="u.hasPush" variant="outline" size="sm" :disabled="pushingUserId === u.id" @click="pushToUser(u)">

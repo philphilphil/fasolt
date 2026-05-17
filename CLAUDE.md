@@ -155,7 +155,7 @@ The server exposes a remote MCP endpoint at `/mcp` (streamable HTTP transport). 
 - `DeleteDeck` — delete a deck, optionally deleting all its cards too
 - `AssignCardsToDeck` — assign cards to a deck, remove from a deck, or move between decks
 - `SetDeckActive` — activate or deactivate a deck for study
-- `GetOverview` — get account overview: total cards, due cards, cards by state, deck and source counts
+- `GetOverview` — get account overview: identity, total cards, due cards, cards by state, deck and source counts
 
 ## Agent Teams
 

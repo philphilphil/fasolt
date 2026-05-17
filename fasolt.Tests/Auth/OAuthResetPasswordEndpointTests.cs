@@ -11,9 +11,12 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class OAuthResetPasswordEndpointTests
+public class OAuthResetPasswordEndpointTests : IAsyncLifetime
 {
     private readonly WebApplicationFactory<Program> _factory;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public OAuthResetPasswordEndpointTests(WebApplicationFactory<Program> factory)
     {
@@ -48,7 +51,7 @@ public class OAuthResetPasswordEndpointTests
     [Fact]
     public async Task Post_WithCorrectCode_RotatesPassword_AndConsumesOtp()
     {
-        var email = $"reset-ok-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string oldPassword = "OldPass1A";
         const string newPassword = "NewPass1B";
         string userId;
@@ -106,7 +109,7 @@ public class OAuthResetPasswordEndpointTests
     [Fact]
     public async Task Post_WithWrongCode_ShowsError_AndDoesNotRotatePassword()
     {
-        var email = $"reset-wrong-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string oldPassword = "OldPass1A";
         string userId;
 
@@ -154,7 +157,7 @@ public class OAuthResetPasswordEndpointTests
     [Fact]
     public async Task Post_WithMismatchedPasswords_ShowsError()
     {
-        var email = $"reset-mismatch-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
@@ -194,7 +197,7 @@ public class OAuthResetPasswordEndpointTests
         // external-provider users from ever getting a code, but if one
         // somehow arrives (prior account conversion, test fixture, etc.)
         // reset-password must still refuse to rotate the password.
-        var email = $"gh-reset-{Guid.NewGuid():N}@users.noreply.github.com";
+        var email = TestEmail.Create("users.noreply.github.com");
         string userId;
         using (var scope = _factory.Services.CreateScope())
         {
@@ -248,7 +251,7 @@ public class OAuthResetPasswordEndpointTests
         // for (a) an unknown email and (b) a known confirmed user in active
         // cooldown. Otherwise an attacker can tell which emails are registered
         // by clicking "Resend" with each one.
-        var knownEmail = $"resend-{Guid.NewGuid():N}@example.com";
+        var knownEmail = TestEmail.Create();
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();
@@ -260,7 +263,7 @@ public class OAuthResetPasswordEndpointTests
             await otp.GenerateAndStoreAsync(user.Id, CancellationToken.None);
         }
 
-        var unknownEmail = $"nobody-{Guid.NewGuid():N}@example.com";
+        var unknownEmail = TestEmail.Create();
 
         async Task<string> PostResendAndReturnLocation(string email)
         {

@@ -9,7 +9,8 @@ public record AdminUserDto(
     int DeckCount,
     bool IsLockedOut,
     bool HasPush,
-    bool EmailConfirmed);
+    bool EmailConfirmed,
+    DateTimeOffset? LastActivityAt);
 
 public record AdminUserListResponse(
     List<AdminUserDto> Users,

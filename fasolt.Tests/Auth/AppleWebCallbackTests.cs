@@ -12,13 +12,16 @@ using Fasolt.Tests.Helpers;
 namespace Fasolt.Tests.Auth;
 
 [Collection(WebAppCollection.Name)]
-public class AppleWebCallbackTests
+public class AppleWebCallbackTests : IAsyncLifetime
 {
     private const string WebClientId = "app.fasolt.web";
     private const string Kid = "test-kid";
 
     private readonly WebApplicationFactory<Program> _factory;
     private readonly RSA _signingKey;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => TestUserCleanup.DeleteTestUsersAsync(_factory);
 
     public AppleWebCallbackTests(WebApplicationFactory<Program> factory)
     {
@@ -144,7 +147,7 @@ public class AppleWebCallbackTests
     public async Task AppleCallback_WithValidToken_CreatesNewUser()
     {
         var uniqueSub = $"apple-web-new-{Guid.NewGuid():N}";
-        var uniqueEmail = $"new-{Guid.NewGuid():N}@icloud.com";
+        var uniqueEmail = TestEmail.Create("icloud.com");
         var idToken = MakeAppleIdToken(uniqueSub, uniqueEmail, true);
         var state = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("/"));
 
@@ -172,7 +175,7 @@ public class AppleWebCallbackTests
     [Fact]
     public async Task AppleCallback_PreservesReturnUrl_FromState()
     {
-        var idToken = MakeAppleIdToken($"apple-web-ret-{Guid.NewGuid():N}", $"ret-{Guid.NewGuid():N}@icloud.com", true);
+        var idToken = MakeAppleIdToken($"apple-web-ret-{Guid.NewGuid():N}", TestEmail.Create("icloud.com"), true);
         var state = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("/decks"));
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
@@ -192,7 +195,7 @@ public class AppleWebCallbackTests
     [Fact]
     public async Task AppleCallback_RejectsNonLocalReturnUrl()
     {
-        var idToken = MakeAppleIdToken($"apple-web-xss-{Guid.NewGuid():N}", $"xss-{Guid.NewGuid():N}@icloud.com", true);
+        var idToken = MakeAppleIdToken($"apple-web-xss-{Guid.NewGuid():N}", TestEmail.Create("icloud.com"), true);
         var state = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("https://evil.com"));
 
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
