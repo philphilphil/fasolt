@@ -10,7 +10,7 @@ public static class TestUserCleanup
     {
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        const string pattern = "[a-f0-9]{32}";
+        const string pattern = "^test-[a-f0-9]{32}@";
         await db.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM \"AspNetUsers\" WHERE \"Email\" ~ {pattern}");
     }

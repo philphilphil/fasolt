@@ -50,7 +50,7 @@ public class OAuthVerifyEmailEndpointTests : IAsyncLifetime
     [Fact]
     public async Task Post_WithCorrectCode_ConfirmsEmail_AndRedirectsToReturnUrl()
     {
-        var email = $"verify-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         string code;
         string userId;
 
@@ -114,7 +114,7 @@ public class OAuthVerifyEmailEndpointTests : IAsyncLifetime
     [Fact]
     public async Task Post_WithWrongCode_ShowsErrorInline()
     {
-        var email = $"wrong-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         using (var scope = _factory.Services.CreateScope())
         {
             var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AppUser>>();

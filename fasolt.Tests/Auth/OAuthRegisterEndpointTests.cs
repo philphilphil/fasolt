@@ -61,7 +61,7 @@ public class OAuthRegisterEndpointTests : IAsyncLifetime
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
-        var email = $"register-test-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,
@@ -130,7 +130,7 @@ public class OAuthRegisterEndpointTests : IAsyncLifetime
         // Enumeration resistance: an attacker probing for a registered email
         // must see the same response as a fresh signup. We land on the
         // verify-email page with no new OTP row for the victim.
-        var email = $"confirmed-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         string userId;
         using (var scope = _factory.Services.CreateScope())
         {
@@ -178,7 +178,7 @@ public class OAuthRegisterEndpointTests : IAsyncLifetime
         // Griefing resistance: an anonymous POST must not trigger a new OTP
         // send against an existing unconfirmed account. The real user can
         // request a fresh code from the verify-email page instead.
-        var email = $"unconfirmed-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         string userId;
         using (var scope = _factory.Services.CreateScope())
         {
@@ -240,7 +240,7 @@ public class OAuthRegisterEndpointTests : IAsyncLifetime
         var csrfToken = ExtractCsrfToken(await getResponse.Content.ReadAsStringAsync());
         var cookieHeader = getResponse.Headers.GetValues("Set-Cookie").FirstOrDefault() ?? "";
 
-        var email = $"weak-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         var content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["__RequestVerificationToken"] = csrfToken,

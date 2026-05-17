@@ -36,7 +36,7 @@ public class OAuthConsentPageTests : IAsyncLifetime
     [Fact]
     public async Task Get_WithSnakeCaseClientId_RendersConsentPage()
     {
-        var email = $"consent-{Guid.NewGuid():N}@example.com";
+        var email = TestEmail.Create();
         const string password = "Abcdefg1";
         var clientId = $"test-client-{Guid.NewGuid():N}";
 
