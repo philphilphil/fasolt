@@ -64,6 +64,7 @@ fasolt.Server/              — backend (includes remote MCP server)
 fasolt.client/              — frontend (Vue 3 SPA)
 fasolt.Tests/               — .NET unit/integration tests
 fasolt.ios/                 — iOS app (Swift/Xcode)
+fasolt.android/             — Android app (Kotlin/Jetpack Compose)
 ```
 
 ## Build & Run
@@ -173,6 +174,80 @@ Always use agent teams (`TeamCreate`) instead of plain subagents when paralleliz
 - `/api/notifications/*` — push notification device tokens and settings
 - `/api/oauth/*` — OAuth consent flow (OpenIddict)
 - `/api/admin/*` — admin-only endpoints
+
+## Android App
+
+Native Kotlin + Jetpack Compose under `fasolt.android/`. Mirrors the iOS architecture (MVVM, repos, OAuth 2.0 PKCE, EncryptedSharedPreferences as Keychain equivalent). OAuth client ID is `fasolt-android` (registered in `Program.cs` alongside `fasolt-ios`); redirect scheme `fasolt://oauth/callback` is shared with iOS.
+
+### Toolchain
+
+Android Studio bundles everything needed. From the CLI you also need:
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+```
+
+The Gradle wrapper (`gradlew`, `gradle-wrapper.jar`) is checked in — never run `gradle wrapper` to regenerate unless intentionally bumping versions.
+
+### Build
+
+```bash
+cd fasolt.android
+./gradlew assembleDebug                 # debug APK
+./gradlew installDebug                  # build + install to connected device/emulator
+./gradlew :app:lintDebug                # AGP lint
+./gradlew test                          # JVM unit tests
+```
+
+Cold builds are slow (1–3 min); incremental Kotlin compile is ~10s. Use `--configuration-cache` (already enabled in `gradle.properties`) for faster reruns.
+
+### Running on emulator / device
+
+```bash
+# List AVDs and start one
+$ANDROID_HOME/emulator/emulator -list-avds
+$ANDROID_HOME/emulator/emulator -avd <name> &
+
+# Or list connected devices
+$ANDROID_HOME/platform-tools/adb devices
+
+# Install + launch
+./gradlew installDebug
+$ANDROID_HOME/platform-tools/adb shell am start -n com.fasolt.android/.MainActivity
+```
+
+Pointing the app at the local backend (`http://localhost:8080`):
+
+- **Emulator**: enter `http://10.0.2.2:8080` on the login screen (the emulator's loopback to the host)
+- **Physical device**: use the host's LAN IP, e.g. `http://192.168.1.42:8080`. Cleartext HTTP to non-localhost requires a `network-security-config` exemption — not currently configured.
+
+Backend must be restarted at least once after pulling Android changes so the `fasolt-android` OpenIddict client gets seeded.
+
+### Debugging
+
+```bash
+# Stream app logs (filter by tag or PID)
+$ANDROID_HOME/platform-tools/adb logcat --pid=$($ANDROID_HOME/platform-tools/adb shell pidof com.fasolt.android)
+
+# Clear app data (token storage, prefs) — useful for re-testing the login flow
+$ANDROID_HOME/platform-tools/adb shell pm clear com.fasolt.android
+
+# Inspect HTTP traffic — OkHttp logging interceptor logs at BASIC level via Logcat
+```
+
+Common gotchas:
+
+- **OAuth Custom Tab doesn't return to app** → check `appAuthRedirectScheme` in `app/build.gradle.kts` matches the scheme portion of `redirect_uri`.
+- **401 loop** → `TokenAuthenticator` only retries once per request chain; check that the refresh token actually exists in `EncryptedSharedPreferences` (`adb shell run-as com.fasolt.android cat shared_prefs/fasolt_secure_prefs.xml`).
+- **Material icon "Unresolved reference"** → many icons moved to `Icons.AutoMirrored.Filled.*` in current Compose; check the import path.
+- **Cleartext HTTP blocked** → emulator-to-host is fine via `10.0.2.2`; for LAN IPs you need `android:usesCleartextTraffic="true"` (dev only) or a `network-security-config`.
+
+### Architecture notes
+
+- DI is intentionally a plain service locator on `FasoltApplication` for now. Hilt is planned but deferred (issue #126 item 3).
+- ViewModels use `AndroidViewModel` to reach `FasoltApplication` directly — when introducing Hilt, swap to constructor injection.
+- Cache layer (Room) is not yet present; `DeckRepository` is currently a pass-through to the API. The offline/pending-review queue mirroring iOS's `SyncService` is issue #126 item 4.
 
 ## Production Infrastructure
 

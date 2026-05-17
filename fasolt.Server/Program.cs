@@ -466,6 +466,29 @@ if (!app.Environment.IsEnvironment("Testing"))
             await appManager.UpdateAsync(existing, descriptor);
         }
     }
+
+    // Seed first-party Android OAuth client (no Apple grant; otherwise mirrors iOS)
+    const string androidClientId = "fasolt-android";
+    var existingAndroid = await appManager.FindByClientIdAsync(androidClientId);
+    if (existingAndroid is null)
+    {
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = androidClientId,
+            DisplayName = "Fasolt Android",
+            ClientType = OpenIddictConstants.ClientTypes.Public,
+            ApplicationType = OpenIddictConstants.ApplicationTypes.Native,
+            ConsentType = OpenIddictConstants.ConsentTypes.Systematic,
+        };
+        descriptor.RedirectUris.Add(new Uri("fasolt://oauth/callback"));
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess);
+        await appManager.CreateAsync(descriptor);
+    }
 }
 
 if (!app.Environment.IsDevelopment())

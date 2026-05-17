@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Debug-only: permit cleartext HTTP to any host so dev backends on
+         localhost, 10.0.2.2 (emulator loopback), or LAN IPs work without
+         per-IP configuration. Production builds inherit Android's HTTPS-only
+         default — this config is in src/debug, not src/main. -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
