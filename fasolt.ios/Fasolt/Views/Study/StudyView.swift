@@ -5,10 +5,12 @@ struct StudyView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel: StudyViewModel
     private let deckId: String?
+    private let mode: StudyMode
 
-    init(viewModel: StudyViewModel, deckId: String? = nil) {
+    init(viewModel: StudyViewModel, deckId: String? = nil, mode: StudyMode = .normal) {
         _viewModel = State(initialValue: viewModel)
         self.deckId = deckId
+        self.mode = mode
     }
 
     var body: some View {
@@ -19,14 +21,18 @@ struct StudyView: View {
             case .studying, .flipped:
                 cardContent
             case .summary:
-                StudySummaryView(
-                    cardsStudied: viewModel.cardsStudied,
-                    ratingsCount: viewModel.ratingsCount,
-                    failedRatings: viewModel.failedRatings,
-                    skippedCount: viewModel.skippedCount,
-                    suspendedCount: viewModel.suspendedCount,
-                    onDone: { dismiss() }
-                )
+                if viewModel.mode == .cram {
+                    cramSummary
+                } else {
+                    StudySummaryView(
+                        cardsStudied: viewModel.cardsStudied,
+                        ratingsCount: viewModel.ratingsCount,
+                        failedRatings: viewModel.failedRatings,
+                        skippedCount: viewModel.skippedCount,
+                        suspendedCount: viewModel.suspendedCount,
+                        onDone: { dismiss() }
+                    )
+                }
             }
         }
         .toolbar {
@@ -80,7 +86,7 @@ struct StudyView: View {
         }
         .task {
             if viewModel.state == .idle {
-                await viewModel.startSession(deckId: deckId)
+                await viewModel.startSession(deckId: deckId, mode: mode)
             }
         }
         .offlineBanner()
@@ -110,6 +116,14 @@ struct StudyView: View {
 
     private var cardContent: some View {
         VStack(spacing: 0) {
+            if viewModel.mode == .cram {
+                Text("Custom study — FSRS not adjusted")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
+            }
+
             progressBar
                 .padding(.horizontal)
                 .padding(.top, 8)
@@ -151,9 +165,15 @@ struct StudyView: View {
             }
 
             if viewModel.isFlipped {
-                ratingButtons
-                    .padding()
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                if viewModel.mode == .cram {
+                    nextButton
+                        .padding()
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                } else {
+                    ratingButtons
+                        .padding()
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             } else {
                 Button {
                     flipWithHaptic()
@@ -197,6 +217,54 @@ struct StudyView: View {
             }
             .frame(height: 4)
         }
+    }
+
+    // MARK: - Cram Mode
+
+    private var nextButton: some View {
+        Button {
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+            viewModel.advance()
+            if viewModel.state == .summary {
+                let notification = UINotificationFeedbackGenerator()
+                notification.notificationOccurred(.success)
+            }
+        } label: {
+            Text("Next")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+    }
+
+    private var cramSummary: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(.green)
+
+            Text("Session Complete")
+                .font(.title2.bold())
+
+            Text("\(viewModel.cardsStudied) card\(viewModel.cardsStudied == 1 ? "" : "s") reviewed")
+                .font(.body)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button("Done") {
+                dismiss()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity)
+        }
+        .padding()
     }
 
     // MARK: - Rating Buttons

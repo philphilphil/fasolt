@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
+using Fasolt.Server.Domain.Entities;
 using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests;
@@ -327,6 +328,148 @@ public class ReviewServiceTests : IAsyncLifetime
         var interval1 = result.DueAt!.Value - _time.GetUtcNow();
         var interval2 = result2!.DueAt!.Value - _time.GetUtcNow();
         interval1.Should().BeGreaterThan(interval2);
+    }
+
+    // --- GetCustomStudyCards (cram mode) tests ---
+
+    private async Task<(string DeckPublicId, List<string> CardPublicIds)> SeedDeckWithCards(
+        Server.Infrastructure.Data.AppDbContext db, string name, int cardCount)
+    {
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+        var deck = await deckSvc.CreateDeck(UserId, name, null);
+        var cardIds = new List<string>();
+        for (var i = 0; i < cardCount; i++)
+        {
+            var card = await cardSvc.CreateCard(UserId, $"{name} Q{i}", $"{name} A{i}", null, null);
+            cardIds.Add(card.Id);
+        }
+        if (cardIds.Count > 0)
+            await deckSvc.AddCards(UserId, deck.Id, cardIds);
+        return (deck.Id, cardIds);
+    }
+
+    [Fact]
+    public async Task GetCustomStudyCards_ReturnsAllNonSuspendedCardsInDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+        var (deckId, cardIds) = await SeedDeckWithCards(db, "Cram", 5);
+
+        var cards = await svc.GetCustomStudyCards(UserId, deckId);
+
+        cards.Should().NotBeNull();
+        cards!.Should().HaveCount(5);
+        cards.Select(c => c.Id).Should().BeEquivalentTo(cardIds);
+    }
+
+    [Fact]
+    public async Task GetCustomStudyCards_ExcludesSuspendedCards()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+        var (deckId, cardIds) = await SeedDeckWithCards(db, "CramSuspend", 3);
+
+        // Suspend the first card
+        var suspendedPublicId = cardIds[0];
+        var suspended = await db.Cards.FirstAsync(c => c.PublicId == suspendedPublicId);
+        suspended.IsSuspended = true;
+        await db.SaveChangesAsync();
+
+        var cards = await svc.GetCustomStudyCards(UserId, deckId);
+
+        cards.Should().NotBeNull();
+        cards!.Should().HaveCount(2);
+        cards.Select(c => c.Id).Should().NotContain(suspendedPublicId);
+    }
+
+    [Fact]
+    public async Task GetCustomStudyCards_EmptyDeck_ReturnsEmptyList()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+        var (deckId, _) = await SeedDeckWithCards(db, "CramEmpty", 0);
+
+        var cards = await svc.GetCustomStudyCards(UserId, deckId);
+
+        cards.Should().NotBeNull();
+        cards!.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCustomStudyCards_NonexistentDeck_ReturnsNull()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+
+        var cards = await svc.GetCustomStudyCards(UserId, "nonexistent");
+
+        cards.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetCustomStudyCards_OtherUsersDeck_ReturnsNull()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+
+        // Create another user and a deck owned by them
+        var otherUserId = Guid.NewGuid().ToString();
+        db.Users.Add(new AppUser
+        {
+            Id = otherUserId,
+            UserName = "other@fasolt.test",
+            NormalizedUserName = "OTHER@FASOLT.TEST",
+            Email = "other@fasolt.test",
+            NormalizedEmail = "OTHER@FASOLT.TEST",
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString(),
+        });
+        await db.SaveChangesAsync();
+
+        var otherDeckSvc = new DeckService(db);
+        var otherDeck = await otherDeckSvc.CreateDeck(otherUserId, "Other deck", null);
+
+        // Our user tries to access their deck
+        var cards = await svc.GetCustomStudyCards(UserId, otherDeck.Id);
+
+        cards.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetCustomStudyCards_DoesNotMutateCardStateOrCreateReviewLogs()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+        var (deckId, cardIds) = await SeedDeckWithCards(db, "CramInvariant", 3);
+
+        // Bring cards into a non-default state so any mutation would be visible.
+        // Rate them to give them stability/difficulty/dueAt values.
+        foreach (var cardPublicId in cardIds)
+            await svc.RateCard(UserId, new RateCardRequest(cardPublicId, "good"));
+
+        // Snapshot state of cards and review-log count.
+        var before = await db.Cards
+            .Where(c => cardIds.Contains(c.PublicId))
+            .Select(c => new { c.PublicId, c.DueAt, c.Stability, c.Difficulty, c.State, c.Step, c.LastReviewedAt })
+            .ToListAsync();
+        var beforeLogCount = await db.ReviewLogs.CountAsync(r => r.UserId == UserId);
+
+        // Run cram fetch.
+        var cards = await svc.GetCustomStudyCards(UserId, deckId);
+        cards.Should().NotBeNull();
+        cards!.Should().HaveCount(3);
+
+        // Verify nothing mutated.
+        await using var verifyDb = _db.CreateDbContext();
+        var after = await verifyDb.Cards
+            .Where(c => cardIds.Contains(c.PublicId))
+            .Select(c => new { c.PublicId, c.DueAt, c.Stability, c.Difficulty, c.State, c.Step, c.LastReviewedAt })
+            .ToListAsync();
+        var afterLogCount = await verifyDb.ReviewLogs.CountAsync(r => r.UserId == UserId);
+
+        afterLogCount.Should().Be(beforeLogCount);
+        after.Should().BeEquivalentTo(before);
     }
 
     [Fact]

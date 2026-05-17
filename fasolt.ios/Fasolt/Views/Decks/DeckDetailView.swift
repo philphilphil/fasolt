@@ -109,16 +109,30 @@ struct DeckDetailView: View {
                         }
                     }
 
-                    if detail.dueCount > 0 && !detail.isSuspended {
-                        Button {
-                            startStudy(deckId: viewModel.deckId)
-                        } label: {
-                            Text("Study This Deck")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
+                    if !detail.isSuspended && detail.cardCount > 0 {
+                        VStack(spacing: 8) {
+                            if detail.dueCount > 0 {
+                                Button {
+                                    startStudy(deckId: viewModel.deckId)
+                                } label: {
+                                    Text("Study This Deck")
+                                        .font(.headline)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                }
+                                .buttonStyle(.borderedProminent)
+                            }
+
+                            Button {
+                                startStudy(deckId: viewModel.deckId, mode: .cram)
+                            } label: {
+                                Text("Custom study")
+                                    .font(.headline)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                            }
+                            .buttonStyle(.bordered)
                         }
-                        .buttonStyle(.borderedProminent)
                         .padding()
                     }
                 }
@@ -148,31 +162,29 @@ struct DeckDetailView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showEditSheet = true
-                } label: {
-                    Label("Edit", systemImage: "pencil")
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
                     Picker("Sort", selection: $sortOrder) {
                         ForEach(CardSortOrder.allCases, id: \.self) { order in
                             Text(order.rawValue).tag(order)
                         }
                     }
+
+                    Button {
+                        Task { await viewModel.toggleSuspended() }
+                    } label: {
+                        Label(
+                            viewModel.detail?.isSuspended == true ? "Unsuspend" : "Suspend",
+                            systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
+                        )
+                    }
                 } label: {
-                    Label("Sort", systemImage: "arrow.up.arrow.down")
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await viewModel.toggleSuspended() }
-                } label: {
-                    Label(
-                        viewModel.detail?.isSuspended == true ? "Unsuspend" : "Suspend",
-                        systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
-                    )
+                    Label("More", systemImage: "ellipsis.circle")
                 }
             }
         }

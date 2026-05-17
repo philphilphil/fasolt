@@ -136,6 +136,16 @@ const stateCounts = computed(() => {
         >
           Study this deck
         </Button>
+        <Button
+          v-if="deck.cardCount > 0 && !deck.isSuspended"
+          variant="outline"
+          size="sm"
+          class="text-xs"
+          data-testid="custom-study-button"
+          @click="router.push(`/review?deckId=${deck.id}&mode=cram`)"
+        >
+          Custom study
+        </Button>
         <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deck.id}/snapshots`)">
           <History class="h-3.5 w-3.5 mr-1" />Snapshots
         </Button>

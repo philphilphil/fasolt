@@ -28,6 +28,17 @@ final class CardRepository {
         return cards
     }
 
+    func fetchCustomCards(deckId: String) async throws -> [DueCardDTO] {
+        let endpoint = Endpoint(
+            path: "/api/review/custom",
+            method: .get,
+            queryItems: [URLQueryItem(name: "deckId", value: deckId)]
+        )
+        let cards: [DueCardDTO] = try await apiClient.request(endpoint)
+        logger.info("Fetched \(cards.count) custom-study cards for deck \(deckId)")
+        return cards
+    }
+
     func createCard(_ request: CreateCardRequest) async throws -> CardDTO {
         let endpoint = Endpoint(path: "/api/cards", method: .post, body: request)
         let card: CardDTO = try await apiClient.request(endpoint)

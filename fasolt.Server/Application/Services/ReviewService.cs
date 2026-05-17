@@ -77,6 +77,25 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
             .ToListAsync();
     }
 
+    public async Task<List<DueCardDto>?> GetCustomStudyCards(string userId, string deckPublicId)
+    {
+        var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
+        if (deck is null) return null;
+
+        var cards = await db.Cards
+            .Where(c => c.UserId == userId && !c.IsSuspended && c.DeckCards.Any(dc => dc.DeckId == deck.Id))
+            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.FrontSvg, c.BackSvg))
+            .ToListAsync();
+
+        for (var i = cards.Count - 1; i > 0; i--)
+        {
+            var j = Random.Shared.Next(i + 1);
+            (cards[i], cards[j]) = (cards[j], cards[i]);
+        }
+
+        return cards;
+    }
+
     public async Task<RateCardResponse?> RateCard(string userId, RateCardRequest request)
     {
         if (!ValidRatings.TryGetValue(request.Rating, out var fsrsRating))

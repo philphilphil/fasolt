@@ -12,6 +12,7 @@ struct MainTabView: View {
     @State private var notificationService: NotificationService?
     @State private var showStudy = false
     @State private var studyDeckId: String?
+    @State private var studyMode: StudyMode = .normal
     @State private var selectedTab: Int = 0
     @State private var router = NavigationRouter.shared
 
@@ -69,14 +70,16 @@ struct MainTabView: View {
                 }
                 .fullScreenCover(isPresented: $showStudy, onDismiss: {
                     studyDeckId = nil
+                    studyMode = .normal
                     NotificationCenter.default.post(name: .studySessionEnded, object: nil)
                 }) {
                     NavigationStack {
-                        StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId)
+                        StudyView(viewModel: studyViewModelFactory(), deckId: studyDeckId, mode: studyMode)
                     }
                 }
-                .environment(\.startStudy, StartStudyAction { deckId in
+                .environment(\.startStudy, StartStudyAction { deckId, mode in
                     studyDeckId = deckId
+                    studyMode = mode
                     showStudy = true
                 })
                 .onAppear {

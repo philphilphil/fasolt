@@ -29,6 +29,7 @@ struct DeckListView: View {
 }
 
 struct DeckListContent: View {
+    @Environment(\.startStudy) private var startStudy
     var viewModel: DeckListViewModel
     @State private var searchText = ""
     @State private var sortOrder: DeckSortOrder = .name
@@ -135,6 +136,15 @@ struct DeckListContent: View {
                         Label("Copy ID", systemImage: "doc.on.doc")
                     }
                     .tint(.blue)
+
+                    if !deck.isSuspended && deck.cardCount > 0 {
+                        Button {
+                            startStudy(deckId: deck.id, mode: .cram)
+                        } label: {
+                            Label("Cram", systemImage: "flame")
+                        }
+                        .tint(.orange)
+                    }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
