@@ -63,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fasolt.android.FasoltApplication
 import com.fasolt.android.data.api.models.DeckCardDto
 import com.fasolt.android.ui.decks.components.DeckFormSheet
+import com.fasolt.android.ui.util.RefreshOnResume
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +86,8 @@ fun DeckDetailScreen(
     val state by viewModel.uiState.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
     var menuExpanded by remember { mutableStateOf(false) }
+
+    RefreshOnResume { viewModel.load() }
     var showEditSheet by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 

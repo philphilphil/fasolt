@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fasolt.android.data.api.models.Overview
 import com.fasolt.android.data.api.models.StudyStats
+import com.fasolt.android.ui.util.RefreshOnResume
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +58,8 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    RefreshOnResume { viewModel.refresh() }
 
     Scaffold(
         topBar = {

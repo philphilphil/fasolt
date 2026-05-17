@@ -52,6 +52,7 @@ import com.fasolt.android.ui.decks.DecksUiState
 import com.fasolt.android.ui.decks.DecksViewModel
 import com.fasolt.android.ui.decks.components.DeckFormSheet
 import com.fasolt.android.ui.decks.components.DeckRow
+import com.fasolt.android.ui.util.RefreshOnResume
 
 enum class LibrarySegment(val label: String) {
     Decks("Decks"),
@@ -69,6 +70,8 @@ fun LibraryScreen(
     val decksViewModel: DecksViewModel = viewModel()
     var showCreateDeckSheet by remember { mutableStateOf(false) }
     val createDeckError by decksViewModel.createError.collectAsState()
+
+    RefreshOnResume { decksViewModel.refresh() }
 
     Scaffold(
         topBar = {

@@ -53,6 +53,8 @@ fun ProgressScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
+    com.fasolt.android.ui.util.RefreshOnResume { viewModel.refresh() }
+
     Scaffold(
         topBar = {
             TopAppBar(
