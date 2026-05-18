@@ -2,6 +2,18 @@ import SwiftUI
 
 struct ProgressDashboardView: View {
     @State private var viewModel: ProgressViewModel
+    @State private var selectedRange: Range = .year
+
+    enum Range: String, CaseIterable { case year = "Year", d90 = "90d", d30 = "30d", d7 = "7d"
+        var days: Int {
+            switch self {
+            case .year: return 364
+            case .d90: return 90
+            case .d30: return 30
+            case .d7: return 7
+            }
+        }
+    }
 
     init(viewModel: ProgressViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -10,20 +22,24 @@ struct ProgressDashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 14) {
+                    rangePicker
                     if let progress = viewModel.progress {
-                        statCards(progress)
-                        periodStats(progress)
-                        activityGrid(progress)
+                        streakBanner(progress)
+                        statTiles(progress)
+                        activityCard(progress)
                         if progress.totalAnswered == 0 {
                             emptyHint
                         }
                     }
                 }
-                .padding()
+                .padding(.horizontal, FasoltTheme.pagePadding)
+                .padding(.bottom, 24)
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
             .navigationTitle("Progress")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .refreshable { await viewModel.load() }
             .overlay {
                 if viewModel.isLoading && viewModel.progress == nil {
@@ -52,237 +68,303 @@ struct ProgressDashboardView: View {
         }
     }
 
-    private func statCards(_ p: ProgressDTO) -> some View {
+    // MARK: - Range picker (visual only — we always fetch a year)
+
+    private var rangePicker: some View {
+        Picker("Range", selection: $selectedRange) {
+            ForEach(Range.allCases, id: \.self) { range in
+                Text(range.rawValue).tag(range)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Streak banner
+
+    private func streakBanner(_ p: ProgressDTO) -> some View {
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(FasoltTheme.paper1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
+                )
+
+            VStack(spacing: 0) {
+                AccentStripe(horizontalInset: 22)
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        CapsLabel(text: p.currentStreak > 0 ? "Streak · active" : "Streak", color: FasoltTheme.accent)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("\(p.currentStreak)")
+                                .font(.system(size: 56, weight: .semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(FasoltTheme.ink0)
+                            Text("days · best \(p.bestStreak)")
+                                .font(.system(size: 14))
+                                .foregroundStyle(FasoltTheme.ink2)
+                        }
+                    }
+                    Spacer()
+                    miniStreakBars(p)
+                }
+                .padding(.horizontal, 18)
+                .padding(.top, 12)
+                .padding(.bottom, 16)
+            }
+        }
+    }
+
+    private func miniStreakBars(_ p: ProgressDTO) -> some View {
+        // Show the last 14 days
+        let last = Array(p.dailyActivity.suffix(14))
+        let maxCount = max(1, last.map { $0.count }.max() ?? 1)
+        return HStack(alignment: .bottom, spacing: 3) {
+            ForEach(Array(last.enumerated()), id: \.offset) { i, day in
+                let intensity = Double(day.count) / Double(maxCount)
+                let h = 8 + CGFloat(intensity) * 28
+                let isLast = i == last.count - 1
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(isLast && day.count > 0
+                          ? FasoltTheme.accent
+                          : (day.count == 0 ? FasoltTheme.rule1 : FasoltTheme.good.opacity(0.3 + intensity * 0.6)))
+                    .frame(width: 7, height: h)
+            }
+        }
+        .frame(height: 36)
+    }
+
+    // MARK: - Stat tiles 2x2
+
+    private func statTiles(_ p: ProgressDTO) -> some View {
         LazyVGrid(
             columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
             spacing: 10
         ) {
-            statCell(label: "CURRENT STREAK") {
-                HStack(spacing: 5) {
-                    if p.currentStreak > 0 {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(.orange)
-                            .font(.title3)
-                    }
-                    Text("\(p.currentStreak)")
-                        .font(.title2.weight(.bold))
-                        .monospacedDigit()
-                }
-            }
-            statCell(label: "BEST STREAK") {
-                Text("\(p.bestStreak)")
-                    .font(.title2.weight(.bold))
-                    .monospacedDigit()
-            }
-            statCell(label: "TOTAL ANSWERED") {
-                Text("\(p.totalAnswered)")
-                    .font(.title2.weight(.bold))
-                    .monospacedDigit()
-            }
-            statCell(label: "TODAY") {
-                Text("\(p.answeredToday)")
-                    .font(.title2.weight(.bold))
-                    .monospacedDigit()
-            }
+            statTile(label: "Cards answered", value: "\(p.totalAnswered)", sub: "+\(p.answeredThisMonth) this month")
+            statTile(label: "Today", value: "\(p.answeredToday)", sub: "answered today")
+            statTile(label: "This week", value: "\(p.answeredThisWeek)", sub: "rolling 7 days")
+            statTile(label: "Best streak", value: "\(p.bestStreak)", sub: "all time")
         }
     }
 
-    @ViewBuilder
-    private func statCell<V: View>(label: String, @ViewBuilder content: () -> V) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .tracking(0.6)
-            content()
+    private func statTile(label: String, value: String, sub: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            CapsLabel(text: label, size: 10)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 28, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(FasoltTheme.ink0)
+            }
+            .padding(.top, 6)
+            Text(sub)
+                .font(.system(size: 11))
+                .foregroundStyle(FasoltTheme.ink2)
+                .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .paperCard(radius: 14)
     }
 
-    private func periodStats(_ p: ProgressDTO) -> some View {
-        HStack(spacing: 10) {
-            periodCell(label: "THIS WEEK", value: p.answeredThisWeek)
-            periodCell(label: "THIS MONTH", value: p.answeredThisMonth)
-        }
-    }
+    // MARK: - Year activity card
 
-    private func periodCell(label: String, value: Int) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .tracking(0.6)
-            Text("\(value)")
-                .font(.title3.weight(.semibold))
-                .monospacedDigit()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    // MARK: - Activity grid (GitHub-style)
-
-    private static let cellSize: CGFloat = 26
-    private static let cellSpacing: CGFloat = 4
-
-    private func activityGrid(_ p: ProgressDTO) -> some View {
-        let maxCount = max(1, p.dailyActivity.map { $0.count }.max() ?? 1)
-        let cells = buildCells(p)
-        let cols = Array(repeating: GridItem(.fixed(Self.cellSize), spacing: Self.cellSpacing), count: 7)
-        let studiedDays = p.dailyActivity.filter { $0.count > 0 }.count
-
-        return VStack(alignment: .leading, spacing: 12) {
+    private func activityCard(_ p: ProgressDTO) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
-                Text("LAST 30 DAYS")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .tracking(0.6)
+                VStack(alignment: .leading, spacing: 2) {
+                    CapsLabel(text: titleForRange(), size: 11)
+                    Text(headingForRange())
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(FasoltTheme.ink0)
+                }
                 Spacer()
-                Text("\(studiedDays) of \(p.dailyActivity.count) studied")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+                legend()
             }
+            .padding(.bottom, 12)
+
+            heatmap(p)
 
             HStack {
-                Spacer(minLength: 0)
-                LazyVGrid(columns: cols, alignment: .center, spacing: Self.cellSpacing) {
-                    ForEach(cells) { cell in
-                        if let day = cell.day {
-                            activityCell(day: day, isToday: cell.isToday, maxCount: maxCount)
-                        } else {
-                            Color.clear.frame(width: Self.cellSize, height: Self.cellSize)
+                heatmapStat(label: "Best", value: "\(p.dailyActivity.map(\.count).max() ?? 0)")
+                Spacer()
+                heatmapStat(label: "Avg", value: "\(averagePerDay(p))")
+                Spacer()
+                heatmapStat(label: "Rest", value: "\(p.dailyActivity.filter { $0.count == 0 }.count)")
+            }
+            .padding(.top, 10)
+        }
+        .padding(16)
+        .paperCard(radius: 18)
+    }
+
+    private func titleForRange() -> String {
+        switch selectedRange {
+        case .year: return "Year"
+        case .d90: return "90 days"
+        case .d30: return "30 days"
+        case .d7: return "7 days"
+        }
+    }
+
+    private func headingForRange() -> String {
+        switch selectedRange {
+        case .year: return "One year of practice"
+        case .d90: return "Last 90 days"
+        case .d30: return "Last 30 days"
+        case .d7: return "This week"
+        }
+    }
+
+    private func legend() -> some View {
+        HStack(spacing: 6) {
+            CapsLabel(text: "less", size: 9)
+            HStack(spacing: 2) {
+                ForEach(0..<5, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(cellColor(intensity: Double(i) / 4.0))
+                        .frame(width: 7, height: 7)
+                }
+            }
+            CapsLabel(text: "more", size: 9)
+        }
+    }
+
+    private func heatmapStat(label: String, value: String) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(FasoltTheme.ink2)
+            Text("·")
+                .font(.system(size: 11))
+                .foregroundStyle(FasoltTheme.ink3)
+            Text(value)
+                .font(.system(size: 11, weight: .medium))
+                .monospacedDigit()
+                .foregroundStyle(FasoltTheme.ink0)
+        }
+    }
+
+    // MARK: - Heatmap
+
+    private func heatmap(_ p: ProgressDTO) -> some View {
+        let data = trimmedActivity(p)
+        let maxCount = max(1, data.map { $0.count }.max() ?? 1)
+        let cells = buildCells(data)
+        let weeks = (cells.count + 6) / 7
+
+        return GeometryReader { geo in
+            let totalGap = CGFloat(weeks - 1) * 2
+            let width = (geo.size.width - totalGap) / CGFloat(weeks)
+            HStack(spacing: 2) {
+                ForEach(0..<weeks, id: \.self) { w in
+                    VStack(spacing: 2) {
+                        ForEach(0..<7, id: \.self) { d in
+                            let idx = w * 7 + d
+                            if idx < cells.count {
+                                let cell = cells[idx]
+                                cellView(cell: cell, maxCount: maxCount)
+                                    .frame(width: width, height: width)
+                            } else {
+                                Color.clear.frame(width: width, height: width)
+                            }
                         }
                     }
                 }
-                .fixedSize()
-                Spacer(minLength: 0)
-            }
-
-            HStack(spacing: 14) {
-                legendSwatch(color: studiedSwatchColor, label: "Studied")
-                legendSwatch(color: missedColor, label: "Missed")
-                legendSwatch(color: restColor, label: "Rest")
-                HStack(spacing: 4) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .stroke(Color.blue, lineWidth: 1.5)
-                        .frame(width: 10, height: 10)
-                    Text("Today")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
             }
         }
-        .padding(14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .frame(height: heatmapHeight())
     }
 
-    private func activityCell(day: DailyActivityDTO, isToday: Bool, maxCount: Int) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 5)
-                .fill(cellFill(count: day.count, hadDue: day.hadDue, maxCount: maxCount))
-
-            if isToday {
-                RoundedRectangle(cornerRadius: 5)
-                    .stroke(Color.blue, lineWidth: 1.5)
-            }
-
-            if day.count > 0 {
-                Text("\(day.count)")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(cellTextColor(count: day.count, maxCount: maxCount))
-                    .monospacedDigit()
-            }
-        }
-        .frame(width: Self.cellSize, height: Self.cellSize)
-    }
-
-    // Cell-color palette: greens for studied (4 stepped intensities),
-    // very subtle warm/neutral grays for missed/rest so the chart doesn't feel punishing.
-    private var restColor: Color { Color.gray.opacity(0.14) }
-    private var missedColor: Color { Color.orange.opacity(0.18) }
-    private var studiedSwatchColor: Color { Color.green.opacity(0.7) }
-
-    private func cellFill(count: Int, hadDue: Bool, maxCount: Int) -> Color {
-        if count > 0 {
-            let intensity = Double(count) / Double(maxCount)
-            let opacity: Double
-            switch intensity {
-            case ..<0.25: opacity = 0.35
-            case ..<0.5:  opacity = 0.55
-            case ..<0.75: opacity = 0.75
-            default:      opacity = 1.0
-            }
-            return .green.opacity(opacity)
-        }
-        return hadDue ? missedColor : restColor
-    }
-
-    private func cellTextColor(count: Int, maxCount: Int) -> Color {
-        // Use white only when the green is dark enough; otherwise fall back to a darker green.
-        let intensity = Double(count) / Double(maxCount)
-        return intensity >= 0.5 ? .white : Color(red: 0.15, green: 0.45, blue: 0.20)
-    }
-
-    private func legendSwatch(color: Color, label: String) -> some View {
-        HStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 3)
-                .fill(color)
-                .frame(width: 10, height: 10)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+    private func heatmapHeight() -> CGFloat {
+        // Approximate: 7 rows; height scales with width — we compute via aspect on the fly.
+        // Use a fixed height that looks good for a phone column.
+        switch selectedRange {
+        case .year: return 78
+        case .d90: return 100
+        case .d30: return 140
+        case .d7: return 180
         }
     }
 
-    // Build cells with leading placeholders so the grid aligns to weekdays (Mon-first).
-    private struct ActivityCell: Identifiable {
-        let id: String
+    private func trimmedActivity(_ p: ProgressDTO) -> [DailyActivityDTO] {
+        let days = selectedRange.days
+        let activity = p.dailyActivity
+        if activity.count <= days { return activity }
+        return Array(activity.suffix(days))
+    }
+
+    private struct Cell {
         let day: DailyActivityDTO?
         let isToday: Bool
     }
 
-    private static let dateParser: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone.current
-        return f
-    }()
+    private func buildCells(_ activity: [DailyActivityDTO]) -> [Cell] {
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd"
+        parser.locale = Locale(identifier: "en_US_POSIX")
 
-    private func buildCells(_ p: ProgressDTO) -> [ActivityCell] {
-        guard let first = p.dailyActivity.first,
-              let firstDate = Self.dateParser.date(from: first.date) else {
-            return p.dailyActivity.enumerated().map { idx, day in
-                ActivityCell(id: day.id, day: day, isToday: idx == p.dailyActivity.count - 1)
+        guard let first = activity.first,
+              let firstDate = parser.date(from: first.date) else {
+            return activity.enumerated().map { i, d in
+                Cell(day: d, isToday: i == activity.count - 1)
             }
         }
 
         var calendar = Calendar(identifier: .gregorian)
         calendar.firstWeekday = 2 // Monday
-        let weekday = calendar.component(.weekday, from: firstDate) // Sun=1..Sat=7
+        let weekday = calendar.component(.weekday, from: firstDate)
         let leadingEmpty = (weekday - calendar.firstWeekday + 7) % 7
 
-        var cells: [ActivityCell] = []
-        for i in 0..<leadingEmpty {
-            cells.append(ActivityCell(id: "pad-\(i)", day: nil, isToday: false))
-        }
-        let lastIdx = p.dailyActivity.count - 1
-        for (idx, day) in p.dailyActivity.enumerated() {
-            cells.append(ActivityCell(id: day.id, day: day, isToday: idx == lastIdx))
+        var cells: [Cell] = []
+        for _ in 0..<leadingEmpty { cells.append(Cell(day: nil, isToday: false)) }
+        let lastIdx = activity.count - 1
+        for (i, day) in activity.enumerated() {
+            cells.append(Cell(day: day, isToday: i == lastIdx))
         }
         return cells
     }
 
+    @ViewBuilder
+    private func cellView(cell: Cell, maxCount: Int) -> some View {
+        if let day = cell.day {
+            let intensity = Double(day.count) / Double(maxCount)
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(day.count > 0 ? cellColor(intensity: intensity) : (day.hadDue ? FasoltTheme.again.opacity(0.18) : FasoltTheme.paper2))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .strokeBorder(FasoltTheme.ink0, lineWidth: cell.isToday ? 1.2 : 0)
+                )
+        } else {
+            Color.clear
+        }
+    }
+
+    private func cellColor(intensity: Double) -> Color {
+        if intensity <= 0 { return FasoltTheme.paper2 }
+        if intensity < 0.25 { return Color(red: 0.93, green: 0.72, blue: 0.55) }
+        if intensity < 0.5 { return Color(red: 0.88, green: 0.55, blue: 0.36) }
+        if intensity < 0.75 { return Color(red: 0.80, green: 0.40, blue: 0.22) }
+        return FasoltTheme.accent
+    }
+
+    private func averagePerDay(_ p: ProgressDTO) -> Int {
+        let nonZero = p.dailyActivity.filter { $0.count > 0 }
+        guard !nonZero.isEmpty else { return 0 }
+        let sum = nonZero.map(\.count).reduce(0, +)
+        return sum / nonZero.count
+    }
+
+    // MARK: - Empty hint
+
     private var emptyHint: some View {
         Text("No reviews yet. Once you start studying, your activity shows up here.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(.system(size: 13))
+            .foregroundStyle(FasoltTheme.ink2)
             .multilineTextAlignment(.center)
-            .padding(.top, 4)
+            .padding(.top, 8)
     }
 }

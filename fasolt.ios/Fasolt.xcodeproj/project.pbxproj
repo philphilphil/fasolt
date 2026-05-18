@@ -42,6 +42,7 @@
 		8AAC264CB92F9AEE3F6E1020 /* NotificationSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71B7A226C2BB777883E5F019 /* NotificationSettingsViewModel.swift */; };
 		8ECAC149086A23E54D5DC1D2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE0A6615C77BF475BDCC9074 /* Assets.xcassets */; };
 		95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */; };
+		FA5011110000000000000001 /* FasoltTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011110000000000000002 /* FasoltTheme.swift */; };
 		A16A1F923D61F379CE697E0E /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F0E793E14821102B85EE20 /* SyncService.swift */; };
 		A50194A1752BFC3F532A3112 /* CachedDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D7A52B7D0A14767556278C /* CachedDeck.swift */; };
 		A539068B57031669C41B3827 /* CardListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97DFD5868A6269BA50AAF562 /* CardListViewModel.swift */; };
@@ -100,6 +101,7 @@
 		415F17F4DF4B1095517D8C18 /* CardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListView.swift; sourceTree = "<group>"; };
 		4EF4BD254FD99EC3A6B24AC3 /* Endpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoint.swift; sourceTree = "<group>"; };
 		505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		FA5011110000000000000002 /* FasoltTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltTheme.swift; sourceTree = "<group>"; };
 		5B0A49ADA712CA0F08309A81 /* local.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = local.xcconfig; sourceTree = "<group>"; };
 		625C4C3DCCD780D51E9BCD60 /* StudySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudySummaryView.swift; sourceTree = "<group>"; };
 		63A881609787DFFE078B49DC /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 			isa = PBXGroup;
 			children = (
 				677A742A91B53D3636E21C5D /* BackendStatusMonitor.swift */,
+				FA5011110000000000000002 /* FasoltTheme.swift */,
 				505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */,
 				876CBB32009796B1341C8D59 /* NetworkMonitor.swift */,
 				906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */,
@@ -522,6 +525,7 @@
 				82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */,
 				347AE09D682D99A0D2B91E40 /* FeatureFlagsService.swift in Sources */,
 				570C82CBFB83C91DEE161A25 /* HelpView.swift in Sources */,
+				FA5011110000000000000001 /* FasoltTheme.swift in Sources */,
 				95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */,
 				FE34695915FE433ECE4024E4 /* LibraryView.swift in Sources */,
 				58A1B3892608093BF3282922 /* MainTabView.swift in Sources */,

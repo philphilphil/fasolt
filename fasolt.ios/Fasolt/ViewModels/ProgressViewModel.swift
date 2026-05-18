@@ -24,7 +24,7 @@ final class ProgressViewModel {
         let endpoint = Endpoint(
             path: "/api/review/progress",
             method: .get,
-            queryItems: [URLQueryItem(name: "days", value: "30")]
+            queryItems: [URLQueryItem(name: "days", value: "364")]
         )
         do {
             progress = try await apiClient.request(endpoint)

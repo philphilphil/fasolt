@@ -9,79 +9,118 @@ struct CardView: View {
     var svg: String? = nil
     var cardId: String? = nil
     var questionText: String? = nil
+    var showAnswer: Bool = false
 
     @State private var idCopied = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Text(label)
-                .font(.caption2)
-                .textCase(.uppercase)
-                .tracking(1)
-                .foregroundStyle(.secondary)
-                .padding(.bottom, 8)
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(FasoltTheme.paper1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
+                )
+                .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
 
-            if let questionText {
-                StructuredText(markdown: questionText)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.bottom, 8)
-            }
+            VStack(spacing: 0) {
+                AccentStripe(horizontalInset: 24)
+                    .opacity(showAnswer ? 1 : 0.45)
 
-            if let svg {
-                SvgView(svg: svg)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 240)
-                    .padding(.bottom, 8)
-            }
+                VStack(spacing: 0) {
+                    // Header: label + source file
+                    HStack(alignment: .firstTextBaseline) {
+                        CapsLabel(text: label, color: FasoltTheme.accent, size: 11)
+                        Spacer(minLength: 8)
+                        if let sourceFile {
+                            HStack(spacing: 4) {
+                                Image(systemName: "doc.text")
+                                    .font(.system(size: 10))
+                                Text(sourceFile)
+                                    .font(.system(size: 11, design: .monospaced))
+                            }
+                            .foregroundStyle(FasoltTheme.ink2)
+                            .lineLimit(1)
+                        }
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.top, 20)
+                    .padding(.bottom, 12)
 
-            ScrollView {
-                StructuredText(markdown: text)
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .scrollBounceBehavior(.basedOnSize)
+                    // Question echoed on the back
+                    if let questionText {
+                        VStack(alignment: .leading, spacing: 4) {
+                            StructuredText(markdown: questionText)
+                                .font(.system(size: 13))
+                                .foregroundStyle(FasoltTheme.ink2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 22)
+                        .padding(.bottom, 6)
+                    }
 
-            VStack(alignment: .leading, spacing: 2) {
-                if let sourceFile {
-                    HStack(spacing: 4) {
-                        Text(sourceFile)
+                    if let svg {
+                        SvgView(svg: svg)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 220)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 8)
+                    }
+
+                    ScrollView {
+                        StructuredText(markdown: text)
+                            .font(.system(size: showAnswer ? 16 : 22, weight: showAnswer ? .regular : .semibold))
+                            .foregroundStyle(FasoltTheme.ink0)
+                            .frame(maxWidth: .infinity, alignment: showAnswer ? .leading : .center)
+                            .padding(.horizontal, 22)
+                            .padding(.vertical, showAnswer ? 4 : 16)
+                            .multilineTextAlignment(showAnswer ? .leading : .center)
+                    }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .frame(maxHeight: .infinity)
+
+                    // Footer
+                    HStack(alignment: .firstTextBaseline) {
                         if let sourceHeading {
-                            Text("\u{00B7}")
-                            Text(sourceHeading)
+                            HStack(spacing: 4) {
+                                Image(systemName: "number")
+                                    .font(.system(size: 9))
+                                Text(sourceHeading)
+                                    .font(.system(size: 11, design: .monospaced))
+                            }
+                            .foregroundStyle(FasoltTheme.ink2)
+                            .lineLimit(1)
+                        } else if !showAnswer {
+                            Text("tap to reveal")
+                                .font(.system(size: 11))
+                                .foregroundStyle(FasoltTheme.ink2)
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
+
+                        Spacer(minLength: 6)
+
+                        if let cardId {
+                            Button {
+                                UIPasteboard.general.string = cardId
+                                idCopied = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    idCopied = false
+                                }
+                            } label: {
+                                Text(idCopied ? "Copied!" : String(cardId.prefix(8)))
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(FasoltTheme.ink3)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                }
-                if let cardId {
-                    Button {
-                        UIPasteboard.general.string = cardId
-                        idCopied = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            idCopied = false
-                        }
-                    } label: {
-                        Text(idCopied ? "Copied!" : cardId)
-                            .monospaced()
-                    }
-                    .buttonStyle(.plain)
+                    .padding(.horizontal, 22)
+                    .padding(.bottom, 14)
+                    .padding(.top, 8)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .font(.caption2)
-            .foregroundStyle(.tertiary)
-            .padding(.top, 8)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(.quaternary, lineWidth: 1)
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -93,7 +132,7 @@ struct CardView: View {
         sourceHeading: "Cell Structure"
     )
     .padding()
-    .background(.black)
+    .background(FasoltTheme.paper0)
 }
 
 #Preview("With SVG") {
@@ -105,5 +144,5 @@ struct CardView: View {
         svg: "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"blue\"/></svg>"
     )
     .padding()
-    .background(.black)
+    .background(FasoltTheme.paper0)
 }

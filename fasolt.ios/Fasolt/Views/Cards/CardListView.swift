@@ -46,12 +46,14 @@ struct CardListContent: View {
                 cardsList
             }
         }
-        .searchable(text: $viewModel.searchText, prompt: "Search cards")
+        .scrollContentBackground(.hidden)
+        .background(FasoltTheme.paper0.ignoresSafeArea())
+        .searchable(text: $viewModel.searchText, prompt: "Search front, back or source")
         .refreshable {
             await viewModel.loadCards()
         }
-        .navigationTitle("Cards")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Library")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -138,9 +140,12 @@ struct CardListContent: View {
                 } label: {
                     DeckCardRow(
                         card: card,
-                        deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
+                        deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name),
+                        primaryDeckId: card.decks.first?.id
                     )
                 }
+                .listRowBackground(FasoltTheme.paper1)
+                .listRowSeparatorTint(FasoltTheme.rule2)
                 .swipeActions(edge: .leading) {
                     Button {
                         UIPasteboard.general.string = card.id

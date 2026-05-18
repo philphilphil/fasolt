@@ -13,13 +13,10 @@ struct DashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    if (viewModel.studyStats?.totalAnswered ?? 0) > 0 {
-                        statsRow
-                    }
+                VStack(spacing: 14) {
                     heroCard
-                    if viewModel.totalCards > 0 {
-                        stateBar
+                    if (viewModel.studyStats?.totalAnswered ?? 0) > 0 {
+                        streakStrip
                     }
                     if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
                         emptyStatePrompt
@@ -28,8 +25,11 @@ struct DashboardView: View {
                         deckSection
                     }
                 }
-                .padding()
+                .padding(.horizontal, FasoltTheme.pagePadding)
+                .padding(.bottom, 24)
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
             .sheet(isPresented: $showMcpSheet) {
                 NavigationStack {
                     List {
@@ -47,8 +47,13 @@ struct DashboardView: View {
             .refreshable {
                 await viewModel.loadStats()
             }
-            .navigationTitle("Dashboard")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Today")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    CapsLabel(text: shortDateLabel, color: FasoltTheme.ink2)
+                }
+            }
             .overlay {
                 if viewModel.isLoading && viewModel.totalCards == 0 {
                     ProgressView()
@@ -86,22 +91,147 @@ struct DashboardView: View {
     }
 
     private var dueDecks: [DeckDTO] {
-        viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }
+        viewModel.decks.filter { !$0.isSuspended }
     }
 
+    private var dueDeckCount: Int {
+        viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }.count
+    }
+
+    private var shortDateLabel: String {
+        let f = DateFormatter()
+        f.dateFormat = "EEE d MMM"
+        return f.string(from: Date()).uppercased()
+    }
+
+    // MARK: - Hero card
+
+    private var heroCard: some View {
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: FasoltTheme.cardRadius, style: .continuous)
+                .fill(FasoltTheme.paper1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: FasoltTheme.cardRadius, style: .continuous)
+                        .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
+                )
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+
+            VStack(spacing: 0) {
+                AccentStripe(horizontalInset: 24)
+
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .bottom) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            CapsLabel(text: "Due", color: FasoltTheme.accent)
+                            Text("\(viewModel.dueCount)")
+                                .font(.system(size: 86, weight: .semibold, design: .default))
+                                .monospacedDigit()
+                                .foregroundStyle(FasoltTheme.ink0)
+                                .kerning(-1)
+                                .padding(.top, 2)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                        }
+                        Spacer(minLength: 8)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("cards across")
+                                .font(.system(size: 14))
+                                .foregroundStyle(FasoltTheme.ink1)
+                            Text("\(dueDeckCount) \(dueDeckCount == 1 ? "deck" : "decks")")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(FasoltTheme.ink0)
+                        }
+                        .padding(.bottom, 8)
+                    }
+
+                    Button {
+                        if viewModel.dueCount > 0 { startStudy() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text(viewModel.dueCount > 0 ? "Start reviewing" : "All caught up")
+                            if viewModel.dueCount > 0 {
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 14, weight: .bold))
+                            }
+                        }
+                    }
+                    .buttonStyle(AccentButtonStyle())
+                    .disabled(viewModel.dueCount == 0)
+                    .opacity(viewModel.dueCount == 0 ? 0.5 : 1)
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 22)
+                .padding(.bottom, 18)
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    // MARK: - Streak strip
+
+    private var streakStrip: some View {
+        HStack(spacing: 12) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(viewModel.studyStats?.currentStreak ?? 0)")
+                    .font(.system(size: 28, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(FasoltTheme.ink0)
+                Text("day streak")
+                    .font(.system(size: 13))
+                    .foregroundStyle(FasoltTheme.ink2)
+            }
+
+            miniStreakBars
+
+            VStack(alignment: .trailing) {
+                CapsLabel(text: "best \(viewModel.studyStats?.bestStreak ?? 0)", size: 10)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .paperCard()
+    }
+
+    private var miniStreakBars: some View {
+        let streak = max(0, viewModel.studyStats?.currentStreak ?? 0)
+        let bars = (0..<14).map { i -> CGFloat in
+            // Show streak intensity falling off historically.
+            let day = 14 - i
+            return day <= streak ? CGFloat(min(day, 6)) : 0
+        }
+        return HStack(alignment: .bottom, spacing: 3) {
+            ForEach(bars.indices, id: \.self) { i in
+                let v = bars[i]
+                let isLast = i == bars.count - 1
+                let height = 6 + v * 3
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(isLast && v > 0
+                          ? FasoltTheme.accent
+                          : (v == 0 ? FasoltTheme.rule1 : FasoltTheme.good.opacity(0.3 + Double(v) * 0.1)))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: height)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: 22)
+    }
+
+    // MARK: - Empty state
+
     private var emptyStatePrompt: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             VStack(spacing: 12) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.blue)
+                    .font(.system(size: 28, weight: .semibold))
+                    .foregroundStyle(FasoltTheme.accent)
+                    .padding(.top, 6)
 
                 Text("Connect your AI")
-                    .font(.headline)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(FasoltTheme.ink0)
 
                 Text("Add Fasolt to Claude, ChatGPT, or another MCP client to start creating cards from your notes.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 14))
+                    .foregroundStyle(FasoltTheme.ink2)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -109,15 +239,12 @@ struct DashboardView: View {
                     showMcpSheet = true
                 } label: {
                     Text("Set up now")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(AccentButtonStyle(height: 44, radius: 12, fontSize: 15))
                 .padding(.top, 4)
             }
             .padding(20)
-            .frame(maxWidth: .infinity)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .paperCard()
 
             Button {
                 Task { await viewModel.createDemoDeck() }
@@ -126,168 +253,78 @@ struct DashboardView: View {
                     ProgressView()
                 } else {
                     Text("or — just try a demo deck")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(FasoltTheme.ink2)
                 }
             }
             .buttonStyle(.borderless)
             .disabled(viewModel.isCreatingDemo)
         }
-        .padding(.top, 8)
+        .padding(.top, 4)
     }
 
-    private var heroCard: some View {
-        VStack(spacing: 8) {
-            Text("Cards due")
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.8))
-
-            Text("\(viewModel.dueCount)")
-                .font(.system(size: 48, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-
-            if viewModel.dueCount > 0 {
-                Text("Study Now")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .background(.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
-            } else {
-                Text("All caught up!")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.7))
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
-        .background(
-            LinearGradient(
-                colors: [.blue, .blue.opacity(0.8)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: 16)
-        )
-        .onTapGesture {
-            if viewModel.dueCount > 0 {
-                startStudy()
-            }
-        }
-    }
-
-    private var statsRow: some View {
-        HStack(spacing: 14) {
-            HStack(spacing: 5) {
-                Image(systemName: "flame.fill")
-                    .foregroundStyle(.orange)
-                    .font(.subheadline)
-                Text("\(viewModel.studyStats?.currentStreak ?? 0)")
-                    .font(.subheadline.weight(.bold).monospacedDigit())
-                Text("day streak")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 8)
-            inlineStat(value: viewModel.studyStats?.answeredToday ?? 0, label: "today")
-            inlineStat(value: viewModel.studyStats?.totalAnswered ?? 0, label: "total")
-            inlineStat(value: viewModel.studyStats?.bestStreak ?? 0, label: "best")
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 9)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    private func inlineStat(value: Int, label: String) -> some View {
-        HStack(spacing: 3) {
-            Text("\(value)")
-                .font(.subheadline.weight(.semibold).monospacedDigit())
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
+    // MARK: - Deck section
 
     private var deckSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Study by deck")
-                .font(.caption2)
-                .textCase(.uppercase)
-                .tracking(1)
-                .foregroundStyle(.secondary)
+            CapsLabel(text: "Your decks", size: 12)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
 
-            ForEach(dueDecks, id: \.id) { deck in
-                Button {
-                    startStudy(deckId: deck.id)
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(deck.name)
-                                .font(.subheadline.weight(.medium))
-                            Text("\(deck.cardCount) cards")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text("\(deck.dueCount) due")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(.orange)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(.orange.opacity(0.1), in: Capsule())
+            VStack(spacing: 0) {
+                ForEach(Array(dueDecks.enumerated()), id: \.element.id) { index, deck in
+                    Button {
+                        if deck.dueCount > 0 { startStudy(deckId: deck.id) }
+                    } label: {
+                        deckRow(deck: deck, isLast: index == dueDecks.count - 1)
                     }
+                    .buttonStyle(.plain)
+                    .disabled(deck.dueCount == 0)
+                }
+            }
+            .paperCard()
+        }
+    }
+
+    private func deckRow(deck: DeckDTO, isLast: Bool) -> some View {
+        HStack(spacing: 12) {
+            DeckTag(color: FasoltTheme.deckColor(for: deck.id), size: 10)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(deck.name)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(FasoltTheme.ink0)
+                    .lineLimit(1)
+                Text("\(deck.cardCount) cards")
+                    .font(.system(size: 13))
+                    .foregroundStyle(FasoltTheme.ink2)
+            }
+            Spacer(minLength: 8)
+            if deck.dueCount > 0 {
+                Text("\(deck.dueCount) due")
+                    .font(.system(size: 13, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(FasoltTheme.accentHi)
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                }
-                .buttonStyle(.plain)
+                    .background(
+                        Capsule().fill(FasoltTheme.accentSoft)
+                    )
+            } else {
+                CapsLabel(text: "caught up", size: 10)
             }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(FasoltTheme.ink3)
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    private var stateBar: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("By state")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-
-            GeometryReader { geo in
-                HStack(spacing: 2) {
-                    stateSegment(key: "new", color: .green, totalWidth: geo.size.width)
-                    stateSegment(key: "review", color: .blue, totalWidth: geo.size.width)
-                    stateSegment(key: "learning", color: .orange, totalWidth: geo.size.width)
-                    stateSegment(key: "relearning", color: .red, totalWidth: geo.size.width)
-                }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .overlay(alignment: .bottom) {
+            if !isLast {
+                Rectangle()
+                    .fill(FasoltTheme.rule2)
+                    .frame(height: FasoltTheme.hairline)
+                    .padding(.leading, 38)
             }
-            .frame(height: 6)
-            .clipShape(Capsule())
-
-            HStack(spacing: 12) {
-                stateLabel("New", key: "new", color: .green)
-                stateLabel("Review", key: "review", color: .blue)
-                stateLabel("Learning", key: "learning", color: .orange)
-                stateLabel("Relearn", key: "relearning", color: .red)
-                Spacer()
-            }
-        }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 10))
-    }
-
-    private func stateSegment(key: String, color: Color, totalWidth: CGFloat) -> some View {
-        let count = viewModel.cardsByState[key] ?? 0
-        let fraction = viewModel.totalCards > 0 ? CGFloat(count) / CGFloat(viewModel.totalCards) : 0
-        return Rectangle()
-            .fill(color)
-            .frame(width: max(fraction * totalWidth, count > 0 ? 2 : 0))
-    }
-
-    private func stateLabel(_ label: String, key: String, color: Color) -> some View {
-        HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 6, height: 6)
-            Text("\(label) \(viewModel.cardsByState[key] ?? 0)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
         }
     }
 }

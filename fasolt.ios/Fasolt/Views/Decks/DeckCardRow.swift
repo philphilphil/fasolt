@@ -3,57 +3,77 @@ import SwiftUI
 struct DeckCardRow: View {
     let card: any CardDisplayable
     var deckNames: [String]? = nil
+    var primaryDeckId: String? = nil
     var showSourceFile = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(card.front.stripMarkdown())
-                .font(.body)
+                .font(.system(size: 15.5))
+                .foregroundStyle(FasoltTheme.ink0)
                 .lineLimit(2)
 
-            HStack(spacing: 6) {
-                if showSourceFile, let sourceFile = card.sourceFile {
-                    HStack(spacing: 2) {
-                        Image(systemName: "doc.text")
-                        Text(sourceFile)
-                    }
+            HStack(spacing: 8) {
+                if let primaryDeckId, let deckNames, let firstDeck = deckNames.first {
+                    DeckTag(color: FasoltTheme.deckColor(for: primaryDeckId), size: 6)
+                    Text(firstDeck)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(FasoltTheme.ink2)
+                        .lineLimit(1)
+                } else if showSourceFile, let sourceFile = card.sourceFile {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 10))
+                        .foregroundStyle(FasoltTheme.ink2)
+                    Text(sourceFile)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(FasoltTheme.ink2)
+                        .lineLimit(1)
                 }
 
-                if let deckNames, !deckNames.isEmpty {
-                    HStack(spacing: 2) {
-                        Image(systemName: "rectangle.stack")
-                        Text(deckNames.joined(separator: ", "))
-                    }
-                }
-
-                Spacer()
+                Text("·")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(FasoltTheme.ink3)
 
                 if let dueText = formattedDueDate(card.dueAt) {
+                    let isDue = isDueOrOverdue(card.dueAt)
                     Text(dueText)
-                        .foregroundStyle(isDueOrOverdue(card.dueAt) ? .orange : .secondary)
+                        .font(.system(size: 12.5, weight: isDue ? .semibold : .regular))
+                        .monospacedDigit()
+                        .foregroundStyle(isDue ? FasoltTheme.accent : FasoltTheme.ink2)
+                } else {
+                    Text("No due")
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(FasoltTheme.ink2)
                 }
+
+                Spacer(minLength: 6)
 
                 if card.isSuspended {
                     Text("Suspended")
-                        .font(.caption2.weight(.medium))
+                        .font(.system(size: 10, weight: .medium))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(.secondary.opacity(0.15), in: Capsule())
-                        .foregroundStyle(.secondary)
+                        .background(FasoltTheme.paper2, in: Capsule())
+                        .foregroundStyle(FasoltTheme.ink2)
                 }
 
-                Text(card.state)
-                    .font(.caption2.weight(.medium))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(stateColor(card.state).opacity(0.15), in: Capsule())
-                    .foregroundStyle(stateColor(card.state))
+                stateChip(card.state)
             }
-            .font(.caption2)
-            .foregroundStyle(.secondary)
             .lineLimit(1)
         }
-        .padding(.vertical, 2)
-        .opacity(card.isSuspended ? 0.5 : 1)
+        .padding(.vertical, 3)
+        .opacity(card.isSuspended ? 0.55 : 1)
+    }
+
+    private func stateChip(_ state: String) -> some View {
+        let color = stateColor(state)
+        return Text(state)
+            .font(.system(size: 11, weight: .medium))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .overlay(
+                Capsule().strokeBorder(color, lineWidth: 1)
+            )
+            .foregroundStyle(color)
     }
 }

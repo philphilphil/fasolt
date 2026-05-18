@@ -22,8 +22,10 @@ struct LibraryView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.horizontal, FasoltTheme.pagePadding)
+                .padding(.top, 6)
+                .padding(.bottom, 8)
+                .background(FasoltTheme.paper0)
 
                 switch selectedSegment {
                 case .decks:
@@ -38,6 +40,7 @@ struct LibraryView: View {
                     )
                 }
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
         }
     }
 }

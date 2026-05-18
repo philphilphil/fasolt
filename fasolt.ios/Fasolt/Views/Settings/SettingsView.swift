@@ -33,8 +33,10 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.horizontal, FasoltTheme.pagePadding)
+                .padding(.top, 6)
+                .padding(.bottom, 8)
+                .background(FasoltTheme.paper0)
 
                 switch selectedSegment {
                 case .settings:
@@ -43,8 +45,9 @@ struct SettingsView: View {
                     snapshotsContent
                 }
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
@@ -252,6 +255,7 @@ struct SettingsView: View {
                 Text("Permanently deletes your account and all associated data.")
             }
         }
+        .scrollContentBackground(.hidden)
         .sheet(isPresented: $showDeleteAccount) {
             DeleteAccountView(viewModel: viewModel)
                 .environment(authService)
@@ -324,6 +328,7 @@ struct SettingsView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
     }
 
     private func formatSnapshotDate(_ isoString: String) -> String {
