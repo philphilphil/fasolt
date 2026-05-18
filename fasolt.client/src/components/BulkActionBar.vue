@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Layers, FolderMinus, Pause, Play, Trash2, X } from 'lucide-vue-next'
 
-const props = defineProps<{
+defineProps<{
   count: number
   someSuspended: boolean
   allSuspended: boolean
@@ -16,8 +16,6 @@ defineEmits<{
   delete: []
   clear: []
 }>()
-
-void props
 </script>
 
 <template>

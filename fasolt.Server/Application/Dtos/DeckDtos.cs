@@ -20,3 +20,5 @@ public record DeckCardDto(
     string? FrontSvg = null, string? BackSvg = null);
 
 public record AddCardsToDeckRequest(List<string> CardIds);
+public record RemoveCardsFromDeckRequest(List<string> CardIds);
+public record RemoveCardsFromDeckResponse(int Removed);

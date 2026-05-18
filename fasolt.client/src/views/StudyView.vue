@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
 import { apiFetch } from '@/api/client'
-import type { Deck, StudyStats } from '@/types'
+import type { Deck, DailyActivity, Progress, StudyStats } from '@/types'
 import { deckColor } from '@/lib/utils'
 
 const router = useRouter()
@@ -16,6 +16,7 @@ const dueCount = ref(0)
 const studiedToday = ref(0)
 const creatingDemo = ref(false)
 const studyStats = ref<StudyStats>({ currentStreak: 0, bestStreak: 0, totalAnswered: 0, answeredToday: 0 })
+const streakActivity = ref<DailyActivity[]>([])
 
 onMounted(async () => {
   try {
@@ -25,6 +26,10 @@ onMounted(async () => {
     studiedToday.value = stats.studiedToday
   } catch { /* leave as 0 */ }
   try { studyStats.value = await reviewStore.fetchStudyStats() } catch { /* leave at zeros */ }
+  try {
+    const progress = await apiFetch<Progress>('/review/progress?days=14')
+    streakActivity.value = progress.dailyActivity
+  } catch { /* leave empty — strip falls back to flat zero state */ }
   decksStore.fetchDecks()
 })
 
@@ -58,26 +63,39 @@ function startReview(deckId?: string) {
   else router.push('/review')
 }
 
-// streak strip: pull last 14 days of activity. Use available studyStats; if we
-// don't have richer data, render a flat strip with today highlighted.
-const streakBars = computed(() => {
-  // Deterministic placeholder pattern when no per-day data is available yet.
-  // The shapes below give a believable visual rhythm even on a brand-new account.
-  const v = studyStats.value
-  const recent = v.answeredToday
-  const seed = v.currentStreak * 7 + v.totalAnswered
-  const out: number[] = []
-  for (let i = 0; i < 14; i++) {
-    if (i === 13) { out.push(recent > 0 ? Math.min(5, Math.max(2, Math.round(recent / 6))) : 0); continue }
-    if (i >= 14 - v.currentStreak) {
-      const noise = ((seed + i * 11) % 4) + 1
-      out.push(noise)
-    } else {
-      out.push(0)
-    }
+// Streak strip — real per-day reviews from /review/progress?days=14, bucketed
+// 0..4 relative to the window max. Empty array (pre-fetch or error) renders as
+// a flat zero strip with today highlighted.
+type StreakBar = { count: number; bucket: number; date: string | null; isToday: boolean }
+
+const streakBars = computed<StreakBar[]>(() => {
+  const data = streakActivity.value
+  if (data.length === 0) {
+    return Array.from({ length: 14 }, (_, i) => ({
+      count: 0, bucket: 0, date: null, isToday: i === 13,
+    }))
   }
-  return out
+  const max = Math.max(1, ...data.map(d => d.count))
+  return data.map((d, i) => {
+    const ratio = d.count / max
+    let bucket = 0
+    if (d.count > 0) {
+      if (ratio >= 0.85) bucket = 4
+      else if (ratio >= 0.55) bucket = 3
+      else if (ratio >= 0.30) bucket = 2
+      else bucket = 1
+    }
+    return { count: d.count, bucket, date: d.date, isToday: i === data.length - 1 }
+  })
 })
+
+function streakBarTitle(b: StreakBar): string {
+  if (!b.date) return b.isToday ? 'Today' : ''
+  const [y, m, day] = b.date.split('-').map(Number)
+  const label = new Date(y, m - 1, day).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+  const verb = b.count === 1 ? 'review' : 'reviews'
+  return `${b.isToday ? 'Today · ' : ''}${label} · ${b.count} ${verb}`
+}
 </script>
 
 <template>
@@ -149,19 +167,19 @@ const streakBars = computed(() => {
         </div>
         <div class="streak-bars">
           <div
-            v-for="(v, i) in streakBars"
+            v-for="(b, i) in streakBars"
             :key="i"
             class="streak-bar"
-            :class="{ 'is-today': i === streakBars.length - 1, 'is-rest': v === 0 }"
+            :class="{ 'is-today': b.isToday, 'is-rest': b.bucket === 0 }"
             :style="{
-              height: `${12 + v * 8}px`,
-              background: i === streakBars.length - 1
+              height: `${12 + b.bucket * 8}px`,
+              background: b.isToday
                 ? 'var(--accent)'
-                : v === 0
+                : b.bucket === 0
                   ? 'var(--rule-1)'
-                  : `oklch(0.55 0.13 155 / ${0.35 + v * 0.1})`,
+                  : `oklch(0.55 0.13 155 / ${0.35 + b.bucket * 0.12})`,
             }"
-            :title="`${v} reviews`"
+            :title="streakBarTitle(b)"
           />
         </div>
         <div class="streak-axis">

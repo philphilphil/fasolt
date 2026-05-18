@@ -56,6 +56,15 @@ export const useDecksStore = defineStore('decks', () => {
     await apiFetch(`/decks/${deckId}/cards/${cardId}`, { method: 'DELETE' })
   }
 
+  async function removeCards(deckId: string, cardIds: string[]): Promise<number> {
+    if (cardIds.length === 0) return 0
+    const { removed } = await apiFetch<{ removed: number }>(`/decks/${deckId}/cards/bulk-remove`, {
+      method: 'POST',
+      body: JSON.stringify({ cardIds }),
+    })
+    return removed
+  }
+
   async function setSuspended(id: string, isSuspended: boolean): Promise<Deck> {
     const result = await apiFetch<Deck>(`/decks/${id}/suspended`, {
       method: 'PUT',
@@ -66,5 +75,5 @@ export const useDecksStore = defineStore('decks', () => {
     return result
   }
 
-  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, setSuspended }
+  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, removeCards, setSuspended }
 })

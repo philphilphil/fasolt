@@ -59,8 +59,8 @@
 @layer utilities {
   .bg-grid {
     background-image:
-      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+      linear-gradient(var(--rule-1) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule-1) 1px, transparent 1px);
     background-size: 48px 48px;
   }
   .bg-grid-fade {

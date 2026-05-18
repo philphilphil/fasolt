@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { apiFetch } from '@/api/client'
 import type { Progress, DailyActivity } from '@/types'
 
@@ -17,22 +17,36 @@ const periodOptions: { value: Period; label: string }[] = [
   { value: '7d',   label: '7d' },
 ]
 
-onMounted(async () => {
+const daysWindow = computed(() => period.value === 'year' ? 364 : period.value === '90d' ? 90 : period.value === '30d' ? 30 : 7)
+
+const windowLabel = computed(() => {
+  switch (period.value) {
+    case 'year': return 'last year'
+    case '90d': return 'last 90 days'
+    case '30d': return 'last 30 days'
+    case '7d': return 'last 7 days'
+  }
+})
+
+async function loadProgress(days: number) {
+  loading.value = true
+  error.value = null
   try {
-    progress.value = await apiFetch<Progress>('/review/progress?days=364')
+    progress.value = await apiFetch<Progress>(`/review/progress?days=${days}`)
   } catch {
     error.value = 'Could not load progress.'
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => loadProgress(daysWindow.value))
+watch(period, (next, prev) => {
+  if (next !== prev) loadProgress(daysWindow.value)
 })
 
-const daysWindow = computed(() => period.value === 'year' ? 364 : period.value === '90d' ? 90 : period.value === '30d' ? 30 : 7)
-
-const windowActivity = computed<DailyActivity[]>(() => {
-  if (!progress.value) return []
-  return progress.value.dailyActivity.slice(-daysWindow.value)
-})
+// Now that we fetch exactly the window we display, no client-side slice needed.
+const windowActivity = computed<DailyActivity[]>(() => progress.value?.dailyActivity ?? [])
 
 const totalAnswered = computed(() => progress.value?.totalAnswered ?? 0)
 const currentStreak = computed(() => progress.value?.currentStreak ?? 0)
@@ -67,38 +81,64 @@ function cellColor(v: number): string {
   return 'oklch(0.56 0.18 38)'
 }
 
-// Heatmap layout: 53 columns x 7 rows for "year", aligned to today.
-// We right-pad the data so the *last* filled cell is today, then prepend
-// null cells until the grid is full — produces a clean column shape and
-// the today marker always lands on a real day.
+// Heatmap layout: 53 columns x 7 rows for "year", weekday-aligned.
+// Each row = a fixed weekday (Mon..Sun) so the side labels are truthful;
+// `today` lands at (last column, today's weekday) and is the only filled cell
+// after that point in the column.
 const HEATMAP_WEEKS = 53
 type Cell = { day: DailyActivity | null; isToday: boolean }
+
 const heatmapCells = computed<Cell[][]>(() => {
   const data = windowActivity.value
+  if (data.length === 0) return []
+
+  const last = data[data.length - 1]
+  const [yy, mm, dd] = last.date.split('-').map(Number)
+  const jsDow = new Date(yy, mm - 1, dd).getDay() // 0=Sun..6=Sat
+  const todayRow = (jsDow + 6) % 7                 // 0=Mon..6=Sun
+
   const totalCells = HEATMAP_WEEKS * 7
-  const padding = Math.max(0, totalCells - data.length)
+  const trailing = 6 - todayRow
+  const leading = Math.max(0, totalCells - trailing - data.length)
+
   const flat: Cell[] = []
-  for (let i = 0; i < padding; i++) flat.push({ day: null, isToday: false })
+  for (let i = 0; i < leading; i++) flat.push({ day: null, isToday: false })
   for (let i = 0; i < data.length; i++) {
     flat.push({ day: data[i], isToday: i === data.length - 1 })
   }
-  // Group into 53 columns of 7
+  for (let i = 0; i < trailing; i++) flat.push({ day: null, isToday: false })
+
+  // If data exceeds the grid, drop the oldest cells from the start.
+  const overflow = flat.length - totalCells
+  const trimmed = overflow > 0 ? flat.slice(overflow) : flat
+
   const cells: Cell[][] = []
   for (let w = 0; w < HEATMAP_WEEKS; w++) {
-    cells.push(flat.slice(w * 7, w * 7 + 7))
+    cells.push(trimmed.slice(w * 7, w * 7 + 7))
   }
   return cells
 })
 
 const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', '']
 
-const monthLabels = computed(() => {
+// Month label per column — the abbreviation appears only on the column whose
+// topmost real day is in a new month. Empty strings keep the flex slots so
+// labels line up with their columns.
+const columnMonthLabels = computed<string[]>(() => {
   if (period.value !== 'year') return []
-  const today = new Date()
+  const grid = heatmapCells.value
   const labels: string[] = []
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
-    labels.push(d.toLocaleString('en-US', { month: 'short' }))
+  let lastMonth = -1
+  for (let c = 0; c < grid.length; c++) {
+    const cell = grid[c].find(x => x.day !== null)
+    if (!cell?.day) { labels.push(''); continue }
+    const month = parseInt(cell.day.date.slice(5, 7), 10)
+    if (month !== lastMonth) {
+      labels.push(new Date(2000, month - 1, 1).toLocaleString('en-US', { month: 'short' }))
+      lastMonth = month
+    } else {
+      labels.push('')
+    }
   }
   return labels
 })
@@ -110,9 +150,8 @@ function dayTooltip(d: DailyActivity | null): string {
   return `${date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} · ${d.count} answered`
 }
 
-// Rating mix is the real breakdown from the backend over the *full* fetched
-// window. (Backend currently returns one number per rating; we don't yet have
-// per-period mix, so this is "year so far" rather than "in current period".)
+// Rating mix is the real breakdown from the backend over the current period
+// window — the fetch is re-issued when the period switch changes.
 const ratingMix = computed(() => {
   const mix = progress.value?.ratingMix
   if (!mix) return null
@@ -140,11 +179,7 @@ const ratingMixTotal = computed(() => {
         <p class="progress-sub">
           <template v-if="progress">
             <strong>{{ windowActiveDays }} active days</strong>
-            in the
-            <template v-if="period === 'year'">last year</template>
-            <template v-else-if="period === '90d'">last 90 days</template>
-            <template v-else-if="period === '30d'">last 30 days</template>
-            <template v-else>last 7 days</template>
+            in the {{ windowLabel }}
             · longest streak <strong>{{ bestStreak }} days</strong>
           </template>
           <template v-else>Your study momentum, end to end.</template>
@@ -219,7 +254,7 @@ const ratingMixTotal = computed(() => {
 
         <div class="heatmap" v-if="period === 'year'">
           <div class="heatmap-months">
-            <div v-for="(m, i) in monthLabels" :key="i" class="heatmap-month fa-mono">{{ m }}</div>
+            <div v-for="(m, i) in columnMonthLabels" :key="i" class="heatmap-month fa-mono">{{ m }}</div>
           </div>
           <div class="heatmap-grid-wrap">
             <div class="heatmap-day-col">
@@ -275,7 +310,7 @@ const ratingMixTotal = computed(() => {
               <span class="fa-cap">Rating mix</span>
               <h3 class="rating-title">How you rate yourself</h3>
             </div>
-            <span class="fa-mono rating-meta">last year · {{ ratingMixTotal.toLocaleString() }} ratings</span>
+            <span class="fa-mono rating-meta">{{ windowLabel }} · {{ ratingMixTotal.toLocaleString() }} ratings</span>
           </div>
           <div class="rating-bar">
             <div
@@ -442,12 +477,16 @@ const ratingMixTotal = computed(() => {
 }
 .heatmap-months {
   display: flex;
+  gap: 3px;
   padding-left: 28px;
 }
 .heatmap-month {
   flex: 1;
+  min-width: 0;
   font-size: 10.5px;
   color: var(--ink-2);
+  white-space: nowrap;
+  overflow: visible;
 }
 .heatmap-grid-wrap {
   display: flex;

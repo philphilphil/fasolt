@@ -171,19 +171,22 @@
   }
   .fa-link:hover { color: var(--accent); border-color: var(--accent); }
 
-  /* Pulsing accent dot — used for "MCP connected" and active states */
+  /* Pulsing accent dot — used for active states. Color tracks --accent so
+     light/dark stay in sync (currentColor in the halo picks up the dot's
+     accent fill, so the ring matches the dot in both themes). */
   .fa-pulse {
     display: inline-block;
     width: 6px; height: 6px;
     border-radius: 50%;
     background: var(--accent);
+    color: var(--accent);
     box-shadow: 0 0 0 0 currentColor;
     animation: faPulse 1.6s infinite;
   }
   @keyframes faPulse {
-    0%   { box-shadow: 0 0 0 0 oklch(0.61 0.17 40 / .55); }
-    70%  { box-shadow: 0 0 0 8px oklch(0.61 0.17 40 / 0); }
-    100% { box-shadow: 0 0 0 0 oklch(0.61 0.17 40 / 0); }
+    0%   { box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 55%, transparent); }
+    70%  { box-shadow: 0 0 0 8px color-mix(in oklch, currentColor 0%, transparent); }
+    100% { box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 0%, transparent); }
   }
 
   /* Deck color swatch */

@@ -24,6 +24,11 @@ public record CardDeckInfoDto(string Id, string Name, bool IsSuspended);
 
 public record SetCardSuspendedRequest(bool IsSuspended);
 
+public record BulkDeleteCardsRequest(List<string> Ids);
+public record BulkDeleteCardsResponse(int Deleted);
+public record BulkSetSuspendedRequest(List<string> Ids, bool IsSuspended);
+public record BulkSetSuspendedResponse(int Updated);
+
 public record UpdateCardFieldsRequest(
     string? NewFront = null,
     string? NewBack = null,

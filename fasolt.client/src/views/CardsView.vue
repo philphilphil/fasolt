@@ -105,8 +105,10 @@ async function bulkSuspend(target: boolean) {
   bulkBusy.value = true
   bulkError.value = ''
   try {
-    const toChange = selectedCards.value.filter(c => c.isSuspended !== target)
-    await Promise.all(toChange.map(c => cardsStore.setSuspended(c.id, target)))
+    const toChange = selectedCards.value
+      .filter(c => c.isSuspended !== target)
+      .map(c => c.id)
+    await cardsStore.setSuspendedBulk(toChange, target)
   } catch {
     bulkError.value = `Failed to ${target ? 'suspend' : 'unsuspend'} cards.`
   } finally {
@@ -118,11 +120,12 @@ async function bulkDeleteConfirmed() {
   bulkBusy.value = true
   bulkError.value = ''
   try {
-    await Promise.all(selectedIds.value.map(id => cardsStore.deleteCard(id)))
+    await cardsStore.deleteCardsBulk(selectedIds.value)
     selectedIds.value = []
     bulkDeleteOpen.value = false
   } catch {
-    bulkError.value = 'Failed to delete some cards. The list is refreshed.'
+    bulkError.value = 'Failed to delete cards. The list has been refreshed.'
+    selectedIds.value = []
     await cardsStore.fetchCards()
   } finally {
     bulkBusy.value = false

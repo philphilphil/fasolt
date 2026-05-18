@@ -48,8 +48,8 @@ async function removeFrom(deckId: string, cardIds: string[]) {
   submitting.value = true
   errorMsg.value = ''
   try {
-    await Promise.all(cardIds.map(cid => decks.removeCard(deckId, cid)))
-    emit('removed', { deckId, count: cardIds.length })
+    const removed = await decks.removeCards(deckId, cardIds)
+    emit('removed', { deckId, count: removed })
     emit('update:open', false)
   } catch {
     errorMsg.value = 'Could not remove cards from deck. Please try again.'
