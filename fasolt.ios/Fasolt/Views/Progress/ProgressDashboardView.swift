@@ -282,42 +282,53 @@ struct ProgressDashboardView: View {
     private func heatmap(_ data: [DailyActivityDTO]) -> some View {
         let maxCount = max(1, data.map { $0.count }.max() ?? 1)
         let cells = buildCells(data)
-        let weeks = (cells.count + 6) / 7
+        let totalWeeks = (cells.count + 6) / 7
+        let rowsOfWeeks = heatmapWeekRows  // 1 for 90d, 2 for year
+        let weeksPerRow = (totalWeeks + rowsOfWeeks - 1) / rowsOfWeeks
         let rows = 7
         let gap: CGFloat = 2
+        let rowGap: CGFloat = 8
 
         return GeometryReader { geo in
-            // Pick the cell size so that 7 rows fit the GeometryReader height
-            // and `weeks` columns fit the width — whichever is smaller wins.
-            let cellByWidth  = (geo.size.width  - CGFloat(weeks - 1) * gap) / CGFloat(weeks)
-            let cellByHeight = (geo.size.height - CGFloat(rows  - 1) * gap) / CGFloat(rows)
+            let totalRows = rowsOfWeeks * rows
+            let totalRowGap = CGFloat(rowsOfWeeks - 1) * rowGap
+            let cellByWidth  = (geo.size.width  - CGFloat(weeksPerRow - 1) * gap) / CGFloat(weeksPerRow)
+            let cellByHeight = (geo.size.height - CGFloat(totalRows - rowsOfWeeks) * gap - totalRowGap) / CGFloat(totalRows)
             let cell = max(0, min(cellByWidth, cellByHeight))
-            let usedWidth = cell * CGFloat(weeks) + gap * CGFloat(weeks - 1)
 
-            HStack(spacing: gap) {
-                ForEach(0..<weeks, id: \.self) { w in
-                    VStack(spacing: gap) {
-                        ForEach(0..<rows, id: \.self) { d in
-                            let idx = w * rows + d
-                            if idx < cells.count {
-                                cellView(cell: cells[idx], maxCount: maxCount)
-                                    .frame(width: cell, height: cell)
-                            } else {
-                                Color.clear.frame(width: cell, height: cell)
+            VStack(spacing: rowGap) {
+                ForEach(0..<rowsOfWeeks, id: \.self) { rowIdx in
+                    let weekStart = rowIdx * weeksPerRow
+                    let weekEnd = min(weekStart + weeksPerRow, totalWeeks)
+                    HStack(spacing: gap) {
+                        ForEach(weekStart..<weekEnd, id: \.self) { w in
+                            VStack(spacing: gap) {
+                                ForEach(0..<rows, id: \.self) { d in
+                                    let idx = w * rows + d
+                                    if idx < cells.count {
+                                        cellView(cell: cells[idx], maxCount: maxCount)
+                                            .frame(width: cell, height: cell)
+                                    } else {
+                                        Color.clear.frame(width: cell, height: cell)
+                                    }
+                                }
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .frame(width: usedWidth, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(height: heatmapHeight())
     }
 
+    private var heatmapWeekRows: Int {
+        selectedRange == .year ? 2 : 1
+    }
+
     private func heatmapHeight() -> CGFloat {
         switch selectedRange {
-        case .year: return 88
+        case .year: return 200   // 2 rows × 7 cells + row gap
         case .d90:  return 84
         case .d30, .d7: return 0
         }
