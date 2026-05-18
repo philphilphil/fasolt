@@ -61,8 +61,7 @@ struct CardListContent<Leading: View>: View {
         .refreshable {
             await viewModel.loadCards()
         }
-        .navigationTitle("Library")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 leadingToolbar()

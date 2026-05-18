@@ -59,8 +59,7 @@ struct DeckListContent<Leading: View>: View {
             .background(FasoltTheme.paper0.ignoresSafeArea())
             .searchable(text: $searchText, prompt: "Search decks")
             .refreshable { await viewModel.loadDecks() }
-            .navigationTitle("Library")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
             .offlineBanner()

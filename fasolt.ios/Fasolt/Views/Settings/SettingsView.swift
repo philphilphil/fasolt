@@ -46,8 +46,7 @@ struct SettingsView: View {
                 }
             }
             .background(FasoltTheme.paper0.ignoresSafeArea())
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {

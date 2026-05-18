@@ -14,10 +14,10 @@ struct DashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    heroCard
                     if (viewModel.studyStats?.totalAnswered ?? 0) > 0 {
                         streakStrip
                     }
+                    heroCard
                     if viewModel.totalCards == 0 && !viewModel.isLoading && viewModel.errorMessage == nil {
                         emptyStatePrompt
                     }
@@ -26,6 +26,7 @@ struct DashboardView: View {
                     }
                 }
                 .padding(.horizontal, FasoltTheme.pagePadding)
+                .padding(.top, 8)
                 .padding(.bottom, 24)
             }
             .background(FasoltTheme.paper0.ignoresSafeArea())
@@ -47,13 +48,7 @@ struct DashboardView: View {
             .refreshable {
                 await viewModel.loadStats()
             }
-            .navigationTitle("Today")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    CapsLabel(text: shortDateLabel, color: FasoltTheme.ink2)
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .overlay {
                 if viewModel.isLoading && viewModel.totalCards == 0 {
                     ProgressView()
@@ -95,12 +90,6 @@ struct DashboardView: View {
     }
 
     private var dueDeckCount: Int { dueDecks.count }
-
-    private var shortDateLabel: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEE d MMM"
-        return f.string(from: Date()).uppercased()
-    }
 
     // MARK: - Hero card
 

@@ -38,8 +38,7 @@ struct ProgressDashboardView: View {
             }
             .background(FasoltTheme.paper0.ignoresSafeArea())
             .scrollContentBackground(.hidden)
-            .navigationTitle("Progress")
-            .navigationBarTitleDisplayMode(.large)
+            .toolbar(.hidden, for: .navigationBar)
             .refreshable { await viewModel.load() }
             .overlay {
                 if viewModel.isLoading && viewModel.progress == nil {
