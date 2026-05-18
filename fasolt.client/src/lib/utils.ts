@@ -31,3 +31,13 @@ export function stripMarkdown(text: string): string {
 export function valueUpdater<T extends Updater<any>>(updaterOrValue: T, ref: Ref) {
   ref.value = typeof updaterOrValue === 'function' ? updaterOrValue(ref.value) : updaterOrValue
 }
+
+// Deterministic OKLCH swatch derived from a deck name / id. Used as the deck's
+// color tag throughout the UI. Hues are spread around the wheel but pulled toward
+// warmer ranges so they sit naturally with the vermilion accent.
+export function deckColor(seed: string): string {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+  const hue = ((h % 360) + 360) % 360
+  return `oklch(0.62 0.15 ${hue})`
+}

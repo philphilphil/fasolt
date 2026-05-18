@@ -2,98 +2,343 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+   Fasolt design system — paper & ink, vermilion accent.
+   Tokens use OKLCH so they read well across light/dark and look honest.
+   Three type voices: Geist (chrome), Geist Mono (data/IDs), Instrument Serif (moments).
+   --------------------------------------------------------------------------- */
+
 @layer base {
   :root {
-    /* Light theme — neutral */
-    --background: 210 20% 98%;
-    --foreground: 228 33% 14%;
-    --card: 0 0% 100%;
-    --card-foreground: 228 33% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 228 33% 14%;
-    --primary: 228 33% 14%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 228 33% 14%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 212 92% 45%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --warning: 40 100% 37%;
-    --warning-foreground: 0 0% 9%;
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 98%;
-    --border: 220 18% 91%;
-    --input: 220 18% 91%;
-    --ring: 212 92% 45%;
-    --radius: 0.375rem;
+    /* paper + ink (light) */
+    --paper-0: oklch(0.985 0.004 75);   /* page bg */
+    --paper-1: oklch(0.970 0.005 75);   /* surface / card */
+    --paper-2: oklch(0.945 0.006 75);   /* sunken / stripe */
+    --rule-1:  oklch(0.905 0.006 75);   /* hairline border */
+    --rule-2:  oklch(0.925 0.005 75);
+    --ink-0:   oklch(0.18  0.012 60);   /* primary text */
+    --ink-1:   oklch(0.36  0.011 60);   /* secondary text */
+    --ink-2:   oklch(0.55  0.008 60);   /* muted */
+    --ink-3:   oklch(0.72  0.005 75);   /* most muted */
+    --accent:  oklch(0.61  0.17 40);    /* vermilion */
+    --accent-hi: oklch(0.55 0.18 38);
+    --accent-soft: oklch(0.945 0.045 55);
+    --accent-on: #ffffff;
 
-    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
+    /* status (Again / Hard / Good / Easy) */
+    --c-again: oklch(0.60 0.18 25);
+    --c-hard:  oklch(0.65 0.16 65);
+    --c-good:  oklch(0.55 0.13 155);
+    --c-easy:  oklch(0.55 0.14 245);
+
+    /* shadows */
+    --sh-1: 0 1px 0 oklch(0.90 0.005 75 / .6);
+    --sh-2: 0 1px 2px oklch(0.20 0.01 60 / .04), 0 4px 16px oklch(0.20 0.01 60 / .04);
+
+    /* tailwind-compat: shadcn used hsl(var(--background)) etc. We point those
+       at the new palette so legacy classes still hit a sensible color. */
+    --background: var(--paper-0);
+    --foreground: var(--ink-0);
+    --card: var(--paper-1);
+    --card-foreground: var(--ink-0);
+    --popover: var(--paper-1);
+    --popover-foreground: var(--ink-0);
+    --primary: var(--ink-0);
+    --primary-foreground: var(--paper-0);
+    --secondary: var(--paper-2);
+    --secondary-foreground: var(--ink-0);
+    --muted: var(--paper-2);
+    --muted-foreground: var(--ink-2);
+    --accent-bg: var(--accent);
+    --accent-foreground: var(--accent-on);
+    --destructive: var(--c-again);
+    --destructive-foreground: #ffffff;
+    --warning: var(--c-hard);
+    --warning-foreground: #ffffff;
+    --success: var(--c-good);
+    --success-foreground: #ffffff;
+    --border: var(--rule-1);
+    --input: var(--rule-1);
+    --ring: var(--accent);
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark theme — GitHub Dark */
-    --background: 215 28% 5%;
-    --foreground: 210 29% 95%;
-    --card: 215 24% 8%;
-    --card-foreground: 210 29% 95%;
-    --popover: 215 24% 8%;
-    --popover-foreground: 210 29% 95%;
-    --primary: 210 29% 95%;
-    --primary-foreground: 215 28% 5%;
-    --secondary: 215 20% 10%;
-    --secondary-foreground: 210 29% 95%;
-    --muted: 215 20% 10%;
-    --muted-foreground: 212 12% 48%;
-    --accent: 212 100% 67%;
-    --accent-foreground: 215 28% 5%;
-    --destructive: 0 72% 63%;
-    --destructive-foreground: 0 0% 98%;
-    --warning: 39 86% 49%;
-    --warning-foreground: 0 0% 9%;
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 98%;
-    --border: 215 14% 16%;
-    --input: 215 14% 16%;
-    --ring: 212 100% 67%;
+    --paper-0: oklch(0.155 0.008 60);
+    --paper-1: oklch(0.185 0.009 60);
+    --paper-2: oklch(0.220 0.010 60);
+    --rule-1:  oklch(0.275 0.010 60);
+    --rule-2:  oklch(0.240 0.009 60);
+    --ink-0:   oklch(0.96  0.005 75);
+    --ink-1:   oklch(0.78  0.007 75);
+    --ink-2:   oklch(0.60  0.008 75);
+    --ink-3:   oklch(0.42  0.008 75);
+    --accent:  oklch(0.70  0.17 42);
+    --accent-hi: oklch(0.77 0.17 42);
+    --accent-soft: oklch(0.25 0.07 45);
+    --accent-on: oklch(0.13 0.01 60);
+
+    --c-again: oklch(0.70 0.20 25);
+    --c-hard:  oklch(0.78 0.16 70);
+    --c-good:  oklch(0.70 0.15 155);
+    --c-easy:  oklch(0.72 0.14 245);
+
+    --sh-1: 0 1px 0 oklch(0 0 0 / .35);
+    --sh-2: 0 1px 2px #000a, 0 8px 28px #0006;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { border-color: var(--rule-1); }
+  html, body { background: var(--paper-0); color: var(--ink-0); }
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-mono);
-    font-size: 14px;
+    font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'ss01','ss02','cv01','cv11';
+    font-size: 13px;
+    line-height: 1.45;
+    letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  ::selection { background: var(--accent-soft); color: var(--ink-0); }
+  .dark ::selection { background: var(--accent-soft); color: var(--ink-0); }
+
   mark {
-    @apply bg-yellow-200 text-foreground rounded-sm px-0.5;
-  }
-  .dark mark {
-    @apply bg-yellow-500/30 text-yellow-200;
+    background: var(--accent-soft);
+    color: var(--ink-0);
+    border-radius: 2px;
+    padding: 0 2px;
   }
 
-  /* Smooth transitions on all interactive elements */
-  button, a, input, select, textarea {
-    @apply transition-all duration-150;
+  button, a, input, select, textarea { transition: color .15s, background .15s, border-color .15s; }
+}
+
+/* ---------------------------------------------------------------------------
+   Type roles & atomic helpers
+   --------------------------------------------------------------------------- */
+@layer components {
+  .fa-sans  { font-family: 'Geist', system-ui, sans-serif; }
+  .fa-mono  { font-family: 'Geist Mono', ui-monospace, 'JetBrains Mono', monospace; font-feature-settings: 'ss01','ss02','zero'; }
+  .fa-serif { font-family: 'Instrument Serif', 'Times New Roman', serif; letter-spacing: -0.01em; }
+
+  /* Numerals — by default a clean tabular sans. */
+  .fa-num {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-feature-settings: 'tnum' 1, 'lnum' 1, 'ss01' 1;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
+  .fa-num-serif {
+    font-family: 'Instrument Serif', serif;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+  }
+
+  /* Small-caps mono labels — the spine of the system */
+  .fa-cap {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-2);
+  }
+
+  /* Keyboard chip */
+  .fa-kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10.5px; line-height: 1; letter-spacing: 0;
+    color: var(--ink-1);
+    background: var(--paper-1);
+    border: 1px solid var(--rule-1);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+  }
+
+  /* Rules */
+  .fa-rule  { height: 1px; background: var(--rule-1); width: 100%; }
+  .fa-vrule { width: 1px; background: var(--rule-1); align-self: stretch; }
+
+  /* Link */
+  .fa-link {
+    color: var(--ink-0);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule-1);
+    transition: color .12s, border-color .12s;
+  }
+  .fa-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Pulsing accent dot — used for "MCP connected" and active states */
+  .fa-pulse {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 currentColor;
+    animation: faPulse 1.6s infinite;
+  }
+  @keyframes faPulse {
+    0%   { box-shadow: 0 0 0 0 oklch(0.61 0.17 40 / .55); }
+    70%  { box-shadow: 0 0 0 8px oklch(0.61 0.17 40 / 0); }
+    100% { box-shadow: 0 0 0 0 oklch(0.61 0.17 40 / 0); }
+  }
+
+  /* Deck color swatch */
+  .fa-tag { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Striped placeholder (used for "new deck" empty card) */
+  .fa-stripe-bg {
+    background-image: repeating-linear-gradient(135deg, var(--rule-2) 0 1px, transparent 1px 8px);
+  }
+
+  /* Buttons — same shape language as inline .fa-btn from the design canvas */
+  .fa-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 0 12px; height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--rule-1);
+    background: var(--paper-1);
+    color: var(--ink-0);
+    font-size: 13px; font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .12s, border-color .12s, transform .08s, color .12s;
+    white-space: nowrap;
+  }
+  .fa-btn:hover { background: var(--paper-2); border-color: var(--ink-3); }
+  .fa-btn:active { transform: translateY(1px); }
+  .fa-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .fa-btn-primary {
+    background: var(--accent);
+    color: var(--accent-on);
+    border-color: var(--accent-hi);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / .18), 0 1px 2px oklch(0.4 0.16 40 / .25);
+  }
+  .fa-btn-primary:hover { background: var(--accent-hi); border-color: var(--accent-hi); color: var(--accent-on); }
+  .fa-btn-ghost { background: transparent; border-color: transparent; }
+  .fa-btn-ghost:hover { background: var(--paper-1); border-color: var(--rule-1); }
+  .fa-btn-accent {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .fa-btn-accent:hover { background: var(--accent-soft); }
+
+  /* Filter pill (used in Cards table) */
+  .fa-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--rule-1);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-1);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  .fa-pill:hover { border-color: var(--ink-3); }
+  .fa-pill.is-active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--ink-0);
+  }
+
+  /* Chip — small data tag */
+  .fa-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 22px; padding: 0 8px;
+    font-size: 11px; font-family: 'Geist Mono', monospace;
+    color: var(--ink-1);
+    background: var(--paper-1);
+    border: 1px solid var(--rule-1);
+    border-radius: 999px;
+  }
+
+  /* Surface card (replaces shadcn Card visuals) */
+  .fa-surface {
+    border: 1px solid var(--rule-1);
+    border-radius: 10px;
+    background: var(--paper-1);
+  }
+  .fa-surface-lg { border-radius: 12px; }
+
+  /* Markdown prose tuned to the system */
+  .fa-prose { color: var(--ink-1); font-size: 15px; line-height: 1.6; }
+  .fa-prose p  { margin: 0 0 0.6em; }
+  .fa-prose strong { font-weight: 600; color: var(--ink-0); }
+  .fa-prose em { font-style: italic; }
+  .fa-prose code {
+    font-family: 'Geist Mono', monospace;
+    font-size: 0.92em;
+    padding: 1px 5px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule-1);
+    border-radius: 4px;
+    color: var(--ink-0);
+  }
+  .fa-prose pre {
+    margin: 12px 0;
+    padding: 12px 14px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule-1);
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .fa-prose pre code { padding: 0; background: transparent; border: none; }
+  .fa-prose h1, .fa-prose h2, .fa-prose h3, .fa-prose h4 {
+    font-family: 'Geist', sans-serif;
+    color: var(--ink-0);
+    line-height: 1.2;
+    margin: 1em 0 .4em;
+    letter-spacing: -0.01em;
+  }
+  .fa-prose h1 { font-size: 22px; font-weight: 600; }
+  .fa-prose h2 { font-size: 18px; font-weight: 600; }
+  .fa-prose h3 { font-size: 16px; font-weight: 600; }
+  .fa-prose ul, .fa-prose ol { padding-left: 1.4em; margin: 0 0 .6em; }
+  .fa-prose li { margin: .2em 0; }
+  .fa-prose a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+  }
+  .fa-prose a:hover { border-color: var(--accent); }
+  .fa-prose blockquote {
+    margin: 12px 0;
+    padding: 4px 14px;
+    border-left: 2px solid var(--accent);
+    color: var(--ink-1);
+  }
+  .fa-prose table { border-collapse: collapse; margin: 12px 0; }
+  .fa-prose th, .fa-prose td { border: 1px solid var(--rule-1); padding: 6px 10px; }
+  .fa-prose th { background: var(--paper-2); font-weight: 600; }
 }
 
 @layer utilities {
+  .bg-paper-0 { background: var(--paper-0); }
+  .bg-paper-1 { background: var(--paper-1); }
+  .bg-paper-2 { background: var(--paper-2); }
+  .text-ink-0 { color: var(--ink-0); }
+  .text-ink-1 { color: var(--ink-1); }
+  .text-ink-2 { color: var(--ink-2); }
+  .text-ink-3 { color: var(--ink-3); }
+  .text-accent { color: var(--accent); }
+  .bg-accent  { background: var(--accent); }
+  .border-rule-1 { border-color: var(--rule-1); }
+  .border-rule-2 { border-color: var(--rule-2); }
+
+  /* Subtle dotted grid used on the landing background */
   .bg-grid {
     background-image:
-      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+      linear-gradient(var(--rule-1) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule-1) 1px, transparent 1px);
     background-size: 48px 48px;
   }
   .bg-grid-fade {
     -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
   }
 }
