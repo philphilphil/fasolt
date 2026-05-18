@@ -104,7 +104,7 @@ function formatDue(iso: string | null) {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
 
   <div v-else class="space-y-6">
     <!-- Breadcrumb -->
@@ -124,18 +124,18 @@ function formatDue(iso: string | null) {
         <h1 class="text-xl font-bold tracking-tight">Restore snapshot</h1>
         <p class="text-sm text-muted-foreground mt-1">Select which changes to revert. This will restore selected cards to their snapshot state.</p>
       </div>
-      <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deckId}/snapshots`)">
+      <Button variant="outline" size="sm" class="text-sm" @click="router.push(`/decks/${deckId}/snapshots`)">
         Back to snapshots
       </Button>
     </div>
 
     <!-- Error -->
-    <div v-if="error && !diff" class="py-8 text-center text-xs text-destructive">
+    <div v-if="error && !diff" class="py-8 text-center text-sm text-destructive">
       {{ error }}
     </div>
 
     <!-- Empty diff -->
-    <div v-else-if="isEmpty" class="py-12 text-center text-xs text-muted-foreground">
+    <div v-else-if="isEmpty" class="py-12 text-center text-sm text-muted-foreground">
       No differences found. The deck matches this snapshot.
     </div>
 
@@ -144,8 +144,8 @@ function formatDue(iso: string | null) {
       <!-- Deleted since snapshot -->
       <div v-if="diff.deleted.length > 0">
         <div class="flex items-center gap-2 mb-3">
-          <Badge variant="destructive" class="text-[10px]">Deleted</Badge>
-          <span class="text-xs text-muted-foreground">{{ diff.deleted.length }} card{{ diff.deleted.length !== 1 ? 's' : '' }} removed since snapshot</span>
+          <Badge variant="destructive" class="text-xs">Deleted</Badge>
+          <span class="text-sm text-muted-foreground">{{ diff.deleted.length }} card{{ diff.deleted.length !== 1 ? 's' : '' }} removed since snapshot</span>
         </div>
         <div class="space-y-2">
           <div
@@ -160,7 +160,7 @@ function formatDue(iso: string | null) {
             />
             <div class="min-w-0 flex-1">
               <div class="text-sm font-medium">{{ card.front }}</div>
-              <div class="text-xs text-muted-foreground mt-0.5">{{ card.back }}</div>
+              <div class="text-sm text-muted-foreground mt-0.5">{{ card.back }}</div>
               <div class="flex gap-4 mt-1 text-[11px] text-muted-foreground">
                 <span :class="card.stillExists ? 'text-amber-500' : 'text-destructive'">{{ card.stillExists ? 'unassigned' : 'deleted' }}</span>
                 <span v-if="card.sourceFile">{{ card.sourceFile }}</span>
@@ -175,8 +175,8 @@ function formatDue(iso: string | null) {
       <!-- Modified since snapshot -->
       <div v-if="diff.modified.length > 0">
         <div class="flex items-center gap-2 mb-3">
-          <Badge class="text-[10px] bg-amber-500/15 text-amber-500 border-amber-500/25">Modified</Badge>
-          <span class="text-xs text-muted-foreground">{{ diff.modified.length }} card{{ diff.modified.length !== 1 ? 's' : '' }} changed since snapshot</span>
+          <Badge class="text-xs bg-amber-500/15 text-amber-500 border-amber-500/25">Modified</Badge>
+          <span class="text-sm text-muted-foreground">{{ diff.modified.length }} card{{ diff.modified.length !== 1 ? 's' : '' }} changed since snapshot</span>
         </div>
         <div class="space-y-2">
           <div
@@ -192,12 +192,12 @@ function formatDue(iso: string | null) {
             <div class="min-w-0 flex-1 space-y-1">
               <div v-if="card.front !== card.currentFront || card.back !== card.currentBack" class="text-sm space-y-1">
                 <div v-if="card.front !== card.currentFront">
-                  <span class="text-xs text-muted-foreground">front: </span>
+                  <span class="text-sm text-muted-foreground">front: </span>
                   <span class="line-through text-muted-foreground">{{ card.front }}</span>
                   <span class="ml-1.5">{{ card.currentFront }}</span>
                 </div>
                 <div v-if="card.back !== card.currentBack">
-                  <span class="text-xs text-muted-foreground">back: </span>
+                  <span class="text-sm text-muted-foreground">back: </span>
                   <span class="line-through text-muted-foreground">{{ card.back }}</span>
                   <span class="ml-1.5">{{ card.currentBack }}</span>
                 </div>
@@ -217,21 +217,21 @@ function formatDue(iso: string | null) {
               <div v-if="svgPreview === card.cardId" class="space-y-3 mt-2 rounded border border-border p-3 bg-muted/30">
                 <div v-if="card.snapshotFrontSvg !== null || card.currentFrontSvg !== null" class="grid grid-cols-2 gap-3">
                   <div>
-                    <div class="text-[10px] text-muted-foreground mb-1">front image — snapshot</div>
+                    <div class="text-xs text-muted-foreground mb-1">front image — snapshot</div>
                     <div class="bg-background rounded p-2" v-html="card.snapshotFrontSvg || '(none)'"></div>
                   </div>
                   <div>
-                    <div class="text-[10px] text-muted-foreground mb-1">front image — current</div>
+                    <div class="text-xs text-muted-foreground mb-1">front image — current</div>
                     <div class="bg-background rounded p-2" v-html="card.currentFrontSvg || '(none)'"></div>
                   </div>
                 </div>
                 <div v-if="card.snapshotBackSvg !== null || card.currentBackSvg !== null" class="grid grid-cols-2 gap-3">
                   <div>
-                    <div class="text-[10px] text-muted-foreground mb-1">back image — snapshot</div>
+                    <div class="text-xs text-muted-foreground mb-1">back image — snapshot</div>
                     <div class="bg-background rounded p-2" v-html="card.snapshotBackSvg || '(none)'"></div>
                   </div>
                   <div>
-                    <div class="text-[10px] text-muted-foreground mb-1">back image — current</div>
+                    <div class="text-xs text-muted-foreground mb-1">back image — current</div>
                     <div class="bg-background rounded p-2" v-html="card.currentBackSvg || '(none)'"></div>
                   </div>
                 </div>
@@ -244,8 +244,8 @@ function formatDue(iso: string | null) {
       <!-- Added since snapshot -->
       <div v-if="diff.added.length > 0">
         <div class="flex items-center gap-2 mb-3">
-          <Badge class="text-[10px] bg-green-500/15 text-green-500 border-green-500/25">Added</Badge>
-          <span class="text-xs text-muted-foreground">{{ diff.added.length }} card{{ diff.added.length !== 1 ? 's' : '' }} added since snapshot</span>
+          <Badge class="text-xs bg-green-500/15 text-green-500 border-green-500/25">Added</Badge>
+          <span class="text-sm text-muted-foreground">{{ diff.added.length }} card{{ diff.added.length !== 1 ? 's' : '' }} added since snapshot</span>
         </div>
         <div class="space-y-2">
           <div
@@ -254,7 +254,7 @@ function formatDue(iso: string | null) {
             class="rounded-lg border border-border px-4 py-3"
           >
             <div class="text-sm font-medium">{{ card.front }}</div>
-            <div class="text-xs text-muted-foreground mt-0.5">{{ card.back }}</div>
+            <div class="text-sm text-muted-foreground mt-0.5">{{ card.back }}</div>
           </div>
         </div>
         <div class="text-[11px] text-muted-foreground mt-2">These cards are unaffected by restore.</div>
@@ -262,14 +262,14 @@ function formatDue(iso: string | null) {
     </div>
 
     <!-- Error on restore -->
-    <div v-if="error && diff" class="text-xs text-destructive">{{ error }}</div>
+    <div v-if="error && diff" class="text-sm text-destructive">{{ error }}</div>
 
     <!-- Sticky footer -->
     <div v-if="diff && !isEmpty" class="sticky bottom-0 bg-background border-t border-border -mx-4 px-4 py-3 flex items-center gap-3">
-      <Button variant="ghost" size="sm" class="text-xs" @click="toggleAll">
+      <Button variant="ghost" size="sm" class="text-sm" @click="toggleAll">
         {{ allSelected ? 'Deselect all' : 'Select all' }}
       </Button>
-      <div class="flex-1 text-xs text-muted-foreground">
+      <div class="flex-1 text-sm text-muted-foreground">
         {{ selectedCount }} card{{ selectedCount !== 1 ? 's' : '' }} selected
       </div>
       <Button variant="outline" size="sm" @click="router.push(`/decks/${deckId}/snapshots`)">Cancel</Button>

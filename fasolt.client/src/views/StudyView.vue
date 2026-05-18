@@ -42,12 +42,12 @@ onMounted(async () => {
 
 onUnmounted(() => { cleanup() })
 
+// Study view focuses on what's actionable: only active decks with cards due
+// today. Caught-up or paused decks live in /decks.
 const sortedDecks = computed(() => {
-  return [...decksStore.decks].sort((a, b) => {
-    if (a.isSuspended !== b.isSuspended) return a.isSuspended ? 1 : -1
-    if ((b.dueCount > 0) !== (a.dueCount > 0)) return b.dueCount - a.dueCount
-    return b.dueCount - a.dueCount || a.name.localeCompare(b.name)
-  })
+  return decksStore.decks
+    .filter(d => !d.isSuspended && d.dueCount > 0)
+    .sort((a, b) => b.dueCount - a.dueCount || a.name.localeCompare(b.name))
 })
 
 const decksWithDue = computed(() => decksStore.decks.filter(d => !d.isSuspended && d.dueCount > 0).length)
@@ -204,16 +204,21 @@ function streakBarTitle(b: StreakBar): string {
     <section class="decks-section">
       <header class="section-head">
         <div class="section-head-text">
-          <h2>Your decks</h2>
+          <h2>Decks with cards due</h2>
           <span class="fa-cap">
-            {{ activeDeckCount }} total · {{ decksWithDue }} with cards due
+            {{ decksWithDue }} of {{ activeDeckCount }} active
           </span>
         </div>
+        <RouterLink v-if="activeDeckCount > 0" to="/decks" class="fa-link section-head-link">All decks ›</RouterLink>
       </header>
       <div v-if="decksStore.loading" class="empty">Loading decks…</div>
-      <div v-else-if="sortedDecks.length === 0" class="empty">
+      <div v-else-if="activeDeckCount === 0" class="empty">
         <span>No decks yet.</span>
         <RouterLink to="/decks" class="fa-link">Create your first deck</RouterLink>
+      </div>
+      <div v-else-if="sortedDecks.length === 0" class="empty">
+        <span>All caught up — nothing due right now.</span>
+        <RouterLink to="/decks" class="fa-link">Browse all decks</RouterLink>
       </div>
       <div v-else class="deck-list">
         <button

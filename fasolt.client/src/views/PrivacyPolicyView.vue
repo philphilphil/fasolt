@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import AppFooter from '@/components/AppFooter.vue'
+import FasoltWordmark from '@/components/FasoltWordmark.vue'
 </script>
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-3xl items-center px-6 py-4">
-        <RouterLink to="/" class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-          <img src="/logo.svg" alt="fasolt" class="h-10 object-contain" />
-          fasolt
+        <RouterLink to="/" class="flex items-center">
+          <FasoltWordmark :size="32" />
         </RouterLink>
       </div>
     </nav>
     <div class="mx-auto max-w-3xl px-6 py-12 space-y-8">
     <div>
       <h1 class="text-lg font-semibold tracking-tight">Privacy Policy</h1>
-      <p class="text-xs text-muted-foreground mt-1">Last updated: April 1, 2026</p>
+      <p class="text-sm text-muted-foreground mt-1">Last updated: April 1, 2026</p>
     </div>
 
-    <div class="space-y-6 text-xs text-muted-foreground leading-relaxed">
+    <div class="space-y-6 text-sm text-muted-foreground leading-relaxed">
       <section class="space-y-2">
         <h2 class="text-sm font-semibold text-foreground">1. Controller</h2>
         <p>The controller responsible for data processing on this website is:</p>

@@ -10,12 +10,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import SearchResults from '@/components/SearchResults.vue'
 import FasoltWordmark from '@/components/FasoltWordmark.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSearch } from '@/composables/useSearch'
-import { useDarkMode } from '@/composables/useDarkMode'
 
 const auth = useAuthStore()
-const { isDark, toggle } = useDarkMode()
 const searchInputRef = ref<InstanceType<typeof Input> | null>(null)
 const searchContainerRef = ref<HTMLDivElement | null>(null)
 
@@ -64,7 +63,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
 <template>
   <header class="topbar">
     <RouterLink to="/study" class="brand">
-      <FasoltWordmark />
+      <FasoltWordmark :size="32" />
     </RouterLink>
 
     <div ref="searchContainerRef" class="search-wrap">
@@ -98,10 +97,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
     </div>
 
     <div class="topbar-right">
-      <button class="theme-btn" :aria-label="isDark ? 'Switch to light' : 'Switch to dark'" @click="toggle">
-        <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-      </button>
+      <ThemeToggle />
       <div class="topbar-divider" />
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
@@ -128,7 +124,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
 .topbar {
   display: flex;
   align-items: center;
-  height: 52px;
+  height: 64px;
   padding: 0 20px;
   gap: 16px;
   background: var(--paper-0);
@@ -185,23 +181,6 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.theme-btn {
-  width: 32px;
-  height: 32px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--ink-1);
-  cursor: pointer;
-  transition: background .12s, border-color .12s, color .12s;
-}
-.theme-btn:hover {
-  background: var(--paper-1);
-  border-color: var(--rule-1);
-  color: var(--ink-0);
 }
 .topbar-divider {
   width: 1px;

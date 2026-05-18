@@ -171,7 +171,7 @@ const stateCounts = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
 
   <div v-else-if="deck" class="space-y-6">
     <!-- Breadcrumb -->
@@ -191,7 +191,7 @@ const stateCounts = computed(() => {
         <Button
           v-if="deck.dueCount > 0 && !deck.isSuspended"
           size="sm"
-          class="text-xs"
+          class="text-sm"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
@@ -200,28 +200,28 @@ const stateCounts = computed(() => {
           v-if="deck.cardCount > 0 && !deck.isSuspended"
           variant="outline"
           size="sm"
-          class="text-xs"
+          class="text-sm"
           data-testid="custom-study-button"
           @click="router.push(`/review?deckId=${deck.id}&mode=cram`)"
         >
           Custom study
         </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deck.id}/snapshots`)">
+        <Button variant="outline" size="sm" class="text-sm" @click="router.push(`/decks/${deck.id}/snapshots`)">
           <History class="h-3.5 w-3.5 mr-1" />Snapshots
         </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="toggleSuspended">
+        <Button variant="outline" size="sm" class="text-sm" @click="toggleSuspended">
           {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
         </Button>
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="copyDeckId">
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="copyDeckId">
           {{ idCopied ? 'Copied!' : 'Copy ID' }}
         </Button>
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
-        <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="openEdit">Edit</Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
       </div>
     </div>
 
     <!-- Inactive banner -->
-    <div v-if="deck.isSuspended" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
+    <div v-if="deck.isSuspended" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
       This deck is suspended. Cards are excluded from study.
     </div>
 
@@ -229,15 +229,15 @@ const stateCounts = computed(() => {
     <div class="bg-secondary rounded-lg px-4 py-3 flex items-center gap-5">
       <div>
         <span class="text-lg font-bold">{{ deck.cardCount }}</span>
-        <span class="text-xs text-muted-foreground ml-1.5">cards</span>
+        <span class="text-sm text-muted-foreground ml-1.5">cards</span>
       </div>
       <div class="w-px h-5 bg-border" />
       <div>
         <span class="text-lg font-bold text-warning">{{ deck.dueCount }}</span>
-        <span class="text-xs text-muted-foreground ml-1.5">due</span>
+        <span class="text-sm text-muted-foreground ml-1.5">due</span>
       </div>
       <div class="w-px h-5 bg-border" />
-      <div class="flex items-center gap-3 text-xs text-muted-foreground">
+      <div class="flex items-center gap-3 text-sm text-muted-foreground">
         <span v-for="state in ['new', 'learning', 'review', 'relearning']" :key="state">
           {{ stateCounts[state] || 0 }} {{ state }}
         </span>
@@ -262,7 +262,7 @@ const stateCounts = computed(() => {
         @clear="selectedIds = []"
       />
 
-      <div v-if="bulkError" class="text-xs text-destructive">{{ bulkError }}</div>
+      <div v-if="bulkError" class="text-sm text-destructive">{{ bulkError }}</div>
 
       <CardTable
         v-if="deck.cards.length > 0"
@@ -274,7 +274,7 @@ const stateCounts = computed(() => {
         <template #empty>No cards in this deck yet.</template>
       </CardTable>
 
-      <div v-else class="py-12 text-center text-xs text-muted-foreground">
+      <div v-else class="py-12 text-center text-sm text-muted-foreground">
         No cards in this deck yet. Add cards from the Cards view.
       </div>
     </div>
@@ -306,11 +306,11 @@ const stateCounts = computed(() => {
         </DialogHeader>
         <div class="flex items-center gap-2">
           <Checkbox id="delete-cards" :checked="deleteCards" @update:checked="deleteCards = $event" />
-          <label for="delete-cards" class="text-xs cursor-pointer select-none">
+          <label for="delete-cards" class="text-sm cursor-pointer select-none">
             Also delete all {{ deck.cardCount }} cards in this deck
           </label>
         </div>
-        <div v-if="deleteError" class="text-xs text-destructive">{{ deleteError }}</div>
+        <div v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</div>
         <DialogFooter class="gap-2">
           <Button variant="outline" size="sm" @click="deleteOpen = false">Cancel</Button>
           <Button variant="destructive" size="sm" @click="handleDelete">Delete</Button>

@@ -2,11 +2,9 @@
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Moon, Sun } from 'lucide-vue-next'
-import { useDarkMode } from '@/composables/useDarkMode'
 import AppFooter from '@/components/AppFooter.vue'
-
-const { isDark, toggle } = useDarkMode()
+import FasoltWordmark from '@/components/FasoltWordmark.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 </script>
 
 <template>
@@ -14,20 +12,13 @@ const { isDark, toggle } = useDarkMode()
     <!-- Nav -->
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <RouterLink to="/" class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-          <img src="/logo.svg" alt="fasolt" class="h-10 object-contain" />
-          fasolt
+        <RouterLink to="/" class="flex items-center">
+          <FasoltWordmark :size="32" />
         </RouterLink>
         <div class="flex items-center gap-2">
-          <button
-            class="rounded p-2 text-muted-foreground hover:text-foreground"
-            @click="toggle"
-          >
-            <Sun v-if="isDark" :size="16" />
-            <Moon v-else :size="16" />
-          </button>
+          <ThemeToggle />
           <a href="/login">
-            <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
+            <Button variant="ghost" size="sm" class="text-sm">Log in</Button>
           </a>
         </div>
       </div>
@@ -38,7 +29,7 @@ const { isDark, toggle } = useDarkMode()
       <div class="space-y-8">
         <div>
           <h1 class="text-lg font-semibold tracking-tight">How the Algorithm Works</h1>
-          <p class="text-xs text-muted-foreground mt-1">
+          <p class="text-sm text-muted-foreground mt-1">
             fasolt uses FSRS (Free Spaced Repetition Scheduler) to schedule your reviews.
           </p>
         </div>
@@ -48,7 +39,7 @@ const { isDark, toggle } = useDarkMode()
           <CardHeader>
             <CardTitle class="text-sm">What is Spaced Repetition?</CardTitle>
           </CardHeader>
-          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
+          <CardContent class="text-sm text-muted-foreground leading-relaxed space-y-3">
             <p>
               <a href="https://en.wikipedia.org/wiki/Spaced_repetition" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Spaced repetition</a> is a study technique where you review material at increasing intervals.
               Instead of cramming, you see a card right before you're likely to forget it.
@@ -68,7 +59,7 @@ const { isDark, toggle } = useDarkMode()
           <CardHeader>
             <CardTitle class="text-sm">The FSRS Algorithm</CardTitle>
           </CardHeader>
-          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
+          <CardContent class="text-sm text-muted-foreground leading-relaxed space-y-3">
             <p>
               <a href="https://github.com/open-spaced-repetition/fsrs4anki" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">FSRS</a> (Free Spaced Repetition Scheduler) is a modern, open-source algorithm based on the
               <strong class="text-foreground">Three Component Model of Memory</strong>. It tracks three variables for each card:
@@ -99,7 +90,7 @@ const { isDark, toggle } = useDarkMode()
           <CardHeader>
             <CardTitle class="text-sm">How Reviews Work</CardTitle>
           </CardHeader>
-          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
+          <CardContent class="text-sm text-muted-foreground leading-relaxed space-y-3">
             <p>When you review a card, you rate how well you recalled it. Each rating affects the card differently:</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div class="rounded border border-border/60 p-3 space-y-1">
@@ -127,9 +118,9 @@ const { isDark, toggle } = useDarkMode()
           <CardHeader>
             <CardTitle class="text-sm">How Intervals Grow</CardTitle>
           </CardHeader>
-          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
+          <CardContent class="text-sm text-muted-foreground leading-relaxed space-y-3">
             <p>Here's a typical progression for a card rated "Good" each time:</p>
-            <div class="flex flex-wrap items-center gap-2 text-foreground font-mono text-[11px]">
+            <div class="flex flex-wrap items-center gap-2 text-foreground font-mono text-xs">
               <span class="rounded bg-muted/50 px-2 py-1">1d</span>
               <span class="text-muted-foreground">&rarr;</span>
               <span class="rounded bg-muted/50 px-2 py-1">3d</span>
@@ -142,7 +133,7 @@ const { isDark, toggle } = useDarkMode()
               <span class="text-muted-foreground">&rarr;</span>
               <span class="rounded bg-muted/50 px-2 py-1">4mo</span>
               <span class="text-muted-foreground">&rarr;</span>
-              <span class="text-[10px]">...</span>
+              <span class="text-xs">...</span>
             </div>
             <p>
               The intervals grow roughly exponentially. If you rate "Easy", they grow even faster.
@@ -156,7 +147,7 @@ const { isDark, toggle } = useDarkMode()
           <CardHeader>
             <CardTitle class="text-sm">Why FSRS?</CardTitle>
           </CardHeader>
-          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-3">
+          <CardContent class="text-sm text-muted-foreground leading-relaxed space-y-3">
             <p>
               FSRS replaced the <a href="https://en.wikipedia.org/wiki/SuperMemo#Description_of_SM-2_algorithm" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">SM-2 algorithm</a> (created in 1987) as the standard for spaced repetition.
               It's now the default in <a href="https://en.wikipedia.org/wiki/Anki_(software)" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Anki</a> (since version 23.10), the most popular flashcard app.
@@ -176,7 +167,7 @@ const { isDark, toggle } = useDarkMode()
           <CardHeader>
             <CardTitle class="text-sm">Sources</CardTitle>
           </CardHeader>
-          <CardContent class="text-xs text-muted-foreground leading-relaxed space-y-2">
+          <CardContent class="text-sm text-muted-foreground leading-relaxed space-y-2">
             <ul class="list-disc list-inside space-y-1.5 pl-1">
               <li><a href="https://en.wikipedia.org/wiki/Spaced_repetition" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Spaced repetition</a> — Wikipedia</li>
               <li><a href="https://en.wikipedia.org/wiki/Forgetting_curve" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Forgetting curve</a> — Wikipedia</li>

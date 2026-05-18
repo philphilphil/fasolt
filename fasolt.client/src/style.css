@@ -94,8 +94,8 @@
   body {
     font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-feature-settings: 'ss01','ss02','cv01','cv11';
-    font-size: 13px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.5;
     letter-spacing: -0.005em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

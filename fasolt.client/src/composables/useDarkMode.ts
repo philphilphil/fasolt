@@ -2,37 +2,52 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 const STORAGE_KEY = 'fasolt-theme'
 
+export type ThemeMode = 'light' | 'dark' | 'auto'
+
+// Module-level shared refs — every caller of useDarkMode sees the same state.
+const mode = ref<ThemeMode>('auto')
 const isDark = ref(false)
 
+let mediaQuery: MediaQueryList | null = null
+let initialized = false
+
+function resolveAndApply() {
+  let shouldBeDark: boolean
+  if (mode.value === 'dark') shouldBeDark = true
+  else if (mode.value === 'light') shouldBeDark = false
+  else shouldBeDark = mediaQuery?.matches ?? false
+  isDark.value = shouldBeDark
+  document.documentElement.classList.toggle('dark', shouldBeDark)
+}
+
+function setMode(next: ThemeMode) {
+  mode.value = next
+  if (next === 'auto') localStorage.removeItem(STORAGE_KEY)
+  else localStorage.setItem(STORAGE_KEY, next)
+  resolveAndApply()
+}
+
 export function useDarkMode() {
-  let mediaQuery: MediaQueryList | null = null
   let handler: ((e: MediaQueryListEvent) => void) | null = null
 
-  function apply() {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    let shouldBeDark: boolean
-    if (stored === 'dark') {
-      shouldBeDark = true
-    } else if (stored === 'light') {
-      shouldBeDark = false
-    } else {
-      shouldBeDark = mediaQuery?.matches ?? false
-    }
-    isDark.value = shouldBeDark
-    document.documentElement.classList.toggle('dark', shouldBeDark)
-  }
-
+  // Backwards-compat: cycle light → dark → auto.
   function toggle() {
-    const newTheme = isDark.value ? 'light' : 'dark'
-    localStorage.setItem(STORAGE_KEY, newTheme)
-    apply()
+    const next: ThemeMode =
+      mode.value === 'light' ? 'dark' :
+      mode.value === 'dark' ? 'auto' : 'light'
+    setMode(next)
   }
 
   onMounted(() => {
-    mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    handler = () => apply()
-    mediaQuery.addEventListener('change', handler)
-    apply()
+    if (!initialized) {
+      mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const stored = localStorage.getItem(STORAGE_KEY)
+      mode.value = stored === 'dark' || stored === 'light' ? stored : 'auto'
+      resolveAndApply()
+      initialized = true
+    }
+    handler = () => { if (mode.value === 'auto') resolveAndApply() }
+    mediaQuery?.addEventListener('change', handler)
   })
 
   onUnmounted(() => {
@@ -41,5 +56,5 @@ export function useDarkMode() {
     }
   })
 
-  return { isDark, toggle }
+  return { isDark, mode, setMode, toggle }
 }

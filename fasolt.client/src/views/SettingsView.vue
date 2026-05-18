@@ -187,19 +187,19 @@ async function savePassword() {
 
 <template>
   <div class="flex flex-col gap-6">
-    <h1 class="text-lg font-bold tracking-tight">Settings</h1>
+    <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       <div class="flex flex-col gap-6">
         <Card class="border-border/60">
           <CardHeader>
-            <CardTitle class="text-sm">Snapshots</CardTitle>
+            <CardTitle class="text-base">Snapshots</CardTitle>
           </CardHeader>
           <CardContent class="flex flex-col gap-3">
-            <p class="text-xs text-muted-foreground">
+            <p class="text-sm text-muted-foreground">
               Create a backup of all your decks. Snapshots capture every card's content so you can restore it later if something goes wrong. The last 10 snapshots per deck are kept automatically. Study progress is not affected by restoring — only card content (front, back, images, source) is reverted.
             </p>
-            <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">
+            <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">
               <template v-if="snapshotCreated > 0 && snapshotSkipped === 0">
                 Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}.
               </template>
@@ -210,8 +210,8 @@ async function savePassword() {
                 All decks unchanged — no snapshots needed.
               </template>
             </div>
-            <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ snapshotError }}</div>
-            <div v-if="snapshotCount > 0" class="flex gap-6 text-xs">
+            <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ snapshotError }}</div>
+            <div v-if="snapshotCount > 0" class="flex gap-6 text-sm">
               <div class="flex flex-col">
                 <span class="text-muted-foreground">Snapshots</span>
                 <span class="font-medium">{{ snapshotCount }}</span>
@@ -225,7 +225,7 @@ async function savePassword() {
                 <span class="font-medium">{{ lastSnapshot }}</span>
               </div>
             </div>
-            <Button size="sm" class="self-start text-xs" :disabled="snapshotting" @click="createSnapshot">
+            <Button size="sm" class="self-start text-sm" :disabled="snapshotting" @click="createSnapshot">
               {{ snapshotting ? 'Creating...' : 'Create snapshot' }}
             </Button>
           </CardContent>
@@ -233,14 +233,14 @@ async function savePassword() {
 
         <Card class="border-border/60">
           <CardHeader>
-            <CardTitle class="text-sm">Account</CardTitle>
+            <CardTitle class="text-base">Account</CardTitle>
           </CardHeader>
           <CardContent class="flex flex-col gap-1">
-            <div class="flex items-center gap-2 text-xs">
+            <div class="flex items-center gap-2 text-sm">
               <span class="text-muted-foreground">Signed in as</span>
               <span class="font-medium">{{ auth.user?.displayName || auth.user?.email }}</span>
             </div>
-            <div class="flex items-center gap-2 text-xs">
+            <div class="flex items-center gap-2 text-sm">
               <span class="text-muted-foreground">Account type</span>
               <span v-if="auth.user?.externalProvider === 'GitHub'" class="inline-flex items-center gap-1 font-medium">
                 <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -259,50 +259,50 @@ async function savePassword() {
 
       <Card class="border-border/60">
         <CardHeader>
-          <CardTitle class="text-sm">Scheduling</CardTitle>
-          <p class="text-xs text-muted-foreground">
+          <CardTitle class="text-base">Scheduling</CardTitle>
+          <p class="text-sm text-muted-foreground">
             Adjust how the FSRS algorithm schedules your reviews.
             <RouterLink to="/algorithm" class="text-accent hover:underline">How the algorithm works</RouterLink>
           </p>
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-4" @submit.prevent="saveSchedulingSettings">
-            <div v-if="schedulingLoading" class="text-xs text-muted-foreground">Loading...</div>
+            <div v-if="schedulingLoading" class="text-sm text-muted-foreground">Loading...</div>
             <template v-else>
-              <div v-if="schedulingSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Settings saved.</div>
-              <div v-if="schedulingError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ schedulingError }}</div>
+              <div v-if="schedulingSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Settings saved.</div>
+              <div v-if="schedulingError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ schedulingError }}</div>
 
               <div class="flex flex-col gap-1.5">
-                <label for="desired-retention" class="text-xs font-medium">Desired retention</label>
+                <label for="desired-retention" class="text-sm font-medium">Desired retention</label>
                 <Input id="desired-retention" v-model.number="desiredRetention" type="number" min="0.70" max="0.97" step="0.01" required />
-                <p class="text-xs text-muted-foreground">
+                <p class="text-sm text-muted-foreground">
                   How likely you want to remember a card when it comes up for review. Higher values (e.g. 0.95) mean more frequent reviews but stronger recall. Lower values (e.g. 0.85) mean fewer reviews but more forgetting. Changes apply to future reviews only — cards already scheduled keep their current due dates.
                 </p>
               </div>
 
               <div class="flex flex-col gap-1.5">
-                <label for="maximum-interval" class="text-xs font-medium">Maximum interval (days)</label>
+                <label for="maximum-interval" class="text-sm font-medium">Maximum interval (days)</label>
                 <Input id="maximum-interval" v-model.number="maximumInterval" type="number" min="1" max="36500" step="1" required />
-                <p class="text-xs text-muted-foreground">
+                <p class="text-sm text-muted-foreground">
                   The longest gap allowed between reviews, in days. For example, 365 means you'll see every card at least once a year. The default (36500 days ≈ 100 years) means there's effectively no cap.
                 </p>
               </div>
 
               <div class="flex flex-col gap-1.5">
-                <label for="day-start-hour" class="text-xs font-medium">Day starts at</label>
+                <label for="day-start-hour" class="text-sm font-medium">Day starts at</label>
                 <select
                   id="day-start-hour"
                   v-model.number="dayStartHour"
-                  class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option v-for="h in hourOptions" :key="h" :value="h">{{ formatHourLabel(h) }}</option>
                 </select>
-                <p class="text-xs text-muted-foreground">
+                <p class="text-sm text-muted-foreground">
                   Hour at which a new study day begins, in your browser's time zone ({{ browserTimeZone }}). Cards scheduled a day or more in advance become due all at once at this time, instead of trickling in throughout the day. Sub-day learning steps still fire at their exact times.
                 </p>
               </div>
 
-              <Button type="submit" size="sm" class="self-start text-xs">Save scheduling settings</Button>
+              <Button type="submit" size="sm" class="self-start text-sm">Save scheduling settings</Button>
             </template>
           </form>
         </CardContent>
@@ -312,46 +312,46 @@ async function savePassword() {
     <div v-if="!auth.isExternalAccount" class="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
       <Card class="border-border/60">
         <CardHeader>
-          <CardTitle class="text-sm">Email address</CardTitle>
+          <CardTitle class="text-base">Email address</CardTitle>
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
-            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Verification email sent. Check your inbox to confirm the change.</div>
-            <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ emailError }}</div>
+            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Verification email sent. Check your inbox to confirm the change.</div>
+            <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ emailError }}</div>
             <div class="flex flex-col gap-1.5">
-              <label for="new-email" class="text-xs font-medium">New email</label>
+              <label for="new-email" class="text-sm font-medium">New email</label>
               <Input id="new-email" v-model="newEmail" type="email" required />
             </div>
             <div class="flex flex-col gap-1.5">
-              <label for="email-password" class="text-xs font-medium">Current password</label>
+              <label for="email-password" class="text-sm font-medium">Current password</label>
               <Input id="email-password" v-model="emailCurrentPassword" type="password" required autocomplete="off" />
             </div>
-            <Button type="submit" size="sm" class="self-start text-xs">Update email</Button>
+            <Button type="submit" size="sm" class="self-start text-sm">Update email</Button>
           </form>
         </CardContent>
       </Card>
 
       <Card class="border-border/60">
         <CardHeader>
-          <CardTitle class="text-sm">Change password</CardTitle>
+          <CardTitle class="text-base">Change password</CardTitle>
         </CardHeader>
         <CardContent>
           <form class="flex flex-col gap-3" @submit.prevent="savePassword">
-            <div v-if="passwordSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-xs text-success">Password changed.</div>
-            <div v-if="passwordError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ passwordError }}</div>
+            <div v-if="passwordSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Password changed.</div>
+            <div v-if="passwordError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ passwordError }}</div>
             <div class="flex flex-col gap-1.5">
-              <label for="current-password" class="text-xs font-medium">Current password</label>
+              <label for="current-password" class="text-sm font-medium">Current password</label>
               <Input id="current-password" v-model="currentPassword" type="password" required autocomplete="current-password" />
             </div>
             <div class="flex flex-col gap-1.5">
-              <label for="new-password" class="text-xs font-medium">New password</label>
+              <label for="new-password" class="text-sm font-medium">New password</label>
               <Input id="new-password" v-model="newPassword" type="password" required autocomplete="new-password" />
             </div>
             <div class="flex flex-col gap-1.5">
-              <label for="confirm-new-password" class="text-xs font-medium">Confirm new password</label>
+              <label for="confirm-new-password" class="text-sm font-medium">Confirm new password</label>
               <Input id="confirm-new-password" v-model="confirmNewPassword" type="password" required autocomplete="new-password" />
             </div>
-            <Button type="submit" size="sm" class="self-start text-xs">Change password</Button>
+            <Button type="submit" size="sm" class="self-start text-sm">Change password</Button>
           </form>
         </CardContent>
       </Card>
@@ -359,17 +359,17 @@ async function savePassword() {
 
     <Card class="border-border/60">
       <CardHeader>
-        <CardTitle class="text-sm">Your data</CardTitle>
+        <CardTitle class="text-base">Your data</CardTitle>
       </CardHeader>
       <CardContent class="flex flex-col gap-3">
-        <p class="text-xs text-muted-foreground">
+        <p class="text-sm text-muted-foreground">
           Download a copy of all your data (cards, decks, study progress, snapshots) as a JSON file, or permanently delete your account.
         </p>
         <div class="flex gap-2">
           <a href="/api/account/export" class="inline-flex">
-            <Button size="sm" class="text-xs">Export data</Button>
+            <Button size="sm" class="text-sm">Export data</Button>
           </a>
-          <Button size="sm" variant="destructive" class="text-xs" @click="deleteDialogOpen = true">
+          <Button size="sm" variant="destructive" class="text-sm" @click="deleteDialogOpen = true">
             Delete account
           </Button>
         </div>

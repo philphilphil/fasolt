@@ -78,11 +78,15 @@
   .oauth-brand {
     @apply relative mb-8 flex flex-col items-center gap-2;
   }
-  .oauth-brand img {
-    @apply h-12 w-12 object-contain;
+  .oauth-mark {
+    color: var(--ink-0);
   }
   .oauth-brand span {
-    @apply text-base font-bold text-foreground tracking-tight;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--ink-0);
   }
   .oauth-card {
     @apply relative w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm;
