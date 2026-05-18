@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import AppFooter from '@/components/AppFooter.vue'
+import FasoltWordmark from '@/components/FasoltWordmark.vue'
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col bg-background text-foreground">
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-3xl items-center px-6 py-4">
-        <RouterLink to="/" class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-          <img src="/logo.svg" alt="fasolt" class="h-10 object-contain" />
-          fasolt
+        <RouterLink to="/" class="flex items-center">
+          <FasoltWordmark :size="32" />
         </RouterLink>
       </div>
     </nav>
@@ -17,10 +17,10 @@ import AppFooter from '@/components/AppFooter.vue'
     <div class="mx-auto max-w-3xl flex-1 space-y-8 px-6 py-12">
       <div>
         <h1 class="text-lg font-semibold tracking-tight">Impressum</h1>
-        <p class="mt-1 text-xs text-muted-foreground">Angaben gemäß § 5 DDG</p>
+        <p class="mt-1 text-sm text-muted-foreground">Angaben gemäß § 5 DDG</p>
       </div>
 
-      <div class="space-y-6 text-xs leading-relaxed text-muted-foreground">
+      <div class="space-y-6 text-sm leading-relaxed text-muted-foreground">
         <section class="space-y-2">
           <h2 class="text-sm font-semibold text-foreground">Service provider</h2>
           <address class="not-italic space-y-1">

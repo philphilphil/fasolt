@@ -82,6 +82,13 @@ export interface DailyActivity {
   hadDue: boolean
 }
 
+export interface RatingMix {
+  again: number
+  hard: number
+  good: number
+  easy: number
+}
+
 export interface Progress {
   currentStreak: number
   bestStreak: number
@@ -90,6 +97,7 @@ export interface Progress {
   answeredThisWeek: number
   answeredThisMonth: number
   dailyActivity: DailyActivity[]
+  ratingMix: RatingMix
 }
 
 export interface SourceItem {

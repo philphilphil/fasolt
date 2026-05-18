@@ -14,6 +14,8 @@ public static class CardEndpoints
 
         group.MapPost("/", Create);
         group.MapPost("/bulk", BulkCreate);
+        group.MapPost("/bulk-delete", BulkDelete);
+        group.MapPut("/bulk-suspended", BulkSetSuspended);
         group.MapGet("/", List);
         group.MapGet("/{id}", GetById);
         group.MapPut("/{id}", Update);
@@ -21,6 +23,8 @@ public static class CardEndpoints
         group.MapPost("/{id}/reset", ResetProgress);
         group.MapPut("/{id}/suspended", SetSuspended);
     }
+
+    private const int MaxBulkIds = 500;
 
     private static async Task<IResult> Create(
         CreateCardRequest request,
@@ -135,6 +139,44 @@ public static class CardEndpoints
 
         var dto = await cardService.SetSuspended(user.Id, id, request.IsSuspended);
         return dto is null ? Results.NotFound() : Results.Ok(dto);
+    }
+
+    private static async Task<IResult> BulkDelete(
+        BulkDeleteCardsRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        CardService cardService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        if (request.Ids is null || request.Ids.Count == 0)
+            return Results.BadRequest(new { error = "validation_error", message = "ids must not be empty" });
+
+        if (request.Ids.Count > MaxBulkIds)
+            return Results.BadRequest(new { error = "validation_error", message = $"Maximum {MaxBulkIds} ids per request" });
+
+        var deleted = await cardService.DeleteCards(user.Id, request.Ids);
+        return Results.Ok(new BulkDeleteCardsResponse(deleted));
+    }
+
+    private static async Task<IResult> BulkSetSuspended(
+        BulkSetSuspendedRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        CardService cardService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        if (request.Ids is null || request.Ids.Count == 0)
+            return Results.BadRequest(new { error = "validation_error", message = "ids must not be empty" });
+
+        if (request.Ids.Count > MaxBulkIds)
+            return Results.BadRequest(new { error = "validation_error", message = $"Maximum {MaxBulkIds} ids per request" });
+
+        var updated = await cardService.SetSuspendedBulk(user.Id, request.Ids, request.IsSuspended);
+        return Results.Ok(new BulkSetSuspendedResponse(updated));
     }
 
     private static async Task<IResult> BulkCreate(

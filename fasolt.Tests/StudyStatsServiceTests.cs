@@ -233,6 +233,40 @@ public class StudyStatsServiceTests : IAsyncLifetime
         progress.AnsweredThisMonth.Should().Be(0);
         progress.DailyActivity.Should().HaveCount(30);
         progress.DailyActivity.Should().OnlyContain(d => d.Count == 0);
+        progress.RatingMix.Again.Should().Be(0);
+        progress.RatingMix.Hard.Should().Be(0);
+        progress.RatingMix.Good.Should().Be(0);
+        progress.RatingMix.Easy.Should().Be(0);
+    }
+
+    // --- Progress: rating mix matches actual reviews ---
+
+    [Fact]
+    public async Task Progress_RatingMix_ReflectsActualReviews()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        var now = _time.GetUtcNow();
+        var cards = new List<string>();
+        for (var i = 0; i < 6; i++)
+            cards.Add(await CreateCardAt(db, now.AddHours(-1), $"Q{i}", $"A{i}"));
+
+        // 1 again, 2 hard, 2 good, 1 easy
+        await reviewSvc.RateCard(UserId, new RateCardRequest(cards[0], "again"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(cards[1], "hard"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(cards[2], "hard"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(cards[3], "good"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(cards[4], "good"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(cards[5], "easy"));
+
+        var statsSvc = CreateStatsService(db);
+        var progress = await statsSvc.GetProgress(UserId, 30);
+
+        progress.RatingMix.Again.Should().Be(1);
+        progress.RatingMix.Hard.Should().Be(2);
+        progress.RatingMix.Good.Should().Be(2);
+        progress.RatingMix.Easy.Should().Be(1);
     }
 
     // --- Progress: clamps days param ---
@@ -244,7 +278,7 @@ public class StudyStatsServiceTests : IAsyncLifetime
         var svc = CreateStatsService(db);
 
         (await svc.GetProgress(UserId, 1)).DailyActivity.Should().HaveCount(7);
-        (await svc.GetProgress(UserId, 1000)).DailyActivity.Should().HaveCount(90);
+        (await svc.GetProgress(UserId, 1000)).DailyActivity.Should().HaveCount(366);
         (await svc.GetProgress(UserId, 14)).DailyActivity.Should().HaveCount(14);
     }
 

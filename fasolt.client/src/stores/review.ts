@@ -146,7 +146,7 @@ export const useReviewStore = defineStore('review', () => {
   }
 
   return {
-    queue, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error, mode,
+    queue, currentIndex, currentCard, isFlipped, isActive, isComplete, noDueCards, loading, error, mode,
     progress, sessionStats, sessionTime,
     startSession, flipCard, skip, suspend, rate, advance, endSession, fetchStats, fetchStudyStats,
   }

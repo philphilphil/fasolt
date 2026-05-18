@@ -1,29 +1,91 @@
 <script setup lang="ts">
 import type { ReviewRating } from '@/types'
-import { Button } from '@/components/ui/button'
 
 defineEmits<{ rate: [rating: ReviewRating] }>()
 
-const ratings: { key: string; label: string; rating: ReviewRating; color: string }[] = [
-  { key: '1', label: 'Again', rating: 'again', color: 'border-destructive/50 text-destructive hover:bg-destructive/10' },
-  { key: '2', label: 'Hard', rating: 'hard', color: 'border-warning/50 text-warning hover:bg-warning/10' },
-  { key: '3', label: 'Good', rating: 'good', color: 'border-success/50 text-success hover:bg-success/10' },
-  { key: '4', label: 'Easy', rating: 'easy', color: 'border-accent/50 text-accent hover:bg-accent/10' },
+const ratings: { key: string; label: string; rating: ReviewRating; cssColor: string }[] = [
+  { key: '1', label: 'Again', rating: 'again', cssColor: 'var(--c-again)' },
+  { key: '2', label: 'Hard',  rating: 'hard',  cssColor: 'var(--c-hard)'  },
+  { key: '3', label: 'Good',  rating: 'good',  cssColor: 'var(--c-good)'  },
+  { key: '4', label: 'Easy',  rating: 'easy',  cssColor: 'var(--c-easy)'  },
 ]
 </script>
 
 <template>
-  <div class="flex justify-center gap-2">
-    <Button
+  <div class="rating-bar">
+    <button
       v-for="r in ratings"
       :key="r.rating"
-      variant="outline"
-      class="text-xs py-3"
-      :class="r.color"
+      class="rating-btn"
+      :style="{ '--rcolor': r.cssColor }"
       @click="$emit('rate', r.rating)"
     >
-      <span class="hidden text-muted-foreground sm:inline mr-1 text-[10px]">{{ r.key }}</span>
-      {{ r.label }}
-    </Button>
+      <span class="rating-top">
+        <span class="rating-kbd">{{ r.key }}</span>
+        <span class="rating-label">{{ r.label }}</span>
+      </span>
+    </button>
   </div>
 </template>
+
+<style scoped>
+.rating-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+@media (max-width: 640px) {
+  .rating-bar { gap: 6px; }
+}
+.rating-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 16px;
+  background: var(--paper-1);
+  border: 1px solid var(--rule-1);
+  border-bottom: 3px solid var(--rcolor);
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background .12s, border-color .12s, transform .08s;
+}
+.rating-btn:hover {
+  background: var(--paper-2);
+  border-color: var(--rcolor);
+  border-bottom-color: var(--rcolor);
+}
+.rating-btn:active { transform: translateY(1px); }
+.rating-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rating-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--rcolor);
+  background: var(--paper-1);
+  border: 1px solid var(--rcolor);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}
+.rating-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--rcolor);
+  letter-spacing: -0.01em;
+}
+@media (max-width: 640px) {
+  .rating-btn { padding: 10px 10px; }
+  .rating-label { font-size: 14px; }
+}
+</style>

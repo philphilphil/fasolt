@@ -540,6 +540,15 @@ public static class DevSeedData
             new DeckCard { DeckId = mathDeck.Id, CardId = pi.Id }
         );
 
+        // === Bulk content + synthetic 60-day review history (admin user only) ===
+        var (bulkDecks, bulkCards, bulkDeckCards, reviewLogs, bestStreak) =
+            DevSeedHistory.Build(adminUser.Id, now);
+        db.Decks.AddRange(bulkDecks);
+        db.Cards.AddRange(bulkCards);
+        db.DeckCards.AddRange(bulkDeckCards);
+        db.ReviewLogs.AddRange(reviewLogs);
+        adminUser.BestStreak = bestStreak;
+
         await db.SaveChangesAsync();
     }
 }

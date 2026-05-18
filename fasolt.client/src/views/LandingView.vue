@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { Button } from '@/components/ui/button'
-import { Moon, Sun, Bot, Layers, FileText, Brain, BarChart3, Image, Search, Server } from 'lucide-vue-next'
-import { useDarkMode } from '@/composables/useDarkMode'
+import { Bot, Layers, FileText, Brain, BarChart3, Image, Search, Server } from 'lucide-vue-next'
 import ToolSwitcher from '@/components/ToolSwitcher.vue'
 import FasoltStudyPreview from '@/components/FasoltStudyPreview.vue'
+import FasoltWordmark from '@/components/FasoltWordmark.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import { ArrowRight, ArrowDown } from 'lucide-vue-next'
-
-const { isDark, toggle } = useDarkMode()
 </script>
 
 <template>
@@ -19,19 +18,9 @@ const { isDark, toggle } = useDarkMode()
     <!-- Nav -->
     <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-        <span class="flex items-center gap-2.5 text-sm font-bold tracking-tight">
-          <img src="/logo.svg" alt="fasolt" class="h-10 object-contain" />
-          fasolt
-          <span class="rounded border border-accent/30 bg-accent/10 px-1 text-[8px] leading-4 font-medium text-accent">beta</span>
-        </span>
+        <FasoltWordmark :size="32" />
         <div class="flex items-center gap-2">
-          <button
-            class="rounded p-2 text-muted-foreground hover:text-foreground"
-            @click="toggle"
-          >
-            <Sun v-if="isDark" :size="16" />
-            <Moon v-else :size="16" />
-          </button>
+          <ThemeToggle />
           <a href="/login">
             <Button variant="ghost" size="sm" class="text-xs">Log in</Button>
           </a>

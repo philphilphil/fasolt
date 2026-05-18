@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="fasolt.client/public/logo.png" alt="fasolt" width="80" style="image-rendering: pixelated" />
+  <img src="docs/media/logo.svg" alt="fasolt" width="80" />
 </p>
 
 <h1 align="center">fasolt</h1>

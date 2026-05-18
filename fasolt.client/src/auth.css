@@ -1,13 +1,18 @@
 /*
  * Shared stylesheet for the server-rendered /oauth/* Razor Pages.
  *
- * IMPORTANT: the HSL token block below is a manual copy of the :root
- * palette from src/style.css (light theme only — auth pages are light
- * regardless of user/system preference, per the convergence spec).
+ * IMPORTANT: this :root block is a manual copy of the light-theme palette
+ * from src/style.css. The auth pages are always rendered light, regardless
+ * of user/system preference (per the convergence spec), so we only mirror
+ * the light values here. If you change the SPA palette in src/style.css,
+ * update this file too — there is no automatic sync, because Tailwind's
+ * @import/ordering rules make single-sourcing awkward for a standalone
+ * entry point.
  *
- * If you change the SPA palette in src/style.css, update this file too.
- * There is no automatic sync — Tailwind's @import/ordering rules make
- * single-sourcing awkward for a standalone entry point.
+ * Tailwind opacity modifiers (e.g. `border-border/60`) DO NOT work on
+ * token-backed colors here because tailwind.config.js maps tokens to
+ * complete oklch literals — there's no <alpha-value> placeholder to
+ * compose with. Use plain utilities or bespoke CSS with color-mix.
  */
 
 @tailwind base;
@@ -16,31 +21,24 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 228 33% 14%;
-    --card: 0 0% 100%;
-    --card-foreground: 228 33% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 228 33% 14%;
-    --primary: 228 33% 14%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 228 33% 14%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 212 92% 45%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --warning: 40 100% 37%;
-    --warning-foreground: 0 0% 9%;
-    --success: 160 84% 39%;
-    --success-foreground: 0 0% 98%;
-    --border: 220 18% 91%;
-    --input: 220 18% 91%;
-    --ring: 212 92% 45%;
-    --radius: 0.375rem;
-    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
+    --paper-0: oklch(0.985 0.004 75);
+    --paper-1: oklch(0.970 0.005 75);
+    --paper-2: oklch(0.945 0.006 75);
+    --rule-1:  oklch(0.905 0.006 75);
+    --rule-2:  oklch(0.925 0.005 75);
+    --ink-0:   oklch(0.18  0.012 60);
+    --ink-1:   oklch(0.36  0.011 60);
+    --ink-2:   oklch(0.55  0.008 60);
+    --ink-3:   oklch(0.72  0.005 75);
+    --accent:  oklch(0.61  0.17 40);
+    --accent-hi: oklch(0.55 0.18 38);
+    --accent-soft: oklch(0.945 0.045 55);
+    --accent-on: #ffffff;
+    --c-again: oklch(0.60 0.18 25);
+    --c-hard:  oklch(0.65 0.16 65);
+    --c-good:  oklch(0.55 0.13 155);
+    --c-easy:  oklch(0.55 0.14 245);
+    --radius: 0.5rem;
   }
 
   * {
@@ -49,7 +47,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -59,13 +57,13 @@
 @layer utilities {
   .bg-grid {
     background-image:
-      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+      linear-gradient(var(--rule-1) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule-1) 1px, transparent 1px);
     background-size: 48px 48px;
   }
   .bg-grid-fade {
     -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
   }
 }
 
@@ -80,14 +78,18 @@
   .oauth-brand {
     @apply relative mb-8 flex flex-col items-center gap-2;
   }
-  .oauth-brand img {
-    @apply h-12 w-12 object-contain;
+  .oauth-mark {
+    color: var(--ink-0);
   }
   .oauth-brand span {
-    @apply text-base font-bold text-foreground tracking-tight;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--ink-0);
   }
   .oauth-card {
-    @apply relative w-full max-w-sm rounded-lg border border-border/60 bg-card p-6 shadow-sm;
+    @apply relative w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm;
   }
   .oauth-card h1 {
     @apply mb-2 text-center text-base font-semibold text-foreground;
@@ -114,8 +116,9 @@
     @apply py-3 text-center font-mono text-2xl tracking-[0.5em];
   }
   .oauth-btn {
-    @apply mt-1 inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50;
+    @apply mt-1 inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors disabled:pointer-events-none disabled:opacity-50;
   }
+  .oauth-btn:hover { background: var(--ink-1); }
   .oauth-btn-apple {
     @apply mb-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black/85;
   }
@@ -131,7 +134,9 @@
     @apply h-px flex-1 bg-border;
   }
   .oauth-error {
-    @apply mb-3 rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive;
+    @apply mb-3 rounded px-3 py-2 text-xs text-destructive;
+    border: 1px solid color-mix(in oklch, var(--c-again) 30%, transparent);
+    background: color-mix(in oklch, var(--c-again) 10%, transparent);
   }
   .oauth-field-error {
     @apply mt-1 text-xs text-destructive;

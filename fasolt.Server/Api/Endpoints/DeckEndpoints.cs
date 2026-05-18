@@ -18,9 +18,12 @@ public static class DeckEndpoints
         group.MapPut("/{id}", Update);
         group.MapDelete("/{id}", Delete);
         group.MapPost("/{id}/cards", AddCards);
+        group.MapPost("/{id}/cards/bulk-remove", BulkRemoveCards);
         group.MapDelete("/{id}/cards/{cardId}", RemoveCard);
         group.MapPut("/{id}/suspended", SetSuspended);
     }
+
+    private const int MaxBulkIds = 500;
 
     private static async Task<IResult> Create(
         CreateDeckRequest request,
@@ -135,6 +138,27 @@ public static class DeckEndpoints
 
         var result = await deckService.RemoveCard(user.Id, id, cardId);
         return result == RemoveCardResult.Success ? Results.NoContent() : Results.NotFound();
+    }
+
+    private static async Task<IResult> BulkRemoveCards(
+        string id,
+        RemoveCardsFromDeckRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        DeckService deckService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        if (request.CardIds is null || request.CardIds.Count == 0)
+            return Results.BadRequest(new { error = "validation_error", message = "cardIds must not be empty" });
+
+        if (request.CardIds.Count > MaxBulkIds)
+            return Results.BadRequest(new { error = "validation_error", message = $"Maximum {MaxBulkIds} ids per request" });
+
+        var result = await deckService.RemoveCards(user.Id, id, request.CardIds);
+        if (!result.DeckFound) return Results.NotFound();
+        return Results.Ok(new RemoveCardsFromDeckResponse(result.RemovedCount));
     }
 
     private static async Task<IResult> SetSuspended(

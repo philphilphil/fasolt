@@ -194,7 +194,7 @@ function onDeleted() {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
 
   <div v-else-if="card" class="space-y-6">
     <!-- Breadcrumb + deck navigation -->
@@ -243,18 +243,18 @@ function onDeleted() {
     <div class="flex items-start justify-between">
       <div class="flex items-center gap-2.5">
         <h1 class="text-base font-bold tracking-tight">{{ truncatedFront }}</h1>
-        <Badge variant="outline" class="text-[10px]">{{ card.state }}</Badge>
+        <Badge variant="outline" class="text-xs">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="copyId">
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="copyId">
           {{ idCopied ? 'Copied!' : 'Copy ID' }}
         </Button>
-        <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-[10px]" @click="startEdit">Edit</Button>
+        <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-xs" @click="startEdit">Edit</Button>
         <Button
           v-if="!editing"
           variant="outline"
           size="sm"
-          class="h-7 text-[10px] text-destructive hover:text-destructive"
+          class="h-7 text-xs text-destructive hover:text-destructive"
           @click="resetOpen = true"
         >
           Reset Progress
@@ -262,7 +262,7 @@ function onDeleted() {
         <Button
           variant="outline"
           size="sm"
-          class="h-7 text-[10px] text-destructive hover:text-destructive"
+          class="h-7 text-xs text-destructive hover:text-destructive"
           @click="deleteOpen = true"
         >
           Delete
@@ -271,7 +271,7 @@ function onDeleted() {
     </div>
 
     <!-- Metadata -->
-    <div class="space-y-1 text-xs text-muted-foreground">
+    <div class="space-y-1 text-sm text-muted-foreground">
       <div v-if="card.sourceFile || card.sourceHeading" class="flex flex-wrap gap-x-6">
         <span v-if="card.sourceFile">Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
         <span v-if="card.sourceHeading">Section: <span class="text-foreground">{{ card.sourceHeading }}</span></span>
@@ -316,18 +316,18 @@ function onDeleted() {
       </div>
     </div>
 
-    <div v-if="resetSuccess" class="text-xs text-green-600 dark:text-green-400">Progress reset.</div>
+    <div v-if="resetSuccess" class="text-sm text-green-600 dark:text-green-400">Progress reset.</div>
 
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
       <div class="grid grid-cols-2 gap-3">
         <div class="space-y-1">
           <label class="text-[11px] font-medium text-muted-foreground">Source file</label>
-          <Input v-model="editSourceFile" placeholder="e.g. notes.md" class="h-8 text-xs" />
+          <Input v-model="editSourceFile" placeholder="e.g. notes.md" class="h-8 text-sm" />
         </div>
         <div class="space-y-1">
           <label class="text-[11px] font-medium text-muted-foreground">Section</label>
-          <Input v-model="editSourceHeading" placeholder="e.g. Chapter 1" class="h-8 text-xs" />
+          <Input v-model="editSourceHeading" placeholder="e.g. Chapter 1" class="h-8 text-sm" />
         </div>
       </div>
       <div class="space-y-1">
@@ -336,7 +336,7 @@ function onDeleted() {
           <label
             v-for="d in decksStore.decks"
             :key="d.id"
-            class="flex items-center gap-1.5 text-xs cursor-pointer"
+            class="flex items-center gap-1.5 text-sm cursor-pointer"
           >
             <input
               type="checkbox"
@@ -352,54 +352,54 @@ function onDeleted() {
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front (question)</div>
         <textarea
           v-model="front"
-          class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-full rounded border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           rows="3"
         />
         <details class="mt-2">
-          <summary class="cursor-pointer text-xs text-muted-foreground">SVG (front)</summary>
+          <summary class="cursor-pointer text-sm text-muted-foreground">SVG (front)</summary>
           <div class="mt-2 grid grid-cols-2 gap-2">
             <textarea
               v-model="editFrontSvg"
-              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-xs font-mono"
+              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-sm font-mono"
               placeholder="Paste SVG markup here..."
             />
             <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
               <div v-if="editFrontSvg" class="max-h-[200px] w-full [&>svg]:max-h-[200px] [&>svg]:w-full" v-html="sanitizeSvg(editFrontSvg)" />
-              <span v-else class="text-xs text-muted-foreground">Preview</span>
+              <span v-else class="text-sm text-muted-foreground">Preview</span>
             </div>
           </div>
-          <Button v-if="editFrontSvg" variant="ghost" size="sm" class="mt-1 text-xs" @click="editFrontSvg = ''">Clear SVG</Button>
+          <Button v-if="editFrontSvg" variant="ghost" size="sm" class="mt-1 text-sm" @click="editFrontSvg = ''">Clear SVG</Button>
         </details>
       </div>
       <div class="space-y-1">
         <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back (answer)</div>
         <textarea
           v-model="back"
-          class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-full rounded border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
           rows="8"
         />
         <details class="mt-2">
-          <summary class="cursor-pointer text-xs text-muted-foreground">SVG (back)</summary>
+          <summary class="cursor-pointer text-sm text-muted-foreground">SVG (back)</summary>
           <div class="mt-2 grid grid-cols-2 gap-2">
             <textarea
               v-model="editBackSvg"
-              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-xs font-mono"
+              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-sm font-mono"
               placeholder="Paste SVG markup here..."
             />
             <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
               <div v-if="editBackSvg" class="max-h-[200px] w-full [&>svg]:max-h-[200px] [&>svg]:w-full" v-html="sanitizeSvg(editBackSvg)" />
-              <span v-else class="text-xs text-muted-foreground">Preview</span>
+              <span v-else class="text-sm text-muted-foreground">Preview</span>
             </div>
           </div>
-          <Button v-if="editBackSvg" variant="ghost" size="sm" class="mt-1 text-xs" @click="editBackSvg = ''">Clear SVG</Button>
+          <Button v-if="editBackSvg" variant="ghost" size="sm" class="mt-1 text-sm" @click="editBackSvg = ''">Clear SVG</Button>
         </details>
       </div>
-      <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
+      <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
       <div class="flex gap-2">
-        <Button size="sm" class="text-xs" :disabled="saving" @click="save">
+        <Button size="sm" class="text-sm" :disabled="saving" @click="save">
           {{ saving ? 'Saving...' : 'Save' }}
         </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="editing = false">Cancel</Button>
+        <Button variant="outline" size="sm" class="text-sm" @click="editing = false">Cancel</Button>
       </div>
     </div>
 

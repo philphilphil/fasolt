@@ -382,6 +382,13 @@ public class CardService(AppDbContext db)
             .ExecuteDeleteAsync();
     }
 
+    public async Task<int> SetSuspendedBulk(string userId, List<string> publicIds, bool isSuspended)
+    {
+        return await db.Cards
+            .Where(c => c.UserId == userId && publicIds.Contains(c.PublicId))
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.IsSuspended, isSuspended));
+    }
+
     public async Task<CardDto?> ResetProgress(string userId, string publicId)
     {
         var card = await db.Cards

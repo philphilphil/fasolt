@@ -9,7 +9,12 @@ killall dotnet 2>/dev/null || true
 # Build once, then watch, so fasolt.Server/wwwroot/css/auth.css exists
 # before the backend starts serving requests. Without the initial build,
 # the first few oauth page hits 404 on the stylesheet.
-(cd fasolt.client && npm run build:auth) >/dev/null 2>&1
+# We only swallow stdout — stderr is preserved so build failures are visible
+# instead of silently killing the script via `set -e`.
+if ! (cd fasolt.client && npm run build:auth) >/dev/null; then
+  echo "✗ build:auth failed — see errors above. Aborting." >&2
+  exit 1
+fi
 (cd fasolt.client && npm run watch:auth) &
 AUTH_WATCH_PID=$!
 

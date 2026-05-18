@@ -55,6 +55,28 @@ export const useCardsStore = defineStore('cards', () => {
     cards.value = cards.value.filter(c => c.id !== id)
   }
 
+  async function deleteCardsBulk(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0
+    const { deleted } = await apiFetch<{ deleted: number }>(`/cards/bulk-delete`, {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+    const idSet = new Set(ids)
+    cards.value = cards.value.filter(c => !idSet.has(c.id))
+    return deleted
+  }
+
+  async function setSuspendedBulk(ids: string[], isSuspended: boolean): Promise<number> {
+    if (ids.length === 0) return 0
+    const { updated } = await apiFetch<{ updated: number }>(`/cards/bulk-suspended`, {
+      method: 'PUT',
+      body: JSON.stringify({ ids, isSuspended }),
+    })
+    const idSet = new Set(ids)
+    cards.value = cards.value.map(c => idSet.has(c.id) ? { ...c, isSuspended } : c)
+    return updated
+  }
+
   async function getCard(id: string): Promise<Card> {
     return apiFetch<Card>(`/cards/${id}`)
   }
@@ -74,5 +96,5 @@ export const useCardsStore = defineStore('cards', () => {
     return result
   }
 
-  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, resetProgress, setSuspended }
+  return { cards, loading, fetchCards, getCard, createCard, updateCard, deleteCard, deleteCardsBulk, resetProgress, setSuspended, setSuspendedBulk }
 })

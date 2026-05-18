@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
+import { useCardsStore } from '@/stores/cards'
 import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +11,14 @@ import {
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { History } from 'lucide-vue-next'
-import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import CardTable from '@/components/CardTable.vue'
+import BulkActionBar from '@/components/BulkActionBar.vue'
+import AddToDeckDialog from '@/components/AddToDeckDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const decks = useDecksStore()
+const cardsStore = useCardsStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
@@ -28,9 +31,23 @@ const deleteOpen = ref(false)
 const deleteCards = ref(false)
 const deleteError = ref('')
 
-const deleteCardTarget = ref<any>(null)
-const deleteCardOpen = ref(false)
 const idCopied = ref(false)
+
+// Bulk selection
+const selectedIds = ref<string[]>([])
+const addToDeckOpen = ref(false)
+const bulkDeleteOpen = ref(false)
+const bulkBusy = ref(false)
+const bulkError = ref('')
+
+const selectedCards = computed(() =>
+  selectedIds.value
+    .map(id => deck.value?.cards.find(c => c.id === id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+)
+const selectedCount = computed(() => selectedCards.value.length)
+const someSuspended = computed(() => selectedCards.value.some(c => c.isSuspended))
+const allSuspended = computed(() => selectedCards.value.length > 0 && selectedCards.value.every(c => c.isSuspended))
 
 async function copyDeckId() {
   if (!deck.value) return
@@ -83,22 +100,72 @@ async function handleDelete() {
   }
 }
 
-async function removeCard(cardId: string) {
-  if (!deck.value) return
-  await decks.removeCard(deck.value.id, cardId)
-  await refresh()
-}
-
 async function toggleSuspended() {
   if (!deck.value) return
   await decks.setSuspended(deck.value.id, !deck.value.isSuspended)
   deck.value = await decks.getDeckDetail(deck.value.id)
 }
 
-async function onCardDeleted() {
-  deleteCardTarget.value = null
-  deleteCardOpen.value = false
-  await refresh()
+// --- Bulk actions ---
+async function bulkSuspend(target: boolean) {
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    const ids = selectedCards.value
+      .filter(c => c.isSuspended !== target)
+      .map(c => c.id)
+    if (ids.length > 0) await cardsStore.setSuspendedBulk(ids, target)
+    await refresh()
+  } catch {
+    bulkError.value = `Failed to ${target ? 'suspend' : 'unsuspend'} cards.`
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+async function bulkRemoveFromThisDeck() {
+  if (!deck.value) return
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    await decks.removeCards(deck.value.id, selectedIds.value)
+    selectedIds.value = []
+    await refresh()
+  } catch {
+    bulkError.value = 'Failed to remove cards from this deck.'
+    await refresh()
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+async function bulkDeleteConfirmed() {
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    await cardsStore.deleteCardsBulk(selectedIds.value)
+    selectedIds.value = []
+    bulkDeleteOpen.value = false
+    await refresh()
+  } catch {
+    bulkError.value = 'Failed to delete cards. The list has been refreshed.'
+    selectedIds.value = []
+    await refresh()
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+async function onAddedToOtherDeck() {
+  // Gate the bulk bar while the refetch is in flight so a second action
+  // can't dispatch against a stale selection.
+  bulkBusy.value = true
+  try {
+    await refresh()
+  } finally {
+    selectedIds.value = []
+    bulkBusy.value = false
+  }
 }
 
 const stateCounts = computed(() => {
@@ -111,7 +178,7 @@ const stateCounts = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
 
   <div v-else-if="deck" class="space-y-6">
     <!-- Breadcrumb -->
@@ -131,7 +198,7 @@ const stateCounts = computed(() => {
         <Button
           v-if="deck.dueCount > 0 && !deck.isSuspended"
           size="sm"
-          class="text-xs"
+          class="text-sm"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
@@ -140,28 +207,28 @@ const stateCounts = computed(() => {
           v-if="deck.cardCount > 0 && !deck.isSuspended"
           variant="outline"
           size="sm"
-          class="text-xs"
+          class="text-sm"
           data-testid="custom-study-button"
           @click="router.push(`/review?deckId=${deck.id}&mode=cram`)"
         >
           Custom study
         </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deck.id}/snapshots`)">
+        <Button variant="outline" size="sm" class="text-sm" @click="router.push(`/decks/${deck.id}/snapshots`)">
           <History class="h-3.5 w-3.5 mr-1" />Snapshots
         </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="toggleSuspended">
+        <Button variant="outline" size="sm" class="text-sm" @click="toggleSuspended">
           {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
         </Button>
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="copyDeckId">
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="copyDeckId">
           {{ idCopied ? 'Copied!' : 'Copy ID' }}
         </Button>
-        <Button variant="outline" size="sm" class="h-7 text-[10px]" @click="openEdit">Edit</Button>
-        <Button variant="outline" size="sm" class="h-7 text-[10px] text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs" @click="openEdit">Edit</Button>
+        <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
       </div>
     </div>
 
     <!-- Inactive banner -->
-    <div v-if="deck.isSuspended" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-xs text-muted-foreground">
+    <div v-if="deck.isSuspended" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
       This deck is suspended. Cards are excluded from study.
     </div>
 
@@ -169,15 +236,15 @@ const stateCounts = computed(() => {
     <div class="bg-secondary rounded-lg px-4 py-3 flex items-center gap-5">
       <div>
         <span class="text-lg font-bold">{{ deck.cardCount }}</span>
-        <span class="text-xs text-muted-foreground ml-1.5">cards</span>
+        <span class="text-sm text-muted-foreground ml-1.5">cards</span>
       </div>
       <div class="w-px h-5 bg-border" />
       <div>
         <span class="text-lg font-bold text-warning">{{ deck.dueCount }}</span>
-        <span class="text-xs text-muted-foreground ml-1.5">due</span>
+        <span class="text-sm text-muted-foreground ml-1.5">due</span>
       </div>
       <div class="w-px h-5 bg-border" />
-      <div class="flex items-center gap-3 text-xs text-muted-foreground">
+      <div class="flex items-center gap-3 text-sm text-muted-foreground">
         <span v-for="state in ['new', 'learning', 'review', 'relearning']" :key="state">
           {{ stateCounts[state] || 0 }} {{ state }}
         </span>
@@ -185,20 +252,37 @@ const stateCounts = computed(() => {
     </div>
 
     <!-- Cards section -->
-    <div>
-      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Cards in this deck</div>
+    <div class="space-y-3">
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5">Cards in this deck</div>
+
+      <BulkActionBar
+        v-if="selectedCount > 0"
+        :count="selectedCount"
+        :some-suspended="someSuspended"
+        :all-suspended="allSuspended"
+        :can-remove-from-deck="true"
+        :busy="bulkBusy"
+        @add-to-deck="addToDeckOpen = true"
+        @remove-from-deck="bulkRemoveFromThisDeck"
+        @suspend="bulkSuspend(true)"
+        @unsuspend="bulkSuspend(false)"
+        @delete="bulkDeleteOpen = true"
+        @clear="selectedIds = []"
+      />
+
+      <div v-if="bulkError" class="text-sm text-destructive">{{ bulkError }}</div>
 
       <CardTable
         v-if="deck.cards.length > 0"
+        v-model:selectedIds="selectedIds"
         :cards="deck.cards"
         :deck-context="{ id: deck.id, name: deck.name }"
-        @delete="(card) => { deleteCardTarget = card; deleteCardOpen = true }"
-        @remove="(card) => removeCard(card.id)"
+        selectable
       >
         <template #empty>No cards in this deck yet.</template>
       </CardTable>
 
-      <div v-else class="py-12 text-center text-xs text-muted-foreground">
+      <div v-else class="py-12 text-center text-sm text-muted-foreground">
         No cards in this deck yet. Add cards from the Cards view.
       </div>
     </div>
@@ -230,11 +314,11 @@ const stateCounts = computed(() => {
         </DialogHeader>
         <div class="flex items-center gap-2">
           <Checkbox id="delete-cards" :checked="deleteCards" @update:checked="deleteCards = $event" />
-          <label for="delete-cards" class="text-xs cursor-pointer select-none">
+          <label for="delete-cards" class="text-sm cursor-pointer select-none">
             Also delete all {{ deck.cardCount }} cards in this deck
           </label>
         </div>
-        <div v-if="deleteError" class="text-xs text-destructive">{{ deleteError }}</div>
+        <div v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</div>
         <DialogFooter class="gap-2">
           <Button variant="outline" size="sm" @click="deleteOpen = false">Cancel</Button>
           <Button variant="destructive" size="sm" @click="handleDelete">Delete</Button>
@@ -242,11 +326,29 @@ const stateCounts = computed(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- Delete card dialog -->
-    <CardDeleteDialog
-      v-model:open="deleteCardOpen"
-      :card="deleteCardTarget"
-      @deleted="onCardDeleted"
+    <!-- Add selection to another deck -->
+    <AddToDeckDialog
+      v-model:open="addToDeckOpen"
+      :card-ids="selectedIds"
+      @added="onAddedToOtherDeck"
     />
+
+    <!-- Bulk delete confirm -->
+    <Dialog :open="bulkDeleteOpen" @update:open="bulkDeleteOpen = $event">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {{ selectedCount }} card{{ selectedCount === 1 ? '' : 's' }}?</DialogTitle>
+          <DialogDescription>
+            This permanently removes the cards and their review history. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" :disabled="bulkBusy" @click="bulkDeleteOpen = false">Cancel</Button>
+          <Button variant="destructive" :disabled="bulkBusy" @click="bulkDeleteConfirmed">
+            {{ bulkBusy ? 'Deleting…' : `Delete ${selectedCount}` }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

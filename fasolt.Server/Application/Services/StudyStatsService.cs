@@ -42,7 +42,7 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
 
     public async Task<ProgressDto> GetProgress(string userId, int days = 30)
     {
-        var clampedDays = Math.Clamp(days, 7, 90);
+        var clampedDays = Math.Clamp(days, 7, 366);
 
         var user = await db.Users.FirstAsync(u => u.Id == userId);
         var tz = DueTimeRounder.ResolveTimeZone(user.TimeZone);
@@ -52,6 +52,7 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         var (todayStart, todayEnd) = GetDayBoundaries(now, tz, dayStartHour);
         var weekStart = GetWeekStart(todayStart, tz);
         var monthStart = GetMonthStart(todayStart, tz, dayStartHour);
+        var windowStart = todayStart.AddDays(-(clampedDays - 1));
 
         var totalAnswered = await db.ReviewLogs.CountAsync(r => r.UserId == userId);
         var answeredToday = await db.ReviewLogs.CountAsync(r =>
@@ -65,11 +66,41 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         var bestStreak = Math.Max(user.BestStreak, currentStreak);
 
         var activity = await BuildDailyActivity(userId, todayStart, todayEnd, clampedDays, tz, dayStartHour);
+        var ratingMix = await BuildRatingMix(userId, windowStart, todayEnd);
 
         return new ProgressDto(
             currentStreak, bestStreak,
             totalAnswered, answeredToday, answeredThisWeek, answeredThisMonth,
-            activity);
+            activity, ratingMix);
+    }
+
+    private async Task<RatingMixDto> BuildRatingMix(
+        string userId, DateTimeOffset windowStart, DateTimeOffset windowEnd)
+    {
+        // Group by rating in SQL, then bucket. Anything outside the known
+        // ratings is ignored — we don't want unknown strings inflating totals.
+        var counts = await db.ReviewLogs
+            .AsNoTracking()
+            .Where(r => r.UserId == userId && r.ReviewedAt >= windowStart && r.ReviewedAt < windowEnd)
+            .GroupBy(r => r.Rating)
+            .Select(g => new { Rating = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var again = 0;
+        var hard = 0;
+        var good = 0;
+        var easy = 0;
+        foreach (var c in counts)
+        {
+            switch (c.Rating)
+            {
+                case "again": again = c.Count; break;
+                case "hard":  hard  = c.Count; break;
+                case "good":  good  = c.Count; break;
+                case "easy":  easy  = c.Count; break;
+            }
+        }
+        return new RatingMixDto(again, hard, good, easy);
     }
 
     private async Task<List<DailyActivityDto>> BuildDailyActivity(

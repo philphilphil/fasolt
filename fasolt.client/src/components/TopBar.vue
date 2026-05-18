@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,12 +9,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import SearchResults from '@/components/SearchResults.vue'
+import FasoltWordmark from '@/components/FasoltWordmark.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSearch } from '@/composables/useSearch'
-import { useDarkMode } from '@/composables/useDarkMode'
 
 const auth = useAuthStore()
-const { isDark, toggle } = useDarkMode()
 const searchInputRef = ref<InstanceType<typeof Input> | null>(null)
 const searchContainerRef = ref<HTMLDivElement | null>(null)
 
@@ -34,11 +33,7 @@ const {
 } = useSearch()
 
 const userLabel = computed(() => auth.user?.displayName || auth.user?.email || '')
-
-const userInitial = computed(() => {
-  if (userLabel.value) return userLabel.value[0].toUpperCase()
-  return '?'
-})
+const userInitial = computed(() => userLabel.value ? userLabel.value[0].toUpperCase() : '?')
 
 function focusSearch() {
   const el = searchInputRef.value?.$el as HTMLInputElement | undefined
@@ -46,54 +41,46 @@ function focusSearch() {
 }
 
 function handleClickOutside(e: MouseEvent) {
-  if (searchContainerRef.value && !searchContainerRef.value.contains(e.target as Node)) {
-    close()
-  }
+  if (searchContainerRef.value && !searchContainerRef.value.contains(e.target as Node)) close()
 }
 
 function handleGlobalKeyDown(e: KeyboardEvent) {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault()
-    focusSearch()
-  }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); focusSearch() }
 }
 
 onMounted(() => {
   document.addEventListener('keydown', handleGlobalKeyDown)
   document.addEventListener('click', handleClickOutside)
 })
-
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalKeyDown)
   document.removeEventListener('click', handleClickOutside)
 })
 
-async function handleLogout() {
-  await auth.logout()
-  window.location.href = '/'
-}
+async function handleLogout() { await auth.logout(); window.location.href = '/' }
 </script>
 
 <template>
-  <header class="flex items-center justify-between border-b border-border px-5 py-3">
-    <span class="flex items-center gap-2.5 text-[13px] font-bold text-foreground tracking-tight">
-      <img src="/logo.svg" alt="fasolt" class="h-9 object-contain" />
-      fasolt
-    </span>
-    <div ref="searchContainerRef" class="relative hidden sm:block">
-      <Input
-        ref="searchInputRef"
-        v-model="query"
-        type="text"
-        placeholder="Search cards and decks..."
-        class="h-8 w-[260px] bg-secondary pl-8 text-xs focus:border-accent"
-        @keydown="onKeyDown"
-      />
-      <div class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      </div>
-      <div v-if="!isOpen" class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
-        <kbd class="rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">⌘K</kbd>
+  <header class="topbar">
+    <RouterLink to="/study" class="brand">
+      <FasoltWordmark :size="32" />
+    </RouterLink>
+
+    <div ref="searchContainerRef" class="search-wrap">
+      <div class="search-shell">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <Input
+          ref="searchInputRef"
+          v-model="query"
+          type="text"
+          placeholder="Search cards, decks, sources…"
+          class="search-input"
+          @keydown="onKeyDown"
+        />
+        <div v-if="!isOpen" class="search-kbd">
+          <span class="fa-kbd">⌘</span>
+          <span class="fa-kbd">K</span>
+        </div>
       </div>
       <SearchResults
         v-if="isOpen"
@@ -108,42 +95,125 @@ async function handleLogout() {
         @update:active-index="activeIndex = $event"
       />
     </div>
-    <div class="flex items-center gap-1.5">
-      <Button
-        variant="ghost"
-        size="sm"
-        class="h-8 w-8 p-0"
-        aria-label="Toggle dark mode"
-        @click="toggle"
-      >
-        <svg v-if="isDark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </Button>
+
+    <div class="topbar-right">
+      <ThemeToggle />
+      <div class="topbar-divider" />
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button
-            variant="ghost"
-            size="sm"
-            class="h-8 w-8 rounded bg-secondary p-0 text-xs font-medium"
-            :aria-label="`User menu for ${userLabel}`"
-          >
-            {{ userInitial }}
-          </Button>
+          <button class="user-chip" :aria-label="`User menu for ${userLabel}`">
+            <span class="user-avatar">{{ userInitial }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-48">
-          <div class="px-2 py-1.5 text-xs text-muted-foreground truncate">
-            {{ userLabel }}
-          </div>
+          <div class="px-2 py-1.5 text-xs text-ink-2 truncate">{{ userLabel }}</div>
           <DropdownMenuSeparator />
           <DropdownMenuItem as-child>
             <RouterLink to="/settings" class="cursor-pointer">Settings</RouterLink>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem class="cursor-pointer" @click="handleLogout">
-            Log out
-          </DropdownMenuItem>
+          <DropdownMenuItem class="cursor-pointer" @click="handleLogout">Log out</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   </header>
 </template>
+
+<style scoped>
+.topbar {
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 20px;
+  gap: 16px;
+  background: var(--paper-0);
+  border-bottom: 1px solid var(--rule-1);
+}
+.brand {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.search-wrap {
+  flex: 1 1 auto;
+  max-width: 520px;
+  margin: 0 auto;
+  position: relative;
+}
+.search-shell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--rule-1);
+  border-radius: 8px;
+  background: var(--paper-1);
+  color: var(--ink-2);
+  transition: border-color .12s, background .12s;
+}
+.search-shell:focus-within {
+  border-color: var(--accent);
+  background: var(--paper-0);
+}
+.search-icon { flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--ink-0) !important;
+  font-size: 13px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.search-kbd {
+  margin-left: auto;
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.topbar-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--rule-1);
+}
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 4px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.user-chip:hover {
+  background: var(--paper-2);
+  border-color: var(--ink-3);
+}
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--accent-on);
+  display: grid;
+  place-items: center;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+</style>
