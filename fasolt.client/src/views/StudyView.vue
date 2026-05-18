@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReviewStore } from '@/stores/review'
 import { useDecksStore } from '@/stores/decks'
 import { apiFetch } from '@/api/client'
 import type { Deck, DailyActivity, Progress, StudyStats } from '@/types'
 import { deckColor } from '@/lib/utils'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 
 const router = useRouter()
 const reviewStore = useReviewStore()
 const decksStore = useDecksStore()
+
+const { register, cleanup } = useKeyboardShortcuts()
 
 const totalCards = ref(0)
 const dueCount = ref(0)
@@ -31,7 +34,13 @@ onMounted(async () => {
     streakActivity.value = progress.dailyActivity
   } catch { /* leave empty — strip falls back to flat zero state */ }
   decksStore.fetchDecks()
+
+  register({
+    Enter: () => { if (dueCount.value > 0) startReview() },
+  })
 })
+
+onUnmounted(() => { cleanup() })
 
 const sortedDecks = computed(() => {
   return [...decksStore.decks].sort((a, b) => {

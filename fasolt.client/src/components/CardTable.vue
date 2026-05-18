@@ -14,7 +14,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Image, MoreHorizontal } from 'lucide-vue-next'
+import { Image } from 'lucide-vue-next'
 import { formatDateDot } from '@/lib/formatDate'
 
 const router = useRouter()
@@ -202,8 +202,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
     },
   })
 
-  // When selection mode is on, drop per-row action cluster — bulk bar handles it.
-  // Show a kebab menu that opens the card detail directly.
+  // When selection mode is on, drop the per-row action cluster entirely — bulk
+  // bar handles the actions, and the Front column's RouterLink opens the card.
   if (!props.selectable) {
     cols.push({
       id: 'actions',
@@ -232,27 +232,6 @@ const columns = computed<ColumnDef<any>[]>(() => {
           h(Button, { variant: 'ghost', size: 'sm', class: 'h-6 text-[10px] text-muted-foreground hover:text-destructive', onClick: () => emit('delete', card) }, () => '×'),
         )
         return h('div', { class: 'cell-actions' }, buttons)
-      },
-    })
-  } else {
-    cols.push({
-      id: 'kebab',
-      enableSorting: false,
-      enableHiding: false,
-      meta: { className: 'col-kebab' },
-      cell: ({ row }) => {
-        const card = row.original
-        return h('button', {
-          class: 'kebab-btn',
-          title: 'Open card',
-          onClick: (e: MouseEvent) => {
-            e.stopPropagation()
-            const link = props.deckContext
-              ? `/cards/${card.id}?deckId=${props.deckContext.id}`
-              : `/cards/${card.id}`
-            router.push(link)
-          },
-        }, [h(MoreHorizontal, { size: 14 })])
       },
     })
   }
@@ -346,7 +325,12 @@ const table = useVueTable({
   background: var(--paper-1);
   overflow: hidden;
 }
-.card-table { width: 100%; }
+/* `:deep` needed: shadcn Table.vue renders <div><table/></div>, so the inner
+   <table> is one level below Table.vue's root and doesn't inherit our scope
+   attribute. Without :deep, this selector silently fails to match. */
+:deep(.card-table) {
+  table-layout: fixed;
+}
 
 :deep(.card-table-headrow) {
   background: var(--paper-2);
@@ -395,7 +379,6 @@ const table = useVueTable({
 :deep(.col-decks) { width: 180px; }
 :deep(.col-due) { width: 90px; }
 :deep(.col-actions) { width: 180px; }
-:deep(.col-kebab) { width: 36px; }
 
 /* Front column */
 :deep(.cell-front) { min-width: 0; }
@@ -430,14 +413,24 @@ const table = useVueTable({
   text-overflow: ellipsis;
 }
 
-/* Back column */
+/* Back column — width is enforced by .col-back + table-layout: fixed;
+   the inner div just clips its single line of text. */
 :deep(.cell-back) {
   font-size: 12.5px;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
+}
+
+/* Hide low-priority columns on narrow screens so 7 columns don't fight for
+   a phone-width container. Users can still see the Back content by opening
+   the card. */
+@media (max-width: 900px) {
+  :deep(.col-back) { display: none; }
+}
+@media (max-width: 640px) {
+  :deep(.col-decks), :deep(.col-due) { display: none; }
 }
 
 /* State chips */
@@ -497,24 +490,6 @@ const table = useVueTable({
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
-}
-:deep(.kebab-btn) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 5px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--ink-3);
-  cursor: pointer;
-  transition: color .12s, border-color .12s, background .12s;
-}
-:deep(.kebab-btn:hover) {
-  color: var(--ink-0);
-  border-color: var(--rule-1);
-  background: var(--paper-2);
 }
 
 /* Selection checkbox */

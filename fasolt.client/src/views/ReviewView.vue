@@ -79,7 +79,7 @@ const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
             <span class="context-deck-name">{{ activeDeckLabel }}</span>
           </div>
           <span class="context-vrule" />
-          <span class="fa-mono context-count">{{ review.sessionStats.reviewed }} / {{ review.queue.length }} reviewed</span>
+          <span class="fa-mono context-count">{{ review.currentIndex }} / {{ review.queue.length }} done</span>
         </div>
         <div class="context-right">
           <span class="kbd-hint"><KbdHint keys="space" /> flip</span>
@@ -92,7 +92,7 @@ const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
       </header>
 
       <!-- Progress meter -->
-      <ProgressMeter :total="review.queue.length" :current="review.sessionStats.reviewed" class="meter" />
+      <ProgressMeter :total="review.queue.length" :current="review.currentIndex" class="meter" />
 
       <!-- Cram mode notice -->
       <div v-if="review.mode === 'cram'" class="cram-notice">

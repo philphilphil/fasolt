@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
+import { useCardsStore } from '@/stores/cards'
 import type { DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +11,14 @@ import {
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { History } from 'lucide-vue-next'
-import CardDeleteDialog from '@/components/CardDeleteDialog.vue'
 import CardTable from '@/components/CardTable.vue'
+import BulkActionBar from '@/components/BulkActionBar.vue'
+import AddToDeckDialog from '@/components/AddToDeckDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const decks = useDecksStore()
+const cardsStore = useCardsStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
@@ -28,9 +31,23 @@ const deleteOpen = ref(false)
 const deleteCards = ref(false)
 const deleteError = ref('')
 
-const deleteCardTarget = ref<any>(null)
-const deleteCardOpen = ref(false)
 const idCopied = ref(false)
+
+// Bulk selection
+const selectedIds = ref<string[]>([])
+const addToDeckOpen = ref(false)
+const bulkDeleteOpen = ref(false)
+const bulkBusy = ref(false)
+const bulkError = ref('')
+
+const selectedCards = computed(() =>
+  selectedIds.value
+    .map(id => deck.value?.cards.find(c => c.id === id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+)
+const selectedCount = computed(() => selectedCards.value.length)
+const someSuspended = computed(() => selectedCards.value.some(c => c.isSuspended))
+const allSuspended = computed(() => selectedCards.value.length > 0 && selectedCards.value.every(c => c.isSuspended))
 
 async function copyDeckId() {
   if (!deck.value) return
@@ -83,21 +100,64 @@ async function handleDelete() {
   }
 }
 
-async function removeCard(cardId: string) {
-  if (!deck.value) return
-  await decks.removeCard(deck.value.id, cardId)
-  await refresh()
-}
-
 async function toggleSuspended() {
   if (!deck.value) return
   await decks.setSuspended(deck.value.id, !deck.value.isSuspended)
   deck.value = await decks.getDeckDetail(deck.value.id)
 }
 
-async function onCardDeleted() {
-  deleteCardTarget.value = null
-  deleteCardOpen.value = false
+// --- Bulk actions ---
+async function bulkSuspend(target: boolean) {
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    const ids = selectedCards.value
+      .filter(c => c.isSuspended !== target)
+      .map(c => c.id)
+    if (ids.length > 0) await cardsStore.setSuspendedBulk(ids, target)
+    await refresh()
+  } catch {
+    bulkError.value = `Failed to ${target ? 'suspend' : 'unsuspend'} cards.`
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+async function bulkRemoveFromThisDeck() {
+  if (!deck.value) return
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    await decks.removeCards(deck.value.id, selectedIds.value)
+    selectedIds.value = []
+    await refresh()
+  } catch {
+    bulkError.value = 'Failed to remove cards from this deck.'
+    await refresh()
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+async function bulkDeleteConfirmed() {
+  bulkBusy.value = true
+  bulkError.value = ''
+  try {
+    await cardsStore.deleteCardsBulk(selectedIds.value)
+    selectedIds.value = []
+    bulkDeleteOpen.value = false
+    await refresh()
+  } catch {
+    bulkError.value = 'Failed to delete cards. The list has been refreshed.'
+    selectedIds.value = []
+    await refresh()
+  } finally {
+    bulkBusy.value = false
+  }
+}
+
+async function onAddedToOtherDeck() {
+  selectedIds.value = []
   await refresh()
 }
 
@@ -185,15 +245,31 @@ const stateCounts = computed(() => {
     </div>
 
     <!-- Cards section -->
-    <div>
-      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Cards in this deck</div>
+    <div class="space-y-3">
+      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5">Cards in this deck</div>
+
+      <BulkActionBar
+        v-if="selectedCount > 0"
+        :count="selectedCount"
+        :some-suspended="someSuspended"
+        :all-suspended="allSuspended"
+        :can-remove-from-deck="true"
+        @add-to-deck="addToDeckOpen = true"
+        @remove-from-deck="bulkRemoveFromThisDeck"
+        @suspend="bulkSuspend(true)"
+        @unsuspend="bulkSuspend(false)"
+        @delete="bulkDeleteOpen = true"
+        @clear="selectedIds = []"
+      />
+
+      <div v-if="bulkError" class="text-xs text-destructive">{{ bulkError }}</div>
 
       <CardTable
         v-if="deck.cards.length > 0"
+        v-model:selectedIds="selectedIds"
         :cards="deck.cards"
         :deck-context="{ id: deck.id, name: deck.name }"
-        @delete="(card) => { deleteCardTarget = card; deleteCardOpen = true }"
-        @remove="(card) => removeCard(card.id)"
+        selectable
       >
         <template #empty>No cards in this deck yet.</template>
       </CardTable>
@@ -242,11 +318,29 @@ const stateCounts = computed(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- Delete card dialog -->
-    <CardDeleteDialog
-      v-model:open="deleteCardOpen"
-      :card="deleteCardTarget"
-      @deleted="onCardDeleted"
+    <!-- Add selection to another deck -->
+    <AddToDeckDialog
+      v-model:open="addToDeckOpen"
+      :card-ids="selectedIds"
+      @added="onAddedToOtherDeck"
     />
+
+    <!-- Bulk delete confirm -->
+    <Dialog :open="bulkDeleteOpen" @update:open="bulkDeleteOpen = $event">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {{ selectedCount }} card{{ selectedCount === 1 ? '' : 's' }}?</DialogTitle>
+          <DialogDescription>
+            This permanently removes the cards and their review history. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" :disabled="bulkBusy" @click="bulkDeleteOpen = false">Cancel</Button>
+          <Button variant="destructive" :disabled="bulkBusy" @click="bulkDeleteConfirmed">
+            {{ bulkBusy ? 'Deleting…' : `Delete ${selectedCount}` }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -43,8 +43,8 @@ async function createDeck() {
   }
 }
 
-function openDeck(id: string) { router.push(`/decks/${id}`) }
 function startReview(id: string) { router.push(`/review?deckId=${id}`) }
+function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=cram`) }
 </script>
 
 <template>
@@ -86,18 +86,19 @@ function startReview(id: string) { router.push(`/review?deckId=${id}`) }
     <div v-if="decks.loading" class="empty">Loading decks…</div>
 
     <div v-else class="deck-grid">
-      <button
+      <article
         v-for="deck in sortedDecks"
         :key="deck.id"
         class="deck-card"
         :class="{ 'is-suspended': deck.isSuspended }"
-        @click="openDeck(deck.id)"
       >
-        <span class="deck-stripe" :style="{ background: deckColor(deck.id) }" />
+        <span class="deck-stripe" :style="{ background: deckColor(deck.id) }" aria-hidden="true" />
         <header class="deck-card-head">
           <div class="deck-card-title">
-            <span class="fa-tag" :style="{ background: deckColor(deck.id) }" />
-            <h3>{{ deck.name }}</h3>
+            <span class="fa-tag" :style="{ background: deckColor(deck.id) }" aria-hidden="true" />
+            <h3>
+              <RouterLink :to="`/decks/${deck.id}`" class="deck-card-link">{{ deck.name }}</RouterLink>
+            </h3>
           </div>
           <span v-if="deck.isSuspended" class="paused-chip fa-cap">paused</span>
         </header>
@@ -115,21 +116,33 @@ function startReview(id: string) { router.push(`/review?deckId=${id}`) }
               <span class="fa-cap count-label">due</span>
             </div>
           </div>
-          <span
-            v-if="deck.dueCount > 0 && !deck.isSuspended"
-            class="fa-btn fa-btn-accent deck-card-cta"
-            @click.stop="startReview(deck.id)"
-          >
-            Review
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-          </span>
+          <div v-if="!deck.isSuspended && deck.cardCount > 0" class="deck-card-actions">
+            <button
+              v-if="deck.dueCount > 0"
+              type="button"
+              class="fa-btn fa-btn-accent deck-card-cta"
+              :aria-label="`Review ${deck.name}`"
+              @click="startReview(deck.id)"
+            >
+              Review
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </button>
+            <button
+              type="button"
+              class="deck-card-cram"
+              :aria-label="`Custom study for ${deck.name}`"
+              @click="startCustomStudy(deck.id)"
+            >
+              Custom
+            </button>
+          </div>
           <span v-else class="fa-cap deck-card-status">
-            {{ deck.isSuspended ? 'resume' : 'caught up' }}
+            {{ deck.isSuspended ? 'resume' : 'empty' }}
           </span>
         </footer>
-      </button>
+      </article>
 
-      <button class="new-deck-card fa-stripe-bg" @click="dialogOpen = true">
+      <button type="button" class="new-deck-card fa-stripe-bg" @click="dialogOpen = true">
         <div class="plus-tile">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         </div>
@@ -202,10 +215,10 @@ function startReview(id: string) { router.push(`/review?deckId=${id}`) }
   text-align: left;
   font: inherit;
   color: inherit;
-  cursor: pointer;
   transition: border-color .12s, transform .08s, box-shadow .12s;
 }
-.deck-card:hover {
+.deck-card:has(.deck-card-link:hover),
+.deck-card:has(.deck-card-link:focus-visible) {
   border-color: var(--ink-3);
   transform: translateY(-1px);
   box-shadow: var(--sh-2);
@@ -242,6 +255,22 @@ function startReview(id: string) { router.push(`/review?deckId=${id}`) }
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0;
+}
+.deck-card-link {
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+.deck-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  z-index: 0;
+  cursor: pointer;
+}
+.deck-card-link:focus-visible::after {
+  box-shadow: 0 0 0 2px var(--accent);
 }
 .paused-chip {
   font-size: 9px;
@@ -283,11 +312,35 @@ function startReview(id: string) { router.push(`/review?deckId=${id}`) }
 }
 .count-num.is-due { color: var(--accent); }
 .count-label { font-size: 9px; }
+.deck-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
 .deck-card-cta {
   height: 26px;
   padding: 0 10px;
   font-size: 11.5px;
-  pointer-events: auto;
+}
+.deck-card-cram {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .12s, background .12s, border-color .12s;
+}
+.deck-card-cram:hover {
+  color: var(--ink-0);
+  background: var(--paper-2);
+  border-color: var(--rule-1);
 }
 .deck-card-status {
   font-size: 9px;
