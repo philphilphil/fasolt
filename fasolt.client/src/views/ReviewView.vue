@@ -33,7 +33,6 @@ onMounted(async () => {
       if (!review.isFlipped) review.flipCard()
       else if (review.mode === 'cram') review.advance()
     },
-    'n': () => { if (review.mode === 'cram' && review.isFlipped) review.advance() },
     '1': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('again') },
     '2': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('hard') },
     '3': () => { if (review.mode !== 'cram' && review.isFlipped) review.rate('good') },
@@ -83,8 +82,7 @@ const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
         </div>
         <div class="context-right">
           <span class="kbd-hint"><KbdHint keys="space" /> flip</span>
-          <span v-if="review.mode === 'cram'" class="kbd-hint"><KbdHint keys="n" /> next</span>
-          <span v-else class="kbd-hint"><KbdHint keys="1-4" /> rate</span>
+          <span v-if="review.mode !== 'cram'" class="kbd-hint"><KbdHint keys="1-4" /> rate</span>
           <span class="kbd-hint"><KbdHint keys="s" /> skip</span>
           <span class="kbd-hint"><KbdHint keys="x" /> suspend</span>
           <span class="kbd-hint"><KbdHint keys="esc" /> exit</span>
