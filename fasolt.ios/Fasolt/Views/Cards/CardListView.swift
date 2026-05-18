@@ -9,18 +9,27 @@ struct CardListView: View {
 
     var body: some View {
         NavigationStack {
-            CardListContent(viewModel: viewModel)
+            CardListContent(viewModel: viewModel) { EmptyView() }
         }
     }
 }
 
-struct CardListContent: View {
+struct CardListContent<Leading: View>: View {
     @Bindable var viewModel: CardListViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
     @State private var showCreateSheet = false
     @State private var cardToDelete: CardDTO?
     @State private var showDeleteAlert = false
     @State private var errorMessage: String?
+    @ViewBuilder var leadingToolbar: () -> Leading
+
+    init(
+        viewModel: CardListViewModel,
+        @ViewBuilder leadingToolbar: @escaping () -> Leading = { EmptyView() }
+    ) {
+        self.viewModel = viewModel
+        self.leadingToolbar = leadingToolbar
+    }
 
     var body: some View {
         Group {
@@ -46,13 +55,17 @@ struct CardListContent: View {
                 cardsList
             }
         }
-        .searchable(text: $viewModel.searchText, prompt: "Search cards")
+        .scrollContentBackground(.hidden)
+        .background(FasoltTheme.paper0.ignoresSafeArea())
+        .searchable(text: $viewModel.searchText, prompt: "Search front, back or source")
         .refreshable {
             await viewModel.loadCards()
         }
-        .navigationTitle("Cards")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                leadingToolbar()
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showCreateSheet = true
@@ -138,9 +151,12 @@ struct CardListContent: View {
                 } label: {
                     DeckCardRow(
                         card: card,
-                        deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name)
+                        deckNames: card.decks.isEmpty ? nil : card.decks.map(\.name),
+                        primaryDeckId: card.decks.first?.id
                     )
                 }
+                .listRowBackground(FasoltTheme.paper1)
+                .listRowSeparatorTint(FasoltTheme.rule2)
                 .swipeActions(edge: .leading) {
                     Button {
                         UIPasteboard.general.string = card.id

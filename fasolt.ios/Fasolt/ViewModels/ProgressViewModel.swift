@@ -16,7 +16,7 @@ final class ProgressViewModel {
         self.apiClient = apiClient
     }
 
-    func load() async {
+    func load(days: Int = 364) async {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -24,7 +24,7 @@ final class ProgressViewModel {
         let endpoint = Endpoint(
             path: "/api/review/progress",
             method: .get,
-            queryItems: [URLQueryItem(name: "days", value: "30")]
+            queryItems: [URLQueryItem(name: "days", value: "\(days)")]
         )
         do {
             progress = try await apiClient.request(endpoint)

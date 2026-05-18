@@ -139,6 +139,16 @@ struct ProgressDTO: Decodable, Sendable {
     let answeredThisWeek: Int
     let answeredThisMonth: Int
     let dailyActivity: [DailyActivityDTO]
+    let ratingMix: RatingMixDTO?
+}
+
+struct RatingMixDTO: Decodable, Sendable {
+    let again: Int
+    let hard: Int
+    let good: Int
+    let easy: Int
+
+    var total: Int { again + hard + good + easy }
 }
 
 // MARK: - Overview

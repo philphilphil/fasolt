@@ -23,12 +23,12 @@ struct DeckListView: View {
                 viewModel: viewModel,
                 deckRepository: deckRepository,
                 cardRepository: cardRepository
-            )
+            ) { EmptyView() }
         }
     }
 }
 
-struct DeckListContent: View {
+struct DeckListContent<Leading: View>: View {
     @Environment(\.startStudy) private var startStudy
     var viewModel: DeckListViewModel
     @State private var searchText = ""
@@ -39,12 +39,26 @@ struct DeckListContent: View {
     @State private var errorMessage: String?
     let deckRepository: DeckRepository
     let cardRepository: CardRepository
+    @ViewBuilder var leadingToolbar: () -> Leading
+
+    init(
+        viewModel: DeckListViewModel,
+        deckRepository: DeckRepository,
+        cardRepository: CardRepository,
+        @ViewBuilder leadingToolbar: @escaping () -> Leading = { EmptyView() }
+    ) {
+        self.viewModel = viewModel
+        self.deckRepository = deckRepository
+        self.cardRepository = cardRepository
+        self.leadingToolbar = leadingToolbar
+    }
 
     var body: some View {
         contentView
+            .scrollContentBackground(.hidden)
+            .background(FasoltTheme.paper0.ignoresSafeArea())
             .searchable(text: $searchText, prompt: "Search decks")
             .refreshable { await viewModel.loadDecks() }
-            .navigationTitle("Decks")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
@@ -129,6 +143,8 @@ struct DeckListContent: View {
                 } label: {
                     deckRow(deck)
                 }
+                .listRowBackground(FasoltTheme.paper1)
+                .listRowSeparatorTint(FasoltTheme.rule2)
                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
                     Button {
                         UIPasteboard.general.string = deck.id
@@ -178,6 +194,9 @@ struct DeckListContent: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            leadingToolbar()
+        }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 showCreateSheet = true
@@ -223,52 +242,50 @@ struct DeckListContent: View {
     }
 
     private func deckRow(_ deck: DeckDTO) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 12) {
+            DeckInitialsBadge(
+                name: deck.name,
+                color: FasoltTheme.deckColor(for: deck.id)
+            )
+
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(deck.name)
-                        .font(.body.weight(.medium))
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(FasoltTheme.ink0)
+                        .lineLimit(1)
                     if deck.isSuspended {
                         Text("Suspended")
-                            .font(.caption2.weight(.medium))
+                            .font(.system(size: 10, weight: .medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(.secondary.opacity(0.2), in: Capsule())
-                            .foregroundStyle(.secondary)
+                            .background(FasoltTheme.paper2, in: Capsule())
+                            .foregroundStyle(FasoltTheme.ink2)
                     }
                 }
-                if let description = deck.description {
+                if let description = deck.description, !description.isEmpty {
                     Text(description)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(FasoltTheme.ink2)
                         .lineLimit(1)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            HStack(spacing: 12) {
-                VStack(spacing: 2) {
-                    Text("\(deck.cardCount)")
-                        .font(.subheadline.weight(.semibold))
-                    Text("cards")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-
-                if deck.dueCount > 0 {
-                    VStack(spacing: 2) {
-                        Text("\(deck.dueCount)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.orange)
-                        Text("due")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+            VStack(alignment: .trailing, spacing: 1) {
+                Text("\(deck.cardCount)")
+                    .font(.system(size: 16, weight: .semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(FasoltTheme.ink0)
+                CapsLabel(
+                    text: deck.dueCount > 0 ? "\(deck.dueCount) due" : "cards",
+                    color: deck.dueCount > 0 ? FasoltTheme.accent : FasoltTheme.ink2,
+                    size: 9.5
+                )
             }
         }
         .padding(.vertical, 4)
-        .opacity(deck.isSuspended ? 0.5 : 1)
+        .opacity(deck.isSuspended ? 0.55 : 1)
     }
 }

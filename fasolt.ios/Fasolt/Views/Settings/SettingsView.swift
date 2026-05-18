@@ -1,8 +1,9 @@
 import SwiftUI
 
 enum SettingsSegment: String, CaseIterable {
-    case settings = "Settings"
-    case snapshots = "Snapshots"
+    case general = "General"
+    case fsrs = "FSRS"
+    case about = "About"
 }
 
 struct SettingsView: View {
@@ -10,18 +11,15 @@ struct SettingsView: View {
     @State private var viewModel: SettingsViewModel
     @State private var notificationViewModel: NotificationSettingsViewModel
     @State private var schedulingViewModel: SchedulingSettingsViewModel
-    @State private var snapshotViewModel: SnapshotViewModel
-    @State private var selectedSegment: SettingsSegment = .settings
+    @State private var selectedSegment: SettingsSegment = .general
     @State private var showSignOutConfirmation = false
     @State private var showDeleteAccount = false
-    @State private var showSnapshotSuccess = false
     @AppStorage("hasSeenWelcomeFlow") private var hasSeenWelcomeFlow = false
 
-    init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel, snapshotViewModel: SnapshotViewModel) {
+    init(viewModel: SettingsViewModel, notificationViewModel: NotificationSettingsViewModel, schedulingViewModel: SchedulingSettingsViewModel) {
         _viewModel = State(initialValue: viewModel)
         _notificationViewModel = State(initialValue: notificationViewModel)
         _schedulingViewModel = State(initialValue: schedulingViewModel)
-        _snapshotViewModel = State(initialValue: snapshotViewModel)
     }
 
     var body: some View {
@@ -33,17 +31,21 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.horizontal, FasoltTheme.pagePadding)
+                .padding(.top, 6)
+                .padding(.bottom, 8)
+                .background(FasoltTheme.paper0)
 
                 switch selectedSegment {
-                case .settings:
-                    settingsContent
-                case .snapshots:
-                    snapshotsContent
+                case .general:
+                    generalContent
+                case .fsrs:
+                    fsrsContent
+                case .about:
+                    aboutContent
                 }
             }
-            .navigationTitle("Settings")
+            .background(FasoltTheme.paper0.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -63,27 +65,17 @@ struct SettingsView: View {
             } message: {
                 Text("You'll need to sign in again to use Fasolt.")
             }
-            .alert("Snapshot", isPresented: $showSnapshotSuccess) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let count = snapshotViewModel.createSuccessCount, count > 0 {
-                    Text("Created snapshots for \(count) deck(s).")
-                } else {
-                    Text("All decks unchanged — no snapshots created.")
-                }
-            }
             .task {
                 await viewModel.loadUserInfo()
                 await notificationViewModel.load()
                 await schedulingViewModel.load()
-                await snapshotViewModel.loadSnapshots()
             }
         }
     }
 
-    // MARK: - Settings Tab
+    // MARK: - General
 
-    private var settingsContent: some View {
+    private var generalContent: some View {
         List {
             McpSetupSection(serverURL: authService.serverURL)
 
@@ -128,6 +120,63 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Account") {
+                if viewModel.isLoading {
+                    HStack {
+                        Text("Loading...")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ProgressView()
+                    }
+                } else if let error = viewModel.errorMessage {
+                    HStack {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Retry") {
+                            Task { await viewModel.loadUserInfo() }
+                        }
+                        .font(.subheadline)
+                    }
+                } else {
+                    if let displayName = viewModel.displayName {
+                        LabeledContent("Signed in as", value: displayName)
+                    } else if let email = viewModel.email {
+                        LabeledContent("Email", value: email)
+                    }
+                    LabeledContent("Account type", value: viewModel.externalProvider ?? "Email & password")
+                    if let serverURL = viewModel.serverURL {
+                        LabeledContent("Server", value: serverURL)
+                            .lineLimit(1)
+                    }
+                }
+            }
+
+            Section {
+                Button("Sign Out", role: .destructive) {
+                    showSignOutConfirmation = true
+                }
+            }
+
+            Section {
+                Button("Delete Account", role: .destructive) {
+                    showDeleteAccount = true
+                }
+            } footer: {
+                Text("Permanently deletes your account and all associated data.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .sheet(isPresented: $showDeleteAccount) {
+            DeleteAccountView(viewModel: viewModel)
+                .environment(authService)
+        }
+    }
+
+    // MARK: - FSRS
+
+    private var fsrsContent: some View {
+        List {
             Section("Scheduling") {
                 if schedulingViewModel.isLoading {
                     HStack {
@@ -196,8 +245,15 @@ struct SettingsView: View {
                     }
                 }
             }
+        }
+        .scrollContentBackground(.hidden)
+    }
 
-            Section("About") {
+    // MARK: - About
+
+    private var aboutContent: some View {
+        List {
+            Section {
                 LabeledContent("Version", value: viewModel.appVersion)
                 Button {
                     hasSeenWelcomeFlow = false
@@ -205,134 +261,7 @@ struct SettingsView: View {
                     Label("Show welcome again", systemImage: "sparkles")
                 }
             }
-
-            Section("Account") {
-                if viewModel.isLoading {
-                    HStack {
-                        Text("Loading...")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        ProgressView()
-                    }
-                } else if let error = viewModel.errorMessage {
-                    HStack {
-                        Label(error, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Button("Retry") {
-                            Task { await viewModel.loadUserInfo() }
-                        }
-                        .font(.subheadline)
-                    }
-                } else {
-                    if let displayName = viewModel.displayName {
-                        LabeledContent("Signed in as", value: displayName)
-                    } else if let email = viewModel.email {
-                        LabeledContent("Email", value: email)
-                    }
-                    LabeledContent("Account type", value: viewModel.externalProvider ?? "Email & password")
-                    if let serverURL = viewModel.serverURL {
-                        LabeledContent("Server", value: serverURL)
-                            .lineLimit(1)
-                    }
-                }
-            }
-
-            Section {
-                Button("Sign Out", role: .destructive) {
-                    showSignOutConfirmation = true
-                }
-            }
-
-            Section {
-                Button("Delete Account", role: .destructive) {
-                    showDeleteAccount = true
-                }
-            } footer: {
-                Text("Permanently deletes your account and all associated data.")
-            }
         }
-        .sheet(isPresented: $showDeleteAccount) {
-            DeleteAccountView(viewModel: viewModel)
-                .environment(authService)
-        }
-    }
-
-    // MARK: - Snapshots Tab
-
-    private var snapshotsContent: some View {
-        List {
-            Section {
-                Label("Snapshots back up every card's content. The last 10 snapshots per deck are kept automatically. Restoring only reverts card content — your study progress is never affected. To restore, visit fasolt.app.", systemImage: "info.circle")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                Button {
-                    Task {
-                        await snapshotViewModel.createSnapshot()
-                        if snapshotViewModel.createSuccessCount != nil {
-                            showSnapshotSuccess = true
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text("Create Snapshot")
-                        Spacer()
-                        if snapshotViewModel.isCreating {
-                            ProgressView()
-                        }
-                    }
-                }
-                .disabled(snapshotViewModel.isCreating)
-
-                if let error = snapshotViewModel.errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                }
-            }
-
-            Section("History") {
-                if snapshotViewModel.isLoading && snapshotViewModel.snapshots.isEmpty {
-                    HStack {
-                        Text("Loading...")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        ProgressView()
-                    }
-                } else if snapshotViewModel.snapshots.isEmpty {
-                    Text("No snapshots yet.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(snapshotViewModel.snapshots) { snapshot in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(snapshot.deckName ?? "Unknown deck")
-                                    .font(.body)
-                                Text(formatSnapshotDate(snapshot.createdAt))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Text("\(snapshot.cardCount) cards")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private func formatSnapshotDate(_ isoString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        guard let date = formatter.date(from: isoString) else { return isoString }
-        let display = DateFormatter()
-        display.dateStyle = .medium
-        display.timeStyle = .short
-        return display.string(from: date)
+        .scrollContentBackground(.hidden)
     }
 }

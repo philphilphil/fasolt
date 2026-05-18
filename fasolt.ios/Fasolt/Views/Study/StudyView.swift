@@ -32,6 +32,7 @@ struct StudyView: View {
                 )
             }
         }
+        .background(FasoltTheme.paper0.ignoresSafeArea())
         .onChange(of: viewModel.state) { _, newState in
             if newState == .summary && viewModel.mode == .cram {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -54,7 +55,7 @@ struct StudyView: View {
                             }
                         } label: {
                             Image(systemName: "pause.circle")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(FasoltTheme.ink1)
                         }
                         if viewModel.mode != .cram {
                             Button {
@@ -67,8 +68,8 @@ struct StudyView: View {
                                 }
                             } label: {
                                 Text("Skip")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundStyle(FasoltTheme.ink1)
                             }
                         }
                     }
@@ -84,7 +85,7 @@ struct StudyView: View {
                         }
                     } label: {
                         Image(systemName: "xmark")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(FasoltTheme.ink1)
                     }
                 }
             }
@@ -123,17 +124,16 @@ struct StudyView: View {
         VStack(spacing: 0) {
             if viewModel.mode == .cram {
                 Text("Custom study — FSRS not adjusted")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .foregroundStyle(FasoltTheme.ink2)
                     .frame(maxWidth: .infinity)
-                    .padding(.top, 8)
+                    .padding(.top, 6)
             }
 
             progressBar
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
                 .padding(.top, 8)
-
-            Spacer()
+                .padding(.bottom, 6)
 
             if let card = viewModel.currentCard {
                 CardView(
@@ -143,9 +143,11 @@ struct StudyView: View {
                     sourceHeading: viewModel.isFlipped ? card.sourceHeading : nil,
                     svg: viewModel.isFlipped ? card.backSvg : card.frontSvg,
                     cardId: card.id,
-                    questionText: viewModel.isFlipped ? card.front : nil
+                    questionText: viewModel.isFlipped ? card.front : nil,
+                    showAnswer: viewModel.isFlipped
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .rotation3DEffect(
                     .degrees(viewModel.isFlipped ? 180 : 0),
                     axis: (x: 0, y: 1, z: 0),
@@ -159,12 +161,10 @@ struct StudyView: View {
                 }
             }
 
-            Spacer()
-
             if let ratingError = viewModel.ratingError {
                 Text(ratingError)
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+                    .font(.system(size: 12))
+                    .foregroundStyle(FasoltTheme.hard)
                     .padding(.horizontal)
                     .transition(.opacity)
             }
@@ -172,23 +172,27 @@ struct StudyView: View {
             if viewModel.isFlipped {
                 if viewModel.mode == .cram {
                     nextButton
-                        .padding()
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 16)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 } else {
                     ratingButtons
-                        .padding()
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 16)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             } else {
                 Button {
                     flipWithHaptic()
                 } label: {
-                    Text("Show Answer")
-                        .frame(maxWidth: .infinity)
+                    Text("Show answer")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .padding()
+                .buttonStyle(AccentButtonStyle(height: 54, radius: 16, fontSize: 17))
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 16)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
@@ -205,18 +209,17 @@ struct StudyView: View {
     // MARK: - Progress Bar
 
     private var progressBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Text("\(viewModel.currentIndex + 1) / \(viewModel.totalCards)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13, weight: .medium))
                 .monospacedDigit()
+                .foregroundStyle(FasoltTheme.ink2)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
+                    Capsule().fill(FasoltTheme.rule2)
                     Capsule()
-                        .fill(.quaternary)
-                    Capsule()
-                        .fill(.blue)
+                        .fill(FasoltTheme.accent)
                         .frame(width: geo.size.width * viewModel.progress)
                 }
             }
@@ -233,26 +236,22 @@ struct StudyView: View {
             viewModel.advance()
         } label: {
             Text("Next")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(AccentButtonStyle(height: 54, radius: 16, fontSize: 17))
     }
 
     // MARK: - Rating Buttons
 
     private var ratingButtons: some View {
         HStack(spacing: 8) {
-            ratingButton("Again", color: .red, rating: "again")
-            ratingButton("Hard", color: .orange, rating: "hard")
-            ratingButton("Good", color: .green, rating: "good")
-            ratingButton("Easy", color: .blue, rating: "easy")
+            ratingTile("Again", color: FasoltTheme.again, rating: "again")
+            ratingTile("Hard",  color: FasoltTheme.hard,  rating: "hard")
+            ratingTile("Good",  color: FasoltTheme.good,  rating: "good")
+            ratingTile("Easy",  color: FasoltTheme.easy,  rating: "easy")
         }
     }
 
-    private func ratingButton(_ label: String, color: Color, rating: String) -> some View {
+    private func ratingTile(_ label: String, color: Color, rating: String) -> some View {
         Button {
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred()
@@ -265,12 +264,25 @@ struct StudyView: View {
             }
         } label: {
             Text(label)
-                .font(.subheadline.weight(.medium))
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(color)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 6)
+                .background(FasoltTheme.paper1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
+                )
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(color)
+                        .frame(height: 2.5)
+                        .clipShape(RoundedRectangle(cornerRadius: 1.5))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.bordered)
-        .tint(color)
+        .buttonStyle(.plain)
         .disabled(viewModel.isRating)
     }
 }

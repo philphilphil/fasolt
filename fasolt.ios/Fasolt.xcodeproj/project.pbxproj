@@ -66,6 +66,8 @@
 		F25F9C83AEC5BAB8234EC7CF /* CardFormSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 255992C65939E5C9FD7AA061 /* CardFormSheet.swift */; };
 		F6709588A0AD28AB778506BB /* WelcomeFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */; };
 		F75E9545A9905EB791BF523E /* StripMarkdownTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11D330BCF2035457A2A40A7 /* StripMarkdownTests.swift */; };
+		FA5011110000000000000001 /* FasoltTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011110000000000000002 /* FasoltTheme.swift */; };
+		FA5011120000000000000001 /* SnapshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011120000000000000002 /* SnapshotsView.swift */; };
 		FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */; };
 		FE34695915FE433ECE4024E4 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B076BFAB05A25FB8E667D2F /* LibraryView.swift */; };
 /* End PBXBuildFile section */
@@ -145,6 +147,8 @@
 		F05788634721D2A006D68497 /* StudyViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyViewModelTests.swift; sourceTree = "<group>"; };
 		F0804C2A2961591877282737 /* DeleteAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeleteAccountView.swift; sourceTree = "<group>"; };
 		F6DDD51DE5950F388A1F97B2 /* WelcomeFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeFlowView.swift; sourceTree = "<group>"; };
+		FA5011110000000000000002 /* FasoltTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltTheme.swift; sourceTree = "<group>"; };
+		FA5011120000000000000002 /* SnapshotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotsView.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -316,6 +320,7 @@
 			isa = PBXGroup;
 			children = (
 				677A742A91B53D3636E21C5D /* BackendStatusMonitor.swift */,
+				FA5011110000000000000002 /* FasoltTheme.swift */,
 				505D262AD072ECBEDB7E9359 /* KeychainHelper.swift */,
 				876CBB32009796B1341C8D59 /* NetworkMonitor.swift */,
 				906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */,
@@ -347,6 +352,7 @@
 			isa = PBXGroup;
 			children = (
 				7B076BFAB05A25FB8E667D2F /* LibraryView.swift */,
+				FA5011120000000000000002 /* SnapshotsView.swift */,
 			);
 			path = Library;
 			sourceTree = "<group>";
@@ -522,8 +528,10 @@
 				82E3A6C6D13F59A284095235 /* FasoltApp.swift in Sources */,
 				347AE09D682D99A0D2B91E40 /* FeatureFlagsService.swift in Sources */,
 				570C82CBFB83C91DEE161A25 /* HelpView.swift in Sources */,
+				FA5011110000000000000001 /* FasoltTheme.swift in Sources */,
 				95C690EBD288A0F60F67BB73 /* KeychainHelper.swift in Sources */,
 				FE34695915FE433ECE4024E4 /* LibraryView.swift in Sources */,
+				FA5011120000000000000001 /* SnapshotsView.swift in Sources */,
 				58A1B3892608093BF3282922 /* MainTabView.swift in Sources */,
 				51E8268F2EC2669A2B835FBE /* McpSetupSection.swift in Sources */,
 				0E94501A3D4E8E484D926E3D /* NetworkMonitor.swift in Sources */,
@@ -665,7 +673,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -683,7 +691,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.9.0;
+				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fasolt.app;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

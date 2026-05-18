@@ -92,6 +92,7 @@ struct FasoltApp: App {
                     OnboardingView()
                 }
             }
+            .tint(FasoltTheme.accent)
             .animation(.default, value: authService.isAuthenticated)
             .task {
                 await featureFlags.refresh(serverURL: authService.serverURL)
