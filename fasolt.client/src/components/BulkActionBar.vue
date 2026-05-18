@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Layers, FolderMinus, Pause, Play, Trash2, X } from 'lucide-vue-next'
 
-defineProps<{
+withDefaults(defineProps<{
   count: number
   someSuspended: boolean
   allSuspended: boolean
   canRemoveFromDeck: boolean
-}>()
+  busy?: boolean
+}>(), { busy: false })
 
 defineEmits<{
   addToDeck: []
@@ -19,38 +20,45 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="bulk-bar" role="region" aria-label="Bulk actions">
+  <div
+    class="bulk-bar"
+    :class="{ 'is-busy': busy }"
+    role="region"
+    aria-label="Bulk actions"
+    :aria-busy="busy"
+  >
     <div class="bulk-bar-left">
       <span class="fa-num bulk-count">{{ count }}</span>
       <span class="bulk-label">selected</span>
     </div>
     <div class="bulk-bar-actions">
-      <button class="bulk-action" @click="$emit('addToDeck')">
+      <button class="bulk-action" :disabled="busy" @click="$emit('addToDeck')">
         <Layers :size="13" />
         Add to deck
       </button>
       <button
         v-if="canRemoveFromDeck"
         class="bulk-action"
+        :disabled="busy"
         @click="$emit('removeFromDeck')"
       >
         <FolderMinus :size="13" />
         Remove from deck
       </button>
-      <button v-if="!allSuspended" class="bulk-action" @click="$emit('suspend')">
+      <button v-if="!allSuspended" class="bulk-action" :disabled="busy" @click="$emit('suspend')">
         <Pause :size="13" />
         {{ someSuspended ? 'Suspend rest' : 'Suspend' }}
       </button>
-      <button v-if="someSuspended || allSuspended" class="bulk-action" @click="$emit('unsuspend')">
+      <button v-if="someSuspended || allSuspended" class="bulk-action" :disabled="busy" @click="$emit('unsuspend')">
         <Play :size="13" />
         Unsuspend
       </button>
-      <button class="bulk-action is-danger" @click="$emit('delete')">
+      <button class="bulk-action is-danger" :disabled="busy" @click="$emit('delete')">
         <Trash2 :size="13" />
         Delete
       </button>
     </div>
-    <button class="bulk-clear" aria-label="Clear selection" @click="$emit('clear')">
+    <button class="bulk-clear" :disabled="busy" aria-label="Clear selection" @click="$emit('clear')">
       <X :size="14" />
     </button>
   </div>
@@ -66,6 +74,16 @@ defineEmits<{
   background: var(--accent-soft);
   border-radius: 10px;
   animation: bar-pop .2s cubic-bezier(.4,0,.2,1) both;
+  transition: opacity .12s;
+}
+.bulk-bar.is-busy {
+  opacity: 0.65;
+  pointer-events: none;
+}
+.bulk-action:disabled,
+.bulk-clear:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }
 @keyframes bar-pop {
   from { opacity: 0; transform: translateY(-4px); }

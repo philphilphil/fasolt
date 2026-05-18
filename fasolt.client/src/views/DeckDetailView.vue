@@ -157,8 +157,15 @@ async function bulkDeleteConfirmed() {
 }
 
 async function onAddedToOtherDeck() {
-  selectedIds.value = []
-  await refresh()
+  // Gate the bulk bar while the refetch is in flight so a second action
+  // can't dispatch against a stale selection.
+  bulkBusy.value = true
+  try {
+    await refresh()
+  } finally {
+    selectedIds.value = []
+    bulkBusy.value = false
+  }
 }
 
 const stateCounts = computed(() => {
@@ -254,6 +261,7 @@ const stateCounts = computed(() => {
         :some-suspended="someSuspended"
         :all-suspended="allSuspended"
         :can-remove-from-deck="true"
+        :busy="bulkBusy"
         @add-to-deck="addToDeckOpen = true"
         @remove-from-deck="bulkRemoveFromThisDeck"
         @suspend="bulkSuspend(true)"

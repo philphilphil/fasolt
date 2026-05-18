@@ -12,6 +12,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <script>
+      // Apply dark class before the SPA mounts so dark-mode users don't see a
+      // light-theme flash. Must stay in sync with useDarkMode.ts.
+      (function () {
+        try {
+          var stored = localStorage.getItem('fasolt-theme');
+          var dark = stored === 'dark' ||
+            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
     <title>fasolt</title>
   </head>
   <body>

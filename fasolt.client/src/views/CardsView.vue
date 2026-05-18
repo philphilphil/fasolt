@@ -132,10 +132,17 @@ async function bulkDeleteConfirmed() {
   }
 }
 
-function onDeckMembershipChanged() {
+async function onDeckMembershipChanged() {
   // After add/remove, refetch so deck chips and counts reflect reality.
-  cardsStore.fetchCards()
-  selectedIds.value = []
+  // Gate the bulk bar so a second action can't dispatch against a stale
+  // selection while the refetch is still in flight.
+  bulkBusy.value = true
+  try {
+    await cardsStore.fetchCards()
+  } finally {
+    selectedIds.value = []
+    bulkBusy.value = false
+  }
 }
 </script>
 
@@ -217,6 +224,7 @@ function onDeckMembershipChanged() {
       :some-suspended="someSuspended"
       :all-suspended="allSuspended"
       :can-remove-from-deck="canRemoveFromDeck"
+      :busy="bulkBusy"
       @add-to-deck="addToDeckOpen = true"
       @remove-from-deck="removeFromDeckOpen = true"
       @suspend="bulkSuspend(true)"

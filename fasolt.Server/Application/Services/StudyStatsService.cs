@@ -80,6 +80,7 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         // Group by rating in SQL, then bucket. Anything outside the known
         // ratings is ignored — we don't want unknown strings inflating totals.
         var counts = await db.ReviewLogs
+            .AsNoTracking()
             .Where(r => r.UserId == userId && r.ReviewedAt >= windowStart && r.ReviewedAt < windowEnd)
             .GroupBy(r => r.Rating)
             .Select(g => new { Rating = g.Key, Count = g.Count() })
