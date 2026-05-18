@@ -9,10 +9,17 @@ struct SnapshotsView: View {
         NavigationStack {
             List {
                 Section {
-                    Label(
-                        "Snapshots back up every card's content. The last 10 snapshots per deck are kept automatically. Restoring only reverts card content — your study progress is never affected. To restore, visit fasolt.app.",
-                        systemImage: "info.circle"
-                    )
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(.secondary)
+                        (
+                            Text("Snapshots back up every card's content. The last 10 snapshots per deck are kept automatically. Restoring only reverts card content — your study progress is never affected. To restore, visit ")
+                            + Text("[fasolt.app](https://fasolt.app)")
+                                .foregroundColor(FasoltTheme.accent)
+                            + Text(".")
+                        )
+                        .tint(FasoltTheme.accent)
+                    }
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 }

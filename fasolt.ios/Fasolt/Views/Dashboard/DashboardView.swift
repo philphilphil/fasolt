@@ -91,12 +91,10 @@ struct DashboardView: View {
     }
 
     private var dueDecks: [DeckDTO] {
-        viewModel.decks.filter { !$0.isSuspended }
+        viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }
     }
 
-    private var dueDeckCount: Int {
-        viewModel.decks.filter { !$0.isSuspended && $0.dueCount > 0 }.count
-    }
+    private var dueDeckCount: Int { dueDecks.count }
 
     private var shortDateLabel: String {
         let f = DateFormatter()
@@ -267,19 +265,18 @@ struct DashboardView: View {
 
     private var deckSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            CapsLabel(text: "Your decks", size: 12)
+            CapsLabel(text: "Decks due", size: 12)
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
 
             VStack(spacing: 0) {
                 ForEach(Array(dueDecks.enumerated()), id: \.element.id) { index, deck in
                     Button {
-                        if deck.dueCount > 0 { startStudy(deckId: deck.id) }
+                        startStudy(deckId: deck.id)
                     } label: {
                         deckRow(deck: deck, isLast: index == dueDecks.count - 1)
                     }
                     .buttonStyle(.plain)
-                    .disabled(deck.dueCount == 0)
                 }
             }
             .paperCard()
@@ -299,19 +296,15 @@ struct DashboardView: View {
                     .foregroundStyle(FasoltTheme.ink2)
             }
             Spacer(minLength: 8)
-            if deck.dueCount > 0 {
-                Text("\(deck.dueCount) due")
-                    .font(.system(size: 13, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(FasoltTheme.accentHi)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(
-                        Capsule().fill(FasoltTheme.accentSoft)
-                    )
-            } else {
-                CapsLabel(text: "caught up", size: 10)
-            }
+            Text("\(deck.dueCount) due")
+                .font(.system(size: 13, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(FasoltTheme.accentHi)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule().fill(FasoltTheme.accentSoft)
+                )
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(FasoltTheme.ink3)
