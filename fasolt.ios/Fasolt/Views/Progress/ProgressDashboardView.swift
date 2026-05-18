@@ -28,6 +28,9 @@ struct ProgressDashboardView: View {
                         streakBanner(progress)
                         statTiles(progress)
                         activityCard(progress)
+                        if let mix = progress.ratingMix, mix.total > 0 {
+                            ratingMixCard(mix)
+                        }
                         if progress.totalAnswered == 0 {
                             emptyHint
                         }
@@ -394,6 +397,84 @@ struct ProgressDashboardView: View {
         guard !nonZero.isEmpty else { return 0 }
         let sum = nonZero.map(\.count).reduce(0, +)
         return sum / nonZero.count
+    }
+
+    // MARK: - Rating mix
+
+    private func ratingMixCard(_ mix: RatingMixDTO) -> some View {
+        let total = mix.total
+        let entries: [(label: String, n: Int, color: Color)] = [
+            ("Again", mix.again, FasoltTheme.again),
+            ("Hard",  mix.hard,  FasoltTheme.hard),
+            ("Good",  mix.good,  FasoltTheme.good),
+            ("Easy",  mix.easy,  FasoltTheme.easy),
+        ]
+
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    CapsLabel(text: "Rating mix", size: 11)
+                    Text("How you rate yourself")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(FasoltTheme.ink0)
+                }
+                Spacer()
+                Text("\(total)")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(FasoltTheme.ink2)
+                    + Text(" ratings")
+                    .font(.system(size: 11))
+                    .foregroundStyle(FasoltTheme.ink2)
+            }
+            .padding(.bottom, 14)
+
+            // Proportional stacked bar
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    ForEach(entries.indices, id: \.self) { i in
+                        let e = entries[i]
+                        let frac = total > 0 ? CGFloat(e.n) / CGFloat(total) : 0
+                        Rectangle()
+                            .fill(e.color)
+                            .frame(width: max(0, frac * geo.size.width))
+                    }
+                }
+            }
+            .frame(height: 10)
+            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
+
+            // 4-up breakdown
+            HStack(alignment: .top, spacing: 10) {
+                ForEach(entries.indices, id: \.self) { i in
+                    let e = entries[i]
+                    let pct = total > 0 ? Int((Double(e.n) / Double(total)) * 100.0) : 0
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 5) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(e.color)
+                                .frame(width: 6, height: 6)
+                            CapsLabel(text: e.label, color: e.color, size: 10)
+                        }
+                        Text("\(e.n)")
+                            .font(.system(size: 20, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(FasoltTheme.ink0)
+                        Text("\(pct)%")
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(FasoltTheme.ink3)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.top, 14)
+
+            Text("Honest ratings help FSRS schedule better.")
+                .font(.system(size: 11))
+                .foregroundStyle(FasoltTheme.ink2)
+                .padding(.top, 12)
+        }
+        .padding(16)
+        .paperCard(radius: 18)
     }
 
     // MARK: - Empty hint
