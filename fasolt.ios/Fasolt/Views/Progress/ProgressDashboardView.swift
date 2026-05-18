@@ -55,22 +55,25 @@ struct ProgressDashboardView: View {
                     } description: {
                         Text(error)
                     } actions: {
-                        Button("Retry") { Task { await viewModel.load() } }
+                        Button("Retry") { Task { await viewModel.load(days: selectedRange.days) } }
                     }
                 }
             }
-            .task { await viewModel.load() }
+            .task { await viewModel.load(days: selectedRange.days) }
+            .onChange(of: selectedRange) { _, newValue in
+                Task { await viewModel.load(days: newValue.days) }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .appDidBecomeActive)) { _ in
-                Task { await viewModel.load() }
+                Task { await viewModel.load(days: selectedRange.days) }
             }
             .onReceive(NotificationCenter.default.publisher(for: .studySessionEnded)) { _ in
-                Task { await viewModel.load() }
+                Task { await viewModel.load(days: selectedRange.days) }
             }
             .offlineBanner()
         }
     }
 
-    // MARK: - Range picker (visual only — we always fetch a year)
+    // MARK: - Range picker — refetches windowed data on change
 
     private var rangePicker: some View {
         Picker("Range", selection: $selectedRange) {
@@ -137,12 +140,31 @@ struct ProgressDashboardView: View {
         .frame(height: 36)
     }
 
-    // MARK: - Stat tiles (single row)
+    // MARK: - Stat tiles (single row, windowed)
 
     private func statTiles(_ p: ProgressDTO) -> some View {
-        HStack(spacing: 10) {
-            statTile(label: "Cards answered", value: "\(p.totalAnswered)", sub: "+\(p.answeredThisMonth) this month")
-            statTile(label: "This week", value: "\(p.answeredThisWeek)", sub: "rolling 7 days")
+        let windowAnswered = p.dailyActivity.map(\.count).reduce(0, +)
+        let activeDays = p.dailyActivity.filter { $0.count > 0 }.count
+        return HStack(spacing: 10) {
+            statTile(
+                label: "Answered",
+                value: "\(windowAnswered)",
+                sub: "in \(windowLabelShort)"
+            )
+            statTile(
+                label: "Active days",
+                value: "\(activeDays)",
+                sub: "of \(p.dailyActivity.count) days"
+            )
+        }
+    }
+
+    private var windowLabelShort: String {
+        switch selectedRange {
+        case .year: return "this year"
+        case .d90:  return "90 days"
+        case .d30:  return "30 days"
+        case .d7:   return "7 days"
         }
     }
 
@@ -168,7 +190,7 @@ struct ProgressDashboardView: View {
     // MARK: - Activity card
 
     private func activityCard(_ p: ProgressDTO) -> some View {
-        let data = trimmedActivity(p)
+        let data = p.dailyActivity
 
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
@@ -329,13 +351,6 @@ struct ProgressDashboardView: View {
             .frame(width: geo.size.width, height: height, alignment: .bottomLeading)
         }
         .frame(height: height)
-    }
-
-    private func trimmedActivity(_ p: ProgressDTO) -> [DailyActivityDTO] {
-        let days = selectedRange.days
-        let activity = p.dailyActivity
-        if activity.count <= days { return activity }
-        return Array(activity.suffix(days))
     }
 
     private struct Cell {
