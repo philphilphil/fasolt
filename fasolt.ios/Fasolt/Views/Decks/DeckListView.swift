@@ -23,12 +23,12 @@ struct DeckListView: View {
                 viewModel: viewModel,
                 deckRepository: deckRepository,
                 cardRepository: cardRepository
-            )
+            ) { EmptyView() }
         }
     }
 }
 
-struct DeckListContent: View {
+struct DeckListContent<Leading: View>: View {
     @Environment(\.startStudy) private var startStudy
     var viewModel: DeckListViewModel
     @State private var searchText = ""
@@ -39,6 +39,19 @@ struct DeckListContent: View {
     @State private var errorMessage: String?
     let deckRepository: DeckRepository
     let cardRepository: CardRepository
+    @ViewBuilder var leadingToolbar: () -> Leading
+
+    init(
+        viewModel: DeckListViewModel,
+        deckRepository: DeckRepository,
+        cardRepository: CardRepository,
+        @ViewBuilder leadingToolbar: @escaping () -> Leading = { EmptyView() }
+    ) {
+        self.viewModel = viewModel
+        self.deckRepository = deckRepository
+        self.cardRepository = cardRepository
+        self.leadingToolbar = leadingToolbar
+    }
 
     var body: some View {
         contentView
@@ -182,6 +195,9 @@ struct DeckListContent: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            leadingToolbar()
+        }
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 showCreateSheet = true

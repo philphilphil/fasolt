@@ -26,6 +26,7 @@ struct MainTabView: View {
                     return vm
                 }
 
+                let snapshotViewModel = SnapshotViewModel(apiClient: authService.apiClient)
                 TabView(selection: $selectedTab) {
                     DashboardView(
                         viewModel: DashboardViewModel(apiClient: authService.apiClient, deckRepository: deckRepository)
@@ -39,7 +40,8 @@ struct MainTabView: View {
                         deckListViewModel: deckListViewModel,
                         cardListViewModel: cardListViewModel,
                         deckRepository: deckRepository,
-                        cardRepository: cardRepository
+                        cardRepository: cardRepository,
+                        snapshotViewModel: snapshotViewModel
                     )
                     .tabItem {
                         Label("Library", systemImage: "books.vertical.fill")
@@ -57,8 +59,7 @@ struct MainTabView: View {
                     SettingsView(
                         viewModel: SettingsViewModel(apiClient: authService.apiClient),
                         notificationViewModel: NotificationSettingsViewModel(apiClient: authService.apiClient),
-                        schedulingViewModel: SchedulingSettingsViewModel(apiClient: authService.apiClient),
-                        snapshotViewModel: SnapshotViewModel(apiClient: authService.apiClient)
+                        schedulingViewModel: SchedulingSettingsViewModel(apiClient: authService.apiClient)
                     )
                     .tabItem {
                         Label("Settings", systemImage: "gear")

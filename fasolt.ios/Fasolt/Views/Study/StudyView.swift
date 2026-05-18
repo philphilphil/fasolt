@@ -244,14 +244,14 @@ struct StudyView: View {
 
     private var ratingButtons: some View {
         HStack(spacing: 8) {
-            ratingTile("Again", sub: "<10m", color: FasoltTheme.again, rating: "again")
-            ratingTile("Hard", sub: "~1d", color: FasoltTheme.hard, rating: "hard")
-            ratingTile("Good", sub: "2d", color: FasoltTheme.good, rating: "good")
-            ratingTile("Easy", sub: "5d", color: FasoltTheme.easy, rating: "easy")
+            ratingTile("Again", color: FasoltTheme.again, rating: "again")
+            ratingTile("Hard",  color: FasoltTheme.hard,  rating: "hard")
+            ratingTile("Good",  color: FasoltTheme.good,  rating: "good")
+            ratingTile("Easy",  color: FasoltTheme.easy,  rating: "easy")
         }
     }
 
-    private func ratingTile(_ label: String, sub: String, color: Color, rating: String) -> some View {
+    private func ratingTile(_ label: String, color: Color, rating: String) -> some View {
         Button {
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred()
@@ -263,30 +263,24 @@ struct StudyView: View {
                 }
             }
         } label: {
-            VStack(spacing: 2) {
-                Text(label)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(color)
-                Text(sub)
-                    .font(.system(size: 10.5))
-                    .monospacedDigit()
-                    .foregroundStyle(FasoltTheme.ink2)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 6)
-            .background(FasoltTheme.paper1)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
-            )
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(color)
-                    .frame(height: 2.5)
-                    .clipShape(RoundedRectangle(cornerRadius: 1.5))
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            Text(label)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 6)
+                .background(FasoltTheme.paper1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
+                )
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(color)
+                        .frame(height: 2.5)
+                        .clipShape(RoundedRectangle(cornerRadius: 1.5))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .buttonStyle(.plain)
         .disabled(viewModel.isRating)

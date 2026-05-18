@@ -124,7 +124,7 @@ struct DashboardView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             CapsLabel(text: "Due", color: FasoltTheme.accent)
                             Text("\(viewModel.dueCount)")
-                                .font(.system(size: 86, weight: .semibold, design: .default))
+                                .font(.system(size: 64, weight: .semibold, design: .default))
                                 .monospacedDigit()
                                 .foregroundStyle(FasoltTheme.ink0)
                                 .kerning(-1)
@@ -173,7 +173,7 @@ struct DashboardView: View {
         HStack(spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(viewModel.studyStats?.currentStreak ?? 0)")
-                    .font(.system(size: 28, weight: .semibold))
+                    .font(.system(size: 22, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(FasoltTheme.ink0)
                 Text("day streak")

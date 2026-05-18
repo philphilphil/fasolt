@@ -7,11 +7,13 @@ enum LibrarySegment: String, CaseIterable {
 
 struct LibraryView: View {
     @State private var selectedSegment: LibrarySegment = .decks
+    @State private var showSnapshots = false
 
     let deckListViewModel: DeckListViewModel
     let cardListViewModel: CardListViewModel
     let deckRepository: DeckRepository
     let cardRepository: CardRepository
+    let snapshotViewModel: SnapshotViewModel
 
     var body: some View {
         NavigationStack {
@@ -32,15 +34,29 @@ struct LibraryView: View {
                     DeckListContent(
                         viewModel: deckListViewModel,
                         deckRepository: deckRepository,
-                        cardRepository: cardRepository
+                        cardRepository: cardRepository,
+                        leadingToolbar: { snapshotsButton }
                     )
                 case .cards:
                     CardListContent(
-                        viewModel: cardListViewModel
+                        viewModel: cardListViewModel,
+                        leadingToolbar: { snapshotsButton }
                     )
                 }
             }
             .background(FasoltTheme.paper0.ignoresSafeArea())
+            .sheet(isPresented: $showSnapshots) {
+                SnapshotsView(viewModel: snapshotViewModel)
+            }
         }
+    }
+
+    private var snapshotsButton: some View {
+        Button {
+            showSnapshots = true
+        } label: {
+            Image(systemName: "clock.arrow.circlepath")
+        }
+        .accessibilityLabel("Snapshots")
     }
 }

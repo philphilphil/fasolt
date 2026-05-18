@@ -9,18 +9,27 @@ struct CardListView: View {
 
     var body: some View {
         NavigationStack {
-            CardListContent(viewModel: viewModel)
+            CardListContent(viewModel: viewModel) { EmptyView() }
         }
     }
 }
 
-struct CardListContent: View {
+struct CardListContent<Leading: View>: View {
     @Bindable var viewModel: CardListViewModel
     @State private var sortOrder: CardSortOrder = .dueDate
     @State private var showCreateSheet = false
     @State private var cardToDelete: CardDTO?
     @State private var showDeleteAlert = false
     @State private var errorMessage: String?
+    @ViewBuilder var leadingToolbar: () -> Leading
+
+    init(
+        viewModel: CardListViewModel,
+        @ViewBuilder leadingToolbar: @escaping () -> Leading = { EmptyView() }
+    ) {
+        self.viewModel = viewModel
+        self.leadingToolbar = leadingToolbar
+    }
 
     var body: some View {
         Group {
@@ -55,6 +64,9 @@ struct CardListContent: View {
         .navigationTitle("Library")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                leadingToolbar()
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showCreateSheet = true

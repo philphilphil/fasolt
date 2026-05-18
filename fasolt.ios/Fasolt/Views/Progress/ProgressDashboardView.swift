@@ -98,11 +98,11 @@ struct ProgressDashboardView: View {
                         CapsLabel(text: p.currentStreak > 0 ? "Streak · active" : "Streak", color: FasoltTheme.accent)
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text("\(p.currentStreak)")
-                                .font(.system(size: 56, weight: .semibold))
+                                .font(.system(size: 40, weight: .semibold))
                                 .monospacedDigit()
                                 .foregroundStyle(FasoltTheme.ink0)
                             Text("days · best \(p.bestStreak)")
-                                .font(.system(size: 14))
+                                .font(.system(size: 13))
                                 .foregroundStyle(FasoltTheme.ink2)
                         }
                     }
@@ -111,7 +111,7 @@ struct ProgressDashboardView: View {
                 }
                 .padding(.horizontal, 18)
                 .padding(.top, 12)
-                .padding(.bottom, 16)
+                .padding(.bottom, 14)
             }
         }
     }
@@ -135,70 +135,75 @@ struct ProgressDashboardView: View {
         .frame(height: 36)
     }
 
-    // MARK: - Stat tiles 2x2
+    // MARK: - Stat tiles (single row)
 
     private func statTiles(_ p: ProgressDTO) -> some View {
-        LazyVGrid(
-            columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
-            spacing: 10
-        ) {
+        HStack(spacing: 10) {
             statTile(label: "Cards answered", value: "\(p.totalAnswered)", sub: "+\(p.answeredThisMonth) this month")
-            statTile(label: "Today", value: "\(p.answeredToday)", sub: "answered today")
             statTile(label: "This week", value: "\(p.answeredThisWeek)", sub: "rolling 7 days")
-            statTile(label: "Best streak", value: "\(p.bestStreak)", sub: "all time")
         }
     }
 
     private func statTile(label: String, value: String, sub: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             CapsLabel(text: label, size: 10)
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text(value)
-                    .font(.system(size: 28, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(FasoltTheme.ink0)
-            }
-            .padding(.top, 6)
+            Text(value)
+                .font(.system(size: 22, weight: .semibold))
+                .monospacedDigit()
+                .foregroundStyle(FasoltTheme.ink0)
+                .padding(.top, 6)
             Text(sub)
                 .font(.system(size: 11))
                 .foregroundStyle(FasoltTheme.ink2)
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .paperCard(radius: 14)
     }
 
-    // MARK: - Year activity card
+    // MARK: - Activity card
 
     private func activityCard(_ p: ProgressDTO) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let data = trimmedActivity(p)
+
+        return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     CapsLabel(text: titleForRange(), size: 11)
                     Text(headingForRange())
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(FasoltTheme.ink0)
                 }
                 Spacer()
-                legend()
+                if useHeatmap {
+                    legend()
+                }
             }
-            .padding(.bottom, 12)
+            .padding(.bottom, 14)
 
-            heatmap(p)
+            if useHeatmap {
+                heatmap(data)
+            } else {
+                barChart(data)
+            }
 
             HStack {
-                heatmapStat(label: "Best", value: "\(p.dailyActivity.map(\.count).max() ?? 0)")
+                heatmapStat(label: "Best", value: "\(data.map(\.count).max() ?? 0)")
                 Spacer()
-                heatmapStat(label: "Avg", value: "\(averagePerDay(p))")
+                heatmapStat(label: "Avg",  value: "\(averagePerDay(data))")
                 Spacer()
-                heatmapStat(label: "Rest", value: "\(p.dailyActivity.filter { $0.count == 0 }.count)")
+                heatmapStat(label: "Rest", value: "\(data.filter { $0.count == 0 }.count)")
             }
             .padding(.top, 10)
         }
         .padding(16)
         .paperCard(radius: 18)
+    }
+
+    private var useHeatmap: Bool {
+        selectedRange == .year || selectedRange == .d90
     }
 
     private func titleForRange() -> String {
@@ -248,46 +253,80 @@ struct ProgressDashboardView: View {
         }
     }
 
-    // MARK: - Heatmap
+    // MARK: - Heatmap (year / 90d)
 
-    private func heatmap(_ p: ProgressDTO) -> some View {
-        let data = trimmedActivity(p)
+    private func heatmap(_ data: [DailyActivityDTO]) -> some View {
         let maxCount = max(1, data.map { $0.count }.max() ?? 1)
         let cells = buildCells(data)
         let weeks = (cells.count + 6) / 7
+        let rows = 7
+        let gap: CGFloat = 2
 
         return GeometryReader { geo in
-            let totalGap = CGFloat(weeks - 1) * 2
-            let width = (geo.size.width - totalGap) / CGFloat(weeks)
-            HStack(spacing: 2) {
+            // Pick the cell size so that 7 rows fit the GeometryReader height
+            // and `weeks` columns fit the width — whichever is smaller wins.
+            let cellByWidth  = (geo.size.width  - CGFloat(weeks - 1) * gap) / CGFloat(weeks)
+            let cellByHeight = (geo.size.height - CGFloat(rows  - 1) * gap) / CGFloat(rows)
+            let cell = max(0, min(cellByWidth, cellByHeight))
+            let usedWidth = cell * CGFloat(weeks) + gap * CGFloat(weeks - 1)
+
+            HStack(spacing: gap) {
                 ForEach(0..<weeks, id: \.self) { w in
-                    VStack(spacing: 2) {
-                        ForEach(0..<7, id: \.self) { d in
-                            let idx = w * 7 + d
+                    VStack(spacing: gap) {
+                        ForEach(0..<rows, id: \.self) { d in
+                            let idx = w * rows + d
                             if idx < cells.count {
-                                let cell = cells[idx]
-                                cellView(cell: cell, maxCount: maxCount)
-                                    .frame(width: width, height: width)
+                                cellView(cell: cells[idx], maxCount: maxCount)
+                                    .frame(width: cell, height: cell)
                             } else {
-                                Color.clear.frame(width: width, height: width)
+                                Color.clear.frame(width: cell, height: cell)
                             }
                         }
                     }
                 }
             }
+            .frame(width: usedWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(height: heatmapHeight())
     }
 
     private func heatmapHeight() -> CGFloat {
-        // Approximate: 7 rows; height scales with width — we compute via aspect on the fly.
-        // Use a fixed height that looks good for a phone column.
         switch selectedRange {
-        case .year: return 78
-        case .d90: return 100
-        case .d30: return 140
-        case .d7: return 180
+        case .year: return 88
+        case .d90:  return 84
+        case .d30, .d7: return 0
         }
+    }
+
+    // MARK: - Bar chart (30d / 7d)
+
+    private func barChart(_ data: [DailyActivityDTO]) -> some View {
+        let maxCount = max(1, data.map(\.count).max() ?? 1)
+        let height: CGFloat = selectedRange == .d7 ? 140 : 110
+
+        return GeometryReader { geo in
+            let count = max(1, data.count)
+            let gap: CGFloat = selectedRange == .d7 ? 6 : 3
+            let barWidth = max(2, (geo.size.width - CGFloat(count - 1) * gap) / CGFloat(count))
+
+            HStack(alignment: .bottom, spacing: gap) {
+                ForEach(Array(data.enumerated()), id: \.offset) { i, day in
+                    let intensity = Double(day.count) / Double(maxCount)
+                    let isLast = i == data.count - 1
+                    let barHeight = max(2, CGFloat(intensity) * (height - 4))
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(
+                            day.count == 0
+                                ? FasoltTheme.paper2
+                                : (isLast ? FasoltTheme.accent : cellColor(intensity: intensity))
+                        )
+                        .frame(width: barWidth, height: barHeight)
+                }
+            }
+            .frame(width: geo.size.width, height: height, alignment: .bottomLeading)
+        }
+        .frame(height: height)
     }
 
     private func trimmedActivity(_ p: ProgressDTO) -> [DailyActivityDTO] {
@@ -351,8 +390,8 @@ struct ProgressDashboardView: View {
         return FasoltTheme.accent
     }
 
-    private func averagePerDay(_ p: ProgressDTO) -> Int {
-        let nonZero = p.dailyActivity.filter { $0.count > 0 }
+    private func averagePerDay(_ data: [DailyActivityDTO]) -> Int {
+        let nonZero = data.filter { $0.count > 0 }
         guard !nonZero.isEmpty else { return 0 }
         let sum = nonZero.map(\.count).reduce(0, +)
         return sum / nonZero.count
