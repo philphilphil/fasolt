@@ -7,7 +7,6 @@ protocol CardDisplayable {
     var front: String { get }
     var back: String { get }
     var sourceFile: String? { get }
-    var sourceHeading: String? { get }
     var state: String { get }
     var dueAt: String? { get }
     var stability: Double? { get }

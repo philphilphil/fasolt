@@ -34,7 +34,6 @@ const back = ref('')
 const editFrontSvg = ref('')
 const editBackSvg = ref('')
 const editSourceFile = ref('')
-const editSourceHeading = ref('')
 const editDeckIds = ref<string[]>([])
 const saving = ref(false)
 const error = ref('')
@@ -141,7 +140,6 @@ function startEdit() {
   editFrontSvg.value = card.value.frontSvg ?? ''
   editBackSvg.value = card.value.backSvg ?? ''
   editSourceFile.value = card.value.sourceFile ?? ''
-  editSourceHeading.value = card.value.sourceHeading ?? ''
   editDeckIds.value = card.value.decks.map(d => d.id)
   error.value = ''
   editing.value = true
@@ -161,7 +159,6 @@ async function save() {
       frontSvg: editFrontSvg.value,
       backSvg: editBackSvg.value,
       sourceFile: editSourceFile.value || null,
-      sourceHeading: editSourceHeading.value || null,
       deckIds: editDeckIds.value,
     })
     editing.value = false
@@ -272,9 +269,8 @@ function onDeleted() {
 
     <!-- Metadata -->
     <div class="space-y-1 text-sm text-muted-foreground">
-      <div v-if="card.sourceFile || card.sourceHeading" class="flex flex-wrap gap-x-6">
-        <span v-if="card.sourceFile">Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
-        <span v-if="card.sourceHeading">Section: <span class="text-foreground">{{ card.sourceHeading }}</span></span>
+      <div v-if="card.sourceFile" class="flex flex-wrap gap-x-6">
+        <span>Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
       </div>
       <div v-if="card.decks.length > 0">
         Decks:
@@ -320,15 +316,9 @@ function onDeleted() {
 
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
-      <div class="grid grid-cols-2 gap-3">
-        <div class="space-y-1">
-          <label class="text-[11px] font-medium text-muted-foreground">Source file</label>
-          <Input v-model="editSourceFile" placeholder="e.g. notes.md" class="h-8 text-sm" />
-        </div>
-        <div class="space-y-1">
-          <label class="text-[11px] font-medium text-muted-foreground">Section</label>
-          <Input v-model="editSourceHeading" placeholder="e.g. Chapter 1" class="h-8 text-sm" />
-        </div>
+      <div class="space-y-1">
+        <label class="text-[11px] font-medium text-muted-foreground">Source file</label>
+        <Input v-model="editSourceFile" placeholder="e.g. notes.md" class="h-8 text-sm" />
       </div>
       <div class="space-y-1">
         <label class="text-[11px] font-medium text-muted-foreground">Decks</label>

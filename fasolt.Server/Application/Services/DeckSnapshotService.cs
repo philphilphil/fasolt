@@ -46,7 +46,7 @@ public class DeckSnapshotService(AppDbContext db)
                 deck.Description,
                 cards.Select(c => new SnapshotCardData(
                     c.Id, c.PublicId, c.Front, c.Back, c.FrontSvg, c.BackSvg,
-                    c.SourceFile, c.SourceHeading, c.CreatedAt,
+                    c.SourceFile, c.CreatedAt,
                     c.Stability, c.Difficulty, c.Step, c.DueAt, c.State, c.LastReviewedAt,
                     c.IsSuspended
                 )).ToList());
@@ -248,7 +248,6 @@ public class DeckSnapshotService(AppDbContext db)
                     FrontSvg = sc.FrontSvg,
                     BackSvg = sc.BackSvg,
                     SourceFile = sc.SourceFile,
-                    SourceHeading = sc.SourceHeading,
                     CreatedAt = sc.CreatedAt,
                     Stability = sc.Stability,
                     Difficulty = sc.Difficulty,

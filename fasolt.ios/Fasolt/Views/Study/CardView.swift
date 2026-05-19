@@ -5,7 +5,6 @@ struct CardView: View {
     let label: String
     let text: String
     let sourceFile: String?
-    let sourceHeading: String?
     var svg: String? = nil
     var cardId: String? = nil
     var questionText: String? = nil
@@ -81,16 +80,7 @@ struct CardView: View {
 
                     // Footer
                     HStack(alignment: .firstTextBaseline) {
-                        if let sourceHeading {
-                            HStack(spacing: 4) {
-                                Image(systemName: "number")
-                                    .font(.system(size: 9))
-                                Text(sourceHeading)
-                                    .font(.system(size: 11, design: .monospaced))
-                            }
-                            .foregroundStyle(FasoltTheme.ink2)
-                            .lineLimit(1)
-                        } else if !showAnswer {
+                        if !showAnswer {
                             Text("tap to reveal")
                                 .font(.system(size: 11))
                                 .foregroundStyle(FasoltTheme.ink2)
@@ -128,8 +118,7 @@ struct CardView: View {
     CardView(
         label: "Question",
         text: "What organelle is responsible for producing ATP?",
-        sourceFile: "biology-101.md",
-        sourceHeading: "Cell Structure"
+        sourceFile: "biology-101.md"
     )
     .padding()
     .background(FasoltTheme.paper0)
@@ -140,7 +129,6 @@ struct CardView: View {
         label: "Question",
         text: "What shape is this?",
         sourceFile: nil,
-        sourceHeading: nil,
         svg: "<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"blue\"/></svg>"
     )
     .padding()

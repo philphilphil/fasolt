@@ -7,7 +7,6 @@ final class Card {
     var front: String
     var back: String
     var sourceFile: String?
-    var sourceHeading: String?
     var state: String
     var dueAt: Date?
     var stability: Double?
@@ -23,7 +22,7 @@ final class Card {
 
     init(
         publicId: String, front: String, back: String,
-        sourceFile: String? = nil, sourceHeading: String? = nil,
+        sourceFile: String? = nil,
         state: String = "new", dueAt: Date? = nil,
         stability: Double? = nil, difficulty: Double? = nil,
         step: Int? = nil, lastReviewedAt: Date? = nil,
@@ -34,7 +33,6 @@ final class Card {
         self.front = front
         self.back = back
         self.sourceFile = sourceFile
-        self.sourceHeading = sourceHeading
         self.state = state
         self.dueAt = dueAt
         self.stability = stability

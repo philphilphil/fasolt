@@ -115,7 +115,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 Front = "What is X?",
                 Back = "X is Y.",
                 SourceFile = "notes.md",
-                SourceHeading = "Intro",
                 State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             };

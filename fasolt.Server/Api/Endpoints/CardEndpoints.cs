@@ -43,7 +43,7 @@ public static class CardEndpoints
 
         try
         {
-            var dto = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.SourceHeading, request.FrontSvg, request.BackSvg, request.DeckId);
+            var dto = await cardService.CreateCard(user.Id, request.Front, request.Back, request.SourceFile, request.FrontSvg, request.BackSvg, request.DeckId);
             return Results.Created($"/api/cards/{dto.Id}", dto);
         }
         catch (KeyNotFoundException ex)

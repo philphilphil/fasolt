@@ -74,10 +74,6 @@ struct CardDetailSheet: View {
                         HStack(spacing: 4) {
                             Image(systemName: "doc.text")
                             Text(sourceFile)
-                            if let heading = card.sourceHeading {
-                                Text("\u{00B7}")
-                                Text(heading)
-                            }
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)

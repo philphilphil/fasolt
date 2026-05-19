@@ -77,7 +77,6 @@ final class DeckDetailViewModel {
             front: request.front,
             back: request.back,
             sourceFile: request.sourceFile,
-            sourceHeading: request.sourceHeading,
             deckId: deckId
         )
         _ = try await cardRepository.createCard(finalRequest)

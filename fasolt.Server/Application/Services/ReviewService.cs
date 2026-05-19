@@ -73,7 +73,7 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
             .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
             .ThenBy(c => c.CreatedAt)
             .Take(take)
-            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.FrontSvg, c.BackSvg))
+            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.State, c.FrontSvg, c.BackSvg))
             .ToListAsync();
     }
 
@@ -84,7 +84,7 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
 
         var cards = await db.Cards
             .Where(c => c.UserId == userId && !c.IsSuspended && c.DeckCards.Any(dc => dc.DeckId == deck.Id))
-            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.SourceHeading, c.State, c.FrontSvg, c.BackSvg))
+            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.State, c.FrontSvg, c.BackSvg))
             .ToListAsync();
 
         for (var i = cards.Count - 1; i > 0; i--)

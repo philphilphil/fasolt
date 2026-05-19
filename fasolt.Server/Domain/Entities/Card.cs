@@ -9,7 +9,6 @@ public class Card
     public string UserId { get; set; } = default!;
     public AppUser User { get; set; } = default!;
     public string? SourceFile { get; set; }
-    public string? SourceHeading { get; set; }
     public string Front { get; set; } = default!;
     public string Back { get; set; } = default!;
     public string? FrontSvg { get; set; }

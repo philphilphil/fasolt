@@ -10,7 +10,6 @@ import {
 const props = defineProps<{
   open: boolean
   sourceFile?: string
-  sourceHeading?: string
   initialFronts?: string[]
   initialBack?: string
 }>()
@@ -26,7 +25,6 @@ const { render } = useMarkdown()
 const fronts = ref<string[]>([])
 const back = ref('')
 const sourceFile = ref('')
-const sourceHeading = ref('')
 const saving = ref(false)
 const error = ref('')
 const showPreview = ref(false)
@@ -36,7 +34,6 @@ watch(() => props.open, (isOpen) => {
     fronts.value = props.initialFronts?.length ? [...props.initialFronts] : ['']
     back.value = props.initialBack ?? ''
     sourceFile.value = props.sourceFile ?? ''
-    sourceHeading.value = props.sourceHeading ?? ''
     error.value = ''
     showPreview.value = false
   }
@@ -63,7 +60,6 @@ async function save() {
     for (const front of validFronts) {
       await cards.createCard({
         sourceFile: sourceFile.value.trim() || undefined,
-        sourceHeading: sourceHeading.value.trim() || undefined,
         front,
         back: back.value,
       })
@@ -87,25 +83,14 @@ async function save() {
 
       <div class="space-y-4">
         <!-- Source metadata -->
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1">
-            <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Source file</label>
-            <input
-              v-model="sourceFile"
-              type="text"
-              placeholder="e.g. distributed-systems.md"
-              class="w-full rounded border border-border bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div class="space-y-1">
-            <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Source heading</label>
-            <input
-              v-model="sourceHeading"
-              type="text"
-              placeholder="e.g. CAP Theorem"
-              class="w-full rounded border border-border bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+        <div class="space-y-1">
+          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Source file</label>
+          <input
+            v-model="sourceFile"
+            type="text"
+            placeholder="e.g. distributed-systems.md"
+            class="w-full rounded border border-border bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+          />
         </div>
 
         <!-- Single front -->

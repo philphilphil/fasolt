@@ -11,23 +11,20 @@ public class CardService(AppDbContext db)
 {
     public const int MaxFrontLength = 10_000;
     public const int MaxBackLength = 50_000;
-    public const int MaxSourceHeadingLength = 255;
 
-    public static List<string> ValidateCardFields(string? front, string? back, string? sourceHeading)
+    public static List<string> ValidateCardFields(string? front, string? back)
     {
         var errors = new List<string>();
         if (front is not null && front.Length > MaxFrontLength)
             errors.Add($"Front text exceeds maximum length of {MaxFrontLength} characters.");
         if (back is not null && back.Length > MaxBackLength)
             errors.Add($"Back text exceeds maximum length of {MaxBackLength} characters.");
-        if (sourceHeading is not null && sourceHeading.Length > MaxSourceHeadingLength)
-            errors.Add($"Source heading exceeds maximum length of {MaxSourceHeadingLength} characters.");
         return errors;
     }
 
-    public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? sourceHeading, string? frontSvg = null, string? backSvg = null, string? deckId = null)
+    public async Task<CardDto> CreateCard(string userId, string front, string back, string? sourceFile, string? frontSvg = null, string? backSvg = null, string? deckId = null)
     {
-        var errors = ValidateCardFields(front, back, sourceHeading);
+        var errors = ValidateCardFields(front, back);
         if (errors.Count > 0)
             throw new ValidationException(string.Join(" ", errors));
 
@@ -47,7 +44,6 @@ public class CardService(AppDbContext db)
             PublicId = NanoIdGenerator.New(),
             UserId = userId,
             SourceFile = sourceFile?.Trim(),
-            SourceHeading = sourceHeading,
             Front = front,
             Back = back,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -144,7 +140,7 @@ public class CardService(AppDbContext db)
                 continue;
             }
 
-            var itemErrors = ValidateCardFields(item.Front, item.Back, item.SourceHeading);
+            var itemErrors = ValidateCardFields(item.Front, item.Back);
             if (itemErrors.Count > 0)
             {
                 skipped.Add(new SkippedCardDto(trimmedFront, string.Join(" ", itemErrors)));
@@ -157,7 +153,6 @@ public class CardService(AppDbContext db)
                 PublicId = NanoIdGenerator.New(),
                 UserId = userId,
                 SourceFile = effectiveSourceFile,
-                SourceHeading = item.SourceHeading,
                 Front = trimmedFront,
                 Back = item.Back.Trim(),
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -185,7 +180,7 @@ public class CardService(AppDbContext db)
         await db.SaveChangesAsync();
 
         var createdDtos = created.Select(c => new CardDto(
-            c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back,
+            c.PublicId, c.SourceFile, c.Front, c.Back,
             c.State, c.CreatedAt,
             deckId is not null
                 ? [new CardDeckInfoDto(deckId, "", false)]
@@ -238,7 +233,6 @@ public class CardService(AppDbContext db)
             .Select(c => new CardDto(
                 c.PublicId,
                 c.SourceFile,
-                c.SourceHeading,
                 c.Front,
                 c.Back,
                 includeSrs ? c.State : null,
@@ -278,7 +272,7 @@ public class CardService(AppDbContext db)
 
         if (card is null) return null;
 
-        var errors = ValidateCardFields(request.Front, request.Back, request.SourceHeading);
+        var errors = ValidateCardFields(request.Front, request.Back);
         if (errors.Count > 0)
             throw new ValidationException(string.Join(" ", errors));
 
@@ -290,8 +284,6 @@ public class CardService(AppDbContext db)
             card.BackSvg = request.BackSvg == "" ? null : SvgSanitizer.Sanitize(request.BackSvg);
         if (request.SourceFile is not null)
             card.SourceFile = request.SourceFile == "" ? null : request.SourceFile;
-        if (request.SourceHeading is not null)
-            card.SourceHeading = request.SourceHeading == "" ? null : request.SourceHeading;
 
         if (request.DeckIds is not null)
         {
@@ -331,7 +323,7 @@ public class CardService(AppDbContext db)
 
         foreach (var item in items)
         {
-            var req = new UpdateCardFieldsRequest(item.NewFront, item.NewBack, item.NewSourceFile, item.NewSourceHeading, item.NewFrontSvg, item.NewBackSvg);
+            var req = new UpdateCardFieldsRequest(item.NewFront, item.NewBack, item.NewSourceFile, item.NewFrontSvg, item.NewBackSvg);
             var result = await UpdateCardFields(userId, item.CardId, req);
             results.Add(new BulkUpdateCardResult(item.CardId, result.Status, result.Card));
         }
@@ -344,7 +336,7 @@ public class CardService(AppDbContext db)
         var effectiveFront = req.NewFront?.Trim() ?? card.Front;
         var effectiveSourceFile = req.NewSourceFile?.Trim() ?? card.SourceFile;
 
-        var errors = ValidateCardFields(req.NewFront, req.NewBack, req.NewSourceHeading);
+        var errors = ValidateCardFields(req.NewFront, req.NewBack);
         if (errors.Count > 0)
             throw new ValidationException(string.Join(" ", errors));
 
@@ -367,7 +359,6 @@ public class CardService(AppDbContext db)
         if (req.NewFront is not null) card.Front = req.NewFront.Trim();
         if (req.NewBack is not null) card.Back = req.NewBack.Trim();
         if (req.NewSourceFile is not null) card.SourceFile = req.NewSourceFile.Trim();
-        if (req.NewSourceHeading is not null) card.SourceHeading = req.NewSourceHeading.Trim();
         if (req.NewFrontSvg is not null)
             card.FrontSvg = req.NewFrontSvg == "" ? null : SvgSanitizer.Sanitize(req.NewFrontSvg);
         if (req.NewBackSvg is not null)
@@ -444,7 +435,7 @@ public class CardService(AppDbContext db)
     }
 
     private static CardDto ToDto(Card c) =>
-        new(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
+        new(c.PublicId, c.SourceFile, c.Front, c.Back, c.State, c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
             c.IsSuspended,
             c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,

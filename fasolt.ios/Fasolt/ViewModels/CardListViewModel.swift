@@ -36,8 +36,7 @@ final class CardListViewModel {
         return result.filter { card in
             card.front.localizedCaseInsensitiveContains(query) ||
             card.back.localizedCaseInsensitiveContains(query) ||
-            (card.sourceFile?.localizedCaseInsensitiveContains(query) ?? false) ||
-            (card.sourceHeading?.localizedCaseInsensitiveContains(query) ?? false)
+            (card.sourceFile?.localizedCaseInsensitiveContains(query) ?? false)
         }
     }
 
@@ -88,7 +87,6 @@ final class CardListViewModel {
             front: request.front,
             back: request.back,
             sourceFile: request.sourceFile,
-            sourceHeading: request.sourceHeading,
             deckId: deckId
         )
         _ = try await cardRepository.createCard(finalRequest)

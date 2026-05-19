@@ -122,7 +122,6 @@ final class DeckRepository {
                 card.front = cardDto.front
                 card.back = cardDto.back
                 card.sourceFile = cardDto.sourceFile
-                card.sourceHeading = cardDto.sourceHeading
                 card.state = cardDto.state
                 card.dueAt = cardDto.dueAt.flatMap { DateFormatters.parseISO8601($0) }
                 card.stability = cardDto.stability
@@ -140,7 +139,6 @@ final class DeckRepository {
                     front: cardDto.front,
                     back: cardDto.back,
                     sourceFile: cardDto.sourceFile,
-                    sourceHeading: cardDto.sourceHeading,
                     state: cardDto.state,
                     dueAt: cardDto.dueAt.flatMap { DateFormatters.parseISO8601( $0) },
                     stability: cardDto.stability,
@@ -189,7 +187,6 @@ final class DeckRepository {
                 front: card.front,
                 back: card.back,
                 sourceFile: card.sourceFile,
-                sourceHeading: card.sourceHeading,
                 state: card.state,
                 dueAt: card.dueAt.map { DateFormatters.formatISO8601( $0) },
                 isSuspended: false,

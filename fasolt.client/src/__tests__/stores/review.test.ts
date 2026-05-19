@@ -17,7 +17,7 @@ describe('review store', () => {
 
   it('starts a session by fetching due cards', async () => {
     const mockCards = [
-      { id: 'c1', front: 'What is CAP?', back: 'Consistency, Availability, Partition tolerance', sourceFile: 'cap.md', sourceHeading: '## Overview', state: 'learning' },
+      { id: 'c1', front: 'What is CAP?', back: 'Consistency, Availability, Partition tolerance', sourceFile: 'cap.md', state: 'learning' },
     ]
     mockApiFetch.mockResolvedValueOnce(mockCards)
 
@@ -30,7 +30,7 @@ describe('review store', () => {
 
   it('flips the current card', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new' },
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, state: 'new' },
     ])
 
     const store = useReviewStore()
@@ -43,8 +43,8 @@ describe('review store', () => {
 
   it('rates a card and advances to next', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new' },
-      { id: 'c2', front: 'Q2', back: 'A2', sourceFile: null, sourceHeading: null, state: 'new' },
+      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, state: 'new' },
+      { id: 'c2', front: 'Q2', back: 'A2', sourceFile: null, state: 'new' },
     ])
     mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', stability: 1.0, difficulty: 5.0, dueAt: null, state: 'learning' })
 
@@ -59,7 +59,7 @@ describe('review store', () => {
 
   it('completes session after rating last card', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, sourceHeading: null, state: 'new' },
+      { id: 'c1', front: 'Q1', back: 'A1', sourceFile: null, state: 'new' },
     ])
     mockApiFetch.mockResolvedValueOnce({ cardId: 'c1', stability: 1.0, difficulty: 5.0, dueAt: null, state: 'learning' })
 
@@ -95,7 +95,7 @@ describe('review store', () => {
 
   it('rate sends correct API request', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new', frontSvg: null, backSvg: null },
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, state: 'new', frontSvg: null, backSvg: null },
     ])
 
     const store = useReviewStore()
@@ -116,7 +116,7 @@ describe('review store', () => {
 
   it('rate again re-enqueues the card', async () => {
     mockApiFetch.mockResolvedValueOnce([
-      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, sourceHeading: null, state: 'new', frontSvg: null, backSvg: null },
+      { id: 'c1', front: 'Q', back: 'A', sourceFile: null, state: 'new', frontSvg: null, backSvg: null },
     ])
 
     const store = useReviewStore()

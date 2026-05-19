@@ -77,7 +77,6 @@ fun CardFormScreen(
     var front by remember { mutableStateOf("") }
     var back by remember { mutableStateOf("") }
     var sourceFile by remember { mutableStateOf("") }
-    var sourceHeading by remember { mutableStateOf("") }
     val selectedDeckIds: SnapshotStateList<String> = remember { mutableListOf<String>().toMutableStateList() }
     var initialized by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -89,7 +88,6 @@ fun CardFormScreen(
                 front = c.front
                 back = c.back
                 sourceFile = c.sourceFile.orEmpty()
-                sourceHeading = c.sourceHeading.orEmpty()
                 selectedDeckIds.clear()
                 selectedDeckIds.addAll(c.decks.map { it.id })
             }
@@ -130,7 +128,6 @@ fun CardFormScreen(
                                 front = front.trim(),
                                 back = back.trim(),
                                 sourceFile = sourceFile.trim().ifEmpty { null },
-                                sourceHeading = sourceHeading.trim().ifEmpty { null },
                                 deckIds = selectedDeckIds.toList(),
                             ) { success -> if (success) onNavigateBack() }
                         },
@@ -176,13 +173,6 @@ fun CardFormScreen(
                         value = sourceFile,
                         onValueChange = { sourceFile = it },
                         label = { Text("Source file") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = sourceHeading,
-                        onValueChange = { sourceHeading = it },
-                        label = { Text("Heading") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )

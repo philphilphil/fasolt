@@ -113,10 +113,6 @@ struct CardDetailView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.text")
                         Text(sourceFile)
-                        if let heading = card.sourceHeading {
-                            Text("·")
-                            Text(heading)
-                        }
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -179,7 +175,6 @@ struct CardDetailView: View {
                     front: card.front,
                     back: card.back,
                     sourceFile: card.sourceFile,
-                    sourceHeading: card.sourceHeading,
                     deckIds: currentDeckIds,
                     isSuspended: card.isSuspended
                 ),
@@ -189,7 +184,6 @@ struct CardDetailView: View {
                         front: request.front,
                         back: request.back,
                         sourceFile: request.sourceFile,
-                        sourceHeading: request.sourceHeading,
                         deckIds: deckIds
                     )
                     try await onSaveEdit?(updateRequest)

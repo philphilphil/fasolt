@@ -36,7 +36,6 @@ fun CardDisplay(
 ) {
     val text = if (isFlipped) card.back else card.front
     val svg = if (isFlipped) card.backSvg else card.frontSvg
-    val sourceHeading = if (isFlipped) card.sourceHeading else null
     // When the answer is showing, repeat the question above as a small hint —
     // matches iOS's CardView questionText behaviour.
     val questionHint = if (isFlipped) card.front else null
@@ -81,15 +80,9 @@ fun CardDisplay(
                 )
             }
 
-            if (!card.sourceFile.isNullOrBlank() || !sourceHeading.isNullOrBlank()) {
+            val source = card.sourceFile
+            if (!source.isNullOrBlank()) {
                 Spacer(Modifier.height(16.dp))
-                val source = buildString {
-                    card.sourceFile?.let { append(it) }
-                    if (!sourceHeading.isNullOrBlank()) {
-                        if (isNotEmpty()) append(" · ")
-                        append(sourceHeading)
-                    }
-                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,

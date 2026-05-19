@@ -38,7 +38,6 @@ private func makeCard(_ id: String) -> DueCardDTO {
         front: "Q\(id)",
         back: "A\(id)",
         sourceFile: nil,
-        sourceHeading: nil,
         state: "new",
         frontSvg: nil,
         backSvg: nil

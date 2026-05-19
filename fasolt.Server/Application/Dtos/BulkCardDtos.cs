@@ -9,7 +9,6 @@ public record BulkCardItem(
     [property: Description("Back of the card (answer/explanation). Markdown — see server instructions.")]
     string Back,
     string? SourceFile = null,
-    string? SourceHeading = null,
     [property: Description("Optional inline SVG for the front. See server instructions for sanitization rules and viewBox guidance.")]
     string? FrontSvg = null,
     [property: Description("Optional inline SVG for the back. Same rules as frontSvg.")]
