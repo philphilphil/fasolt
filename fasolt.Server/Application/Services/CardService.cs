@@ -369,67 +369,43 @@ public class CardService(AppDbContext db)
         return UpdateCardResult.Success(ToDto(card));
     }
 
-    public async Task<RenameSourcesResponse> RenameSources(string userId, List<RenameSourcePair> pairs)
+    public async Task<RenameSourceResult> RenameSource(string userId, string from, string to)
     {
-        var results = new List<RenameSourcePairResult>();
-        var totalRenamed = 0;
-        var totalSkipped = 0;
+        var trimmedFrom = from?.Trim();
+        var trimmedTo = to?.Trim();
 
-        foreach (var pair in pairs)
-        {
-            var from = pair.From?.Trim();
-            var to = pair.To?.Trim();
+        if (string.IsNullOrEmpty(trimmedFrom) || string.IsNullOrEmpty(trimmedTo) || trimmedFrom == trimmedTo)
+            return new RenameSourceResult(0, 0);
 
-            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
-            {
-                results.Add(new RenameSourcePairResult(pair.From ?? "", pair.To ?? "", 0, 0));
-                continue;
-            }
+        var cards = await db.Cards
+            .Where(c => c.UserId == userId && c.SourceFile == trimmedFrom)
+            .Select(c => new { c.Id, c.Front })
+            .ToListAsync();
 
-            if (from == to)
-            {
-                results.Add(new RenameSourcePairResult(from, to, 0, 0));
-                continue;
-            }
+        if (cards.Count == 0)
+            return new RenameSourceResult(0, 0);
 
-            // Cards to move
-            var cards = await db.Cards
-                .Where(c => c.UserId == userId && c.SourceFile == from)
-                .Select(c => new { c.Id, c.Front })
-                .ToListAsync();
+        // Detect collisions: existing cards already at `to` with the same Front
+        var movingFronts = cards.Select(c => c.Front).ToList();
+        var collidingFronts = await db.Cards
+            .Where(c => c.UserId == userId && c.SourceFile == trimmedTo && movingFronts.Contains(c.Front))
+            .Select(c => c.Front)
+            .ToListAsync();
+        var collidingSet = collidingFronts.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            if (cards.Count == 0)
-            {
-                results.Add(new RenameSourcePairResult(from, to, 0, 0));
-                continue;
-            }
+        var movableIds = cards
+            .Where(c => !collidingSet.Contains(c.Front))
+            .Select(c => c.Id)
+            .ToList();
+        var skipped = cards.Count - movableIds.Count;
 
-            // Detect collisions: existing cards already at `to` with the same Front
-            var movingFronts = cards.Select(c => c.Front).ToList();
-            var collidingFronts = await db.Cards
-                .Where(c => c.UserId == userId && c.SourceFile == to && movingFronts.Contains(c.Front))
-                .Select(c => c.Front)
-                .ToListAsync();
-            var collidingSet = collidingFronts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var renamed = movableIds.Count > 0
+            ? await db.Cards
+                .Where(c => c.UserId == userId && movableIds.Contains(c.Id))
+                .ExecuteUpdateAsync(s => s.SetProperty(c => c.SourceFile, trimmedTo))
+            : 0;
 
-            var movableIds = cards
-                .Where(c => !collidingSet.Contains(c.Front))
-                .Select(c => c.Id)
-                .ToList();
-            var skipped = cards.Count - movableIds.Count;
-
-            var renamed = movableIds.Count > 0
-                ? await db.Cards
-                    .Where(c => c.UserId == userId && movableIds.Contains(c.Id))
-                    .ExecuteUpdateAsync(s => s.SetProperty(c => c.SourceFile, to))
-                : 0;
-
-            totalRenamed += renamed;
-            totalSkipped += skipped;
-            results.Add(new RenameSourcePairResult(from, to, renamed, skipped));
-        }
-
-        return new RenameSourcesResponse(totalRenamed, totalSkipped, results);
+        return new RenameSourceResult(renamed, skipped);
     }
 
     public async Task<int> DeleteCardsBySource(string userId, string sourceFile)

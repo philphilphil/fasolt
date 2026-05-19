@@ -119,16 +119,13 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Rename the sourceFile of cards in bulk. Each pair {from, to} updates all cards whose sourceFile exactly equals `from` to `to`. Use this when the user has moved or renamed notes in their vault — much faster than list_cards + update_cards loops. Matching is exact and case-sensitive. Cards that would collide with an existing card at the destination (same sourceFile + front) are skipped and reported in `skipped`.")]
+    [McpServerTool, Description("Rename the sourceFile of every card whose sourceFile exactly equals `from` to `to`. Use this when the user has moved or renamed a note in their vault — one call instead of list_cards + update_cards. Matching is exact and case-sensitive. To rename several files, call this tool once per file. Cards whose front would collide with an existing card already at `to` are left untouched and counted in `skipped`.")]
     public async Task<string> RenameSourceFile(
-        [Description("Array of {from, to} pairs. Each renames every card with sourceFile == from to sourceFile == to.")] List<RenameSourcePair> pairs)
+        [Description("Existing source file path to match exactly.")] string from,
+        [Description("New source file path to set on matching cards.")] string to)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-
-        if (pairs.Count == 0)
-            return JsonSerializer.Serialize(new { error = "Provide at least one rename pair" }, McpJson.Options);
-
-        var result = await cardService.RenameSources(userId, pairs);
+        var result = await cardService.RenameSource(userId, from, to);
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
