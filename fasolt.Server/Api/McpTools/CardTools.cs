@@ -18,15 +18,19 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("List all cards, optionally filtered by source file or deck. Supports cursor-based pagination.")]
+    [McpServerTool, Description("List cards with slim metadata (id, front, back, sourceFile, sourceHeading, isSuspended, decks, createdAt). To pull FSRS scheduling fields or SVG image content across many cards in one call, pass `include`. Do NOT loop over results calling get_card — use include instead. Supports cursor-based pagination via the `after` parameter.")]
     public async Task<string> ListCards(
         [Description("Filter by source file name")] string? sourceFile = null,
         [Description("Filter by deck ID")] string? deckId = null,
         [Description("Max results to return (1-200, default 50)")] int? limit = null,
-        [Description("Cursor from previous page's nextCursor field")] string? after = null)
+        [Description("Cursor from previous page's nextCursor field")] string? after = null,
+        [Description("Optional opt-in extras. Pass only what you actually need. Valid values: \"srs\" adds FSRS scheduling fields (state, dueAt, stability, difficulty, step, lastReviewedAt) — request when the task involves due dates, difficulty, or learning state. \"svg\" adds frontSvg and backSvg image blobs — only request when you specifically need to read or write the SVG content (e.g. regenerating diagrams). The blobs can be hundreds of KB each; a user asking for a 'full audit' of text content does not need svg.")] string[]? include = null)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
-        var result = await cardService.ListCards(userId, sourceFile, deckId, limit, after);
+        var includeSet = include is null
+            ? new HashSet<string>()
+            : new HashSet<string>(include, StringComparer.OrdinalIgnoreCase);
+        var result = await cardService.ListCards(userId, sourceFile, deckId, limit, after, includeSet);
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 

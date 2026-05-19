@@ -13,7 +13,7 @@ public record UpdateCardRequest(
     List<string>? DeckIds = null);
 public record CardDto(
     string Id, string? SourceFile, string? SourceHeading,
-    string Front, string Back, string State,
+    string Front, string Back, string? State,
     DateTimeOffset CreatedAt, List<CardDeckInfoDto> Decks,
     bool IsSuspended = false,
     DateTimeOffset? DueAt = null, double? Stability = null,
