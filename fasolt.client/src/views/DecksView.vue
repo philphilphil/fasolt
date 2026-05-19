@@ -50,7 +50,7 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
 <template>
   <div class="decks-page">
     <header class="decks-head">
-      <h1 class="page-title fa-serif">Decks</h1>
+      <h1 class="page-title">Decks</h1>
       <div class="head-actions">
         <Dialog v-model:open="dialogOpen">
           <DialogTrigger as-child>
@@ -169,13 +169,6 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-}
-.page-title {
-  font-size: 34px;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  margin: 0;
-  color: var(--ink-0);
 }
 .head-actions { display: flex; gap: 8px; }
 .decks-meta {

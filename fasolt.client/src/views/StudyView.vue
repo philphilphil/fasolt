@@ -318,10 +318,14 @@ function streakBarTitle(b: StreakBar): string {
 .hero-due {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   min-height: 280px;
 }
-.hero-due-stack { margin-top: 0; }
+.hero-due-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
 .hero-number-wrap {
   display: flex;
   align-items: flex-end;

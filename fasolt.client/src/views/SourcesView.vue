@@ -12,9 +12,9 @@ onMounted(() => sourcesStore.fetchSources())
 </script>
 
 <template>
-  <div class="space-y-5">
+  <div class="sources-page">
     <div>
-      <h1 class="text-lg font-bold tracking-tight">Sources</h1>
+      <h1 class="page-title">Sources</h1>
       <p class="text-sm text-muted-foreground mt-1">
         Files your cards were created from.
       </p>
@@ -48,3 +48,12 @@ onMounted(() => sourcesStore.fetchSources())
     </div>
   </div>
 </template>
+
+<style scoped>
+.sources-page {
+  padding: 28px 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+</style>

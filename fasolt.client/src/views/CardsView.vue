@@ -150,7 +150,7 @@ async function onDeckMembershipChanged() {
   <div class="cards-page">
     <header class="cards-head">
       <div class="cards-title">
-        <h1 class="page-title fa-serif">Cards</h1>
+        <h1 class="page-title">Cards</h1>
         <span class="fa-mono cards-summary">
           {{ totalCards.toLocaleString() }} total ·
           {{ stateCounts.review }} review ·
@@ -303,7 +303,7 @@ async function onDeckMembershipChanged() {
 
 <style scoped>
 .cards-page {
-  padding: 24px 0 40px;
+  padding: 28px 0 40px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -320,13 +320,6 @@ async function onDeckMembershipChanged() {
   align-items: baseline;
   gap: 14px;
   flex-wrap: wrap;
-}
-.page-title {
-  font-size: 34px;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  margin: 0;
-  color: var(--ink-0);
 }
 .cards-summary { font-size: 12px; color: var(--ink-2); }
 .head-actions { display: flex; gap: 8px; }

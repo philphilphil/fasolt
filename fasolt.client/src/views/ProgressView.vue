@@ -175,7 +175,7 @@ const ratingMixTotal = computed(() => {
   <div class="progress-page">
     <header class="progress-head">
       <div>
-        <h1 class="page-title fa-serif">Progress</h1>
+        <h1 class="page-title">Progress</h1>
         <p class="progress-sub">
           <template v-if="progress">
             <strong>{{ windowActiveDays }} active days</strong>
@@ -376,13 +376,6 @@ const ratingMixTotal = computed(() => {
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
-}
-.page-title {
-  font-size: 34px;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  margin: 0;
-  color: var(--ink-0);
 }
 .progress-sub {
   font-size: 14px;
