@@ -22,16 +22,17 @@ struct OnboardingView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                         Text("Fasolt")
                             .font(.largeTitle.bold())
+                            .foregroundStyle(FasoltTheme.ink0)
                         Text("Spaced repetition for your notes")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(FasoltTheme.ink2)
                     }
 
                     if showServerField {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Server URL")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(FasoltTheme.ink2)
                             TextField("https://fasolt.app", text: $serverURL)
                                 .textFieldStyle(.roundedBorder)
                                 .textContentType(.URL)

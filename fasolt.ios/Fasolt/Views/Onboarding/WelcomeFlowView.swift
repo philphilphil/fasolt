@@ -79,7 +79,7 @@ private struct HowItWorksStep: View {
                     .font(.title.bold())
                 Text("powered by your AI.")
                     .font(.title.bold())
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(FasoltTheme.accent)
             }
             .multilineTextAlignment(.center)
 
@@ -107,7 +107,7 @@ private struct HowItWorksStep: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(.blue)
+                .foregroundStyle(FasoltTheme.accent)
                 .frame(width: 28, alignment: .center)
             Text(text)
                 .font(.body)
@@ -125,7 +125,7 @@ private struct WhatYouNeedStep: View {
 
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 72, weight: .light))
-                .foregroundStyle(.blue)
+                .foregroundStyle(FasoltTheme.accent)
                 .frame(height: 88)
 
             Text("You'll need an AI client.")
@@ -164,8 +164,8 @@ private struct WhatYouNeedStep: View {
             .font(.caption.weight(.medium))
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(Color.blue.opacity(0.12), in: Capsule())
-            .foregroundStyle(Color.blue)
+            .background(FasoltTheme.accentSoft, in: Capsule())
+            .foregroundStyle(FasoltTheme.accent)
     }
 }
 
