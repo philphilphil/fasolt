@@ -51,8 +51,8 @@ function copyToClipboard(text: string, key: string) {
     </nav>
 
     <main :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'">
-      <div class="flex flex-col gap-6">
-        <h1 class="text-2xl font-bold tracking-tight">MCP Setup</h1>
+      <div :class="auth.isAuthenticated ? 'mcp-page' : 'flex flex-col gap-6'">
+        <h1 class="page-title">MCP Setup</h1>
 
         <p class="text-sm text-muted-foreground leading-relaxed">
           Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client.
@@ -200,6 +200,12 @@ function copyToClipboard(text: string, key: string) {
 </template>
 
 <style scoped>
+.mcp-page {
+  padding: 28px 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
 .mcp-accordion {
   display: flex;
   flex-direction: column;

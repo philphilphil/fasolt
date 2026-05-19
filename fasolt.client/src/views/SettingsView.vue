@@ -186,8 +186,8 @@ async function savePassword() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
+  <div class="settings-page">
+    <h1 class="page-title">Settings</h1>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       <div class="flex flex-col gap-6">
@@ -380,3 +380,13 @@ async function savePassword() {
 
   </div>
 </template>
+
+<style scoped>
+.settings-page {
+  padding: 28px 0 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+</style>
+
