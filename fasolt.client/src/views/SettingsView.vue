@@ -154,7 +154,7 @@ async function savePassword() {
   <div class="settings-page">
     <h1 class="page-title">Settings</h1>
 
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div class="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
       <div class="flex flex-col gap-6">
         <Card class="border-border/60">
           <CardHeader>
@@ -178,6 +178,52 @@ async function savePassword() {
               <span v-else-if="auth.isExternalAccount" class="font-medium">{{ auth.user?.externalProvider }}</span>
               <span v-else class="font-medium">Email &amp; password</span>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card v-if="!auth.isExternalAccount" class="border-border/60">
+          <CardHeader>
+            <CardTitle class="text-base">Email address</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
+              <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Verification email sent. Check your inbox to confirm the change.</div>
+              <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ emailError }}</div>
+              <div class="flex flex-col gap-1.5">
+                <label for="new-email" class="text-sm font-medium">New email</label>
+                <Input id="new-email" v-model="newEmail" type="email" required />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label for="email-password" class="text-sm font-medium">Current password</label>
+                <Input id="email-password" v-model="emailCurrentPassword" type="password" required autocomplete="off" />
+              </div>
+              <Button type="submit" size="sm" class="self-start text-sm">Update email</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card v-if="!auth.isExternalAccount" class="border-border/60">
+          <CardHeader>
+            <CardTitle class="text-base">Change password</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form class="flex flex-col gap-3" @submit.prevent="savePassword">
+              <div v-if="passwordSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Password changed.</div>
+              <div v-if="passwordError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ passwordError }}</div>
+              <div class="flex flex-col gap-1.5">
+                <label for="current-password" class="text-sm font-medium">Current password</label>
+                <Input id="current-password" v-model="currentPassword" type="password" required autocomplete="current-password" />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label for="new-password" class="text-sm font-medium">New password</label>
+                <Input id="new-password" v-model="newPassword" type="password" required autocomplete="new-password" />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label for="confirm-new-password" class="text-sm font-medium">Confirm new password</label>
+                <Input id="confirm-new-password" v-model="confirmNewPassword" type="password" required autocomplete="new-password" />
+              </div>
+              <Button type="submit" size="sm" class="self-start text-sm">Change password</Button>
+            </form>
           </CardContent>
         </Card>
       </div>
@@ -229,54 +275,6 @@ async function savePassword() {
 
               <Button type="submit" size="sm" class="self-start text-sm">Save scheduling settings</Button>
             </template>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-
-    <div v-if="!auth.isExternalAccount" class="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-      <Card class="border-border/60">
-        <CardHeader>
-          <CardTitle class="text-base">Email address</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form class="flex flex-col gap-3" @submit.prevent="saveEmail">
-            <div v-if="emailSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Verification email sent. Check your inbox to confirm the change.</div>
-            <div v-if="emailError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ emailError }}</div>
-            <div class="flex flex-col gap-1.5">
-              <label for="new-email" class="text-sm font-medium">New email</label>
-              <Input id="new-email" v-model="newEmail" type="email" required />
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label for="email-password" class="text-sm font-medium">Current password</label>
-              <Input id="email-password" v-model="emailCurrentPassword" type="password" required autocomplete="off" />
-            </div>
-            <Button type="submit" size="sm" class="self-start text-sm">Update email</Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card class="border-border/60">
-        <CardHeader>
-          <CardTitle class="text-base">Change password</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form class="flex flex-col gap-3" @submit.prevent="savePassword">
-            <div v-if="passwordSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">Password changed.</div>
-            <div v-if="passwordError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ passwordError }}</div>
-            <div class="flex flex-col gap-1.5">
-              <label for="current-password" class="text-sm font-medium">Current password</label>
-              <Input id="current-password" v-model="currentPassword" type="password" required autocomplete="current-password" />
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label for="new-password" class="text-sm font-medium">New password</label>
-              <Input id="new-password" v-model="newPassword" type="password" required autocomplete="new-password" />
-            </div>
-            <div class="flex flex-col gap-1.5">
-              <label for="confirm-new-password" class="text-sm font-medium">Confirm new password</label>
-              <Input id="confirm-new-password" v-model="confirmNewPassword" type="password" required autocomplete="new-password" />
-            </div>
-            <Button type="submit" size="sm" class="self-start text-sm">Change password</Button>
           </form>
         </CardContent>
       </Card>
