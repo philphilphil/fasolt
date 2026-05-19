@@ -27,19 +27,23 @@ struct CardView: View {
                     .opacity(showAnswer ? 1 : 0.45)
 
                 VStack(spacing: 0) {
-                    // Header: label + source file
+                    // Header: label + card id
                     HStack(alignment: .firstTextBaseline) {
                         CapsLabel(text: label, color: FasoltTheme.accent, size: 11)
                         Spacer(minLength: 8)
-                        if let sourceFile {
-                            HStack(spacing: 4) {
-                                Image(systemName: "doc.text")
-                                    .font(.system(size: 10))
-                                Text(sourceFile)
+                        if let cardId {
+                            Button {
+                                UIPasteboard.general.string = cardId
+                                idCopied = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    idCopied = false
+                                }
+                            } label: {
+                                Text(idCopied ? "Copied!" : String(cardId.prefix(8)))
                                     .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(FasoltTheme.ink3)
                             }
-                            .foregroundStyle(FasoltTheme.ink2)
-                            .lineLimit(1)
+                            .buttonStyle(.plain)
                         }
                     }
                     .padding(.horizontal, 22)
@@ -78,35 +82,22 @@ struct CardView: View {
                     .scrollBounceBehavior(.basedOnSize)
                     .frame(maxHeight: .infinity)
 
-                    // Footer
-                    HStack(alignment: .firstTextBaseline) {
-                        if !showAnswer {
-                            Text("tap to reveal")
+                    // Footer: source file (full width, wraps upward as needed)
+                    if let sourceFile {
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Image(systemName: "doc.text")
                                 .font(.system(size: 11))
-                                .foregroundStyle(FasoltTheme.ink2)
-                                .frame(maxWidth: .infinity, alignment: .trailing)
+                            Text(sourceFile)
+                                .font(.system(size: 11, design: .monospaced))
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
                         }
-
-                        Spacer(minLength: 6)
-
-                        if let cardId {
-                            Button {
-                                UIPasteboard.general.string = cardId
-                                idCopied = true
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    idCopied = false
-                                }
-                            } label: {
-                                Text(idCopied ? "Copied!" : String(cardId.prefix(8)))
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .foregroundStyle(FasoltTheme.ink3)
-                            }
-                            .buttonStyle(.plain)
-                        }
+                        .foregroundStyle(FasoltTheme.ink2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 22)
+                        .padding(.bottom, 14)
+                        .padding(.top, 8)
                     }
-                    .padding(.horizontal, 22)
-                    .padding(.bottom, 14)
-                    .padding(.top, 8)
                 }
             }
         }
