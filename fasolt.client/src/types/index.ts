@@ -1,7 +1,6 @@
 export interface Card {
   id: string
   sourceFile: string | null
-  sourceHeading: string | null
   front: string
   back: string
   frontSvg: string | null
@@ -44,7 +43,6 @@ export interface DeckCard {
   front: string
   back: string
   sourceFile: string | null
-  sourceHeading: string | null
   state: string
   dueAt: string | null
   isSuspended: boolean
@@ -57,7 +55,6 @@ export interface DueCard {
   front: string
   back: string
   sourceFile: string | null
-  sourceHeading: string | null
   state: string
   frontSvg: string | null
   backSvg: string | null

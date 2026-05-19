@@ -20,10 +20,9 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var card = await svc.CreateCard(UserId, "What is X?", "X is Y.", "notes.md", "Introduction");
+        var card = await svc.CreateCard(UserId, "What is X?", "X is Y.", "notes.md");
 
         card.SourceFile.Should().Be("notes.md");
-        card.SourceHeading.Should().Be("Introduction");
         card.Front.Should().Be("What is X?");
         card.Back.Should().Be("X is Y.");
     }
@@ -36,7 +35,7 @@ public class CardServiceTests : IAsyncLifetime
         var deckSvc = new DeckService(db);
 
         var deck = await deckSvc.CreateDeck(UserId, "Target Deck", null);
-        var card = await cardSvc.CreateCard(UserId, "Q?", "A.", null, null, deckId: deck.Id);
+        var card = await cardSvc.CreateCard(UserId, "Q?", "A.", null, deckId: deck.Id);
 
         card.Decks.Should().ContainSingle(d => d.Id == deck.Id);
     }
@@ -47,7 +46,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var act = () => svc.CreateCard(UserId, "Q?", "A.", null, null, deckId: "nonexistent");
+        var act = () => svc.CreateCard(UserId, "Q?", "A.", null, deckId: "nonexistent");
 
         await act.Should().ThrowAsync<KeyNotFoundException>();
     }
@@ -58,7 +57,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var card = await svc.CreateCard(UserId, "Capital of France?", "Paris", null, null);
+        var card = await svc.CreateCard(UserId, "Capital of France?", "Paris", null);
 
         card.SourceFile.Should().BeNull();
         card.Front.Should().Be("Capital of France?");
@@ -70,8 +69,8 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Front A", "Back A", "file-a.md", null);
-        await svc.CreateCard(UserId, "Front B", "Back B", "file-b.md", null);
+        await svc.CreateCard(UserId, "Front A", "Back A", "file-a.md");
+        await svc.CreateCard(UserId, "Front B", "Back B", "file-b.md");
 
         var result = await svc.ListCards(UserId, sourceFile: "file-a.md", deckId: null, limit: null, after: null);
 
@@ -87,7 +86,7 @@ public class CardServiceTests : IAsyncLifetime
         var deckSvc = new DeckService(db);
 
         var deck = await deckSvc.CreateDeck(UserId, "Test Deck", null);
-        var card = await cardSvc.CreateCard(UserId, "Deck Q?", "Deck A.", null, null);
+        var card = await cardSvc.CreateCard(UserId, "Deck Q?", "Deck A.", null);
         await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
 
         var result = await cardSvc.ListCards(UserId, sourceFile: null, deckId: deck.Id, limit: null, after: null);
@@ -101,7 +100,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Q with svg", "A with svg", "slim.md", null,
+        await svc.CreateCard(UserId, "Q with svg", "A with svg", "slim.md",
             frontSvg: "<svg><rect/></svg>", backSvg: "<svg><circle/></svg>");
 
         var result = await svc.ListCards(UserId, sourceFile: "slim.md", deckId: null,
@@ -126,7 +125,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Q srs", "A srs", "srs.md", null,
+        await svc.CreateCard(UserId, "Q srs", "A srs", "srs.md",
             frontSvg: "<svg/>", backSvg: "<svg/>");
 
         var result = await svc.ListCards(UserId, sourceFile: "srs.md", deckId: null,
@@ -144,7 +143,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Q svg", "A svg", "svg.md", null,
+        await svc.CreateCard(UserId, "Q svg", "A svg", "svg.md",
             frontSvg: "<svg><rect/></svg>", backSvg: "<svg><circle/></svg>");
 
         var result = await svc.ListCards(UserId, sourceFile: "svg.md", deckId: null,
@@ -163,7 +162,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Q rest", "A rest", "rest.md", null,
+        await svc.CreateCard(UserId, "Q rest", "A rest", "rest.md",
             frontSvg: "<svg/>", backSvg: "<svg/>");
 
         var result = await svc.ListCards(UserId, sourceFile: "rest.md", deckId: null,
@@ -243,7 +242,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var card = await svc.CreateCard(UserId, "To delete", "Gone", null, null);
+        var card = await svc.CreateCard(UserId, "To delete", "Gone", null);
 
         var deleted = await svc.DeleteCard(UserId, card.Id);
         deleted.Should().BeTrue();
@@ -258,9 +257,9 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var a = await svc.CreateCard(UserId, "A", "A", null, null);
-        var b = await svc.CreateCard(UserId, "B", "B", null, null);
-        var c = await svc.CreateCard(UserId, "C", "C", null, null);
+        var a = await svc.CreateCard(UserId, "A", "A", null);
+        var b = await svc.CreateCard(UserId, "B", "B", null);
+        var c = await svc.CreateCard(UserId, "C", "C", null);
 
         var count = await svc.DeleteCards(UserId, [a.Id, b.Id]);
 
@@ -276,7 +275,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var card = await svc.CreateCard(UserId, "Old front", "Old back", "notes.md", "Heading");
+        var card = await svc.CreateCard(UserId, "Old front", "Old back", "notes.md");
 
         // Simulate some SRS state by updating directly
         var entity = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
@@ -308,8 +307,8 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Existing front", "Back A", "notes.md", null);
-        var cardB = await svc.CreateCard(UserId, "Other front", "Back B", "notes.md", null);
+        await svc.CreateCard(UserId, "Existing front", "Back A", "notes.md");
+        var cardB = await svc.CreateCard(UserId, "Other front", "Back B", "notes.md");
 
         // Try to rename cardB's front to collide with existing card
         var result = await svc.UpdateCardFields(UserId, cardB.Id,
@@ -325,8 +324,8 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Same front", "Back A", "notes.md", null);
-        var cardB = await svc.CreateCard(UserId, "Same front", "Back B", "other.md", null);
+        await svc.CreateCard(UserId, "Same front", "Back A", "notes.md");
+        var cardB = await svc.CreateCard(UserId, "Same front", "Back B", "other.md");
 
         // Move cardB to notes.md — collides with existing card
         var result = await svc.UpdateCardFields(UserId, cardB.Id,
@@ -343,7 +342,7 @@ public class CardServiceTests : IAsyncLifetime
 
         // Create 5 cards
         for (var i = 1; i <= 5; i++)
-            await svc.CreateCard(UserId, $"Page {i}", $"Back {i}", "page.md", null);
+            await svc.CreateCard(UserId, $"Page {i}", $"Back {i}", "page.md");
 
         var page1 = await svc.ListCards(UserId, sourceFile: null, deckId: null, limit: 2, after: null);
 
@@ -372,7 +371,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var card = await svc.CreateCard(UserId, "Reset Q", "Reset A", null, null);
+        var card = await svc.CreateCard(UserId, "Reset Q", "Reset A", null);
 
         // Simulate SRS state
         var entity = await db.Cards.FindAsync(db.Cards.First(c => c.PublicId == card.Id).Id);
@@ -412,8 +411,8 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var a = await svc.CreateCard(UserId, "BU-A", "Old A", "bulk.md", null);
-        var b = await svc.CreateCard(UserId, "BU-B", "Old B", "bulk.md", null);
+        var a = await svc.CreateCard(UserId, "BU-A", "Old A", "bulk.md");
+        var b = await svc.CreateCard(UserId, "BU-B", "Old B", "bulk.md");
 
         var results = await svc.BulkUpdateCards(UserId,
         [
@@ -433,7 +432,7 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        var card = await svc.CreateCard(UserId, "Exists", "Back", "mix.md", null);
+        var card = await svc.CreateCard(UserId, "Exists", "Back", "mix.md");
 
         var results = await svc.BulkUpdateCards(UserId,
         [
@@ -452,9 +451,9 @@ public class CardServiceTests : IAsyncLifetime
         await using var db = _db.CreateDbContext();
         var svc = new CardService(db);
 
-        await svc.CreateCard(UserId, "Q1", "A1", "target.md", null);
-        await svc.CreateCard(UserId, "Q2", "A2", "target.md", null);
-        await svc.CreateCard(UserId, "Q3", "A3", "other.md", null);
+        await svc.CreateCard(UserId, "Q1", "A1", "target.md");
+        await svc.CreateCard(UserId, "Q2", "A2", "target.md");
+        await svc.CreateCard(UserId, "Q3", "A3", "other.md");
 
         var count = await svc.DeleteCardsBySource(UserId, "target.md");
 
@@ -484,7 +483,7 @@ public class CardServiceTests : IAsyncLifetime
 
         var longFront = new string('x', CardService.MaxFrontLength + 1);
 
-        var act = () => svc.CreateCard(UserId, longFront, "Back", null, null);
+        var act = () => svc.CreateCard(UserId, longFront, "Back", null);
 
         await act.Should().ThrowAsync<System.ComponentModel.DataAnnotations.ValidationException>()
             .WithMessage("*Front*maximum*");
@@ -498,24 +497,10 @@ public class CardServiceTests : IAsyncLifetime
 
         var longBack = new string('x', CardService.MaxBackLength + 1);
 
-        var act = () => svc.CreateCard(UserId, "Front", longBack, null, null);
+        var act = () => svc.CreateCard(UserId, "Front", longBack, null);
 
         await act.Should().ThrowAsync<System.ComponentModel.DataAnnotations.ValidationException>()
             .WithMessage("*Back*maximum*");
-    }
-
-    [Fact]
-    public async Task CreateCard_RejectsOversizedSourceHeading()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        var longHeading = new string('x', CardService.MaxSourceHeadingLength + 1);
-
-        var act = () => svc.CreateCard(UserId, "Front", "Back", "file.md", longHeading);
-
-        await act.Should().ThrowAsync<System.ComponentModel.DataAnnotations.ValidationException>()
-            .WithMessage("*Source heading*maximum*");
     }
 
     [Fact]
@@ -526,13 +511,11 @@ public class CardServiceTests : IAsyncLifetime
 
         var front = new string('x', CardService.MaxFrontLength);
         var back = new string('x', CardService.MaxBackLength);
-        var heading = new string('x', CardService.MaxSourceHeadingLength);
 
-        var card = await svc.CreateCard(UserId, front, back, "file.md", heading);
+        var card = await svc.CreateCard(UserId, front, back, "file.md");
 
         card.Front.Should().HaveLength(CardService.MaxFrontLength);
         card.Back.Should().HaveLength(CardService.MaxBackLength);
-        card.SourceHeading.Should().HaveLength(CardService.MaxSourceHeadingLength);
     }
 
     [Fact]

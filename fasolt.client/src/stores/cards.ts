@@ -22,7 +22,6 @@ export const useCardsStore = defineStore('cards', () => {
 
   async function createCard(data: {
     sourceFile?: string
-    sourceHeading?: string
     front: string
     back: string
   }): Promise<Card> {
@@ -39,7 +38,6 @@ export const useCardsStore = defineStore('cards', () => {
     frontSvg?: string | null
     backSvg?: string | null
     sourceFile?: string | null
-    sourceHeading?: string | null
     deckIds?: string[]
   }): Promise<Card> {
     const result = await apiFetch<Card>(`/cards/${id}`, {

@@ -124,7 +124,6 @@ struct PagedCardDetailView: View {
                         front: card.front,
                         back: card.back,
                         sourceFile: card.sourceFile,
-                        sourceHeading: card.sourceHeading,
                         deckIds: deckIds,
                         isSuspended: card.isSuspended
                     ),
@@ -134,7 +133,6 @@ struct PagedCardDetailView: View {
                             front: request.front,
                             back: request.back,
                             sourceFile: request.sourceFile,
-                            sourceHeading: request.sourceHeading,
                             deckIds: deckIds
                         )
                         try await onSaveEdit(card.id, updateRequest)

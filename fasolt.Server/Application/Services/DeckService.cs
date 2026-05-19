@@ -56,7 +56,7 @@ public class DeckService(AppDbContext db)
         var cards = await db.DeckCards
             .Where(dc => dc.DeckId == deck.Id)
             .OrderBy(dc => dc.Card.DueAt)
-            .Select(dc => new DeckCardDto(dc.Card.PublicId, dc.Card.Front, dc.Card.Back, dc.Card.SourceFile, dc.Card.SourceHeading, dc.Card.State, dc.Card.DueAt, dc.Card.IsSuspended, dc.Card.Stability, dc.Card.Difficulty, dc.Card.Step, dc.Card.LastReviewedAt, dc.Card.FrontSvg, dc.Card.BackSvg))
+            .Select(dc => new DeckCardDto(dc.Card.PublicId, dc.Card.Front, dc.Card.Back, dc.Card.SourceFile, dc.Card.State, dc.Card.DueAt, dc.Card.IsSuspended, dc.Card.Stability, dc.Card.Difficulty, dc.Card.Step, dc.Card.LastReviewedAt, dc.Card.FrontSvg, dc.Card.BackSvg))
             .ToListAsync();
 
         var dueCount = cards.Count(c => !c.IsSuspended && (c.DueAt == null || c.DueAt <= now));

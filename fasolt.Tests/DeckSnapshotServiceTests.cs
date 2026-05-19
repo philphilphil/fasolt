@@ -103,7 +103,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var deckSvc = new DeckService(db);
 
         var deck = await deckSvc.CreateDeck(UserId, "Field Test", "Test desc");
-        var card = await cardSvc.CreateCard(UserId, "Front", "Back", "source.md", "## Heading");
+        var card = await cardSvc.CreateCard(UserId, "Front", "Back", "source.md");
         await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
 
         // Set FSRS and suspension state on the card entity directly
@@ -132,7 +132,6 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         sc.Front.Should().Be("Front");
         sc.Back.Should().Be("Back");
         sc.SourceFile.Should().Be("source.md");
-        sc.SourceHeading.Should().Be("## Heading");
         sc.Stability.Should().Be(12.5);
         sc.Difficulty.Should().Be(0.3);
         sc.Step.Should().Be(2);
@@ -734,12 +733,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             await svc.CreateAll(UserId);
         }
 
-        // Change only sourceFile and sourceHeading
+        // Change only sourceFile
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.SourceFile = "new-source.md";
-            card.SourceHeading = "## New Heading";
             await db.SaveChangesAsync();
         }
 
@@ -1270,7 +1268,6 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed front";
             card.SourceFile = "new-source.md";
-            card.SourceHeading = "## New Section";
             await db.SaveChangesAsync();
         }
 
@@ -1287,7 +1284,6 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
         restored.Front.Should().Be("Restore KeepSource Q0", "content should be reverted");
         restored.SourceFile.Should().Be("new-source.md", "source metadata should NOT be reverted");
-        restored.SourceHeading.Should().Be("## New Section", "source metadata should NOT be reverted");
     }
 
     [Fact]

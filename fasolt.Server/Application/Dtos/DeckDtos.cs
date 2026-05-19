@@ -12,7 +12,7 @@ public record SetDeckSuspendedRequest(bool IsSuspended);
 
 public record DeckCardDto(
     string Id, string Front, string Back,
-    string? SourceFile, string? SourceHeading,
+    string? SourceFile,
     string State, DateTimeOffset? DueAt,
     bool IsSuspended = false,
     double? Stability = null, double? Difficulty = null,

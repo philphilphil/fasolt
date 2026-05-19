@@ -21,18 +21,16 @@ class CardRepository(private val api: FasoltApi) {
         front: String,
         back: String,
         sourceFile: String? = null,
-        sourceHeading: String? = null,
         deckId: String? = null,
-    ): CardDto = api.createCard(CreateCardRequest(front, back, sourceFile, sourceHeading, deckId))
+    ): CardDto = api.createCard(CreateCardRequest(front, back, sourceFile, deckId))
 
     suspend fun update(
         id: String,
         front: String,
         back: String,
         sourceFile: String? = null,
-        sourceHeading: String? = null,
         deckIds: List<String>? = null,
-    ): CardDto = api.updateCard(id, UpdateCardRequest(front, back, sourceFile, sourceHeading, deckIds))
+    ): CardDto = api.updateCard(id, UpdateCardRequest(front, back, sourceFile, deckIds))
 
     suspend fun delete(id: String) = api.deleteCard(id)
 

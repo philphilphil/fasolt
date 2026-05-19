@@ -23,7 +23,6 @@ struct CardDTO: Decodable, Sendable, Identifiable {
     let front: String
     let back: String
     let sourceFile: String?
-    let sourceHeading: String?
     let state: String
     let dueAt: String?
     let stability: Double?
@@ -70,7 +69,6 @@ struct DeckCardDTO: Decodable, Sendable, Identifiable {
     let front: String
     let back: String
     let sourceFile: String?
-    let sourceHeading: String?
     let state: String
     let dueAt: String?
     let isSuspended: Bool
@@ -89,7 +87,6 @@ struct DueCardDTO: Decodable, Sendable {
     let front: String
     let back: String
     let sourceFile: String?
-    let sourceHeading: String?
     let state: String
     let frontSvg: String?
     let backSvg: String?
@@ -217,7 +214,6 @@ struct CreateCardRequest: Encodable, Sendable {
     let front: String
     let back: String
     let sourceFile: String?
-    let sourceHeading: String?
     let deckId: String?
 }
 
@@ -225,7 +221,6 @@ struct UpdateCardRequest: Encodable, Sendable {
     let front: String
     let back: String
     let sourceFile: String?
-    let sourceHeading: String?
     let deckIds: [String]?
 }
 

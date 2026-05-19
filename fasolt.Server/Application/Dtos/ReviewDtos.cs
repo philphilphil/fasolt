@@ -6,7 +6,7 @@ public record RateCardResponse(string CardId, double? Stability, double? Difficu
 
 public record DueCardDto(
     string Id, string Front, string Back,
-    string? SourceFile, string? SourceHeading,
+    string? SourceFile,
     string State,
     string? FrontSvg = null, string? BackSvg = null);
 

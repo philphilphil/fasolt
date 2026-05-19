@@ -140,7 +140,6 @@ struct StudyView: View {
                     label: viewModel.isFlipped ? "Answer" : "Question",
                     text: viewModel.isFlipped ? card.back : card.front,
                     sourceFile: card.sourceFile,
-                    sourceHeading: viewModel.isFlipped ? card.sourceHeading : nil,
                     svg: viewModel.isFlipped ? card.backSvg : card.frontSvg,
                     cardId: card.id,
                     questionText: viewModel.isFlipped ? card.front : nil,

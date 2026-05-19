@@ -33,13 +33,9 @@ function openEdit(cardId: string) {
 
     <header class="card-head">
       <span class="fa-cap card-label">{{ isFlipped ? 'Answer' : 'Question' }}</span>
-      <div v-if="card.sourceFile || card.sourceHeading" class="card-source">
+      <div v-if="card.sourceFile" class="card-source">
         <FileText :size="12" />
-        <span v-if="card.sourceFile" class="fa-mono">{{ card.sourceFile }}</span>
-        <template v-if="card.sourceFile && card.sourceHeading">
-          <span class="card-source-sep">›</span>
-        </template>
-        <span v-if="card.sourceHeading" class="fa-mono card-source-heading">{{ card.sourceHeading }}</span>
+        <span class="fa-mono">{{ card.sourceFile }}</span>
       </div>
     </header>
 

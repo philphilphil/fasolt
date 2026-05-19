@@ -35,7 +35,6 @@ public record AccountExportCard(
     string? FrontSvg,
     string? BackSvg,
     string? SourceFile,
-    string? SourceHeading,
     string State,
     double? Stability,
     double? Difficulty,

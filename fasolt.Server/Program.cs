@@ -378,8 +378,8 @@ builder.Services.AddMcpServer(options =>
     {
         options.ServerInstructions = """
             Fasolt is a spaced-repetition flashcard app. Use these tools to create and
-            manage cards — either extracted from the user's notes (with sourceFile /
-            sourceHeading provenance) or generated directly. Users review the resulting
+            manage cards — either extracted from the user's notes (with sourceFile
+            provenance) or generated directly. Users review the resulting
             cards on the web/iOS app.
 
             # Card text format

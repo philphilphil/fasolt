@@ -14,10 +14,10 @@ function makeCard(overrides: Partial<{
   state: 'new' | 'learning' | 'review' | 'relearning';
   stability: number | null; difficulty: number | null;
   step: number | null; dueAt: string | null; lastReviewedAt: string | null;
-  sourceFile: string | null; sourceHeading: string | null;
+  sourceFile: string | null;
 }> = {}) {
   return {
-    id: 'c1', sourceFile: null, sourceHeading: null,
+    id: 'c1', sourceFile: null,
     front: 'Q', back: 'A', frontSvg: null, backSvg: null,
     createdAt: '2024-01-01T00:00:00Z',
     stability: null, difficulty: null, step: null, dueAt: null,
@@ -106,7 +106,6 @@ describe('cards store', () => {
     const store = useCardsStore()
     const result = await store.createCard({
       sourceFile: 'notes.md',
-      sourceHeading: '## CAP Theorem',
       front: 'Q',
       back: 'A',
     })
@@ -115,7 +114,6 @@ describe('cards store', () => {
       method: 'POST',
       body: JSON.stringify({
         sourceFile: 'notes.md',
-        sourceHeading: '## CAP Theorem',
         front: 'Q',
         back: 'A',
       }),

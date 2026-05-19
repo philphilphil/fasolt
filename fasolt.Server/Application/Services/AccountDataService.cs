@@ -83,7 +83,6 @@ public class AccountDataService(AppDbContext db, IOpenIddictTokenManager tokenMa
                 FrontSvg: c.FrontSvg,
                 BackSvg: c.BackSvg,
                 SourceFile: c.SourceFile,
-                SourceHeading: c.SourceHeading,
                 State: c.State,
                 Stability: c.Stability,
                 Difficulty: c.Difficulty,

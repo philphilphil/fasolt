@@ -73,7 +73,6 @@ class CardFormViewModel(
         front: String,
         back: String,
         sourceFile: String?,
-        sourceHeading: String?,
         deckIds: List<String>,
         onDone: (Boolean) -> Unit,
     ) {
@@ -88,7 +87,6 @@ class CardFormViewModel(
                         front = front,
                         back = back,
                         sourceFile = sourceFile,
-                        sourceHeading = sourceHeading,
                         deckId = deckIds.firstOrNull() ?: initialDeckId,
                     )
                 } else {
@@ -97,7 +95,6 @@ class CardFormViewModel(
                         front = front,
                         back = back,
                         sourceFile = sourceFile,
-                        sourceHeading = sourceHeading,
                         deckIds = deckIds,
                     )
                 }

@@ -18,7 +18,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("List cards with slim metadata (id, front, back, sourceFile, sourceHeading, isSuspended, decks, createdAt). To pull FSRS scheduling fields or SVG image content across many cards in one call, pass `include`. Do NOT loop over results calling get_card — use include instead. Supports cursor-based pagination via the `after` parameter.")]
+    [McpServerTool, Description("List cards with slim metadata (id, front, back, sourceFile, isSuspended, decks, createdAt). To pull FSRS scheduling fields or SVG image content across many cards in one call, pass `include`. Do NOT loop over results calling get_card — use include instead. Supports cursor-based pagination via the `after` parameter.")]
     public async Task<string> ListCards(
         [Description("Filter by source file name")] string? sourceFile = null,
         [Description("Filter by deck ID")] string? deckId = null,
@@ -104,7 +104,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
 
     [McpServerTool, Description("Update one or more existing cards' text or source metadata by cardId. Preserves all review/SRS history.")]
     public async Task<string> UpdateCards(
-        [Description("Array of card updates. Each needs a cardId and at least one field to update (newFront, newBack, newSourceFile, newSourceHeading, newFrontSvg, newBackSvg).")] List<BulkUpdateCardItem> cards)
+        [Description("Array of card updates. Each needs a cardId and at least one field to update (newFront, newBack, newSourceFile, newFrontSvg, newBackSvg).")] List<BulkUpdateCardItem> cards)
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
 

@@ -49,7 +49,7 @@ public class DeckServiceTests : IAsyncLifetime
         var deckSvc = new DeckService(db);
 
         var deck = await deckSvc.CreateDeck(UserId, "Detail Deck", null);
-        var card = await cardSvc.CreateCard(UserId, "Card Q?", "Card A.", "source.md", "## Section");
+        var card = await cardSvc.CreateCard(UserId, "Card Q?", "Card A.", "source.md");
         await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
 
         var detail = await deckSvc.GetDeck(UserId, deck.Id);
@@ -57,7 +57,6 @@ public class DeckServiceTests : IAsyncLifetime
         detail.Should().NotBeNull();
         detail!.Cards.Should().HaveCount(1);
         detail.Cards[0].SourceFile.Should().Be("source.md");
-        detail.Cards[0].SourceHeading.Should().Be("## Section");
     }
 
     [Fact]

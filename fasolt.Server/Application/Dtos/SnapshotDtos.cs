@@ -11,7 +11,6 @@ public record SnapshotCardData(
     string? FrontSvg,
     string? BackSvg,
     string? SourceFile,
-    string? SourceHeading,
     DateTimeOffset CreatedAt,
     double? Stability,
     double? Difficulty,

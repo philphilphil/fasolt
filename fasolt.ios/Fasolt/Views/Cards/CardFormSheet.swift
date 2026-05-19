@@ -11,7 +11,6 @@ struct CardFormSheet: View {
     @State private var front = ""
     @State private var back = ""
     @State private var sourceFile = ""
-    @State private var sourceHeading = ""
     @State private var selectedDeckIds: Set<String> = []
     @State private var isSuspended = false
     @State private var isSaving = false
@@ -19,7 +18,7 @@ struct CardFormSheet: View {
 
     enum Mode {
         case create(initialDeckIds: [String] = [])
-        case edit(front: String, back: String, sourceFile: String?, sourceHeading: String?, deckIds: [String], isSuspended: Bool)
+        case edit(front: String, back: String, sourceFile: String?, deckIds: [String], isSuspended: Bool)
 
         var title: String {
             switch self {
@@ -43,11 +42,10 @@ struct CardFormSheet: View {
         switch mode {
         case .create(let initialDeckIds):
             _selectedDeckIds = State(initialValue: Set(initialDeckIds))
-        case .edit(let front, let back, let sourceFile, let sourceHeading, let deckIds, let isSuspended):
+        case .edit(let front, let back, let sourceFile, let deckIds, let isSuspended):
             _front = State(initialValue: front)
             _back = State(initialValue: back)
             _sourceFile = State(initialValue: sourceFile ?? "")
-            _sourceHeading = State(initialValue: sourceHeading ?? "")
             _selectedDeckIds = State(initialValue: Set(deckIds))
             _isSuspended = State(initialValue: isSuspended)
         }
@@ -77,7 +75,6 @@ struct CardFormSheet: View {
 
                 Section("Source (Optional)") {
                     TextField("Source File", text: $sourceFile)
-                    TextField("Heading", text: $sourceHeading)
                 }
 
                 if !decks.isEmpty {
@@ -153,7 +150,6 @@ struct CardFormSheet: View {
             front: front.trimmingCharacters(in: .whitespacesAndNewlines),
             back: back.trimmingCharacters(in: .whitespacesAndNewlines),
             sourceFile: sourceFile.isEmpty ? nil : sourceFile,
-            sourceHeading: sourceHeading.isEmpty ? nil : sourceHeading,
             deckId: nil
         )
 
@@ -161,7 +157,7 @@ struct CardFormSheet: View {
             // Preserve deck order matching `decks` so the first selection is stable.
             let ordered = decks.map(\.id).filter { selectedDeckIds.contains($0) }
             try await onSave(request, ordered)
-            if case .edit(_, _, _, _, _, let wasSuspended) = mode, wasSuspended != isSuspended {
+            if case .edit(_, _, _, _, let wasSuspended) = mode, wasSuspended != isSuspended {
                 try await onToggleSuspended?(isSuspended)
             }
             dismiss()

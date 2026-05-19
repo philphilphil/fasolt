@@ -81,7 +81,6 @@ public static class DevSeedHistory
                 FrontSvg = spec.FrontSvg,
                 BackSvg = spec.BackSvg,
                 SourceFile = "visual-notes.md",
-                SourceHeading = spec.Heading,
                 State = "new",
                 CreatedAt = now.AddDays(-ageDays).AddMinutes(rng.Next(0, 24 * 60)),
             };

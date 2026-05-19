@@ -53,7 +53,6 @@ data class DeckCardDto(
     val front: String,
     val back: String,
     val sourceFile: String? = null,
-    val sourceHeading: String? = null,
     val state: String,
     val dueAt: String? = null,
     val isSuspended: Boolean,
@@ -82,7 +81,6 @@ data class CardDto(
     val front: String,
     val back: String,
     val sourceFile: String? = null,
-    val sourceHeading: String? = null,
     val state: String,
     val dueAt: String? = null,
     val stability: Double? = null,
@@ -104,7 +102,6 @@ data class CreateCardRequest(
     val front: String,
     val back: String,
     val sourceFile: String? = null,
-    val sourceHeading: String? = null,
     val deckId: String? = null,
 )
 
@@ -113,7 +110,6 @@ data class UpdateCardRequest(
     val front: String,
     val back: String,
     val sourceFile: String? = null,
-    val sourceHeading: String? = null,
     val deckIds: List<String>? = null,
 )
 
@@ -125,7 +121,6 @@ data class DueCardDto(
     val front: String,
     val back: String,
     val sourceFile: String? = null,
-    val sourceHeading: String? = null,
     val state: String,
     val frontSvg: String? = null,
     val backSvg: String? = null,
