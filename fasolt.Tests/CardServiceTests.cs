@@ -302,39 +302,6 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UpdateCardFields_RejectsCollision()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "Existing front", "Back A", "notes.md");
-        var cardB = await svc.CreateCard(UserId, "Other front", "Back B", "notes.md");
-
-        // Try to rename cardB's front to collide with existing card
-        var result = await svc.UpdateCardFields(UserId, cardB.Id,
-            new UpdateCardFieldsRequest(NewFront: "Existing front"));
-
-        result.Status.Should().Be(UpdateCardStatus.Collision);
-        result.Card.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task UpdateCardFields_SourceFileChangeCollision()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "Same front", "Back A", "notes.md");
-        var cardB = await svc.CreateCard(UserId, "Same front", "Back B", "other.md");
-
-        // Move cardB to notes.md — collides with existing card
-        var result = await svc.UpdateCardFields(UserId, cardB.Id,
-            new UpdateCardFieldsRequest(NewSourceFile: "notes.md"));
-
-        result.Status.Should().Be(UpdateCardStatus.Collision);
-    }
-
-    [Fact]
     public async Task ListCards_Pagination_CursorReturnsNextPage()
     {
         await using var db = _db.CreateDbContext();
@@ -531,7 +498,6 @@ public class CardServiceTests : IAsyncLifetime
         var result = await svc.RenameSource(UserId, "old/path.md", "new/path.md");
 
         result.Renamed.Should().Be(2);
-        result.Skipped.Should().Be(0);
 
         var moved = await svc.ListCards(UserId, sourceFile: "new/path.md", deckId: null, limit: null, after: null);
         moved.Items.Should().HaveCount(2);
@@ -548,31 +514,6 @@ public class CardServiceTests : IAsyncLifetime
         var result = await svc.RenameSource(UserId, "missing.md", "new.md");
 
         result.Renamed.Should().Be(0);
-        result.Skipped.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task RenameSource_CollisionAtDestination_SkipsCollidingCard()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "Same?", "From old.", "old.md");
-        await svc.CreateCard(UserId, "Unique?", "From old.", "old.md");
-        await svc.CreateCard(UserId, "Same?", "From new.", "new.md");
-
-        var result = await svc.RenameSource(UserId, "old.md", "new.md");
-
-        result.Renamed.Should().Be(1);
-        result.Skipped.Should().Be(1);
-
-        // Original "Same?" card stays in old.md; the unique one is moved.
-        var newCards = await svc.ListCards(UserId, sourceFile: "new.md", deckId: null, limit: null, after: null);
-        newCards.Items.Should().HaveCount(2);
-        newCards.Items.Should().Contain(c => c.Front == "Unique?");
-
-        var oldCards = await svc.ListCards(UserId, sourceFile: "old.md", deckId: null, limit: null, after: null);
-        oldCards.Items.Should().ContainSingle(c => c.Front == "Same?");
     }
 
     [Fact]

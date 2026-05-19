@@ -333,28 +333,9 @@ public class CardService(AppDbContext db)
 
     private async Task<UpdateCardResult> ApplyCardFieldUpdates(string userId, Card card, UpdateCardFieldsRequest req)
     {
-        var effectiveFront = req.NewFront?.Trim() ?? card.Front;
-        var effectiveSourceFile = req.NewSourceFile?.Trim() ?? card.SourceFile;
-
         var errors = ValidateCardFields(req.NewFront, req.NewBack);
         if (errors.Count > 0)
             throw new ValidationException(string.Join(" ", errors));
-
-        // Check for natural key collision if front or sourceFile is changing
-        if (effectiveFront != card.Front || effectiveSourceFile != card.SourceFile)
-        {
-            if (effectiveSourceFile is not null)
-            {
-                var collision = await db.Cards.AnyAsync(c =>
-                    c.UserId == userId
-                    && c.Id != card.Id
-                    && c.SourceFile != null
-                    && c.SourceFile.ToLower() == effectiveSourceFile.ToLower()
-                    && c.Front.ToLower() == effectiveFront.ToLower());
-
-                if (collision) return UpdateCardResult.Collision();
-            }
-        }
 
         if (req.NewFront is not null) card.Front = req.NewFront.Trim();
         if (req.NewBack is not null) card.Back = req.NewBack.Trim();
@@ -375,37 +356,13 @@ public class CardService(AppDbContext db)
         var trimmedTo = to?.Trim();
 
         if (string.IsNullOrEmpty(trimmedFrom) || string.IsNullOrEmpty(trimmedTo) || trimmedFrom == trimmedTo)
-            return new RenameSourceResult(0, 0);
+            return new RenameSourceResult(0);
 
-        var cards = await db.Cards
+        var renamed = await db.Cards
             .Where(c => c.UserId == userId && c.SourceFile == trimmedFrom)
-            .Select(c => new { c.Id, c.Front })
-            .ToListAsync();
+            .ExecuteUpdateAsync(s => s.SetProperty(c => c.SourceFile, trimmedTo));
 
-        if (cards.Count == 0)
-            return new RenameSourceResult(0, 0);
-
-        // Detect collisions: existing cards already at `to` with the same Front
-        var movingFronts = cards.Select(c => c.Front).ToList();
-        var collidingFronts = await db.Cards
-            .Where(c => c.UserId == userId && c.SourceFile == trimmedTo && movingFronts.Contains(c.Front))
-            .Select(c => c.Front)
-            .ToListAsync();
-        var collidingSet = collidingFronts.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var movableIds = cards
-            .Where(c => !collidingSet.Contains(c.Front))
-            .Select(c => c.Id)
-            .ToList();
-        var skipped = cards.Count - movableIds.Count;
-
-        var renamed = movableIds.Count > 0
-            ? await db.Cards
-                .Where(c => c.UserId == userId && movableIds.Contains(c.Id))
-                .ExecuteUpdateAsync(s => s.SetProperty(c => c.SourceFile, trimmedTo))
-            : 0;
-
-        return new RenameSourceResult(renamed, skipped);
+        return new RenameSourceResult(renamed);
     }
 
     public async Task<int> DeleteCardsBySource(string userId, string sourceFile)

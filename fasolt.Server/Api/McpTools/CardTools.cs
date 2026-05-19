@@ -119,7 +119,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Rename the sourceFile of every card whose sourceFile exactly equals `from` to `to`. Use this when the user has moved or renamed a note in their vault — one call instead of list_cards + update_cards. Matching is exact and case-sensitive. To rename several files, call this tool once per file. Cards whose front would collide with an existing card already at `to` are left untouched and counted in `skipped`.")]
+    [McpServerTool, Description("Rename the sourceFile of every card whose sourceFile exactly equals `from` to `to`. Use this when the user has moved or renamed a note in their vault — one call instead of list_cards + update_cards. Matching is exact and case-sensitive. To rename several files, call this tool once per file. Returns the number of cards updated.")]
     public async Task<string> RenameSourceFile(
         [Description("Existing source file path to match exactly.")] string from,
         [Description("New source file path to set on matching cards.")] string to)

@@ -35,13 +35,12 @@ public record UpdateCardFieldsRequest(
     string? NewFrontSvg = null,
     string? NewBackSvg = null);
 
-public enum UpdateCardStatus { Success, NotFound, Collision }
+public enum UpdateCardStatus { Success, NotFound }
 
 public record UpdateCardResult(UpdateCardStatus Status, CardDto? Card = null)
 {
     public static UpdateCardResult Success(CardDto card) => new(UpdateCardStatus.Success, card);
     public static UpdateCardResult NotFound() => new(UpdateCardStatus.NotFound);
-    public static UpdateCardResult Collision() => new(UpdateCardStatus.Collision);
 }
 
 public record BulkUpdateCardItem(
@@ -59,4 +58,4 @@ public record BulkUpdateCardItem(
 
 public record BulkUpdateCardResult(string CardId, UpdateCardStatus Status, CardDto? Card = null);
 
-public record RenameSourceResult(int Renamed, int Skipped);
+public record RenameSourceResult(int Renamed);
