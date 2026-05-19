@@ -119,6 +119,19 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         }, McpJson.Options);
     }
 
+    [McpServerTool, Description("Rename the sourceFile of cards in bulk. Each pair {from, to} updates all cards whose sourceFile exactly equals `from` to `to`. Use this when the user has moved or renamed notes in their vault — much faster than list_cards + update_cards loops. Matching is exact and case-sensitive. Cards that would collide with an existing card at the destination (same sourceFile + front) are skipped and reported in `skipped`.")]
+    public async Task<string> RenameSourceFile(
+        [Description("Array of {from, to} pairs. Each renames every card with sourceFile == from to sourceFile == to.")] List<RenameSourcePair> pairs)
+    {
+        var userId = McpUserResolver.GetUserId(httpContextAccessor);
+
+        if (pairs.Count == 0)
+            return JsonSerializer.Serialize(new { error = "Provide at least one rename pair" }, McpJson.Options);
+
+        var result = await cardService.RenameSources(userId, pairs);
+        return JsonSerializer.Serialize(result, McpJson.Options);
+    }
+
     [McpServerTool, Description("Add an SVG image to a card. Useful for generating diagrams, charts, chemical structures, or math visualizations.")]
     public async Task<string> AddSvgToCard(
         [Description("Card ID")] string cardId,

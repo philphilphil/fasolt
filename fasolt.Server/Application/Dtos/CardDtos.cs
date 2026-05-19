@@ -58,3 +58,12 @@ public record BulkUpdateCardItem(
     string? NewBackSvg = null);
 
 public record BulkUpdateCardResult(string CardId, UpdateCardStatus Status, CardDto? Card = null);
+
+public record RenameSourcePair(
+    [property: Description("Existing source file path to match exactly (case-sensitive). Required.")]
+    string From,
+    [property: Description("New source file path to set on matching cards. Required and non-empty.")]
+    string To);
+
+public record RenameSourcePairResult(string From, string To, int Renamed, int Skipped);
+public record RenameSourcesResponse(int Renamed, int Skipped, List<RenameSourcePairResult> Results);

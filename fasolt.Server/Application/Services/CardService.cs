@@ -369,6 +369,69 @@ public class CardService(AppDbContext db)
         return UpdateCardResult.Success(ToDto(card));
     }
 
+    public async Task<RenameSourcesResponse> RenameSources(string userId, List<RenameSourcePair> pairs)
+    {
+        var results = new List<RenameSourcePairResult>();
+        var totalRenamed = 0;
+        var totalSkipped = 0;
+
+        foreach (var pair in pairs)
+        {
+            var from = pair.From?.Trim();
+            var to = pair.To?.Trim();
+
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+            {
+                results.Add(new RenameSourcePairResult(pair.From ?? "", pair.To ?? "", 0, 0));
+                continue;
+            }
+
+            if (from == to)
+            {
+                results.Add(new RenameSourcePairResult(from, to, 0, 0));
+                continue;
+            }
+
+            // Cards to move
+            var cards = await db.Cards
+                .Where(c => c.UserId == userId && c.SourceFile == from)
+                .Select(c => new { c.Id, c.Front })
+                .ToListAsync();
+
+            if (cards.Count == 0)
+            {
+                results.Add(new RenameSourcePairResult(from, to, 0, 0));
+                continue;
+            }
+
+            // Detect collisions: existing cards already at `to` with the same Front
+            var movingFronts = cards.Select(c => c.Front).ToList();
+            var collidingFronts = await db.Cards
+                .Where(c => c.UserId == userId && c.SourceFile == to && movingFronts.Contains(c.Front))
+                .Select(c => c.Front)
+                .ToListAsync();
+            var collidingSet = collidingFronts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var movableIds = cards
+                .Where(c => !collidingSet.Contains(c.Front))
+                .Select(c => c.Id)
+                .ToList();
+            var skipped = cards.Count - movableIds.Count;
+
+            var renamed = movableIds.Count > 0
+                ? await db.Cards
+                    .Where(c => c.UserId == userId && movableIds.Contains(c.Id))
+                    .ExecuteUpdateAsync(s => s.SetProperty(c => c.SourceFile, to))
+                : 0;
+
+            totalRenamed += renamed;
+            totalSkipped += skipped;
+            results.Add(new RenameSourcePairResult(from, to, renamed, skipped));
+        }
+
+        return new RenameSourcesResponse(totalRenamed, totalSkipped, results);
+    }
+
     public async Task<int> DeleteCardsBySource(string userId, string sourceFile)
     {
         return await db.Cards

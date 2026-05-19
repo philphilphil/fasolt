@@ -22,8 +22,8 @@ public class DeckSnapshotService(AppDbContext db)
             .Include(d => d.Cards).ThenInclude(dc => dc.Card)
             .ToListAsync();
 
-        var created = 0;
-        var skipped = 0;
+        var createdDecks = new List<string>();
+        var skippedDecks = new List<string>();
         foreach (var deck in decks)
         {
             var cards = deck.Cards.Select(dc => dc.Card).ToList();
@@ -38,7 +38,7 @@ public class DeckSnapshotService(AppDbContext db)
             {
                 var lastData = JsonSerializer.Deserialize<SnapshotData>(lastSnapshot.Data, JsonOptions)!;
                 var currentById = cards.ToDictionary(c => c.Id);
-                if (CountContentChanges(lastData, currentById) == 0) { skipped++; continue; }
+                if (CountContentChanges(lastData, currentById) == 0) { skippedDecks.Add(deck.Name); continue; }
             }
 
             var data = new SnapshotData(
@@ -64,7 +64,7 @@ public class DeckSnapshotService(AppDbContext db)
             };
 
             db.DeckSnapshots.Add(snapshot);
-            created++;
+            createdDecks.Add(deck.Name);
         }
 
         await db.SaveChangesAsync();
@@ -72,7 +72,7 @@ public class DeckSnapshotService(AppDbContext db)
         // Enforce retention
         await EnforceRetention(userId);
 
-        return new SnapshotCreateResult(created, skipped);
+        return new SnapshotCreateResult(createdDecks.Count, skippedDecks.Count, createdDecks, skippedDecks);
     }
 
     public async Task<List<SnapshotListDto>> ListByDeck(string userId, string deckPublicId)

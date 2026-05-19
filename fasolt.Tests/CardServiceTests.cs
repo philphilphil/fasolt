@@ -519,6 +519,106 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RenameSources_SinglePair_RenamesMatchingCards()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "A?", "A.", "old/path.md");
+        await svc.CreateCard(UserId, "B?", "B.", "old/path.md");
+        await svc.CreateCard(UserId, "C?", "C.", "other.md");
+
+        var result = await svc.RenameSources(UserId, [new RenameSourcePair("old/path.md", "new/path.md")]);
+
+        result.Renamed.Should().Be(2);
+        result.Skipped.Should().Be(0);
+        result.Results.Should().ContainSingle()
+            .Which.Should().BeEquivalentTo(new RenameSourcePairResult("old/path.md", "new/path.md", 2, 0));
+
+        var moved = await svc.ListCards(UserId, sourceFile: "new/path.md", deckId: null, limit: null, after: null);
+        moved.Items.Should().HaveCount(2);
+        var untouched = await svc.ListCards(UserId, sourceFile: "other.md", deckId: null, limit: null, after: null);
+        untouched.Items.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task RenameSources_MultiplePairs_AppliedIndependently()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "A?", "A.", "a.md");
+        await svc.CreateCard(UserId, "B?", "B.", "b.md");
+
+        var result = await svc.RenameSources(UserId, [
+            new RenameSourcePair("a.md", "alpha.md"),
+            new RenameSourcePair("b.md", "beta.md"),
+        ]);
+
+        result.Renamed.Should().Be(2);
+        result.Results.Should().HaveCount(2);
+        result.Results[0].Renamed.Should().Be(1);
+        result.Results[1].Renamed.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RenameSources_NoMatch_ReturnsZero()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var result = await svc.RenameSources(UserId, [new RenameSourcePair("missing.md", "new.md")]);
+
+        result.Renamed.Should().Be(0);
+        result.Skipped.Should().Be(0);
+        result.Results.Should().ContainSingle().Which.Renamed.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task RenameSources_CollisionAtDestination_SkipsCollidingCard()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Same?", "From old.", "old.md");
+        await svc.CreateCard(UserId, "Unique?", "From old.", "old.md");
+        await svc.CreateCard(UserId, "Same?", "From new.", "new.md");
+
+        var result = await svc.RenameSources(UserId, [new RenameSourcePair("old.md", "new.md")]);
+
+        result.Renamed.Should().Be(1);
+        result.Skipped.Should().Be(1);
+        result.Results[0].Renamed.Should().Be(1);
+        result.Results[0].Skipped.Should().Be(1);
+
+        // Original "Same?" card stays in old.md; the unique one is moved.
+        var newCards = await svc.ListCards(UserId, sourceFile: "new.md", deckId: null, limit: null, after: null);
+        newCards.Items.Should().HaveCount(2);
+        newCards.Items.Should().Contain(c => c.Front == "Unique?");
+
+        var oldCards = await svc.ListCards(UserId, sourceFile: "old.md", deckId: null, limit: null, after: null);
+        oldCards.Items.Should().ContainSingle(c => c.Front == "Same?");
+    }
+
+    [Fact]
+    public async Task RenameSources_EmptyOrSameFromTo_NoOp()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q?", "A.", "x.md");
+
+        var result = await svc.RenameSources(UserId, [
+            new RenameSourcePair("", "new.md"),
+            new RenameSourcePair("x.md", ""),
+            new RenameSourcePair("x.md", "x.md"),
+        ]);
+
+        result.Renamed.Should().Be(0);
+        result.Skipped.Should().Be(0);
+    }
+
+    [Fact]
     public async Task BulkCreateCards_SkipsOversizedCards()
     {
         await using var db = _db.CreateDbContext();
