@@ -228,6 +228,7 @@ async function savePassword() {
         </Card>
       </div>
 
+      <div class="flex flex-col gap-6">
       <Card class="border-border/60">
         <CardHeader>
           <CardTitle class="text-base">Scheduling</CardTitle>
@@ -278,26 +279,27 @@ async function savePassword() {
           </form>
         </CardContent>
       </Card>
-    </div>
 
-    <Card class="border-border/60">
-      <CardHeader>
-        <CardTitle class="text-base">Your data</CardTitle>
-      </CardHeader>
-      <CardContent class="flex flex-col gap-3">
-        <p class="text-sm text-muted-foreground">
-          Download a copy of all your data (cards, decks, study progress, snapshots) as a JSON file, or permanently delete your account.
-        </p>
-        <div class="flex gap-2">
-          <a href="/api/account/export" class="inline-flex">
-            <Button size="sm" class="text-sm">Export data</Button>
-          </a>
-          <Button size="sm" variant="destructive" class="text-sm" @click="deleteDialogOpen = true">
-            Delete account
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <Card class="border-border/60">
+        <CardHeader>
+          <CardTitle class="text-base">Your data</CardTitle>
+        </CardHeader>
+        <CardContent class="flex flex-col gap-3">
+          <p class="text-sm text-muted-foreground">
+            Download a copy of all your data (cards, decks, study progress, snapshots) as a JSON file, or permanently delete your account.
+          </p>
+          <div class="flex gap-2">
+            <a href="/api/account/export" class="inline-flex">
+              <Button size="sm" class="text-sm">Export data</Button>
+            </a>
+            <Button size="sm" variant="destructive" class="text-sm" @click="deleteDialogOpen = true">
+              Delete account
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      </div>
+    </div>
 
     <DeleteAccountDialog v-model:open="deleteDialogOpen" />
 
