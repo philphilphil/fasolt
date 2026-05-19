@@ -53,12 +53,6 @@ const sortedDecks = computed(() => {
 const decksWithDue = computed(() => decksStore.decks.filter(d => !d.isSuspended && d.dueCount > 0).length)
 const activeDeckCount = computed(() => decksStore.decks.filter(d => !d.isSuspended).length)
 
-const today = computed(() => {
-  return new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-})
-
-const todayLabel = computed(() => `Today · ${today.value}`)
-
 async function createDemoDeck() {
   creatingDemo.value = true
   try {
@@ -112,9 +106,6 @@ function streakBarTitle(b: StreakBar): string {
     <!-- Hero row: due number + streak panel -->
     <section class="hero">
       <div class="hero-due">
-        <div class="hero-meta">
-          <span class="fa-cap">{{ todayLabel }}</span>
-        </div>
         <div class="hero-due-stack">
           <div class="hero-number-wrap">
             <span class="hero-number fa-num">{{ dueCount }}</span>
@@ -330,13 +321,7 @@ function streakBarTitle(b: StreakBar): string {
   justify-content: space-between;
   min-height: 280px;
 }
-.hero-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-.hero-meta .muted { font-size: 9.5px; }
-.hero-due-stack { margin-top: 18px; }
+.hero-due-stack { margin-top: 0; }
 .hero-number-wrap {
   display: flex;
   align-items: flex-end;
