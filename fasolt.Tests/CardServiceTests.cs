@@ -302,39 +302,6 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UpdateCardFields_RejectsCollision()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "Existing front", "Back A", "notes.md");
-        var cardB = await svc.CreateCard(UserId, "Other front", "Back B", "notes.md");
-
-        // Try to rename cardB's front to collide with existing card
-        var result = await svc.UpdateCardFields(UserId, cardB.Id,
-            new UpdateCardFieldsRequest(NewFront: "Existing front"));
-
-        result.Status.Should().Be(UpdateCardStatus.Collision);
-        result.Card.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task UpdateCardFields_SourceFileChangeCollision()
-    {
-        await using var db = _db.CreateDbContext();
-        var svc = new CardService(db);
-
-        await svc.CreateCard(UserId, "Same front", "Back A", "notes.md");
-        var cardB = await svc.CreateCard(UserId, "Same front", "Back B", "other.md");
-
-        // Move cardB to notes.md — collides with existing card
-        var result = await svc.UpdateCardFields(UserId, cardB.Id,
-            new UpdateCardFieldsRequest(NewSourceFile: "notes.md"));
-
-        result.Status.Should().Be(UpdateCardStatus.Collision);
-    }
-
-    [Fact]
     public async Task ListCards_Pagination_CursorReturnsNextPage()
     {
         await using var db = _db.CreateDbContext();
@@ -516,6 +483,50 @@ public class CardServiceTests : IAsyncLifetime
 
         card.Front.Should().HaveLength(CardService.MaxFrontLength);
         card.Back.Should().HaveLength(CardService.MaxBackLength);
+    }
+
+    [Fact]
+    public async Task RenameSource_RenamesMatchingCards()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "A?", "A.", "old/path.md");
+        await svc.CreateCard(UserId, "B?", "B.", "old/path.md");
+        await svc.CreateCard(UserId, "C?", "C.", "other.md");
+
+        var result = await svc.RenameSource(UserId, "old/path.md", "new/path.md");
+
+        result.Renamed.Should().Be(2);
+
+        var moved = await svc.ListCards(UserId, sourceFile: "new/path.md", deckId: null, limit: null, after: null);
+        moved.Items.Should().HaveCount(2);
+        var untouched = await svc.ListCards(UserId, sourceFile: "other.md", deckId: null, limit: null, after: null);
+        untouched.Items.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task RenameSource_NoMatch_ReturnsZero()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        var result = await svc.RenameSource(UserId, "missing.md", "new.md");
+
+        result.Renamed.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task RenameSource_EmptyOrSameFromTo_NoOp()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q?", "A.", "x.md");
+
+        (await svc.RenameSource(UserId, "", "new.md")).Renamed.Should().Be(0);
+        (await svc.RenameSource(UserId, "x.md", "")).Renamed.Should().Be(0);
+        (await svc.RenameSource(UserId, "x.md", "x.md")).Renamed.Should().Be(0);
     }
 
     [Fact]

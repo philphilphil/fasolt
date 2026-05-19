@@ -254,6 +254,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var result = await svc.CreateAll(UserId);
             result.Created.Should().Be(1, "first snapshot always created");
             result.Skipped.Should().Be(0);
+            result.CreatedDecks.Should().ContainSingle().Which.Should().Be("No Change");
+            result.SkippedDecks.Should().BeEmpty();
         }
 
         // Second call without changes
@@ -263,6 +265,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var result = await svc.CreateAll(UserId);
             result.Created.Should().Be(0, "no content changes since last snapshot");
             result.Skipped.Should().Be(1, "one deck was unchanged");
+            result.CreatedDecks.Should().BeEmpty();
+            result.SkippedDecks.Should().ContainSingle().Which.Should().Be("No Change");
         }
 
         await using var checkDb = _db.CreateDbContext();
