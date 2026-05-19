@@ -1,37 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'
-import { useSnapshotsStore } from '@/stores/snapshots'
 import { apiFetch, isApiError } from '@/api/client'
 import DeleteAccountDialog from '@/components/DeleteAccountDialog.vue'
 
 const auth = useAuthStore()
-const snapshotsStore = useSnapshotsStore()
-const snapshotting = ref(false)
-const snapshotSuccess = ref(false)
-const snapshotError = ref('')
-const snapshotCreated = ref(0)
-const snapshotSkipped = ref(0)
-
-async function createSnapshot() {
-  snapshotting.value = true
-  snapshotSuccess.value = false
-  snapshotError.value = ''
-  try {
-    const result = await snapshotsStore.createAll()
-    snapshotCreated.value = result.created
-    snapshotSkipped.value = result.skipped
-    snapshotSuccess.value = true
-    snapshotsStore.fetchRecent()
-  } catch {
-    snapshotError.value = 'Failed to create snapshot. Please try again.'
-  } finally {
-    snapshotting.value = false
-  }
-}
 
 type SchedulingSettings = {
   desiredRetention: number
@@ -130,20 +106,9 @@ const passwordError = ref('')
 
 const deleteDialogOpen = ref(false)
 
-const snapshotCount = computed(() => snapshotsStore.snapshots.length)
-const lastSnapshot = computed(() => {
-  if (snapshotsStore.snapshots.length === 0) return null
-  const date = new Date(snapshotsStore.snapshots[0].createdAt)
-  return date.toLocaleDateString(undefined, { dateStyle: 'medium' })
-})
-const totalCardsBacked = computed(() =>
-  snapshotsStore.snapshots.reduce((sum, s) => sum + s.cardCount, 0)
-)
-
 onMounted(() => {
   newEmail.value = auth.user?.email || ''
   loadSchedulingSettings()
-  snapshotsStore.fetchRecent()
 })
 
 async function saveEmail() {
@@ -191,46 +156,6 @@ async function savePassword() {
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
       <div class="flex flex-col gap-6">
-        <Card class="border-border/60">
-          <CardHeader>
-            <CardTitle class="text-base">Snapshots</CardTitle>
-          </CardHeader>
-          <CardContent class="flex flex-col gap-3">
-            <p class="text-sm text-muted-foreground">
-              Create a backup of all your decks. Snapshots capture every card's content so you can restore it later if something goes wrong. The last 10 snapshots per deck are kept automatically. Study progress is not affected by restoring — only card content (front, back, images, source) is reverted.
-            </p>
-            <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">
-              <template v-if="snapshotCreated > 0 && snapshotSkipped === 0">
-                Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}.
-              </template>
-              <template v-else-if="snapshotCreated > 0 && snapshotSkipped > 0">
-                Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}. {{ snapshotSkipped }} unchanged, skipped.
-              </template>
-              <template v-else>
-                All decks unchanged — no snapshots needed.
-              </template>
-            </div>
-            <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ snapshotError }}</div>
-            <div v-if="snapshotCount > 0" class="flex gap-6 text-sm">
-              <div class="flex flex-col">
-                <span class="text-muted-foreground">Snapshots</span>
-                <span class="font-medium">{{ snapshotCount }}</span>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-muted-foreground">Cards backed up</span>
-                <span class="font-medium">{{ totalCardsBacked }}</span>
-              </div>
-              <div v-if="lastSnapshot" class="flex flex-col">
-                <span class="text-muted-foreground">Last snapshot</span>
-                <span class="font-medium">{{ lastSnapshot }}</span>
-              </div>
-            </div>
-            <Button size="sm" class="self-start text-sm" :disabled="snapshotting" @click="createSnapshot">
-              {{ snapshotting ? 'Creating...' : 'Create snapshot' }}
-            </Button>
-          </CardContent>
-        </Card>
-
         <Card class="border-border/60">
           <CardHeader>
             <CardTitle class="text-base">Account</CardTitle>

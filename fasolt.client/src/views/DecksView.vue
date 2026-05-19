@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
+import { useSnapshotsStore } from '@/stores/snapshots'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,12 +12,50 @@ import { deckColor } from '@/lib/utils'
 
 const router = useRouter()
 const decks = useDecksStore()
+const snapshotsStore = useSnapshotsStore()
 const newName = ref('')
 const newDescription = ref('')
 const dialogOpen = ref(false)
 const createError = ref('')
 
-onMounted(() => decks.fetchDecks())
+const snapshotDialogOpen = ref(false)
+const snapshotting = ref(false)
+const snapshotSuccess = ref(false)
+const snapshotError = ref('')
+const snapshotCreated = ref(0)
+const snapshotSkipped = ref(0)
+
+const snapshotCount = computed(() => snapshotsStore.snapshots.length)
+const lastSnapshot = computed(() => {
+  if (snapshotsStore.snapshots.length === 0) return null
+  const date = new Date(snapshotsStore.snapshots[0].createdAt)
+  return date.toLocaleDateString(undefined, { dateStyle: 'medium' })
+})
+const totalCardsBacked = computed(() =>
+  snapshotsStore.snapshots.reduce((sum, s) => sum + s.cardCount, 0),
+)
+
+async function createSnapshot() {
+  snapshotting.value = true
+  snapshotSuccess.value = false
+  snapshotError.value = ''
+  try {
+    const result = await snapshotsStore.createAll()
+    snapshotCreated.value = result.created
+    snapshotSkipped.value = result.skipped
+    snapshotSuccess.value = true
+    snapshotsStore.fetchRecent()
+  } catch {
+    snapshotError.value = 'Failed to create snapshot. Please try again.'
+  } finally {
+    snapshotting.value = false
+  }
+}
+
+onMounted(() => {
+  decks.fetchDecks()
+  snapshotsStore.fetchRecent()
+})
 
 const sortedDecks = computed(() =>
   [...decks.decks].sort((a, b) => {
@@ -52,6 +91,55 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
     <header class="decks-head">
       <h1 class="page-title">Decks</h1>
       <div class="head-actions">
+        <Dialog v-model:open="snapshotDialogOpen">
+          <DialogTrigger as-child>
+            <button class="fa-btn" type="button">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              Snapshots
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Snapshots</DialogTitle>
+            </DialogHeader>
+            <div class="flex flex-col gap-3">
+              <p class="text-sm text-muted-foreground">
+                Back up every card's content so you can restore it later if something goes wrong. The last 10 snapshots per deck are kept automatically. Restoring only reverts card content — your study progress is never touched.
+              </p>
+              <div v-if="snapshotSuccess" class="rounded border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">
+                <template v-if="snapshotCreated > 0 && snapshotSkipped === 0">
+                  Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}.
+                </template>
+                <template v-else-if="snapshotCreated > 0 && snapshotSkipped > 0">
+                  Snapshot created for {{ snapshotCreated }} deck{{ snapshotCreated !== 1 ? 's' : '' }}. {{ snapshotSkipped }} unchanged, skipped.
+                </template>
+                <template v-else>
+                  All decks unchanged — no snapshots needed.
+                </template>
+              </div>
+              <div v-if="snapshotError" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ snapshotError }}</div>
+              <div v-if="snapshotCount > 0" class="flex gap-6 text-sm">
+                <div class="flex flex-col">
+                  <span class="text-muted-foreground">Snapshots</span>
+                  <span class="font-medium">{{ snapshotCount }}</span>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-muted-foreground">Cards backed up</span>
+                  <span class="font-medium">{{ totalCardsBacked }}</span>
+                </div>
+                <div v-if="lastSnapshot" class="flex flex-col">
+                  <span class="text-muted-foreground">Last snapshot</span>
+                  <span class="font-medium">{{ lastSnapshot }}</span>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button :disabled="snapshotting" @click="createSnapshot">
+                {{ snapshotting ? 'Creating…' : 'Create snapshot' }}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Dialog v-model:open="dialogOpen">
           <DialogTrigger as-child>
             <button class="fa-btn fa-btn-primary">
