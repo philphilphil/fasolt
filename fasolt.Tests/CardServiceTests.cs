@@ -96,6 +96,86 @@ public class CardServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ListCards_SlimDefault_OmitsSrsAndSvg()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q with svg", "A with svg", "slim.md", null,
+            frontSvg: "<svg><rect/></svg>", backSvg: "<svg><circle/></svg>");
+
+        var result = await svc.ListCards(UserId, sourceFile: "slim.md", deckId: null,
+            limit: null, after: null, include: new HashSet<string>());
+
+        var card = result.Items.Should().ContainSingle().Subject;
+        card.State.Should().BeNull();
+        card.DueAt.Should().BeNull();
+        card.Stability.Should().BeNull();
+        card.Difficulty.Should().BeNull();
+        card.Step.Should().BeNull();
+        card.LastReviewedAt.Should().BeNull();
+        card.FrontSvg.Should().BeNull();
+        card.BackSvg.Should().BeNull();
+        card.Front.Should().Be("Q with svg");
+        card.Back.Should().Be("A with svg");
+    }
+
+    [Fact]
+    public async Task ListCards_IncludeSrs_PopulatesSrsFieldsOnly()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q srs", "A srs", "srs.md", null,
+            frontSvg: "<svg/>", backSvg: "<svg/>");
+
+        var result = await svc.ListCards(UserId, sourceFile: "srs.md", deckId: null,
+            limit: null, after: null, include: new HashSet<string> { "srs" });
+
+        var card = result.Items.Should().ContainSingle().Subject;
+        card.State.Should().NotBeNull();
+        card.FrontSvg.Should().BeNull();
+        card.BackSvg.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ListCards_IncludeSvg_PopulatesSvgFieldsOnly()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q svg", "A svg", "svg.md", null,
+            frontSvg: "<svg><rect/></svg>", backSvg: "<svg><circle/></svg>");
+
+        var result = await svc.ListCards(UserId, sourceFile: "svg.md", deckId: null,
+            limit: null, after: null, include: new HashSet<string> { "svg" });
+
+        var card = result.Items.Should().ContainSingle().Subject;
+        card.State.Should().BeNull();
+        card.DueAt.Should().BeNull();
+        card.FrontSvg.Should().NotBeNull().And.Contain("<rect");
+        card.BackSvg.Should().NotBeNull().And.Contain("<circle");
+    }
+
+    [Fact]
+    public async Task ListCards_NullInclude_ReturnsFullShape_ForRestCompatibility()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q rest", "A rest", "rest.md", null,
+            frontSvg: "<svg/>", backSvg: "<svg/>");
+
+        var result = await svc.ListCards(UserId, sourceFile: "rest.md", deckId: null,
+            limit: null, after: null, include: null);
+
+        var card = result.Items.Should().ContainSingle().Subject;
+        card.State.Should().NotBeNull();
+        card.FrontSvg.Should().NotBeNull();
+        card.BackSvg.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task BulkCreate_WithSourceFileOverride()
     {
         await using var db = _db.CreateDbContext();

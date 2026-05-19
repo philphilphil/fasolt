@@ -197,9 +197,17 @@ public class CardService(AppDbContext db)
         return BulkCreateResult.Success(new BulkCreateCardsResponse(createdDtos, skipped));
     }
 
-    public async Task<PaginatedResponse<CardDto>> ListCards(string userId, string? sourceFile, string? deckId, int? limit, string? after)
+    public async Task<PaginatedResponse<CardDto>> ListCards(
+        string userId,
+        string? sourceFile,
+        string? deckId,
+        int? limit,
+        string? after,
+        HashSet<string>? include = null)
     {
         var take = Math.Clamp(limit ?? 50, 1, 200);
+        var includeSrs = include is null || include.Contains("srs");
+        var includeSvg = include is null || include.Contains("svg");
 
         IQueryable<Card> query = db.Cards
             .Where(c => c.UserId == userId)
@@ -227,11 +235,23 @@ public class CardService(AppDbContext db)
 
         var cards = await query
             .Take(take + 1)
-            .Select(c => new CardDto(c.PublicId, c.SourceFile, c.SourceHeading, c.Front, c.Back, c.State, c.CreatedAt,
+            .Select(c => new CardDto(
+                c.PublicId,
+                c.SourceFile,
+                c.SourceHeading,
+                c.Front,
+                c.Back,
+                includeSrs ? c.State : null,
+                c.CreatedAt,
                 c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
                 c.IsSuspended,
-                c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
-                c.FrontSvg, c.BackSvg))
+                includeSrs ? c.DueAt : null,
+                includeSrs ? c.Stability : null,
+                includeSrs ? c.Difficulty : null,
+                includeSrs ? c.Step : null,
+                includeSrs ? c.LastReviewedAt : null,
+                includeSvg ? c.FrontSvg : null,
+                includeSvg ? c.BackSvg : null))
             .ToListAsync();
 
         var hasMore = cards.Count > take;
