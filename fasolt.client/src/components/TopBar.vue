@@ -35,6 +35,10 @@ const {
 const userLabel = computed(() => auth.user?.displayName || auth.user?.email || '')
 const userInitial = computed(() => userLabel.value ? userLabel.value[0].toUpperCase() : '?')
 
+function setActiveIndex(idx: number) {
+  activeIndex.value = idx
+}
+
 function focusSearch() {
   const el = searchInputRef.value?.$el as HTMLInputElement | undefined
   el?.focus()
@@ -44,16 +48,28 @@ function handleClickOutside(e: MouseEvent) {
   if (searchContainerRef.value && !searchContainerRef.value.contains(e.target as Node)) close()
 }
 
+const SEARCH_NAV_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Enter', 'Escape'])
+
 function handleGlobalKeyDown(e: KeyboardEvent) {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); focusSearch() }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); focusSearch(); return }
+  // Route search-navigation keys to onKeyDown when the popup is open and focus
+  // is inside the search area. Capture phase + stopPropagation ensures we win
+  // against view-level shortcuts (e.g. StudyView's "Enter → start review") and
+  // works reliably across browsers (Vue/shadcn @keydown fallthrough was flaky
+  // in Firefox).
+  if (!isOpen.value) return
+  if (!SEARCH_NAV_KEYS.has(e.key)) return
+  if (!searchContainerRef.value?.contains(document.activeElement)) return
+  e.stopPropagation()
+  onKeyDown(e)
 }
 
 onMounted(() => {
-  document.addEventListener('keydown', handleGlobalKeyDown)
+  document.addEventListener('keydown', handleGlobalKeyDown, true)
   document.addEventListener('click', handleClickOutside)
 })
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleGlobalKeyDown)
+  document.removeEventListener('keydown', handleGlobalKeyDown, true)
   document.removeEventListener('click', handleClickOutside)
 })
 
@@ -75,7 +91,6 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
           type="text"
           placeholder="Search cards, decks, sources…"
           class="search-input"
-          @keydown="onKeyDown"
         />
         <div v-if="!isOpen" class="search-kbd">
           <span class="fa-kbd">⌘</span>
@@ -92,7 +107,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
         :has-results="hasResults"
         :error="error"
         @select="navigateToResult"
-        @update:active-index="activeIndex = $event"
+        @update:active-index="setActiveIndex"
       />
     </div>
 

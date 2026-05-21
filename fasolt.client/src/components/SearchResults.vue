@@ -66,8 +66,8 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
         <button
           v-for="(deck, i) in results.decks"
           :key="deck.id"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-accent/10"
-          :class="{ 'bg-accent/10': activeIndex === globalIndex(flatItems, 'deck', i) }"
+          class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
+          :class="activeIndex === globalIndex(flatItems, 'deck', i) ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/10'"
           @click="emit('select', { type: 'deck', data: deck })"
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'deck', i))"
         >
@@ -88,8 +88,8 @@ function globalIndex(flatItems: SearchItem[], type: string, localIndex: number):
         <button
           v-for="(card, i) in results.cards"
           :key="card.id"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-accent/10"
-          :class="{ 'bg-accent/10': activeIndex === globalIndex(flatItems, 'card', i) }"
+          class="flex w-full items-center gap-2 px-3 py-2 text-left text-xs"
+          :class="activeIndex === globalIndex(flatItems, 'card', i) ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/10'"
           @click="emit('select', { type: 'card', data: card })"
           @mouseenter="emit('update:activeIndex', globalIndex(flatItems, 'card', i))"
         >
