@@ -412,17 +412,34 @@ builder.Services.AddMcpServer(options =>
     .WithToolsFromAssembly()
     .WithRequestFilters(filters =>
     {
-        // Per-tool-call usage signal — sent to ILogger / Seq only, never
-        // to AppLog. Keeps GDPR-sensitive behavioural data out of the admin
-        // DB table (which has no retention policy) and into Seq, where
-        // retention is configurable and the data is queryable by tool name.
         filters.AddCallToolFilter(next => async (context, cancellationToken) =>
         {
             var logger = context.Services?.GetService<ILogger<Program>>();
             var toolName = context.Params?.Name ?? "(unknown)";
             var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            // Per-tool-call usage signal — sent to ILogger / Seq only, never
+            // to AppLog. Keeps GDPR-sensitive behavioural data out of the admin
+            // DB table (which has no retention policy) and into Seq, where
+            // retention is configurable and the data is queryable by tool name.
             logger?.LogInformation("MCP tool {Tool} called by user {UserId}", toolName, userId ?? "(anonymous)");
-            return await next(context, cancellationToken);
+
+            try
+            {
+                return await next(context, cancellationToken);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException
+                                       && ex is not ModelContextProtocol.McpException)
+            {
+                // The MCP SDK's default behaviour swallows non-McpException
+                // messages, returning a generic "An error occurred invoking 'X'."
+                // to the LLM. For argument/format/JSON errors the inner message
+                // is exactly what the LLM needs to self-correct its next call.
+                if (Fasolt.Server.Api.McpTools.McpErrorTranslator.IsInputError(ex))
+                    logger?.LogWarning(ex, "MCP tool {Tool} rejected bad arguments for user {UserId}", toolName, userId ?? "(anonymous)");
+                else
+                    logger?.LogError(ex, "MCP tool {Tool} threw for user {UserId}", toolName, userId ?? "(anonymous)");
+                return Fasolt.Server.Api.McpTools.McpErrorTranslator.ToErrorResult(ex, toolName);
+            }
         });
     });
 
