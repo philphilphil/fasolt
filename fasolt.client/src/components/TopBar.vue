@@ -35,9 +35,12 @@ const {
 const userLabel = computed(() => auth.user?.displayName || auth.user?.email || '')
 const userInitial = computed(() => userLabel.value ? userLabel.value[0].toUpperCase() : '?')
 
+function nativeInput(): HTMLInputElement | undefined {
+  return searchInputRef.value?.$el as HTMLInputElement | undefined
+}
+
 function focusSearch() {
-  const el = searchInputRef.value?.$el as HTMLInputElement | undefined
-  el?.focus()
+  nativeInput()?.focus()
 }
 
 function handleClickOutside(e: MouseEvent) {
@@ -51,10 +54,15 @@ function handleGlobalKeyDown(e: KeyboardEvent) {
 onMounted(() => {
   document.addEventListener('keydown', handleGlobalKeyDown)
   document.addEventListener('click', handleClickOutside)
+  // Bind the search navigation keys directly to the native input.
+  // Why: shadcn-vue's <Input> wrapper doesn't reliably forward @keydown via
+  // attribute fallthrough across browsers (worked in Chromium, not Firefox).
+  nativeInput()?.addEventListener('keydown', onKeyDown)
 })
 onUnmounted(() => {
   document.removeEventListener('keydown', handleGlobalKeyDown)
   document.removeEventListener('click', handleClickOutside)
+  nativeInput()?.removeEventListener('keydown', onKeyDown)
 })
 
 async function handleLogout() { await auth.logout(); window.location.href = '/' }
@@ -66,7 +74,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
       <FasoltWordmark :size="32" />
     </RouterLink>
 
-    <div ref="searchContainerRef" class="search-wrap" @keydown="onKeyDown">
+    <div ref="searchContainerRef" class="search-wrap">
       <div class="search-shell">
         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <Input
