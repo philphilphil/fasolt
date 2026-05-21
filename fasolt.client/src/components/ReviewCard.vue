@@ -33,10 +33,11 @@ function openEdit(cardId: string) {
 
     <header class="card-head">
       <span class="fa-cap card-label">{{ isFlipped ? 'Answer' : 'Question' }}</span>
-      <div v-if="card.sourceFile" class="card-source">
-        <FileText :size="12" />
-        <span class="fa-mono">{{ card.sourceFile }}</span>
-      </div>
+      <button class="card-id" :title="idCopied ? 'Copied!' : 'Copy card ID'" @click.stop="copyId(card.id)">
+        <Copy v-if="!idCopied" :size="10" />
+        <Check v-else :size="10" />
+        <span class="fa-mono">{{ card.id.slice(0, 8) }}</span>
+      </button>
     </header>
 
     <!-- Front body — when flipped, also still shown as a small re-statement -->
@@ -52,17 +53,17 @@ function openEdit(cardId: string) {
     </div>
 
     <footer class="card-foot">
-      <div class="card-foot-meta">
-        <button class="card-id" :title="idCopied ? 'Copied!' : 'Copy card ID'" @click.stop="copyId(card.id)">
-          <Copy v-if="!idCopied" :size="10" />
-          <Check v-else :size="10" />
-          <span class="fa-mono">{{ card.id.slice(0, 8) }}</span>
-        </button>
-        <span class="card-state fa-cap">{{ card.state }}</span>
+      <div v-if="card.sourceFile" class="card-source">
+        <FileText :size="12" class="card-source-icon" />
+        <span class="card-source-text fa-mono">{{ card.sourceFile }}</span>
       </div>
-      <button class="card-edit" title="Edit card" @click.stop="openEdit(card.id)">
-        <Pencil :size="13" />
-      </button>
+      <div v-else class="card-source-spacer" />
+      <div class="card-foot-actions">
+        <span class="card-state fa-cap">{{ card.state }}</span>
+        <button class="card-edit" title="Edit card" @click.stop="openEdit(card.id)">
+          <Pencil :size="13" />
+        </button>
+      </div>
     </footer>
   </div>
 </template>
@@ -111,19 +112,6 @@ function openEdit(cardId: string) {
   gap: 12px;
 }
 .card-label { color: var(--accent); }
-.card-source {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--ink-2);
-  min-width: 0;
-  max-width: 60%;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.card-source-sep { color: var(--ink-3); }
-.card-source-heading { color: var(--ink-1); }
 
 .card-body {
   flex: 1;
@@ -204,16 +192,41 @@ function openEdit(cardId: string) {
 
 .card-foot {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 14px;
   margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid var(--rule-1);
 }
-.card-foot-meta {
+.card-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+.card-source-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.card-source-text {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+.card-source-spacer { flex: 1; }
+.card-foot-actions {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-shrink: 0;
 }
 .card-id {
   display: inline-flex;
@@ -226,6 +239,7 @@ function openEdit(cardId: string) {
   padding: 0;
   cursor: pointer;
   transition: color .12s;
+  flex-shrink: 0;
 }
 .card-id:hover { color: var(--ink-1); }
 .card-state { font-size: 9px; }

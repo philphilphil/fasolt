@@ -66,7 +66,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
       <FasoltWordmark :size="32" />
     </RouterLink>
 
-    <div ref="searchContainerRef" class="search-wrap">
+    <div ref="searchContainerRef" class="search-wrap" @keydown="onKeyDown">
       <div class="search-shell">
         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <Input
@@ -75,7 +75,6 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
           type="text"
           placeholder="Search cards, decks, sources…"
           class="search-input"
-          @keydown="onKeyDown"
         />
         <div v-if="!isOpen" class="search-kbd">
           <span class="fa-kbd">⌘</span>
