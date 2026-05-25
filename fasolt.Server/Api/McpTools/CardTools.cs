@@ -102,7 +102,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(new { deleted = count > 0, deletedCount = count }, McpJson.Options);
     }
 
-    [McpServerTool, Description("Update one or more existing cards' text or source metadata by cardId. Preserves all review/SRS history.")]
+    [McpServerTool, Description("Update one or more existing cards' text or source metadata by cardId. Preserves all review/SRS history. Returns the number of cards updated and the cardIds of any that were not found (notFound is empty when everything succeeded).")]
     public async Task<string> UpdateCards(
         [Description("Array of card updates. Each needs a cardId and at least one field to update (newFront, newBack, newSourceFile, newFrontSvg, newBackSvg).")] List<BulkUpdateCardItem> cards)
     {
@@ -115,7 +115,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(new
         {
             updated = results.Count(r => r.Status == UpdateCardStatus.Success),
-            results
+            notFound = results.Where(r => r.Status == UpdateCardStatus.NotFound).Select(r => r.CardId).ToList(),
         }, McpJson.Options);
     }
 
