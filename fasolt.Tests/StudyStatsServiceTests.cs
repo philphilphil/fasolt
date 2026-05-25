@@ -59,6 +59,30 @@ public class StudyStatsServiceTests : IAsyncLifetime
         stats.BestStreak.Should().Be(0);
         stats.TotalAnswered.Should().Be(0);
         stats.AnsweredToday.Should().Be(0);
+        stats.Last7Days.Should().HaveCount(7);
+        stats.Last7Days.Should().OnlyContain(d => d.Count == 0);
+    }
+
+    // --- Last7Days reflects real activity, today is the last entry ---
+
+    [Fact]
+    public async Task Last7Days_ReflectsActivity_TodayIsLastEntry()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        var now = _time.GetUtcNow();
+        var c1 = await CreateCardAt(db, now.AddHours(-1), "Q1", "A1");
+        var c2 = await CreateCardAt(db, now.AddHours(-1), "Q2", "A2");
+        await reviewSvc.RateCard(UserId, new RateCardRequest(c1, "good"));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(c2, "good"));
+
+        var statsSvc = CreateStatsService(db);
+        var stats = await statsSvc.GetStats(UserId);
+
+        stats.Last7Days.Should().HaveCount(7);
+        stats.Last7Days[^1].Count.Should().Be(2); // today
+        stats.Last7Days.Take(6).Should().OnlyContain(d => d.Count == 0); // prior 6 days idle
     }
 
     // --- Single review today ---

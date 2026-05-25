@@ -22,7 +22,10 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         var currentStreak = await ComputeCurrentStreak(userId, now, tz, dayStartHour);
         var bestStreak = Math.Max(user.BestStreak, currentStreak);
 
-        return new StudyStatsDto(currentStreak, bestStreak, totalAnswered, answeredToday);
+        // Last 7 days of real activity for the dashboard day-dot strip (oldest→newest).
+        var last7Days = await BuildDailyActivity(userId, todayStart, todayEnd, 7, tz, dayStartHour);
+
+        return new StudyStatsDto(currentStreak, bestStreak, totalAnswered, answeredToday, last7Days);
     }
 
     public async Task UpdateBestStreakIfNeeded(string userId)

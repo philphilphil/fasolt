@@ -168,7 +168,7 @@ struct DashboardView: View {
                     .foregroundStyle(FasoltTheme.ink2)
             }
 
-            miniStreakBars
+            dayDots
 
             VStack(alignment: .trailing) {
                 CapsLabel(text: "best \(viewModel.studyStats?.bestStreak ?? 0)", size: 10)
@@ -179,27 +179,37 @@ struct DashboardView: View {
         .paperCard()
     }
 
-    private var miniStreakBars: some View {
-        let streak = max(0, viewModel.studyStats?.currentStreak ?? 0)
-        let bars = (0..<14).map { i -> CGFloat in
-            // Show streak intensity falling off historically.
-            let day = 14 - i
-            return day <= streak ? CGFloat(min(day, 6)) : 0
-        }
-        return HStack(alignment: .bottom, spacing: 3) {
-            ForEach(bars.indices, id: \.self) { i in
-                let v = bars[i]
-                let isLast = i == bars.count - 1
-                let height = 6 + v * 3
-                RoundedRectangle(cornerRadius: 1.5)
-                    .fill(isLast && v > 0
-                          ? FasoltTheme.accent
-                          : (v == 0 ? FasoltTheme.rule1 : FasoltTheme.good.opacity(0.3 + Double(v) * 0.1)))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: height)
+    // Last 7 days of real study activity, oldest→newest. Filled = studied that
+    // day; hollow = didn't; today is ringed. The streak number beside it remains
+    // the authoritative streak (rest days with nothing due read as hollow here).
+    private var dayDots: some View {
+        let days = viewModel.studyStats?.last7Days ?? []
+        return HStack(spacing: 8) {
+            ForEach(Array(days.enumerated()), id: \.element.id) { i, day in
+                dayDot(studied: day.count > 0, isToday: i == days.count - 1)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: 22)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func dayDot(studied: Bool, isToday: Bool) -> some View {
+        ZStack {
+            if studied {
+                Circle()
+                    .fill(FasoltTheme.accent)
+                    .frame(width: 10, height: 10)
+            } else {
+                Circle()
+                    .strokeBorder(FasoltTheme.rule2, lineWidth: 1.5)
+                    .frame(width: 10, height: 10)
+            }
+            if isToday {
+                Circle()
+                    .strokeBorder(FasoltTheme.accent.opacity(0.5), lineWidth: 1.5)
+                    .frame(width: 18, height: 18)
+            }
+        }
+        .frame(width: 18, height: 18)
     }
 
     // MARK: - Empty state
