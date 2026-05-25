@@ -116,6 +116,7 @@ struct StudyStatsDTO: Decodable, Sendable {
     let bestStreak: Int
     let totalAnswered: Int
     let answeredToday: Int
+    let last7Days: [DailyActivityDTO]
 }
 
 // MARK: - Progress
