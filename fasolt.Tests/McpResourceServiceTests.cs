@@ -330,4 +330,38 @@ public class McpResourceServiceTests : IAsyncLifetime
         md.Should().Contain("kept");
         md.Should().NotContain("suspended");
     }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_FirstCardOfGroupTruncated_DoesNotOrphanHeader()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        var cardSvc = new CardService(db);
+
+        // Two decks. Deck A fills ~78 KB (75 cards × ~1044 chars each) — just under the 80 KB budget.
+        // Deck Z gets 1 card with a ~5 KB front that pushes past the budget, so its header
+        // must NOT appear in the output (the card is truncated before the header is written).
+        var deckA = await deckSvc.CreateDeck(UserId, "AlphaDeck", null);
+        var deckZ = await deckSvc.CreateDeck(UserId, "ZetaDeck", null);
+
+        var aIds = new List<string>();
+        for (var i = 0; i < 75; i++)
+        {
+            var c = await cardSvc.CreateCard(UserId, $"a-front-{i:00}-{new string('a', 1000)}", "back", null);
+            aIds.Add(c.Id);
+        }
+        await deckSvc.AddCards(UserId, deckA.Id, aIds);
+
+        // 5 KB front — well within the 10 KB card limit but tips the total past 80 KB
+        var zCard = await cardSvc.CreateCard(UserId, new string('z', 5000), "back", null);
+        await deckSvc.AddCards(UserId, deckZ.Id, [zCard.Id]);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDueTodayAsync(UserId);
+
+        md.Should().NotBeNull();
+        md.Should().Contain("## AlphaDeck");
+        // ZetaDeck's header must NOT appear because its only card was truncated
+        md.Should().NotContain("## ZetaDeck");
+    }
 }

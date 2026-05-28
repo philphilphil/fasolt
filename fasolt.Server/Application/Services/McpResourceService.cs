@@ -228,17 +228,22 @@ public class McpResourceService(
                 .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
                 .ToList();
 
-            sb.Append("## ").Append(group.Key).Append(" (")
-              .Append(groupCards.Count)
-              .Append(groupCards.Count == 1 ? " card)" : " cards)").Append("\n\n");
+            var groupHeaderWritten = false;
 
             foreach (var card in groupCards)
             {
                 var block = FormatCardBlock(card, includeDeckLabel: false, includeCreatedDate: false);
-                if (rendered >= SoftCardCap || sb.Length + block.Length > SizeBudgetBytes)
+                if (rendered >= SoftCardCap || (sb.Length + block.Length > SizeBudgetBytes && rendered > 0))
                 {
                     truncatedAtGroup = true;
                     break;
+                }
+                if (!groupHeaderWritten)
+                {
+                    sb.Append("## ").Append(group.Key).Append(" (")
+                      .Append(groupCards.Count)
+                      .Append(groupCards.Count == 1 ? " card)" : " cards)").Append("\n\n");
+                    groupHeaderWritten = true;
                 }
                 sb.Append(block);
                 rendered++;
