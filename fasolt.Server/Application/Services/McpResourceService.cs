@@ -12,7 +12,6 @@ public record McpResourceEntry(
 
 public class McpResourceService(
     AppDbContext db,
-    ReviewService reviewService,
     TimeProvider timeProvider)
 {
     private const int SoftCardCap = 100;

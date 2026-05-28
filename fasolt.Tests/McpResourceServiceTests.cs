@@ -16,10 +16,7 @@ public class McpResourceServiceTests : IAsyncLifetime
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
     private McpResourceService CreateService(AppDbContext db) =>
-        new McpResourceService(
-            db,
-            new ReviewService(db, TimeProvider.System, new StudyStatsService(db, TimeProvider.System)),
-            TimeProvider.System);
+        new McpResourceService(db, TimeProvider.System);
 
     [Fact]
     public async Task ListUserResourcesAsync_NoDecks_ReturnsTwoStatics()

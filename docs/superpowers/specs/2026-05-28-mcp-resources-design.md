@@ -63,11 +63,11 @@ All resources return `mimeType = "text/markdown"`.
 
 **Back:** to eat
 
-*Source: notes/german/verbs.md → Common verbs*
+*Source: notes/german/verbs.md*
 ```
 
 - `**Back:** …` block omitted if back is empty.
-- `*Source: …*` italic footer omitted if no source file. Heading appended after `→` when present.
+- `*Source: …*` italic footer omitted if no source file. (The Card entity tracks only `SourceFile`; per-card source heading is not currently part of the data model.)
 - Cards with SVG: append `[has SVG image — use get_card for full content]`. SVG bytes are NOT inlined (text-focused, keeps content bounded).
 
 Cards are separated by `---` (horizontal rule). The paragraph-with-bold-labels format is robust against cards whose own markdown contains headings (which would collide with `## Front` styles) or multi-line content (which would break tables).
