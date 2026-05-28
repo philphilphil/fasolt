@@ -460,4 +460,62 @@ public class McpResourceServiceTests : IAsyncLifetime
         md.Should().Contain("**Created:**");
         md.Should().Contain("**Deck:** TestDeck");
     }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_IncludesActiveDecks()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        await deckSvc.CreateDeck(UserId, "Alpha", null);
+        await deckSvc.CreateDeck(UserId, "Beta", "with desc");
+
+        var svc = CreateService(db);
+        var entries = await svc.ListUserResourcesAsync(UserId);
+
+        entries.Should().Contain(e => e.Name == "Alpha" && e.Uri.StartsWith("fasolt://deck/"));
+        entries.Should().Contain(e => e.Name == "Beta" && e.Uri.StartsWith("fasolt://deck/"));
+    }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_ExcludesSuspendedDecks()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        var active = await deckSvc.CreateDeck(UserId, "ActiveDeck", null);
+        var sus = await deckSvc.CreateDeck(UserId, "SuspendedDeck", null);
+        await deckSvc.SetSuspended(UserId, sus.Id, true);
+
+        var svc = CreateService(db);
+        var entries = await svc.ListUserResourcesAsync(UserId);
+
+        entries.Should().Contain(e => e.Name == "ActiveDeck");
+        entries.Should().NotContain(e => e.Name == "SuspendedDeck");
+    }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_DeckEntryUsesPublicIdInUri()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        var deck = await deckSvc.CreateDeck(UserId, "Findable", null);
+
+        var svc = CreateService(db);
+        var entries = await svc.ListUserResourcesAsync(UserId);
+
+        entries.Should().Contain(e => e.Uri == $"fasolt://deck/{deck.Id}");
+    }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_DoesNotLeakOtherUsersDecks()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        await deckSvc.CreateDeck(UserId, "Mine", null);
+
+        var svc = CreateService(db);
+        var entries = await svc.ListUserResourcesAsync("some-other-user");
+
+        entries.Should().NotContain(e => e.Name == "Mine");
+        entries.Should().HaveCount(2); // just the two statics
+    }
 }
