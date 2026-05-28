@@ -201,4 +201,59 @@ public class McpResourceServiceTests : IAsyncLifetime
         md.Should().Contain("**Front:** question-only");
         md.Should().NotContain("**Back:**");
     }
+
+    [Fact]
+    public async Task RenderDeckAsync_OverSoftCap_TruncatesWithFooter()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        var cardSvc = new CardService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Big Deck", null);
+
+        // 105 cards — over the 100-card soft cap
+        var cardIds = new List<string>();
+        for (var i = 0; i < 105; i++)
+        {
+            var card = await cardSvc.CreateCard(UserId, $"front-{i:000}", $"back-{i:000}", null);
+            cardIds.Add(card.Id);
+        }
+        await deckSvc.AddCards(UserId, deck.Id, cardIds);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDeckAsync(UserId, deck.Id);
+
+        md.Should().NotBeNull();
+        md.Should().Contain("front-000"); // first card shown
+        md.Should().Contain("Showing 100 of 105 cards");
+        md.Should().NotContain("front-100"); // truncated
+    }
+
+    [Fact]
+    public async Task RenderDeckAsync_OverSizeBudget_TruncatesWithFooter()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        var cardSvc = new CardService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Heavy Deck", null);
+
+        // 50 cards, ~2 KB each → ~100 KB total, exceeds 80 KB budget
+        var bigText = new string('x', 2000);
+        var cardIds = new List<string>();
+        for (var i = 0; i < 50; i++)
+        {
+            var card = await cardSvc.CreateCard(UserId, $"front-{i:00}-{bigText}", $"back-{i:00}", null);
+            cardIds.Add(card.Id);
+        }
+        await deckSvc.AddCards(UserId, deck.Id, cardIds);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDeckAsync(UserId, deck.Id);
+
+        md.Should().NotBeNull();
+        md!.Length.Should().BeLessThan(100 * 1024); // truncated under 100 KB
+        md.Should().Contain("Showing"); // truncation footer present
+        md.Should().Contain("of 50 cards");
+    }
 }
