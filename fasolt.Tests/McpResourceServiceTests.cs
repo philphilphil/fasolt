@@ -364,4 +364,100 @@ public class McpResourceServiceTests : IAsyncLifetime
         // ZetaDeck's header must NOT appear because its only card was truncated
         md.Should().NotContain("## ZetaDeck");
     }
+
+    [Fact]
+    public async Task RenderRecentAsync_NoCards_RendersEmptyMessage()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+
+        var md = await svc.RenderRecentAsync(UserId);
+
+        md.Should().Contain("# Recently Created");
+        md.Should().Contain("No cards.");
+    }
+
+    [Fact]
+    public async Task RenderRecentAsync_NewestFirst()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+
+        var first = await cardSvc.CreateCard(UserId, "older", "older-back", null);
+        await Task.Delay(20);
+        var second = await cardSvc.CreateCard(UserId, "newer", "newer-back", null);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderRecentAsync(UserId);
+
+        var newerIdx = md.IndexOf("newer");
+        var olderIdx = md.IndexOf("older");
+        newerIdx.Should().BeGreaterThan(0);
+        newerIdx.Should().BeLessThan(olderIdx);
+    }
+
+    [Fact]
+    public async Task RenderRecentAsync_ExcludesCardsOlderThanSevenDays()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+
+        var newCard = await cardSvc.CreateCard(UserId, "fresh", "back", null);
+
+        // Insert an "old" card directly with a CreatedAt 8 days ago
+        var oldEntity = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = Guid.NewGuid().ToString("N")[..12],
+            UserId = UserId,
+            Front = "stale",
+            Back = "old",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-8),
+        };
+        db.Cards.Add(oldEntity);
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var md = await svc.RenderRecentAsync(UserId);
+
+        md.Should().Contain("fresh");
+        md.Should().NotContain("stale");
+    }
+
+    [Fact]
+    public async Task RenderRecentAsync_SuspendedCardExcluded()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+
+        var kept = await cardSvc.CreateCard(UserId, "kept-recent", "back", null);
+        var sus = await cardSvc.CreateCard(UserId, "suspended-recent", "back", null);
+        var susEntity = await db.Cards.FirstAsync(c => c.PublicId == sus.Id);
+        susEntity.IsSuspended = true;
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var md = await svc.RenderRecentAsync(UserId);
+
+        md.Should().Contain("kept-recent");
+        md.Should().NotContain("suspended-recent");
+    }
+
+    [Fact]
+    public async Task RenderRecentAsync_IncludesCreatedDateAndDeckMetadata()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "TestDeck", null);
+        var card = await cardSvc.CreateCard(UserId, "front-with-deck", "back", null);
+        await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderRecentAsync(UserId);
+
+        md.Should().Contain("**Created:**");
+        md.Should().Contain("**Deck:** TestDeck");
+    }
 }

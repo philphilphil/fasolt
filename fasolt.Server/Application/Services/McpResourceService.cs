@@ -256,6 +256,52 @@ public class McpResourceService(
         return sb.ToString();
     }
 
-    public Task<string> RenderRecentAsync(string userId) =>
-        throw new NotImplementedException();
+    public async Task<string> RenderRecentAsync(string userId)
+    {
+        var now = timeProvider.GetUtcNow();
+        var cutoff = now.AddDays(-7);
+
+        var raw = await db.Cards
+            .Where(c => c.UserId == userId && !c.IsSuspended && c.CreatedAt >= cutoff)
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new
+            {
+                c.Front,
+                c.Back,
+                c.SourceFile,
+                c.FrontSvg,
+                c.BackSvg,
+                c.CreatedAt,
+                c.DueAt,
+                DeckName = c.DeckCards
+                    .Where(dc => !dc.Deck.IsSuspended)
+                    .OrderBy(dc => dc.Deck.Name)
+                    .Select(dc => dc.Deck.Name)
+                    .FirstOrDefault(),
+            })
+            .Take(200) // hard cap pre-render; truncation may cut further
+            .ToListAsync();
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("# Recently Created\n\n");
+
+        if (raw.Count == 0)
+        {
+            sb.Append("No cards.\n");
+            return sb.ToString();
+        }
+
+        var since = cutoff.UtcDateTime.ToString("yyyy-MM-dd");
+        var wordCard = raw.Count == 1 ? "card" : "cards";
+        sb.Append(raw.Count).Append(' ').Append(wordCard)
+          .Append(" created since ").Append(since)
+          .Append(" (last 7 days)\n\n---\n\n");
+
+        var renderable = raw
+            .Select(c => new RenderableCard(c.Front, c.Back, c.SourceFile, c.FrontSvg, c.BackSvg, c.CreatedAt, c.DueAt, c.DeckName))
+            .ToList();
+
+        AppendCardsWithTruncation(sb, renderable, includeDeckLabel: true, includeCreatedDate: true);
+        return sb.ToString();
+    }
 }
