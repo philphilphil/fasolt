@@ -57,16 +57,21 @@ public class McpResourceEndpointTests
         });
         await db.SaveChangesAsync();
 
-        var svc = scope.ServiceProvider.GetRequiredService<McpResourceService>();
-        var entries = await svc.ListUserResourcesAsync(userId);
+        try
+        {
+            var svc = scope.ServiceProvider.GetRequiredService<McpResourceService>();
+            var entries = await svc.ListUserResourcesAsync(userId);
 
-        entries.Should().Contain(e => e.Name == "IntegrationDeck");
-        entries.Should().Contain(e => e.Uri == "fasolt://due-today");
-        entries.Should().Contain(e => e.Uri == "fasolt://recent");
-
-        // cleanup
-        await db.Database.ExecuteSqlInterpolatedAsync(
-            $"DELETE FROM \"AspNetUsers\" WHERE \"Id\" = {userId}");
+            entries.Should().Contain(e => e.Name == "IntegrationDeck");
+            entries.Should().Contain(e => e.Uri == "fasolt://due-today");
+            entries.Should().Contain(e => e.Uri == "fasolt://recent");
+        }
+        finally
+        {
+            // cleanup
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"AspNetUsers\" WHERE \"Id\" = {userId}");
+        }
     }
 
     [Fact]
