@@ -256,4 +256,78 @@ public class McpResourceServiceTests : IAsyncLifetime
         md.Should().Contain("Showing"); // truncation footer present
         md.Should().Contain("of 50 cards");
     }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_NoDueCards_RendersEmptyMessage()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = CreateService(db);
+
+        var md = await svc.RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("# Due Today");
+        md.Should().Contain("No cards.");
+    }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_GroupsByDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var deckSvc = new DeckService(db);
+        var cardSvc = new CardService(db);
+
+        var german = await deckSvc.CreateDeck(UserId, "German Verbs", null);
+        var french = await deckSvc.CreateDeck(UserId, "French Vocab", null);
+
+        var ger1 = await cardSvc.CreateCard(UserId, "essen", "to eat", null);
+        var fr1 = await cardSvc.CreateCard(UserId, "manger", "to eat", null);
+        await deckSvc.AddCards(UserId, german.Id, [ger1.Id]);
+        await deckSvc.AddCards(UserId, french.Id, [fr1.Id]);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("## French Vocab"); // alphabetical
+        md.Should().Contain("## German Verbs");
+        md.Should().Contain("**Front:** essen");
+        md.Should().Contain("**Front:** manger");
+
+        // French should appear before German (alphabetical)
+        var fIdx = md.IndexOf("## French Vocab");
+        var gIdx = md.IndexOf("## German Verbs");
+        fIdx.Should().BeLessThan(gIdx);
+    }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_CardWithNoDeck_GoesInNoDeckBucket()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        await cardSvc.CreateCard(UserId, "orphan-front", "orphan-back", null);
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("## (no deck)");
+        md.Should().Contain("**Front:** orphan-front");
+    }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_SuspendedCard_Excluded()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+
+        var kept = await cardSvc.CreateCard(UserId, "kept", "ok", null);
+        var sus = await cardSvc.CreateCard(UserId, "suspended", "no", null);
+        var susEntity = await db.Cards.FirstAsync(c => c.PublicId == sus.Id);
+        susEntity.IsSuspended = true;
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("kept");
+        md.Should().NotContain("suspended");
+    }
 }

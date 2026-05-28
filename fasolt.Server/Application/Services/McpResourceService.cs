@@ -162,8 +162,94 @@ public class McpResourceService(
         return sb.ToString();
     }
 
-    public Task<string> RenderDueTodayAsync(string userId) =>
-        throw new NotImplementedException();
+    public async Task<string> RenderDueTodayAsync(string userId)
+    {
+        var now = timeProvider.GetUtcNow();
+
+        // Cards that are due (DueAt null = new, or DueAt <= now), not suspended,
+        // and whose decks (if any) are not all suspended.
+        var raw = await db.Cards
+            .Where(c => c.UserId == userId && !c.IsSuspended)
+            .Where(c => c.DueAt == null || c.DueAt <= now)
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended))
+            .Select(c => new
+            {
+                c.Front,
+                c.Back,
+                c.SourceFile,
+                c.FrontSvg,
+                c.BackSvg,
+                c.CreatedAt,
+                c.DueAt,
+                DeckNames = c.DeckCards.Where(dc => !dc.Deck.IsSuspended).Select(dc => dc.Deck.Name).ToList(),
+            })
+            .ToListAsync();
+
+        // Group by first (alphabetical) active deck name, or "(no deck)".
+        var groups = raw
+            .Select(c => new
+            {
+                Card = new RenderableCard(c.Front, c.Back, c.SourceFile, c.FrontSvg, c.BackSvg, c.CreatedAt, c.DueAt, null),
+                GroupName = c.DeckNames.Count == 0 ? "(no deck)" : c.DeckNames.OrderBy(n => n).First(),
+            })
+            .GroupBy(x => x.GroupName)
+            .OrderBy(g => g.Key == "(no deck)") // "(no deck)" last
+                .ThenBy(g => g.Key)
+            .ToList();
+
+        var totalCards = raw.Count;
+        var totalDecks = groups.Count(g => g.Key != "(no deck)");
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("# Due Today\n\n");
+
+        if (totalCards == 0)
+        {
+            sb.Append("No cards.\n");
+            return sb.ToString();
+        }
+
+        var summary = totalCards == 1 ? "1 card" : $"{totalCards} cards";
+        if (totalDecks > 0)
+        {
+            var deckWord = totalDecks == 1 ? "deck" : "decks";
+            summary += $" across {totalDecks} {deckWord}";
+        }
+        sb.Append(summary).Append("\n\n");
+
+        var rendered = 0;
+        var truncatedAtGroup = false;
+
+        foreach (var group in groups)
+        {
+            if (truncatedAtGroup) break;
+
+            var groupCards = group.Select(x => x.Card)
+                .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
+                .ToList();
+
+            sb.Append("## ").Append(group.Key).Append(" (")
+              .Append(groupCards.Count)
+              .Append(groupCards.Count == 1 ? " card)" : " cards)").Append("\n\n");
+
+            foreach (var card in groupCards)
+            {
+                var block = FormatCardBlock(card, includeDeckLabel: false, includeCreatedDate: false);
+                if (rendered >= SoftCardCap || sb.Length + block.Length > SizeBudgetBytes)
+                {
+                    truncatedAtGroup = true;
+                    break;
+                }
+                sb.Append(block);
+                rendered++;
+            }
+        }
+
+        if (rendered < totalCards)
+            sb.Append($"\n*Showing {rendered} of {totalCards} cards. Use list_cards or search_cards for the full set.*\n");
+
+        return sb.ToString();
+    }
 
     public Task<string> RenderRecentAsync(string userId) =>
         throw new NotImplementedException();
