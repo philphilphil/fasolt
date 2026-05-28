@@ -18,7 +18,7 @@ internal static class McpResourceHandlers
             var http = services.GetRequiredService<IHttpContextAccessor>();
             var resourceService = services.GetRequiredService<McpResourceService>();
 
-            var userId = McpUserResolver.GetUserId(http);
+            var userId = ResolveUserId(http);
             var entries = await resourceService.ListUserResourcesAsync(userId);
 
             return new ListResourcesResult
@@ -55,7 +55,7 @@ internal static class McpResourceHandlers
             var http = services.GetRequiredService<IHttpContextAccessor>();
             var resourceService = services.GetRequiredService<McpResourceService>();
 
-            var userId = McpUserResolver.GetUserId(http);
+            var userId = ResolveUserId(http);
             var uri = ctx.Params?.Uri
                 ?? throw new McpProtocolException("Missing resource URI.", McpErrorCode.InvalidParams);
 
@@ -96,5 +96,17 @@ internal static class McpResourceHandlers
         });
 
         return builder;
+    }
+
+    private static string ResolveUserId(IHttpContextAccessor http)
+    {
+        try
+        {
+            return McpUserResolver.GetUserId(http);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new McpProtocolException("Not authenticated.", McpErrorCode.InvalidRequest);
+        }
     }
 }
