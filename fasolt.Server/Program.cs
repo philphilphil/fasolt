@@ -341,6 +341,7 @@ builder.Services.AddScoped<DeviceTokenService>();
 builder.Services.AddScoped<SchedulingSettingsService>();
 builder.Services.AddScoped<DeckSnapshotService>();
 builder.Services.AddScoped<AccountDataService>();
+builder.Services.AddScoped<McpResourceService>();
 
 var apnsKeyId = builder.Configuration["APNS_KEY_ID"];
 var apnsKeyBase64 = builder.Configuration["APNS_KEY_BASE64"];
