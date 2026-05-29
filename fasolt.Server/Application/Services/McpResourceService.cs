@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
 namespace Fasolt.Server.Application.Services;
@@ -16,6 +15,7 @@ public class McpResourceService(
 {
     private const int SoftCardCap = 100;
     private const int SizeBudgetBytes = 80 * 1024;
+    private const int QueryHardCap = 200;
     private const string Mime = "text/markdown";
 
     public async Task<List<McpResourceEntry>> ListUserResourcesAsync(string userId)
@@ -70,8 +70,7 @@ public class McpResourceService(
                 dc.Card.Front,
                 dc.Card.Back,
                 dc.Card.SourceFile,
-                dc.Card.FrontSvg,
-                dc.Card.BackSvg,
+                dc.Card.FrontSvg != null || dc.Card.BackSvg != null,
                 dc.Card.CreatedAt,
                 dc.Card.DueAt,
                 null))
@@ -106,8 +105,7 @@ public class McpResourceService(
         string Front,
         string Back,
         string? SourceFile,
-        string? FrontSvg,
-        string? BackSvg,
+        bool HasSvg,
         DateTimeOffset CreatedAt,
         DateTimeOffset? DueAt,
         string? DeckName);
@@ -152,7 +150,7 @@ public class McpResourceService(
         sb.Append("**Front:** ").Append(c.Front).Append("\n\n");
         if (!string.IsNullOrEmpty(c.Back))
             sb.Append("**Back:** ").Append(c.Back).Append("\n\n");
-        if (c.FrontSvg is not null || c.BackSvg is not null)
+        if (c.HasSvg)
             sb.Append("[has SVG image — use get_card for full content]\n\n");
         if (!string.IsNullOrWhiteSpace(c.SourceFile))
             sb.Append("*Source: ").Append(c.SourceFile).Append("*\n\n");
@@ -171,24 +169,25 @@ public class McpResourceService(
             .Where(c => c.UserId == userId && !c.IsSuspended)
             .Where(c => c.DueAt == null || c.DueAt <= now)
             .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended))
+            .OrderBy(c => c.DueAt) // soonest-due first so the hard cap keeps the most-due cards
             .Select(c => new
             {
                 c.Front,
                 c.Back,
                 c.SourceFile,
-                c.FrontSvg,
-                c.BackSvg,
+                HasSvg = c.FrontSvg != null || c.BackSvg != null,
                 c.CreatedAt,
                 c.DueAt,
                 DeckNames = c.DeckCards.Where(dc => !dc.Deck.IsSuspended).Select(dc => dc.Deck.Name).ToList(),
             })
+            .Take(QueryHardCap) // hard cap pre-render; truncation may cut further
             .ToListAsync();
 
         // Group by first (alphabetical) active deck name, or "(no deck)".
         var groups = raw
             .Select(c => new
             {
-                Card = new RenderableCard(c.Front, c.Back, c.SourceFile, c.FrontSvg, c.BackSvg, c.CreatedAt, c.DueAt, null),
+                Card = new RenderableCard(c.Front, c.Back, c.SourceFile, c.HasSvg, c.CreatedAt, c.DueAt, null),
                 GroupName = c.DeckNames.Count == 0 ? "(no deck)" : c.DeckNames.OrderBy(n => n).First(),
             })
             .GroupBy(x => x.GroupName)
@@ -268,8 +267,7 @@ public class McpResourceService(
                 c.Front,
                 c.Back,
                 c.SourceFile,
-                c.FrontSvg,
-                c.BackSvg,
+                HasSvg = c.FrontSvg != null || c.BackSvg != null,
                 c.CreatedAt,
                 c.DueAt,
                 DeckName = c.DeckCards
@@ -278,7 +276,7 @@ public class McpResourceService(
                     .Select(dc => dc.Deck.Name)
                     .FirstOrDefault(),
             })
-            .Take(200) // hard cap pre-render; truncation may cut further
+            .Take(QueryHardCap) // hard cap pre-render; truncation may cut further
             .ToListAsync();
 
         var sb = new System.Text.StringBuilder();
@@ -297,7 +295,7 @@ public class McpResourceService(
           .Append(" (last 7 days)\n\n---\n\n");
 
         var renderable = raw
-            .Select(c => new RenderableCard(c.Front, c.Back, c.SourceFile, c.FrontSvg, c.BackSvg, c.CreatedAt, c.DueAt, c.DeckName))
+            .Select(c => new RenderableCard(c.Front, c.Back, c.SourceFile, c.HasSvg, c.CreatedAt, c.DueAt, c.DeckName))
             .ToList();
 
         AppendCardsWithTruncation(sb, renderable, includeDeckLabel: true, includeCreatedDate: true);
