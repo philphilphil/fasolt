@@ -37,13 +37,13 @@ Connect fasolt to Claude, ChatGPT, or any MCP-compatible agent. Ask it to create
 
 ## iOS App
 
-Native iOS app (Swift / SwiftUI) for studying on the go. Syncs with the backend, supports offline review with automatic sync when back online, and receives push notifications when cards are due.
+[Native iOS app](https://apps.apple.com/us/app/fasolt/id6761048313) (Swift / SwiftUI) for studying on the go.
 
 <p align="center">
   <img src="docs/media/ios_dashboard.png" alt="iOS dashboard" width="200" />
   <img src="docs/media/ios_front.png" alt="iOS study question" width="200" />
   <img src="docs/media/ios_back.png" alt="iOS study answer" width="200" />
-  <img src="docs/media/ios_studyend.png" alt="iOS session complete" width="200" />
+  <img src="docs/media/ios_progress.png" alt="iOS Progress" width="200" />
 </p>
 
 ## MCP

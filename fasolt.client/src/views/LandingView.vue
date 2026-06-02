@@ -158,7 +158,9 @@ import { ArrowRight, ArrowDown } from 'lucide-vue-next'
     <section class="mx-auto max-w-5xl px-6 py-16">
       <div class="flex flex-col items-center gap-6">
         <p class="text-xs uppercase tracking-[0.2em] text-accent">Study anywhere</p>
-        <p class="text-xs text-muted-foreground">Native iOS app — coming soon</p>
+        <a href="https://apps.apple.com/us/app/fasolt/id6761048313" target="_blank" rel="noopener">
+          <Button variant="outline">Download on the App Store</Button>
+        </a>
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <img
             src="/ios_screenshot_dashboard.png"
