@@ -73,12 +73,14 @@ function bucket(count: number): number {
   return 1
 }
 
+// Heatmap buckets are accent-tinted via color-mix so both themes derive from
+// the single brand token — calm, flat, never neon. Empty = sunken paper.
 function cellColor(v: number): string {
   if (v === 0) return 'var(--paper-2)'
-  if (v === 1) return 'oklch(0.85 0.07 50)'
-  if (v === 2) return 'oklch(0.75 0.12 48)'
-  if (v === 3) return 'oklch(0.65 0.15 42)'
-  return 'oklch(0.56 0.18 38)'
+  if (v === 1) return 'color-mix(in oklab, var(--accent) 22%, var(--paper-2))'
+  if (v === 2) return 'color-mix(in oklab, var(--accent) 46%, var(--paper-2))'
+  if (v === 3) return 'color-mix(in oklab, var(--accent) 72%, var(--paper-2))'
+  return 'var(--accent)'
 }
 
 // Heatmap layout: 53 columns x 7 rows for "year", weekday-aligned.
@@ -209,7 +211,7 @@ const ratingMixTotal = computed(() => {
           </div>
           <div class="big-stat-row">
             <span class="big-stat-num fa-num accent">{{ currentStreak }}</span>
-            <span class="big-stat-unit fa-mono">days</span>
+            <span class="big-stat-unit">days</span>
           </div>
           <p class="big-stat-sub">active · best {{ bestStreak }}</p>
         </div>
@@ -246,19 +248,19 @@ const ratingMixTotal = computed(() => {
             </h2>
           </div>
           <div class="heatmap-legend">
-            <span class="fa-mono">less</span>
+            <span>Less</span>
             <span v-for="v in [0,1,2,3,4]" :key="v" class="legend-cell" :style="{ background: cellColor(v) }" />
-            <span class="fa-mono">more</span>
+            <span>More</span>
           </div>
         </div>
 
         <div class="heatmap" v-if="period === 'year'">
           <div class="heatmap-months">
-            <div v-for="(m, i) in columnMonthLabels" :key="i" class="heatmap-month fa-mono">{{ m }}</div>
+            <div v-for="(m, i) in columnMonthLabels" :key="i" class="heatmap-month">{{ m }}</div>
           </div>
           <div class="heatmap-grid-wrap">
             <div class="heatmap-day-col">
-              <div v-for="(d, i) in dayLabels" :key="i" class="heatmap-day-label fa-mono">{{ d }}</div>
+              <div v-for="(d, i) in dayLabels" :key="i" class="heatmap-day-label">{{ d }}</div>
             </div>
             <div class="heatmap-grid">
               <div v-for="(col, w) in heatmapCells" :key="w" class="heatmap-col">
@@ -291,13 +293,13 @@ const ratingMixTotal = computed(() => {
 
         <div class="heatmap-foot">
           <span v-if="windowBestDay">
-            Best day · <span class="fa-mono accent-text">{{ windowBestDay.count }} cards</span>
+            Best day · <span class="foot-value">{{ windowBestDay.count }} cards</span>
           </span>
           <span>
-            Avg per active day · <span class="fa-mono accent-text">{{ windowAvgPerActive }} cards</span>
+            Avg per active day · <span class="foot-value">{{ windowAvgPerActive }} cards</span>
           </span>
           <span>
-            Rest days · <span class="fa-mono accent-text">{{ windowRestDays }}</span>
+            Rest days · <span class="foot-value">{{ windowRestDays }}</span>
           </span>
         </div>
       </section>
@@ -310,7 +312,7 @@ const ratingMixTotal = computed(() => {
               <span class="fa-cap">Rating mix</span>
               <h3 class="rating-title">How you rate yourself</h3>
             </div>
-            <span class="fa-mono rating-meta">{{ windowLabel }} · {{ ratingMixTotal.toLocaleString() }} ratings</span>
+            <span class="rating-meta">{{ windowLabel }} · {{ ratingMixTotal.toLocaleString() }} ratings</span>
           </div>
           <div class="rating-bar">
             <div
@@ -328,7 +330,7 @@ const ratingMixTotal = computed(() => {
               </div>
               <div class="rating-cell-row">
                 <span class="fa-num rating-num">{{ d.n.toLocaleString() }}</span>
-                <span class="fa-mono rating-pct">{{ d.pct }}%</span>
+                <span class="fa-num rating-pct">{{ d.pct }}%</span>
               </div>
             </div>
           </div>
@@ -391,25 +393,28 @@ const ratingMixTotal = computed(() => {
   background: var(--accent-soft);
 }
 
+/* Open stat row — whitespace + a single top/bottom hairline instead of a
+   boxed, per-tile bordered grid. Hairline verticals between tiles only. */
 .big-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border: 1px solid var(--rule-1);
-  border-radius: 12px;
-  background: var(--paper-1);
+  border-top: 1px solid var(--rule-1);
+  border-bottom: 1px solid var(--rule-1);
 }
 @media (max-width: 800px) {
   .big-stats { grid-template-columns: repeat(2, 1fr); }
-  .big-stat.is-last { border-bottom: none; }
 }
 .big-stat {
-  padding: 22px 24px;
+  padding: 20px 24px;
   border-right: 1px solid var(--rule-1);
 }
-.big-stat.is-last { border-right: none; }
+.big-stat:first-child { padding-left: 4px; }
+.big-stat.is-last { border-right: none; padding-right: 4px; }
 @media (max-width: 800px) {
-  .big-stat { border-right: none; border-bottom: 1px solid var(--rule-1); }
-  .big-stat:nth-child(odd) { border-right: 1px solid var(--rule-1); }
+  .big-stat { padding-left: 24px; }
+  .big-stat:nth-child(odd) { padding-left: 4px; }
+  .big-stat:nth-child(even) { border-right: none; padding-right: 4px; }
+  .big-stat:nth-child(1), .big-stat:nth-child(2) { border-bottom: 1px solid var(--rule-1); }
 }
 .big-stat-head {
   display: flex;
@@ -452,11 +457,10 @@ const ratingMixTotal = computed(() => {
 .heatmap-legend {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   color: var(--ink-2);
-  font-size: 11px;
+  font-size: 12px;
 }
-.heatmap-legend > .fa-mono { font-size: 11px; }
 .legend-cell {
   width: 11px;
   height: 11px;
@@ -513,7 +517,6 @@ const ratingMixTotal = computed(() => {
   aspect-ratio: 1 / 1;
   width: 100%;
   border-radius: 2.5px;
-  transition: transform .1s;
 }
 .heatmap-cell.is-today {
   outline: 1.5px solid var(--ink-0);
@@ -542,7 +545,7 @@ const ratingMixTotal = computed(() => {
   flex-wrap: wrap;
   gap: 8px;
 }
-.accent-text { color: var(--ink-0); }
+.foot-value { color: var(--ink-0); font-weight: 600; }
 
 /* Lower split */
 .lower-split {

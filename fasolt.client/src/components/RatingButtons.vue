@@ -44,19 +44,16 @@ const ratings: { key: string; label: string; rating: ReviewRating; cssColor: str
   padding: 14px 16px;
   background: var(--paper-1);
   border: 1px solid var(--rule-1);
-  border-bottom: 3px solid var(--rcolor);
-  border-radius: 8px;
+  border-radius: 9px;
   cursor: pointer;
   font: inherit;
   color: inherit;
-  transition: background .12s, border-color .12s, transform .08s;
+  transition: background .12s, border-color .12s;
 }
 .rating-btn:hover {
   background: var(--paper-2);
   border-color: var(--rcolor);
-  border-bottom-color: var(--rcolor);
 }
-.rating-btn:active { transform: translateY(1px); }
 .rating-top {
   display: flex;
   align-items: center;
@@ -69,7 +66,7 @@ const ratings: { key: string; label: string; rating: ReviewRating; cssColor: str
   min-width: 22px;
   height: 22px;
   padding: 0 6px;
-  font-family: 'Geist Mono', monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 11px;
   font-weight: 600;
   color: var(--rcolor);

@@ -56,8 +56,7 @@ const labels = { light: 'Light', dark: 'Dark', auto: 'Auto' } as const
   transition: background .12s, border-color .12s, color .12s;
 }
 .theme-btn:hover {
-  background: var(--paper-1);
-  border-color: var(--rule-1);
+  background: var(--paper-2);
   color: var(--ink-0);
 }
 .theme-item {

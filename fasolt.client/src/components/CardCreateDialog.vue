@@ -78,48 +78,48 @@ async function save() {
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="max-w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle class="text-sm">{{ cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}</DialogTitle>
+        <DialogTitle>{{ cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}</DialogTitle>
       </DialogHeader>
 
       <div class="space-y-4">
         <!-- Source metadata -->
-        <div class="space-y-1">
-          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Source file</label>
+        <div class="space-y-1.5">
+          <label class="fa-cap block">Source file</label>
           <input
             v-model="sourceFile"
             type="text"
             placeholder="e.g. distributed-systems.md"
-            class="w-full rounded border border-border bg-transparent px-3 py-1.5 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+            class="fa-field"
           />
         </div>
 
         <!-- Single front -->
-        <div v-if="isSingle" class="space-y-1">
-          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Front (question)</label>
+        <div v-if="isSingle" class="space-y-1.5">
+          <label class="fa-cap block">Front (question)</label>
           <textarea
             v-if="!showPreview"
             v-model="fronts[0]"
-            class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            class="fa-field"
             rows="2"
           />
-          <div v-else class="prose dark:prose-invert max-w-none rounded border border-border/60 p-3" v-html="render(fronts[0])" />
+          <div v-else class="fa-preview fa-prose" v-html="render(fronts[0])" />
         </div>
 
         <!-- Multiple fronts -->
         <div v-else class="space-y-2">
-          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Fronts (one card per question)</label>
+          <label class="fa-cap block">Fronts (one card per question)</label>
           <div v-for="(front, idx) in fronts" :key="idx" class="flex items-start gap-2">
             <textarea
               v-if="!showPreview"
               v-model="fronts[idx]"
-              class="flex-1 rounded border border-border bg-transparent px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              class="fa-field flex-1"
               rows="1"
             />
-            <div v-else class="flex-1 prose dark:prose-invert rounded border border-border/60 p-2 text-xs" v-html="render(front)" />
+            <div v-else class="fa-preview fa-prose flex-1" v-html="render(front)" />
             <Button
               variant="ghost"
               size="sm"
-              class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+              class="h-7 w-7 p-0 text-ink-2 hover:text-destructive shrink-0"
               @click="removeFront(idx)"
             >
               &times;
@@ -128,33 +128,74 @@ async function save() {
         </div>
 
         <!-- Back -->
-        <div class="space-y-1">
-          <label class="text-[10px] font-medium text-muted-foreground uppercase tracking-[0.1em]">Back (answer) {{ !isSingle ? '— shared by all cards' : '' }}</label>
+        <div class="space-y-1.5">
+          <label class="fa-cap block">Back (answer) {{ !isSingle ? '— shared by all cards' : '' }}</label>
           <textarea
             v-if="!showPreview"
             v-model="back"
-            class="w-full rounded border border-border bg-transparent px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+            class="fa-field"
             rows="8"
           />
-          <div v-else class="prose dark:prose-invert max-w-none rounded border border-border/60 p-3" v-html="renderedBack" />
+          <div v-else class="fa-preview fa-prose" v-html="renderedBack" />
         </div>
 
-        <div v-if="isLong" class="rounded border border-warning/30 bg-warning/10 px-3 py-2 text-[11px] text-warning">
+        <div v-if="isLong" class="fa-note">
           This card is quite long ({{ back.length.toLocaleString() }} chars). Consider creating cards from specific sections instead.
         </div>
 
-        <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
+        <div v-if="error" class="fa-error">{{ error }}</div>
       </div>
 
       <DialogFooter class="gap-2">
-        <Button variant="outline" size="sm" class="text-xs" @click="showPreview = !showPreview">
+        <button class="fa-btn fa-btn-ghost" @click="showPreview = !showPreview">
           {{ showPreview ? 'Edit' : 'Preview' }}
-        </Button>
-        <Button variant="outline" size="sm" class="text-xs" @click="emit('update:open', false)">Cancel</Button>
-        <Button size="sm" class="text-xs" :disabled="saving" @click="save">
-          {{ saving ? 'Saving...' : cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}
-        </Button>
+        </button>
+        <button class="fa-btn" @click="emit('update:open', false)">Cancel</button>
+        <button class="fa-btn fa-btn-primary" :disabled="saving" @click="save">
+          {{ saving ? 'Saving…' : cardCount > 1 ? `Create ${cardCount} cards` : 'Create card' }}
+        </button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+/* Text inputs / textareas — flat, hairline, accent ring on focus */
+.fa-field {
+  width: 100%;
+  border-radius: 9px;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  padding: 8px 11px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink-0);
+  transition: border-color .12s;
+}
+.fa-field::placeholder { color: var(--ink-3); }
+.fa-field:focus { outline: none; border-color: var(--accent); }
+textarea.fa-field { resize: vertical; }
+
+/* Rendered markdown preview surface */
+.fa-preview {
+  border: 1px solid var(--rule-1);
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: var(--paper-2);
+}
+
+/* Soft advisory note (long-card warning) — quiet, no glow */
+.fa-note {
+  border: 1px solid var(--rule-1);
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 12px;
+  color: var(--ink-1);
+  background: var(--paper-2);
+}
+
+.fa-error {
+  font-size: 12.5px;
+  color: var(--c-again);
+}
+</style>

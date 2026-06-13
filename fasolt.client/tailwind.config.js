@@ -80,9 +80,10 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Geist', 'system-ui', 'sans-serif'],
-        mono: ['Geist Mono', 'ui-monospace', 'JetBrains Mono', 'monospace'],
-        serif: ['Instrument Serif', 'Times New Roman', 'serif'],
+        // UI uses the platform system font. 'Geist' is reserved for the wordmark only.
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
+        brand: ['Geist', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",

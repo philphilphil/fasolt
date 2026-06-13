@@ -6,7 +6,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
 
 <template>
   <div class="min-h-screen bg-background text-foreground">
-    <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <nav class="sticky top-0 z-50 border-b border-rule-1 bg-paper-0">
       <div class="mx-auto flex max-w-3xl items-center px-6 py-4">
         <RouterLink to="/" class="flex items-center">
           <FasoltWordmark :size="32" />
@@ -28,7 +28,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
           <p>c/o Webix Solutions GmbH</p>
           <p>Zuckerfabrik 14</p>
           <p>70376 Stuttgart, Germany</p>
-          <p>Email: <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a></p>
+          <p>Email: <a href="mailto:info@fasolt.app" class="text-accent-text hover:underline">info@fasolt.app</a></p>
         </address>
       </section>
 
@@ -71,7 +71,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
       <section class="space-y-2">
         <h2 class="text-sm font-semibold text-foreground">6. International Data Transfers</h2>
         <p>Some of the providers listed above may process personal data outside the EU or EEA, including in the United States. Where this happens, we rely on an adequacy decision, Standard Contractual Clauses, or other lawful transfer mechanism required by applicable law, together with supplementary safeguards where necessary.</p>
-        <p>You can contact us at <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a> if you would like more information about the transfer safeguards relevant to a particular processing activity.</p>
+        <p>You can contact us at <a href="mailto:info@fasolt.app" class="text-accent-text hover:underline">info@fasolt.app</a> if you would like more information about the transfer safeguards relevant to a particular processing activity.</p>
       </section>
 
       <section class="space-y-2">
@@ -98,9 +98,9 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
           <li><strong class="text-foreground">Data portability</strong> — receive your data in a structured, machine-readable format (Art. 20 GDPR)</li>
           <li><strong class="text-foreground">Object</strong> to processing based on legitimate interest (Art. 21 GDPR)</li>
         </ul>
-        <p>You can exercise these rights by contacting us at <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a>. Where available, you can also use in-product export and account deletion features.</p>
+        <p>You can exercise these rights by contacting us at <a href="mailto:info@fasolt.app" class="text-accent-text hover:underline">info@fasolt.app</a>. Where available, you can also use in-product export and account deletion features.</p>
         <p>We do not use automated decision-making with legal or similarly significant effects within the meaning of Art. 22 GDPR. Review scheduling is automated, but it only affects study timing inside the service.</p>
-        <p>You also have the right to lodge a complaint with a supervisory authority. The competent authority is the <strong class="text-foreground">Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg</strong> (<a href="https://www.baden-wuerttemberg.datenschutz.de" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">www.baden-wuerttemberg.datenschutz.de</a>).</p>
+        <p>You also have the right to lodge a complaint with a supervisory authority. The competent authority is the <strong class="text-foreground">Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg</strong> (<a href="https://www.baden-wuerttemberg.datenschutz.de" target="_blank" rel="noopener noreferrer" class="text-accent-text hover:underline">www.baden-wuerttemberg.datenschutz.de</a>).</p>
       </section>
 
       <section class="space-y-2">
@@ -120,7 +120,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
 
       <section class="space-y-2">
         <h2 class="text-sm font-semibold text-foreground">13. Contact</h2>
-        <p>For questions about this privacy policy or your data, email us at <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a>.</p>
+        <p>For questions about this privacy policy or your data, email us at <a href="mailto:info@fasolt.app" class="text-accent-text hover:underline">info@fasolt.app</a>.</p>
       </section>
     </div>
   </div>

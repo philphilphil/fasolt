@@ -8,10 +8,12 @@
       name="description"
       content="fasolt is MCP-first spaced repetition for markdown notes. Let your AI agent turn notes into flashcards, then study them with FSRS on the web or iOS."
     />
-    <meta name="theme-color" content="#0b111a" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1b1b1c" media="(prefers-color-scheme: dark)" />
+    <!-- The UI uses the system font. Geist is loaded for the fasolt wordmark (logotype) only. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700&display=swap" rel="stylesheet" />
     <script>
       // Apply dark class before the SPA mounts so dark-mode users don't see a
       // light-theme flash. Must stay in sync with useDarkMode.ts.

@@ -178,82 +178,79 @@ const stateCounts = computed(() => {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="loading-state">Loading…</div>
 
-  <div v-else-if="deck" class="space-y-6">
-    <!-- Breadcrumb -->
-    <div class="text-[11px] text-muted-foreground">
-      <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
-      <span class="mx-1.5">/</span>
-      <span class="text-foreground">{{ deck.name }}</span>
-    </div>
+  <div v-else-if="deck" class="deck-page">
+    <RouterLink to="/decks" class="fa-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      Decks
+    </RouterLink>
 
     <!-- Header -->
-    <div class="flex items-start justify-between">
-      <div>
-        <h1 class="text-xl font-bold tracking-tight">{{ deck.name }}</h1>
-        <p v-if="deck.description" class="text-sm text-muted-foreground mt-1">{{ deck.description }}</p>
+    <header class="deck-header">
+      <div class="deck-header-text">
+        <h1 class="page-title">{{ deck.name }}</h1>
+        <p v-if="deck.description" class="deck-description">{{ deck.description }}</p>
       </div>
-      <div class="flex items-center gap-2">
-        <Button
+      <div class="deck-actions">
+        <button
           v-if="deck.dueCount > 0 && !deck.isSuspended"
-          size="sm"
-          class="text-sm"
+          class="fa-btn fa-btn-primary"
           @click="router.push(`/review?deckId=${deck.id}`)"
         >
           Study this deck
-        </Button>
-        <Button
+        </button>
+        <button
           v-if="deck.cardCount > 0 && !deck.isSuspended"
-          variant="outline"
-          size="sm"
-          class="text-sm"
+          class="fa-btn"
           data-testid="custom-study-button"
           @click="router.push(`/review?deckId=${deck.id}&mode=cram`)"
         >
           Custom study
-        </Button>
-        <Button variant="outline" size="sm" class="text-sm" @click="router.push(`/decks/${deck.id}/snapshots`)">
-          <History class="h-3.5 w-3.5 mr-1" />Snapshots
-        </Button>
-        <Button variant="outline" size="sm" class="text-sm" @click="toggleSuspended">
+        </button>
+        <button class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
+          <History class="h-3.5 w-3.5" />Snapshots
+        </button>
+        <button class="fa-btn" @click="toggleSuspended">
           {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
-        </Button>
-        <Button variant="outline" size="sm" class="h-7 text-xs" @click="copyDeckId">
+        </button>
+        <button class="fa-btn" @click="copyDeckId">
           {{ idCopied ? 'Copied!' : 'Copy ID' }}
-        </Button>
-        <Button variant="outline" size="sm" class="h-7 text-xs" @click="openEdit">Edit</Button>
-        <Button variant="outline" size="sm" class="h-7 text-xs text-destructive hover:text-destructive" @click="openDelete">Delete</Button>
+        </button>
+        <button class="fa-btn" @click="openEdit">Edit</button>
+        <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
       </div>
-    </div>
+    </header>
 
     <!-- Inactive banner -->
-    <div v-if="deck.isSuspended" class="rounded-md border border-muted bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
+    <div v-if="deck.isSuspended" class="suspended-banner">
       This deck is suspended. Cards are excluded from study.
     </div>
 
-    <!-- Stat bar -->
-    <div class="bg-secondary rounded-lg px-4 py-3 flex items-center gap-5">
-      <div>
-        <span class="text-lg font-bold">{{ deck.cardCount }}</span>
-        <span class="text-sm text-muted-foreground ml-1.5">cards</span>
-      </div>
-      <div class="w-px h-5 bg-border" />
-      <div>
-        <span class="text-lg font-bold text-warning">{{ deck.dueCount }}</span>
-        <span class="text-sm text-muted-foreground ml-1.5">due</span>
-      </div>
-      <div class="w-px h-5 bg-border" />
-      <div class="flex items-center gap-3 text-sm text-muted-foreground">
+    <!-- Stat line — quiet whitespace, no boxed tile -->
+    <div class="stat-line">
+      <span class="stat">
+        <span class="stat-num fa-num">{{ deck.cardCount }}</span>
+        <span class="stat-label">cards</span>
+      </span>
+      <span class="stat-sep">·</span>
+      <span class="stat">
+        <span class="stat-num fa-num" :class="{ 'is-due': deck.dueCount > 0 }">{{ deck.dueCount }}</span>
+        <span class="stat-label">due</span>
+      </span>
+      <span class="stat-sep">·</span>
+      <span class="stat-states">
         <span v-for="state in ['new', 'learning', 'review', 'relearning']" :key="state">
-          {{ stateCounts[state] || 0 }} {{ state }}
+          <span class="fa-num">{{ stateCounts[state] || 0 }}</span> {{ state }}
         </span>
-      </div>
+      </span>
     </div>
 
+    <div class="fa-rule" />
+
     <!-- Cards section -->
-    <div class="space-y-3">
-      <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5">Cards in this deck</div>
+    <div class="cards-section">
+      <div class="fa-cap section-label">Cards in this deck</div>
 
       <BulkActionBar
         v-if="selectedCount > 0"
@@ -270,7 +267,7 @@ const stateCounts = computed(() => {
         @clear="selectedIds = []"
       />
 
-      <div v-if="bulkError" class="text-sm text-destructive">{{ bulkError }}</div>
+      <div v-if="bulkError" class="bulk-error">{{ bulkError }}</div>
 
       <CardTable
         v-if="deck.cards.length > 0"
@@ -282,7 +279,7 @@ const stateCounts = computed(() => {
         <template #empty>No cards in this deck yet.</template>
       </CardTable>
 
-      <div v-else class="py-12 text-center text-sm text-muted-foreground">
+      <div v-else class="cards-empty">
         No cards in this deck yet. Add cards from the Cards view.
       </div>
     </div>
@@ -318,7 +315,7 @@ const stateCounts = computed(() => {
             Also delete all {{ deck.cardCount }} cards in this deck
           </label>
         </div>
-        <div v-if="deleteError" class="text-sm text-destructive">{{ deleteError }}</div>
+        <div v-if="deleteError" class="bulk-error">{{ deleteError }}</div>
         <DialogFooter class="gap-2">
           <Button variant="outline" size="sm" @click="deleteOpen = false">Cancel</Button>
           <Button variant="destructive" size="sm" @click="handleDelete">Delete</Button>
@@ -352,3 +349,91 @@ const stateCounts = computed(() => {
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+.deck-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.loading-state {
+  padding: 48px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* Header */
+.deck-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.deck-header-text { min-width: 0; }
+.deck-page .page-title { font-size: 26px; }
+.deck-description {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--ink-1);
+}
+.deck-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.delete-btn { color: var(--c-again); }
+.delete-btn:hover { color: var(--c-again); border-color: var(--c-again); }
+
+/* Suspended banner — quiet surface, hairline, no glow */
+.suspended-banner {
+  border: 1px solid var(--rule-1);
+  background: var(--paper-2);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: var(--ink-1);
+}
+
+/* Stat line — open row of numbers + labels, accent only on "due" */
+.stat-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.stat { display: inline-flex; align-items: baseline; gap: 5px; }
+.stat-num { font-size: 17px; color: var(--ink-0); font-weight: 600; }
+.stat-num.is-due { color: var(--accent-text); }
+.stat-label { color: var(--ink-2); }
+.stat-sep { color: var(--ink-3); }
+.stat-states {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  color: var(--ink-2);
+}
+.stat-states .fa-num { color: var(--ink-1); font-weight: 600; }
+
+/* Cards section */
+.cards-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.section-label { margin-bottom: 2px; }
+
+.bulk-error { font-size: 13px; color: var(--c-again); }
+
+.cards-empty {
+  padding: 48px 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+</style>

@@ -6,7 +6,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
 
 <template>
   <div class="flex min-h-screen flex-col bg-background text-foreground">
-    <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <nav class="sticky top-0 z-50 border-b border-rule-1 bg-paper-0">
       <div class="mx-auto flex max-w-3xl items-center px-6 py-4">
         <RouterLink to="/" class="flex items-center">
           <FasoltWordmark :size="32" />
@@ -76,7 +76,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
           <h2 class="text-sm font-semibold text-foreground">10. Privacy</h2>
           <p>
             Our processing of personal data is described in the
-            <RouterLink to="/privacy" class="text-accent hover:underline">Privacy Policy</RouterLink>.
+            <RouterLink to="/privacy" class="text-accent-text hover:underline">Privacy Policy</RouterLink>.
           </p>
         </section>
 
@@ -90,9 +90,9 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
           <h2 class="text-sm font-semibold text-foreground">12. Contact</h2>
           <p>
             For questions about these terms, email us at
-            <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a>
+            <a href="mailto:info@fasolt.app" class="text-accent-text hover:underline">info@fasolt.app</a>
             or refer to the
-            <RouterLink to="/impressum" class="text-accent hover:underline">Impressum</RouterLink>.
+            <RouterLink to="/impressum" class="text-accent-text hover:underline">Impressum</RouterLink>.
           </p>
         </section>
       </div>

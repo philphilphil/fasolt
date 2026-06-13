@@ -21,24 +21,35 @@
 
 @layer base {
   :root {
-    --paper-0: oklch(0.985 0.004 75);
-    --paper-1: oklch(0.970 0.005 75);
-    --paper-2: oklch(0.945 0.006 75);
-    --rule-1:  oklch(0.905 0.006 75);
-    --rule-2:  oklch(0.925 0.005 75);
-    --ink-0:   oklch(0.18  0.012 60);
-    --ink-1:   oklch(0.36  0.011 60);
-    --ink-2:   oklch(0.55  0.008 60);
-    --ink-3:   oklch(0.72  0.005 75);
-    --accent:  oklch(0.61  0.17 40);
-    --accent-hi: oklch(0.55 0.18 38);
-    --accent-soft: oklch(0.945 0.045 55);
-    --accent-on: #ffffff;
-    --c-again: oklch(0.60 0.18 25);
-    --c-hard:  oklch(0.65 0.16 65);
-    --c-good:  oklch(0.55 0.13 155);
-    --c-easy:  oklch(0.55 0.14 245);
-    --radius: 0.5rem;
+    /* paper + ink (light) — white page, hairlines + air do the structuring.
+       Mirrors the light-theme palette in src/style.css. Auth is always light. */
+    --paper-0: #ffffff;
+    --paper-1: #ffffff;
+    --paper-2: #f4f4f3;
+    --rule-1:  #ececec;
+    --rule-2:  #f2f2f2;
+    --ink-0:   #1c1c1e;
+    --ink-1:   #6b6b70;
+    --ink-2:   #8e8e93;
+    --ink-3:   #c2c2c7;
+
+    /* brand marigold accent */
+    --accent:      #ee9b42;
+    --accent-hi:   #e08f31;
+    --accent-text: #c9781a;
+    --accent-soft: #fbeede;
+    --accent-on:   #ffffff;
+
+    /* status hues */
+    --c-again: #ff3b30;
+    --c-hard:  #f5b400;
+    --c-good:  #34c759;
+    --c-easy:  #2e7cf6;
+
+    /* shadows — at most a whisper */
+    --sh-2: 0 1px 3px rgba(0,0,0,.05);
+
+    --radius: 0.625rem;
   }
 
   * {
@@ -47,7 +58,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -89,7 +100,8 @@
     color: var(--ink-0);
   }
   .oauth-card {
-    @apply relative w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm;
+    @apply relative w-full max-w-sm rounded-xl border border-border bg-card p-6;
+    box-shadow: var(--sh-2);
   }
   .oauth-card h1 {
     @apply mb-2 text-center text-base font-semibold text-foreground;
@@ -109,21 +121,33 @@
   .oauth-field input[type=text],
   .oauth-field input[type=email],
   .oauth-field input[type=password] {
-    @apply w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply w-full rounded-lg border border-input px-3 py-2 text-base transition-colors placeholder:text-muted-foreground focus-visible:outline-none;
+    background: var(--paper-2);
+  }
+  .oauth-field input[type=text]:focus-visible,
+  .oauth-field input[type=email]:focus-visible,
+  .oauth-field input[type=password]:focus-visible {
+    border-color: var(--accent);
+    background: var(--paper-1);
   }
   .oauth-field input[name="Input.Code"],
   .oauth-field input[name=code] {
     @apply py-3 text-center font-mono text-2xl tracking-[0.5em];
   }
   .oauth-btn {
-    @apply mt-1 inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors disabled:pointer-events-none disabled:opacity-50;
+    @apply mt-1 inline-flex h-10 w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50;
+    background: var(--accent);
+    color: var(--accent-on);
+    border: 1px solid var(--accent);
   }
-  .oauth-btn:hover { background: var(--ink-1); }
+  .oauth-btn:hover { background: var(--accent-hi); border-color: var(--accent-hi); }
+  /* Provider buttons keep the providers' own brand identity (Apple black,
+     GitHub charcoal) — these are third-party brand colors, not fasolt theme. */
   .oauth-btn-apple {
-    @apply mb-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black/85;
+    @apply mb-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-black/85;
   }
   .oauth-btn-github {
-    @apply mb-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#24292f] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#32383f];
+    @apply mb-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#24292f] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#32383f];
   }
   .oauth-divider {
     @apply my-3 flex items-center gap-3 text-xs text-muted-foreground;
@@ -145,7 +169,8 @@
     @apply mt-4 flex flex-col items-center gap-1 text-center text-xs text-muted-foreground;
   }
   .oauth-footer a {
-    @apply text-accent hover:underline;
+    color: var(--accent-text);
+    @apply hover:underline;
   }
   .oauth-permissions {
     @apply mb-5 rounded-md border border-border bg-muted p-3;
@@ -161,7 +186,7 @@
     @apply text-muted-foreground;
   }
   .oauth-btn-secondary {
-    @apply mt-2 inline-flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted;
+    @apply mt-2 inline-flex h-10 w-full items-center justify-center rounded-lg border border-input bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted;
   }
   .oauth-rules {
     @apply mt-1 list-none space-y-0.5 pl-0 text-[11px] text-muted-foreground;
@@ -185,7 +210,8 @@
     @apply mt-0.5 w-auto;
   }
   .oauth-tos a {
-    @apply font-medium text-accent;
+    @apply font-medium;
+    color: var(--accent-text);
   }
   .oauth-resend {
     @apply mt-3 text-center text-xs text-muted-foreground;

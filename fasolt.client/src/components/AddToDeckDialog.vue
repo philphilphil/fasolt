@@ -77,11 +77,11 @@ async function moveTo(deckId: string) {
           <span class="fa-tag" :style="{ background: deckColor(d.id) }" />
           <div class="move-row-text">
             <div class="move-row-name">{{ d.name }}</div>
-            <div class="fa-mono move-row-sub">
+            <div class="move-row-sub">
               {{ d.cardCount }} card{{ d.cardCount === 1 ? '' : 's' }}<template v-if="d.isSuspended"> · suspended</template>
             </div>
           </div>
-          <span class="move-row-cta fa-mono">add ›</span>
+          <span class="move-row-cta">Add ›</span>
         </button>
 
         <div v-if="filteredDecks.length === 0" class="move-empty">

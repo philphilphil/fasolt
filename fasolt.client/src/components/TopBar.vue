@@ -227,7 +227,7 @@ async function handleLogout() { await auth.logout(); window.location.href = '/' 
   color: var(--accent-on);
   display: grid;
   place-items: center;
-  font-family: 'Geist Mono', monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 11px;
   font-weight: 600;
 }

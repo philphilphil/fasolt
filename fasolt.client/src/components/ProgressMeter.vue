@@ -53,7 +53,7 @@ const useDots = computed(() => props.total >= 5 && props.total <= 60)
   transition: background .2s;
 }
 .progress-tick.is-done { background: var(--accent); }
-.progress-tick.is-next { background: var(--ink-3); opacity: .7; }
+.progress-tick.is-next { background: var(--ink-3); }
 .progress-bar-track {
   flex: 1;
   height: 3px;

@@ -63,11 +63,11 @@ onMounted(async () => {
   color: var(--ink-3);
   transition: color .12s;
 }
-.footer-gh:hover { color: var(--ink-0); }
+.footer-gh:hover { color: var(--accent-text); }
 .footer-link {
   color: var(--ink-2);
   text-decoration: none;
   transition: color .12s;
 }
-.footer-link:hover { color: var(--ink-0); }
+.footer-link:hover { color: var(--accent-text); }
 </style>

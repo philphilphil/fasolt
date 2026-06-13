@@ -79,14 +79,15 @@ const total = computed(() => breakdown.value.reduce((a, b) => a + b.n, 0) || 1)
 .hero { display: flex; flex-direction: column; }
 .accent-label { color: var(--accent); }
 .hero-title {
-  font-family: 'Instrument Serif', serif;
-  font-size: 72px;
-  line-height: 1;
+  font-family: inherit;
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.02;
   letter-spacing: -0.03em;
   margin: 12px 0 0;
   color: var(--ink-0);
 }
-@media (max-width: 600px) { .hero-title { font-size: 52px; } }
+@media (max-width: 600px) { .hero-title { font-size: 44px; } }
 .hero-sub {
   margin-top: 14px;
   font-size: 16px;

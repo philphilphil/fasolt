@@ -6,7 +6,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
 
 <template>
   <div class="flex min-h-screen flex-col bg-background text-foreground">
-    <nav class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <nav class="sticky top-0 z-50 border-b border-rule-1 bg-paper-0">
       <div class="mx-auto flex max-w-3xl items-center px-6 py-4">
         <RouterLink to="/" class="flex items-center">
           <FasoltWordmark :size="32" />
@@ -36,7 +36,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
           <h2 class="text-sm font-semibold text-foreground">Contact</h2>
           <p>
             Email:
-            <a href="mailto:info@fasolt.app" class="text-accent hover:underline">info@fasolt.app</a>
+            <a href="mailto:info@fasolt.app" class="text-accent-text hover:underline">info@fasolt.app</a>
           </p>
           <p>
             For project-related inquiries, you can also use the
@@ -44,7 +44,7 @@ import FasoltWordmark from '@/components/FasoltWordmark.vue'
               href="https://github.com/philphilphil/fasolt"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-accent hover:underline"
+              class="text-accent-text hover:underline"
             >
               GitHub repository</a>.
           </p>

@@ -29,7 +29,7 @@ defineEmits<{
   >
     <div class="bulk-bar-left">
       <span class="fa-num bulk-count">{{ count }}</span>
-      <span class="bulk-label">selected</span>
+      <span class="fa-cap bulk-label">selected</span>
     </div>
     <div class="bulk-bar-actions">
       <button class="bulk-action" :disabled="busy" @click="$emit('addToDeck')">
@@ -70,10 +70,11 @@ defineEmits<{
   align-items: center;
   gap: 14px;
   padding: 9px 14px;
-  border: 1px solid var(--accent);
-  background: var(--accent-soft);
-  border-radius: 10px;
-  animation: bar-pop .2s cubic-bezier(.4,0,.2,1) both;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  border-radius: 12px;
+  box-shadow: var(--sh-2);
+  animation: bar-fade .15s ease both;
   transition: opacity .12s;
 }
 .bulk-bar.is-busy {
@@ -85,29 +86,25 @@ defineEmits<{
   cursor: progress;
   opacity: 0.6;
 }
-@keyframes bar-pop {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes bar-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .bulk-bar-left {
   display: flex;
   align-items: baseline;
   gap: 6px;
   padding-right: 12px;
-  border-right: 1px solid color-mix(in oklch, var(--accent) 25%, transparent);
+  border-right: 1px solid var(--rule-1);
 }
 .bulk-count {
   font-size: 20px;
   line-height: 1;
-  font-weight: 500;
-  color: var(--accent-hi);
+  font-weight: 600;
+  color: var(--accent-text);
 }
 .bulk-label {
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  color: var(--accent-hi);
+  font-size: 11px;
 }
 .bulk-bar-actions {
   display: flex;
@@ -126,20 +123,18 @@ defineEmits<{
   font-weight: 500;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--accent-hi);
+  border-radius: 7px;
+  color: var(--ink-0);
   cursor: pointer;
-  transition: background .12s, border-color .12s, color .12s;
+  transition: background .12s, color .12s;
 }
 .bulk-action:hover {
-  background: var(--paper-1);
-  border-color: var(--accent);
+  background: var(--paper-2);
   color: var(--ink-0);
 }
 .bulk-action.is-danger { color: var(--c-again); }
 .bulk-action.is-danger:hover {
-  border-color: var(--c-again);
-  background: color-mix(in oklch, var(--c-again) 8%, var(--paper-1));
+  background: var(--paper-2);
   color: var(--c-again);
 }
 .bulk-clear {
@@ -148,15 +143,15 @@ defineEmits<{
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 5px;
+  border-radius: 7px;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--accent-hi);
+  color: var(--ink-2);
   cursor: pointer;
-  transition: background .12s, border-color .12s;
+  transition: background .12s, color .12s;
 }
 .bulk-clear:hover {
-  background: var(--paper-1);
-  border-color: var(--accent);
+  background: var(--paper-2);
+  color: var(--ink-0);
 }
 </style>
