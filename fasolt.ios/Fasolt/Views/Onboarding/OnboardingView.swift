@@ -29,16 +29,28 @@ struct OnboardingView: View {
                     }
 
                     if showServerField {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Text("Server URL")
-                                .font(.caption)
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(FasoltTheme.ink2)
                             TextField("https://fasolt.app", text: $serverURL)
-                                .textFieldStyle(.roundedBorder)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 16))
+                                .foregroundStyle(FasoltTheme.ink0)
                                 .textContentType(.URL)
                                 .autocorrectionDisabled()
                                 .textInputAutocapitalization(.never)
                                 .keyboardType(.URL)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(FasoltTheme.paper2)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(FasoltTheme.rule1, lineWidth: FasoltTheme.hairline)
+                                )
                                 .onChange(of: serverURL) { _, newValue in
                                     Task { await featureFlags.refresh(serverURL: newValue) }
                                 }
@@ -86,12 +98,16 @@ struct OnboardingView: View {
                     .padding(.horizontal)
 
                     if featureFlags.appleLogin || featureFlags.githubLogin {
-                        HStack {
-                            VStack { Divider() }
+                        HStack(spacing: 12) {
+                            Rectangle()
+                                .fill(FasoltTheme.rule1)
+                                .frame(height: FasoltTheme.hairline)
                             Text("or")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            VStack { Divider() }
+                                .font(.system(size: 13))
+                                .foregroundStyle(FasoltTheme.ink2)
+                            Rectangle()
+                                .fill(FasoltTheme.rule1)
+                                .frame(height: FasoltTheme.hairline)
                         }
                         .padding(.horizontal)
                     }
@@ -105,16 +121,14 @@ struct OnboardingView: View {
                         } label: {
                             if authService.isLoading {
                                 ProgressView()
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 22)
+                                    .tint(FasoltTheme.accentOn)
                             } else {
                                 Text("Sign up with email")
-                                    .frame(maxWidth: .infinity)
                             }
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        .buttonStyle(AccentButtonStyle(height: 48))
                         .disabled(authService.isLoading || serverURL.isEmpty)
+                        .opacity(authService.isLoading || serverURL.isEmpty ? 0.5 : 1)
 
                         Button {
                             Task {
@@ -122,18 +136,29 @@ struct OnboardingView: View {
                             }
                         } label: {
                             Text("Sign in with email")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(FasoltTheme.ink0)
                                 .frame(maxWidth: .infinity)
+                                .frame(height: 48)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(FasoltTheme.paper1)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .strokeBorder(FasoltTheme.rule1, lineWidth: FasoltTheme.hairline)
+                                )
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        .buttonStyle(.plain)
                         .disabled(authService.isLoading || serverURL.isEmpty)
+                        .opacity(authService.isLoading || serverURL.isEmpty ? 0.5 : 1)
                     }
                     .padding(.horizontal)
 
                     if let error = authService.errorMessage {
                         Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                            .font(.system(size: 13))
+                            .foregroundStyle(FasoltTheme.again)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -146,13 +171,15 @@ struct OnboardingView: View {
                             }
                             Task { await featureFlags.refresh(serverURL: Self.selfHostDefault) }
                         }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 13))
+                        .foregroundStyle(FasoltTheme.ink2)
                     }
 
                     Spacer().frame(height: 32)
                 }
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
             .offlineBanner()
         }
     }

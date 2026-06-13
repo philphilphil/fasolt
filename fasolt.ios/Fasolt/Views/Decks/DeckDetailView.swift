@@ -30,17 +30,20 @@ struct DeckDetailView: View {
                                 VStack(spacing: 2) {
                                     Text("\(detail.cardCount)")
                                         .font(.title3.weight(.semibold))
+                                        .monospacedDigit()
+                                        .foregroundStyle(FasoltTheme.ink0)
                                     Text("cards")
                                         .font(.caption2)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(FasoltTheme.ink2)
                                 }
                                 VStack(spacing: 2) {
                                     Text("\(detail.dueCount)")
                                         .font(.title3.weight(.semibold))
-                                        .foregroundStyle(detail.dueCount > 0 ? .orange : .primary)
+                                        .monospacedDigit()
+                                        .foregroundStyle(detail.dueCount > 0 ? FasoltTheme.accentText : FasoltTheme.ink0)
                                     Text("due")
                                         .font(.caption2)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(FasoltTheme.ink2)
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -49,7 +52,7 @@ struct DeckDetailView: View {
                             if detail.isSuspended {
                                 Text("This deck is suspended. Cards are excluded from study.")
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(FasoltTheme.ink2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.vertical, 4)
                             }
@@ -104,7 +107,7 @@ struct DeckDetailView: View {
                                                 systemImage: card.isSuspended ? "play.circle" : "pause.circle"
                                             )
                                         }
-                                        .tint(.orange)
+                                        .tint(.indigo)
                                     }
                                 }
                             }
@@ -115,13 +118,12 @@ struct DeckDetailView: View {
                         Button {
                             startStudy(deckId: viewModel.deckId)
                         } label: {
-                            Text("Study This Deck")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
+                            Text("Study this deck")
                         }
-                        .buttonStyle(.borderedProminent)
-                        .padding()
+                        .buttonStyle(AccentButtonStyle())
+                        .padding(.horizontal, FasoltTheme.pagePadding)
+                        .padding(.vertical, 12)
+                        .background(FasoltTheme.paper0)
                     }
                 }
             } else if let error = viewModel.errorMessage {

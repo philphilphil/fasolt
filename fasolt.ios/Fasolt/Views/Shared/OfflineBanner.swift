@@ -22,13 +22,19 @@ struct OfflineBanner: ViewModifier {
                 HStack(spacing: 6) {
                     Image(systemName: icon)
                         .font(.caption2)
+                        .foregroundStyle(FasoltTheme.hard)
                     Text(label)
                         .font(.caption2.weight(.medium))
+                        .foregroundStyle(FasoltTheme.ink1)
                 }
-                .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
-                .background(.ultraThinMaterial)
+                .background(FasoltTheme.paper2)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(FasoltTheme.rule1)
+                        .frame(height: FasoltTheme.hairline)
+                }
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
 

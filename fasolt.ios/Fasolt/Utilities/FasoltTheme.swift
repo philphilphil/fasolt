@@ -3,108 +3,117 @@ import UIKit
 
 // MARK: - Design tokens
 //
-// Paper-and-ink palette with a vermilion accent. Light/dark adaptive via
-// dynamic UIColors so SwiftUI picks the right value automatically.
+// "Quiet & Functional" palette, anchored on Things — a warm marigold accent on
+// white / warm-charcoal paper. System font (SF) throughout, whitespace over
+// borders, no gloss. Mirrors the web design language; see
+// docs/superpowers/specs/2026-06-13-things-design-language.md.
+// Light/dark adaptive via dynamic UIColors so SwiftUI picks the right value.
 
 enum FasoltTheme {
 
     // MARK: Surfaces
 
-    /// Page background — warm off-white in light, ink in dark.
+    /// Page background — white in light, warm charcoal in dark.
     static let paper0 = Color(
-        light: UIColor(red: 0.961, green: 0.953, blue: 0.933, alpha: 1.0),
-        dark:  UIColor(red: 0.085, green: 0.082, blue: 0.078, alpha: 1.0)
+        light: UIColor.white,
+        dark:  UIColor(red: 0.106, green: 0.106, blue: 0.110, alpha: 1.0)
     )
 
     /// Card / inset surface.
     static let paper1 = Color(
         light: UIColor.white,
-        dark:  UIColor(red: 0.117, green: 0.114, blue: 0.106, alpha: 1.0)
+        dark:  UIColor(red: 0.141, green: 0.141, blue: 0.153, alpha: 1.0)
     )
 
-    /// Sunken / striped surface.
+    /// Sunken / striped surface / hover fill.
     static let paper2 = Color(
-        light: UIColor(red: 0.925, green: 0.918, blue: 0.898, alpha: 1.0),
-        dark:  UIColor(red: 0.152, green: 0.149, blue: 0.137, alpha: 1.0)
+        light: UIColor(red: 0.957, green: 0.957, blue: 0.953, alpha: 1.0),
+        dark:  UIColor(red: 0.184, green: 0.184, blue: 0.200, alpha: 1.0)
     )
 
     /// Hairline rule (0.5pt borders).
     static let rule1 = Color(
-        light: UIColor(red: 0.235, green: 0.235, blue: 0.263, alpha: 0.18),
-        dark:  UIColor(white: 1.0, alpha: 0.12)
+        light: UIColor(red: 0.925, green: 0.925, blue: 0.925, alpha: 1.0),
+        dark:  UIColor(red: 0.204, green: 0.204, blue: 0.227, alpha: 1.0)
     )
 
     /// Fainter inset separator.
     static let rule2 = Color(
-        light: UIColor(red: 0.235, green: 0.235, blue: 0.263, alpha: 0.12),
-        dark:  UIColor(white: 1.0, alpha: 0.07)
+        light: UIColor(red: 0.949, green: 0.949, blue: 0.949, alpha: 1.0),
+        dark:  UIColor(red: 0.173, green: 0.173, blue: 0.188, alpha: 1.0)
     )
 
     // MARK: Ink (text)
 
     static let ink0 = Color(
         light: UIColor(red: 0.110, green: 0.110, blue: 0.118, alpha: 1.0),
-        dark:  UIColor(white: 0.96, alpha: 1.0)
+        dark:  UIColor(red: 0.929, green: 0.929, blue: 0.941, alpha: 1.0)
     )
 
     static let ink1 = Color(
-        light: UIColor(red: 0.235, green: 0.235, blue: 0.263, alpha: 0.78),
-        dark:  UIColor(white: 0.78, alpha: 1.0)
+        light: UIColor(red: 0.420, green: 0.420, blue: 0.439, alpha: 1.0),
+        dark:  UIColor(red: 0.659, green: 0.659, blue: 0.686, alpha: 1.0)
     )
 
     static let ink2 = Color(
-        light: UIColor(red: 0.235, green: 0.235, blue: 0.263, alpha: 0.58),
-        dark:  UIColor(white: 0.62, alpha: 1.0)
+        light: UIColor(red: 0.557, green: 0.557, blue: 0.576, alpha: 1.0),
+        dark:  UIColor(red: 0.541, green: 0.541, blue: 0.569, alpha: 1.0)
     )
 
     static let ink3 = Color(
-        light: UIColor(red: 0.235, green: 0.235, blue: 0.263, alpha: 0.36),
-        dark:  UIColor(white: 0.42, alpha: 1.0)
+        light: UIColor(red: 0.761, green: 0.761, blue: 0.780, alpha: 1.0),
+        dark:  UIColor(red: 0.361, green: 0.361, blue: 0.388, alpha: 1.0)
     )
 
-    // MARK: Accent (vermilion)
+    // MARK: Accent (warm marigold)
 
-    /// Primary accent — vermilion.
+    /// Primary accent — marigold. Used only for action / active / today / progress.
     static let accent = Color(
-        light: UIColor(red: 0.815, green: 0.330, blue: 0.180, alpha: 1.0),
-        dark:  UIColor(red: 0.952, green: 0.462, blue: 0.282, alpha: 1.0)
+        light: UIColor(red: 0.933, green: 0.608, blue: 0.259, alpha: 1.0),
+        dark:  UIColor(red: 0.949, green: 0.639, blue: 0.322, alpha: 1.0)
     )
 
-    /// Hover / pressed variant.
+    /// Pressed / stronger variant.
     static let accentHi = Color(
-        light: UIColor(red: 0.733, green: 0.290, blue: 0.155, alpha: 1.0),
-        dark:  UIColor(red: 1.000, green: 0.560, blue: 0.380, alpha: 1.0)
+        light: UIColor(red: 0.878, green: 0.561, blue: 0.192, alpha: 1.0),
+        dark:  UIColor(red: 0.957, green: 0.678, blue: 0.388, alpha: 1.0)
+    )
+
+    /// Accent as text/links on light surfaces — deeper, for legibility (AA).
+    static let accentText = Color(
+        light: UIColor(red: 0.788, green: 0.471, blue: 0.102, alpha: 1.0),
+        dark:  UIColor(red: 0.949, green: 0.639, blue: 0.322, alpha: 1.0)
     )
 
     /// Soft tint for chips & subtle backgrounds.
     static let accentSoft = Color(
-        light: UIColor(red: 0.980, green: 0.918, blue: 0.882, alpha: 1.0),
-        dark:  UIColor(red: 0.290, green: 0.150, blue: 0.092, alpha: 1.0)
+        light: UIColor(red: 0.984, green: 0.933, blue: 0.871, alpha: 1.0),
+        dark:  UIColor(red: 0.227, green: 0.173, blue: 0.102, alpha: 1.0)
     )
 
     /// Foreground when on accent surfaces.
     static let accentOn = Color.white
 
-    // MARK: Status colors (rating buttons / state chips)
+    // MARK: Status colors (rating buttons / state chips) — Apple system hues
 
     static let again = Color(
-        light: UIColor(red: 0.812, green: 0.300, blue: 0.235, alpha: 1.0),
-        dark:  UIColor(red: 0.952, green: 0.420, blue: 0.330, alpha: 1.0)
+        light: UIColor(red: 1.000, green: 0.231, blue: 0.188, alpha: 1.0),
+        dark:  UIColor(red: 1.000, green: 0.271, blue: 0.227, alpha: 1.0)
     )
 
     static let hard = Color(
-        light: UIColor(red: 0.795, green: 0.502, blue: 0.110, alpha: 1.0),
-        dark:  UIColor(red: 0.972, green: 0.685, blue: 0.220, alpha: 1.0)
+        light: UIColor(red: 0.961, green: 0.706, blue: 0.000, alpha: 1.0),
+        dark:  UIColor(red: 1.000, green: 0.800, blue: 0.200, alpha: 1.0)
     )
 
     static let good = Color(
-        light: UIColor(red: 0.227, green: 0.560, blue: 0.345, alpha: 1.0),
-        dark:  UIColor(red: 0.388, green: 0.760, blue: 0.500, alpha: 1.0)
+        light: UIColor(red: 0.204, green: 0.780, blue: 0.349, alpha: 1.0),
+        dark:  UIColor(red: 0.188, green: 0.820, blue: 0.345, alpha: 1.0)
     )
 
     static let easy = Color(
-        light: UIColor(red: 0.220, green: 0.476, blue: 0.770, alpha: 1.0),
-        dark:  UIColor(red: 0.400, green: 0.660, blue: 0.950, alpha: 1.0)
+        light: UIColor(red: 0.180, green: 0.486, blue: 0.965, alpha: 1.0),
+        dark:  UIColor(red: 0.290, green: 0.608, blue: 1.000, alpha: 1.0)
     )
 
     // MARK: Spacing & radius
@@ -173,28 +182,27 @@ extension View {
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
+                    .strokeBorder(FasoltTheme.rule1, lineWidth: FasoltTheme.hairline)
             )
     }
 
-    /// Section header style — small all-caps mono-ish label.
+    /// Quiet section label — sentence case, calm, muted. (Replaces the old
+    /// uppercase wide-tracked label, the main "AI tell" we're removing.)
     func sectionLabel() -> some View {
         self
-            .font(.system(size: 12, weight: .medium, design: .default))
-            .textCase(.uppercase)
-            .tracking(0.6)
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(FasoltTheme.ink2)
     }
 }
 
 // MARK: - Small components
 
-/// Tiny coloured square used as a deck tag.
+/// Small round dot used as a deck tag.
 struct DeckTag: View {
     let color: Color
     var size: CGFloat = 8
     var body: some View {
-        RoundedRectangle(cornerRadius: 2, style: .continuous)
+        Circle()
             .fill(color)
             .frame(width: size, height: size)
     }
@@ -234,7 +242,7 @@ struct DeckInitialsBadge: View {
     }
 }
 
-/// Vermilion underline used on hero cards.
+/// Marigold underline used on hero cards.
 struct AccentStripe: View {
     var horizontalInset: CGFloat = 24
     var body: some View {
@@ -249,21 +257,19 @@ struct AccentStripe: View {
     }
 }
 
-/// Small uppercase mono caption used throughout the design.
+/// Small quiet caption used throughout the design — sentence case, no gloss.
 struct CapsLabel: View {
     let text: String
     var color: Color = FasoltTheme.ink2
-    var size: CGFloat = 11
+    var size: CGFloat = 12
     var body: some View {
         Text(text)
-            .font(.system(size: size, weight: .medium))
-            .tracking(0.6)
-            .textCase(.uppercase)
+            .font(.system(size: size, weight: .semibold))
             .foregroundStyle(color)
     }
 }
 
-/// Primary accent button used as a hero CTA.
+/// Primary accent button used as a hero CTA — flat marigold, no gloss.
 struct AccentButtonStyle: ButtonStyle {
     var height: CGFloat = 50
     var radius: CGFloat = 14
@@ -278,13 +284,7 @@ struct AccentButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(FasoltTheme.accent)
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(.white.opacity(0.12), lineWidth: 1)
-                    .blendMode(.overlay)
-            )
             .opacity(configuration.isPressed ? 0.85 : 1.0)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1.0)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
@@ -294,7 +294,7 @@ struct SoftAccentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(FasoltTheme.accentHi)
+            .foregroundStyle(FasoltTheme.accentText)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .background(

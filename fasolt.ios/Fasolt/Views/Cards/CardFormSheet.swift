@@ -83,13 +83,15 @@ struct CardFormSheet: View {
                             Button {
                                 toggleDeck(deck.id)
                             } label: {
-                                HStack {
+                                HStack(spacing: 10) {
+                                    DeckTag(color: FasoltTheme.deckColor(for: deck.id), size: 8)
                                     Text(deck.name)
-                                        .foregroundStyle(.primary)
+                                        .foregroundStyle(FasoltTheme.ink0)
                                     Spacer()
                                     if selectedDeckIds.contains(deck.id) {
                                         Image(systemName: "checkmark")
-                                            .foregroundStyle(.blue)
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(FasoltTheme.accentText)
                                     }
                                 }
                                 .contentShape(Rectangle())
@@ -113,11 +115,13 @@ struct CardFormSheet: View {
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(FasoltTheme.again)
                             .font(.caption)
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(FasoltTheme.paper0.ignoresSafeArea())
             .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

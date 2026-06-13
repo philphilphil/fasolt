@@ -80,11 +80,11 @@ enum DateFormatters {
 
 func stateColor(_ state: String) -> Color {
     switch state {
-    case "new": return .green
-    case "review": return .blue
-    case "learning": return .orange
-    case "relearning": return .red
-    default: return .secondary
+    case "new": return FasoltTheme.good
+    case "review": return FasoltTheme.easy
+    case "learning": return FasoltTheme.hard
+    case "relearning": return FasoltTheme.again
+    default: return FasoltTheme.ink2
     }
 }
 
@@ -155,9 +155,10 @@ struct FSRSItem: View {
         VStack(spacing: 2) {
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FasoltTheme.ink2)
             Text(value)
                 .font(.subheadline.weight(.medium))
+                .foregroundStyle(FasoltTheme.ink0)
         }
         .frame(maxWidth: .infinity)
     }

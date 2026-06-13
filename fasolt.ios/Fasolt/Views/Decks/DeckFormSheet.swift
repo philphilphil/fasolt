@@ -45,18 +45,20 @@ struct DeckFormSheet: View {
             Form {
                 Section("Details") {
                     TextField("Name", text: $name)
-                    TextField("Description (Optional)", text: $description, axis: .vertical)
+                    TextField("Description (optional)", text: $description, axis: .vertical)
                         .lineLimit(2...4)
                 }
 
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(FasoltTheme.again)
                             .font(.caption)
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(FasoltTheme.paper0.ignoresSafeArea())
             .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

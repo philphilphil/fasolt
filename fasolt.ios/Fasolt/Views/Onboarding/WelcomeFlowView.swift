@@ -28,20 +28,18 @@ struct WelcomeFlowView: View {
                     }
                 } label: {
                     Text(buttonTitle)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 24)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(AccentButtonStyle())
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if currentStep < totalSteps - 1 {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button("Skip") { complete() }
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(FasoltTheme.ink2)
                     }
                 }
             }
@@ -77,9 +75,10 @@ private struct HowItWorksStep: View {
             VStack(spacing: 4) {
                 Text("Spaced repetition,")
                     .font(.title.bold())
+                    .foregroundStyle(FasoltTheme.ink0)
                 Text("powered by your AI.")
                     .font(.title.bold())
-                    .foregroundStyle(FasoltTheme.accent)
+                    .foregroundStyle(FasoltTheme.accentText)
             }
             .multilineTextAlignment(.center)
 
@@ -111,6 +110,7 @@ private struct HowItWorksStep: View {
                 .frame(width: 28, alignment: .center)
             Text(text)
                 .font(.body)
+                .foregroundStyle(FasoltTheme.ink0)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -130,6 +130,7 @@ private struct WhatYouNeedStep: View {
 
             Text("You'll need an AI client.")
                 .font(.title.bold())
+                .foregroundStyle(FasoltTheme.ink0)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
@@ -138,7 +139,7 @@ private struct WhatYouNeedStep: View {
             )
             .font(.body)
             .multilineTextAlignment(.center)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(FasoltTheme.ink1)
             .padding(.horizontal, 32)
             .fixedSize(horizontal: false, vertical: true)
 
@@ -150,7 +151,7 @@ private struct WhatYouNeedStep: View {
 
             Text("Don't have one yet? You can still try a demo deck after this.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FasoltTheme.ink2)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .fixedSize(horizontal: false, vertical: true)
@@ -165,7 +166,7 @@ private struct WhatYouNeedStep: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(FasoltTheme.accentSoft, in: Capsule())
-            .foregroundStyle(FasoltTheme.accent)
+            .foregroundStyle(FasoltTheme.accentText)
     }
 }
 
@@ -177,6 +178,7 @@ private struct ConnectAIStep: View {
             VStack(spacing: 6) {
                 Text("Add Fasolt to your AI client")
                     .font(.title2.bold())
+                    .foregroundStyle(FasoltTheme.ink0)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }
@@ -198,17 +200,18 @@ private struct YouAreSetStep: View {
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 96, weight: .regular))
-                .foregroundStyle(.green)
+                .foregroundStyle(FasoltTheme.good)
                 .symbolRenderingMode(.hierarchical)
 
             VStack(spacing: 12) {
                 Text("You're ready to go.")
                     .font(.title.bold())
+                    .foregroundStyle(FasoltTheme.ink0)
                 Text(
                     "Start creating cards through your AI client, or try a demo deck on the dashboard."
                 )
                 .font(.body)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FasoltTheme.ink1)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
                 .fixedSize(horizontal: false, vertical: true)

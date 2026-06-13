@@ -62,9 +62,10 @@ struct PagedCardDetailView: View {
                 VStack(spacing: 0) {
                     Text("Card")
                         .font(.headline)
+                        .foregroundStyle(FasoltTheme.ink0)
                     Text("\(currentIndex + 1) / \(cards.count)")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink2)
                         .monospacedDigit()
                 }
             }

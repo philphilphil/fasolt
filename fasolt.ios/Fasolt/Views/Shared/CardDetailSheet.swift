@@ -11,43 +11,33 @@ struct CardDetailSheet: View {
             ScrollView {
                 VStack(spacing: 24) {
                     VStack(spacing: 8) {
-                        Text("Front")
-                            .font(.caption2)
-                            .textCase(.uppercase)
-                            .tracking(1)
-                            .foregroundStyle(.secondary)
+                        CapsLabel(text: "Front")
                         if let svg = card.frontSvg, !svg.isEmpty {
                             SvgView(svg: svg)
                                 .frame(height: 200)
                         }
                         StructuredText(markdown: card.front)
                             .font(.title3)
+                            .foregroundStyle(FasoltTheme.ink0)
                     }
 
                     Divider()
 
                     VStack(spacing: 8) {
-                        Text("Back")
-                            .font(.caption2)
-                            .textCase(.uppercase)
-                            .tracking(1)
-                            .foregroundStyle(.secondary)
+                        CapsLabel(text: "Back")
                         if let svg = card.backSvg, !svg.isEmpty {
                             SvgView(svg: svg)
                                 .frame(height: 200)
                         }
                         StructuredText(markdown: card.back)
                             .font(.title3)
+                            .foregroundStyle(FasoltTheme.ink0)
                     }
 
                     Divider()
 
                     VStack(spacing: 8) {
-                        Text("Scheduling")
-                            .font(.caption2)
-                            .textCase(.uppercase)
-                            .tracking(1)
-                            .foregroundStyle(.secondary)
+                        CapsLabel(text: "Scheduling")
 
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                             FSRSItem(label: "State", value: card.state.capitalized)
@@ -66,7 +56,7 @@ struct CardDetailSheet: View {
                             Text(deckNames.joined(separator: ", "))
                         }
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink2)
                     }
 
                     if let sourceFile = card.sourceFile {
@@ -76,11 +66,13 @@ struct CardDetailSheet: View {
                             Text(sourceFile)
                         }
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink2)
                     }
                 }
                 .padding(24)
             }
+            .background(FasoltTheme.paper0.ignoresSafeArea())
+            .scrollContentBackground(.hidden)
             .navigationTitle("Card Detail")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
