@@ -515,4 +515,89 @@ public class McpResourceServiceTests : IAsyncLifetime
         entries.Should().NotContain(e => e.Name == "Mine");
         entries.Should().HaveCount(2); // just the two statics
     }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_DeckCount_ExcludesSuspendedCards()
+    {
+        await using var db = _db.CreateDbContext();
+        var cardSvc = new CardService(db);
+        var deckSvc = new DeckService(db);
+
+        var deck = await deckSvc.CreateDeck(UserId, "Counted", null);
+        var a = await cardSvc.CreateCard(UserId, "a-front", "a-back", null);
+        var b = await cardSvc.CreateCard(UserId, "b-front", "b-back", null);
+        var c = await cardSvc.CreateCard(UserId, "c-front", "c-back", null);
+        await deckSvc.AddCards(UserId, deck.Id, [a.Id, b.Id, c.Id]);
+
+        var susEntity = await db.Cards.FirstAsync(x => x.PublicId == c.Id);
+        susEntity.IsSuspended = true;
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var entries = await svc.ListUserResourcesAsync(UserId);
+
+        // 3 cards, 1 suspended → the list description must match the rendered deck (2).
+        var entry = entries.Single(e => e.Name == "Counted");
+        entry.Description.Should().Contain("2 cards");
+        entry.Description.Should().NotContain("3 cards");
+    }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_OverQueryCap_ReportsTrueTotal()
+    {
+        await using var db = _db.CreateDbContext();
+
+        // 205 due (new) cards — over the 200 query cap and the 100 render cap.
+        var cards = new List<Card>();
+        for (var i = 0; i < 205; i++)
+        {
+            cards.Add(new Card
+            {
+                Id = Guid.NewGuid(),
+                PublicId = Guid.NewGuid().ToString("N")[..12],
+                UserId = UserId,
+                Front = $"due-{i:000}",
+                Back = "back",
+                CreatedAt = DateTimeOffset.UtcNow,
+                DueAt = null, // new => due today
+            });
+        }
+        db.Cards.AddRange(cards);
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var md = await svc.RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("205 cards");                 // summary reflects the true total, not the cap
+        md.Should().Contain("Showing 100 of 205 cards");  // footer reflects the true total
+    }
+
+    [Fact]
+    public async Task RenderRecentAsync_OverQueryCap_ReportsTrueTotal()
+    {
+        await using var db = _db.CreateDbContext();
+
+        // 205 recent cards — over the 200 query cap and the 100 render cap.
+        var cards = new List<Card>();
+        for (var i = 0; i < 205; i++)
+        {
+            cards.Add(new Card
+            {
+                Id = Guid.NewGuid(),
+                PublicId = Guid.NewGuid().ToString("N")[..12],
+                UserId = UserId,
+                Front = $"recent-{i:000}",
+                Back = "back",
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-i),
+            });
+        }
+        db.Cards.AddRange(cards);
+        await db.SaveChangesAsync();
+
+        var svc = CreateService(db);
+        var md = await svc.RenderRecentAsync(UserId);
+
+        md.Should().Contain("205 cards created since");    // header reflects the true total, not the cap
+        md.Should().Contain("Showing 100 of 205 cards");   // footer reflects the true total
+    }
 }

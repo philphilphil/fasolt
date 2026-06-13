@@ -23,7 +23,7 @@ public class McpResourceService(
         var decks = await db.Decks
             .Where(d => d.UserId == userId && !d.IsSuspended)
             .OrderBy(d => d.Name)
-            .Select(d => new { d.PublicId, d.Name, d.Description, Count = d.Cards.Count })
+            .Select(d => new { d.PublicId, d.Name, d.Description, Count = d.Cards.Count(dc => !dc.Card.IsSuspended) })
             .ToListAsync();
 
         var entries = new List<McpResourceEntry>();
@@ -97,7 +97,8 @@ public class McpResourceService(
             return sb.ToString();
         }
 
-        AppendCardsWithTruncation(sb, cards, includeDeckLabel: false, includeCreatedDate: false);
+        // Deck loads every non-suspended card (no page cap), so cards.Count is the true total.
+        AppendCardsWithTruncation(sb, cards, cards.Count, includeDeckLabel: false, includeCreatedDate: false);
         return sb.ToString();
     }
 
@@ -110,9 +111,12 @@ public class McpResourceService(
         DateTimeOffset? DueAt,
         string? DeckName);
 
+    // totalCount is the true count across the whole result set (which may exceed the
+    // materialized `cards` page), so the truncation footer reports the real total.
     private void AppendCardsWithTruncation(
         System.Text.StringBuilder sb,
         IReadOnlyList<RenderableCard> cards,
+        int totalCount,
         bool includeDeckLabel,
         bool includeCreatedDate)
     {
@@ -131,8 +135,8 @@ public class McpResourceService(
             rendered++;
         }
 
-        if (rendered < cards.Count)
-            sb.Append($"\n*Showing {rendered} of {cards.Count} cards. Use list_cards or search_cards for the full set.*\n");
+        if (rendered < totalCount)
+            sb.Append($"\n*Showing {rendered} of {totalCount} cards. Use list_cards or search_cards for the full set.*\n");
     }
 
     private static string FormatCardBlock(RenderableCard c, bool includeDeckLabel, bool includeCreatedDate)
@@ -165,11 +169,30 @@ public class McpResourceService(
 
         // Cards that are due (DueAt null = new, or DueAt <= now), not suspended,
         // and whose decks (if any) are not all suspended.
-        var raw = await db.Cards
+        var dueCards = db.Cards
             .Where(c => c.UserId == userId && !c.IsSuspended)
             .Where(c => c.DueAt == null || c.DueAt <= now)
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended))
-            .OrderBy(c => c.DueAt) // soonest-due first so the hard cap keeps the most-due cards
+            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+
+        // Counts come from the full set so the summary/footer stay accurate
+        // independent of the rendered-page cap below.
+        var totalCards = await dueCards.CountAsync();
+        var totalDecks = await db.Decks
+            .CountAsync(d => d.UserId == userId && !d.IsSuspended
+                && d.Cards.Any(dc => !dc.Card.IsSuspended && (dc.Card.DueAt == null || dc.Card.DueAt <= now)));
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("# Due Today\n\n");
+
+        if (totalCards == 0)
+        {
+            sb.Append("No cards.\n");
+            return sb.ToString();
+        }
+
+        // Materialize only a bounded page; rendering caps further at SoftCardCap / size budget.
+        var raw = await dueCards
+            .OrderBy(c => c.DueAt) // soonest-due first so the cap keeps the most-due cards
             .Select(c => new
             {
                 c.Front,
@@ -180,7 +203,7 @@ public class McpResourceService(
                 c.DueAt,
                 DeckNames = c.DeckCards.Where(dc => !dc.Deck.IsSuspended).Select(dc => dc.Deck.Name).ToList(),
             })
-            .Take(QueryHardCap) // hard cap pre-render; truncation may cut further
+            .Take(QueryHardCap)
             .ToListAsync();
 
         // Group by first (alphabetical) active deck name, or "(no deck)".
@@ -194,18 +217,6 @@ public class McpResourceService(
             .OrderBy(g => g.Key == "(no deck)") // "(no deck)" last
                 .ThenBy(g => g.Key)
             .ToList();
-
-        var totalCards = raw.Count;
-        var totalDecks = groups.Count(g => g.Key != "(no deck)");
-
-        var sb = new System.Text.StringBuilder();
-        sb.Append("# Due Today\n\n");
-
-        if (totalCards == 0)
-        {
-            sb.Append("No cards.\n");
-            return sb.ToString();
-        }
 
         var summary = totalCards == 1 ? "1 card" : $"{totalCards} cards";
         if (totalDecks > 0)
@@ -259,8 +270,23 @@ public class McpResourceService(
         var now = timeProvider.GetUtcNow();
         var cutoff = now.AddDays(-7);
 
-        var raw = await db.Cards
-            .Where(c => c.UserId == userId && !c.IsSuspended && c.CreatedAt >= cutoff)
+        var recentCards = db.Cards
+            .Where(c => c.UserId == userId && !c.IsSuspended && c.CreatedAt >= cutoff);
+
+        // Count from the full set so the header stays accurate independent of the page cap.
+        var totalCards = await recentCards.CountAsync();
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("# Recently Created\n\n");
+
+        if (totalCards == 0)
+        {
+            sb.Append("No cards.\n");
+            return sb.ToString();
+        }
+
+        // Materialize only a bounded page; rendering caps further at SoftCardCap / size budget.
+        var raw = await recentCards
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new
             {
@@ -276,21 +302,12 @@ public class McpResourceService(
                     .Select(dc => dc.Deck.Name)
                     .FirstOrDefault(),
             })
-            .Take(QueryHardCap) // hard cap pre-render; truncation may cut further
+            .Take(QueryHardCap)
             .ToListAsync();
 
-        var sb = new System.Text.StringBuilder();
-        sb.Append("# Recently Created\n\n");
-
-        if (raw.Count == 0)
-        {
-            sb.Append("No cards.\n");
-            return sb.ToString();
-        }
-
         var since = cutoff.UtcDateTime.ToString("yyyy-MM-dd");
-        var wordCard = raw.Count == 1 ? "card" : "cards";
-        sb.Append(raw.Count).Append(' ').Append(wordCard)
+        var wordCard = totalCards == 1 ? "card" : "cards";
+        sb.Append(totalCards).Append(' ').Append(wordCard)
           .Append(" created since ").Append(since)
           .Append(" (last 7 days)\n\n---\n\n");
 
@@ -298,7 +315,7 @@ public class McpResourceService(
             .Select(c => new RenderableCard(c.Front, c.Back, c.SourceFile, c.HasSvg, c.CreatedAt, c.DueAt, c.DeckName))
             .ToList();
 
-        AppendCardsWithTruncation(sb, renderable, includeDeckLabel: true, includeCreatedDate: true);
+        AppendCardsWithTruncation(sb, renderable, totalCards, includeDeckLabel: true, includeCreatedDate: true);
         return sb.ToString();
     }
 }
