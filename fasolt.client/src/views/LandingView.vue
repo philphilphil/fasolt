@@ -51,7 +51,11 @@ import { ArrowRight, ArrowDown } from 'lucide-vue-next'
     <section class="relative mx-auto max-w-6xl px-6 pb-20">
       <div class="grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
         <div class="flex min-w-0 flex-col">
-          <p class="fa-cap mb-3">1 — Ask your AI</p>
+          <div class="mb-3">
+            <span class="inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-semibold text-accent-text">Step 1</span>
+            <h3 class="mt-2 text-base font-semibold text-ink-0">Ask your AI to make cards</h3>
+            <p class="mt-0.5 text-[12.5px] text-ink-2">From your notes, a topic, anything you want to learn.</p>
+          </div>
           <ToolSwitcher />
         </div>
         <div class="hidden lg:flex items-center justify-center text-ink-3">
@@ -61,7 +65,11 @@ import { ArrowRight, ArrowDown } from 'lucide-vue-next'
           <ArrowDown :size="18" />
         </div>
         <div class="flex min-w-0 flex-col">
-          <p class="fa-cap mb-3">2 — Study in fasolt</p>
+          <div class="mb-3">
+            <span class="inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-[11px] font-semibold text-accent-text">Step 2</span>
+            <h3 class="mt-2 text-base font-semibold text-ink-0">Study them in fasolt</h3>
+            <p class="mt-0.5 text-[12.5px] text-ink-2">On the web or the iOS app.</p>
+          </div>
           <FasoltStudyPreview />
           <p class="mt-3 text-xs text-ink-2">
             Cards are scheduled with FSRS — the more you remember, the longer the gaps.
