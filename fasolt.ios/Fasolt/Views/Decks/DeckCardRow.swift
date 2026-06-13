@@ -39,7 +39,7 @@ struct DeckCardRow: View {
                     Text(dueText)
                         .font(.system(size: 12.5, weight: isDue ? .semibold : .regular))
                         .monospacedDigit()
-                        .foregroundStyle(isDue ? FasoltTheme.accent : FasoltTheme.ink2)
+                        .foregroundStyle(isDue ? FasoltTheme.accentText : FasoltTheme.ink2)
                 } else {
                     Text("No due")
                         .font(.system(size: 12.5))

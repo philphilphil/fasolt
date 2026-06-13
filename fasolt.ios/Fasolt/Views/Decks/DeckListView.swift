@@ -159,7 +159,7 @@ struct DeckListContent<Leading: View>: View {
                         } label: {
                             Label("Custom study", systemImage: "rectangle.stack.badge.play")
                         }
-                        .tint(.orange)
+                        .tint(.blue)
                     }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -186,7 +186,7 @@ struct DeckListContent<Leading: View>: View {
                             systemImage: deck.isSuspended ? "play.circle" : "pause.circle"
                         )
                     }
-                    .tint(.orange)
+                    .tint(.gray)
                 }
             }
         }
@@ -280,7 +280,7 @@ struct DeckListContent<Leading: View>: View {
                     .foregroundStyle(FasoltTheme.ink0)
                 CapsLabel(
                     text: deck.dueCount > 0 ? "\(deck.dueCount) due" : "cards",
-                    color: deck.dueCount > 0 ? FasoltTheme.accent : FasoltTheme.ink2,
+                    color: deck.dueCount > 0 ? FasoltTheme.accentText : FasoltTheme.ink2,
                     size: 9.5
                 )
             }

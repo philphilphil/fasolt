@@ -190,7 +190,7 @@ struct CardListContent<Leading: View>: View {
                             systemImage: card.isSuspended ? "play.circle" : "pause.circle"
                         )
                     }
-                    .tint(.orange)
+                    .tint(FasoltTheme.hard)
                 }
             }
         }

@@ -21,11 +21,7 @@ struct CardDetailView: View {
             VStack(spacing: 24) {
                 // Front
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Front")
-                        .font(.caption2)
-                        .textCase(.uppercase)
-                        .tracking(1)
-                        .foregroundStyle(.secondary)
+                    CapsLabel(text: "Front")
 
                     if let svg = card.frontSvg, !svg.isEmpty {
                         SvgView(svg: svg)
@@ -36,18 +32,16 @@ struct CardDetailView: View {
 
                     StructuredText(markdown: card.front)
                         .font(.body)
+                        .foregroundStyle(FasoltTheme.ink0)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Divider()
+                    .overlay(FasoltTheme.rule1)
 
                 // Back
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Back")
-                        .font(.caption2)
-                        .textCase(.uppercase)
-                        .tracking(1)
-                        .foregroundStyle(.secondary)
+                    CapsLabel(text: "Back")
 
                     if let svg = card.backSvg, !svg.isEmpty {
                         SvgView(svg: svg)
@@ -58,10 +52,12 @@ struct CardDetailView: View {
 
                     StructuredText(markdown: card.back)
                         .font(.body)
+                        .foregroundStyle(FasoltTheme.ink0)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 Divider()
+                    .overlay(FasoltTheme.rule1)
 
                 if card.isSuspended {
                     HStack(spacing: 6) {
@@ -69,17 +65,14 @@ struct CardDetailView: View {
                         Text("Suspended")
                             .font(.subheadline.weight(.medium))
                     }
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FasoltTheme.ink2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 // Scheduling
                 VStack(spacing: 8) {
-                    Text("Scheduling")
-                        .font(.caption2)
-                        .textCase(.uppercase)
-                        .tracking(1)
-                        .foregroundStyle(.secondary)
+                    CapsLabel(text: "Scheduling")
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         FSRSItem(label: "State", value: card.state.capitalized)
@@ -97,30 +90,34 @@ struct CardDetailView: View {
                 // Metadata
                 if let deckNames, !deckNames.isEmpty {
                     Divider()
+                        .overlay(FasoltTheme.rule1)
                     HStack(spacing: 4) {
                         Image(systemName: "rectangle.stack")
                         Text(deckNames.joined(separator: ", "))
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FasoltTheme.ink2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 if let sourceFile = card.sourceFile {
                     if deckNames == nil || deckNames?.isEmpty == true {
                         Divider()
+                            .overlay(FasoltTheme.rule1)
                     }
                     HStack(spacing: 4) {
                         Image(systemName: "doc.text")
                         Text(sourceFile)
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FasoltTheme.ink2)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding()
         }
+        .background(FasoltTheme.paper0.ignoresSafeArea())
+        .scrollContentBackground(.hidden)
         .navigationTitle("Card")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

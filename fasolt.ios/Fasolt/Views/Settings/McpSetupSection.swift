@@ -14,16 +14,16 @@ struct McpSetupSection: View {
             Text(
                 "Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client."
             )
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            .font(.system(size: 14))
+            .foregroundStyle(FasoltTheme.ink2)
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Your MCP URL")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    CapsLabel(text: "Your MCP URL", size: 12)
                     Text(mcpURL)
-                        .font(.subheadline.monospaced())
+                        .font(.system(size: 15, design: .monospaced))
+                        .foregroundStyle(FasoltTheme.ink0)
+                        .textSelection(.enabled)
                 }
                 Spacer()
                 copyButton(text: mcpURL, id: "url")
@@ -32,18 +32,12 @@ struct McpSetupSection: View {
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Run in your terminal:")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    HStack {
-                        Text("claude mcp add fasolt --transport http \(mcpURL)")
-                            .font(.caption.monospaced())
-                            .textSelection(.enabled)
-                        Spacer()
-                        copyButton(
-                            text: "claude mcp add fasolt --transport http \(mcpURL)",
-                            id: "claude-code"
-                        )
-                    }
+                        .font(.system(size: 12))
+                        .foregroundStyle(FasoltTheme.ink2)
+                    codeBlock(
+                        "claude mcp add fasolt --transport http \(mcpURL)",
+                        id: "claude-code"
+                    )
                 }
                 .padding(.vertical, 4)
             } label: {
@@ -63,9 +57,11 @@ struct McpSetupSection: View {
                                 "https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp"
                         )!
                     )
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .semibold))
+                    .tint(FasoltTheme.accentText)
                 }
-                .font(.subheadline)
+                .font(.system(size: 15))
+                .foregroundStyle(FasoltTheme.ink1)
                 .padding(.vertical, 4)
             } label: {
                 Label("Claude.ai Web", systemImage: "globe")
@@ -74,8 +70,8 @@ struct McpSetupSection: View {
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Requires Pro, Team, Enterprise, or Edu plan.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 12))
+                        .foregroundStyle(FasoltTheme.ink2)
                     Text("1. Enable Developer Mode in Settings → Apps → Advanced Settings")
                     Text("2. Click Create App")
                     Text("3. Paste your MCP URL")
@@ -87,9 +83,11 @@ struct McpSetupSection: View {
                                 "https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta"
                         )!
                     )
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .semibold))
+                    .tint(FasoltTheme.accentText)
                 }
-                .font(.subheadline)
+                .font(.system(size: 15))
+                .foregroundStyle(FasoltTheme.ink1)
                 .padding(.vertical, 4)
             } label: {
                 Label("ChatGPT", systemImage: "bubble.left.and.bubble.right")
@@ -103,16 +101,11 @@ struct McpSetupSection: View {
                             "Connectors",
                             destination: URL(string: "https://chat.mistral.ai/connections")!
                         )
+                        .tint(FasoltTheme.accentText)
                     }
                     Text("2. Click + Add Connector → Custom MCP Connector")
                     Text("3. Set Connector name to fasolt and paste the server URL:")
-                    HStack {
-                        Text(mcpURL)
-                            .font(.caption.monospaced())
-                            .textSelection(.enabled)
-                        Spacer()
-                        copyButton(text: mcpURL, id: "mistral")
-                    }
+                    codeBlock(mcpURL, id: "mistral")
                     Text("4. Click Connect and authorize with your fasolt account")
                     Link(
                         "See documentation",
@@ -121,9 +114,11 @@ struct McpSetupSection: View {
                                 "https://docs.mistral.ai/le-chat/knowledge-integrations/connectors/mcp-connectors/"
                         )!
                     )
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .semibold))
+                    .tint(FasoltTheme.accentText)
                 }
-                .font(.subheadline)
+                .font(.system(size: 15))
+                .foregroundStyle(FasoltTheme.ink1)
                 .padding(.vertical, 4)
             } label: {
                 Label("Mistral Le Chat", systemImage: "sparkles")
@@ -132,8 +127,8 @@ struct McpSetupSection: View {
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Add to ~/.copilot/mcp-config.json:")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 12))
+                        .foregroundStyle(FasoltTheme.ink2)
                     let configJSON = """
                         {
                           "mcpServers": {
@@ -144,13 +139,7 @@ struct McpSetupSection: View {
                           }
                         }
                         """
-                    HStack(alignment: .top) {
-                        Text(configJSON)
-                            .font(.caption.monospaced())
-                            .textSelection(.enabled)
-                        Spacer()
-                        copyButton(text: configJSON, id: "copilot")
-                    }
+                    codeBlock(configJSON, id: "copilot", alignment: .top)
                 }
                 .padding(.vertical, 4)
             } label: {
@@ -158,11 +147,34 @@ struct McpSetupSection: View {
             }
 
             Text("You'll be asked to log in when your AI client first connects.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.system(size: 12))
+                .foregroundStyle(FasoltTheme.ink2)
         } header: {
-            Text("MCP Setup")
+            Text("MCP setup")
+                .sectionLabel()
         }
+    }
+
+    /// Monospaced code/config block on a sunken paper surface with a flat copy button.
+    private func codeBlock(
+        _ text: String,
+        id: String,
+        alignment: VerticalAlignment = .center
+    ) -> some View {
+        HStack(alignment: alignment, spacing: 8) {
+            Text(text)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(FasoltTheme.ink0)
+                .textSelection(.enabled)
+            Spacer(minLength: 8)
+            copyButton(text: text, id: id)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(FasoltTheme.paper2)
+        )
     }
 
     private func copyButton(text: String, id: String) -> some View {
@@ -182,8 +194,8 @@ struct McpSetupSection: View {
             }
         } label: {
             Image(systemName: copiedItem == id ? "checkmark" : "doc.on.doc")
-                .font(.caption)
-                .foregroundStyle(copiedItem == id ? .green : .accentColor)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(copiedItem == id ? FasoltTheme.good : FasoltTheme.accentText)
         }
         .buttonStyle(.borderless)
     }

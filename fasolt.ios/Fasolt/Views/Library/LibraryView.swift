@@ -45,6 +45,7 @@ struct LibraryView: View {
                 }
             }
             .background(FasoltTheme.paper0.ignoresSafeArea())
+            .tint(FasoltTheme.accent)
             .sheet(isPresented: $showSnapshots) {
                 SnapshotsView(viewModel: snapshotViewModel)
             }

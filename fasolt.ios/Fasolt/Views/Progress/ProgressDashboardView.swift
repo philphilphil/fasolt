@@ -133,7 +133,7 @@ struct ProgressDashboardView: View {
                 RoundedRectangle(cornerRadius: 1.5)
                     .fill(isLast && day.count > 0
                           ? FasoltTheme.accent
-                          : (day.count == 0 ? FasoltTheme.rule1 : FasoltTheme.good.opacity(0.3 + intensity * 0.6)))
+                          : (day.count == 0 ? FasoltTheme.rule1 : FasoltTheme.accent.opacity(0.3 + intensity * 0.6)))
                     .frame(width: 7, height: h)
             }
         }
@@ -411,10 +411,13 @@ struct ProgressDashboardView: View {
     }
 
     private func cellColor(intensity: Double) -> Color {
+        // Quiet accent ramp: empty → soft tint → full accent. Built from
+        // FasoltTheme tokens so it stays calm and adapts to light/dark, rather
+        // than a hardcoded neon-orange scale.
         if intensity <= 0 { return FasoltTheme.paper2 }
-        if intensity < 0.25 { return Color(red: 0.93, green: 0.72, blue: 0.55) }
-        if intensity < 0.5 { return Color(red: 0.88, green: 0.55, blue: 0.36) }
-        if intensity < 0.75 { return Color(red: 0.80, green: 0.40, blue: 0.22) }
+        if intensity < 0.25 { return FasoltTheme.accent.opacity(0.25) }
+        if intensity < 0.5 { return FasoltTheme.accent.opacity(0.5) }
+        if intensity < 0.75 { return FasoltTheme.accent.opacity(0.75) }
         return FasoltTheme.accent
     }
 

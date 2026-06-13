@@ -6,20 +6,20 @@ struct HelpView: View {
             Section {
                 Text("fasolt uses FSRS (Free Spaced Repetition Scheduler) to schedule your reviews. Here's how it works.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FasoltTheme.ink1)
             }
 
-            Section("What is Spaced Repetition?") {
+            Section("What is spaced repetition?") {
                 Text("Spaced repetition is a study technique where you review material at increasing intervals. Instead of cramming, you see a card right before you're likely to forget it. Each successful recall makes the memory stronger, so the next review can wait longer.")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(FasoltTheme.ink1)
             }
 
-            Section("The FSRS Algorithm") {
+            Section("The FSRS algorithm") {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("FSRS tracks three variables for each card:")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink1)
 
                     VStack(alignment: .leading, spacing: 8) {
                         helpItem(
@@ -38,63 +38,64 @@ struct HelpView: View {
                 }
             }
 
-            Section("How Reviews Work") {
+            Section("How reviews work") {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("When you review a card, you rate how well you recalled it:")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink1)
 
                     ratingItem(
                         rating: "Again",
-                        color: .red,
+                        color: FasoltTheme.again,
                         description: "You forgot. Stability resets and the card re-enters the learning phase."
                     )
                     ratingItem(
                         rating: "Hard",
-                        color: .orange,
+                        color: FasoltTheme.hard,
                         description: "You recalled with significant difficulty. Stability increases slightly, difficulty goes up."
                     )
                     ratingItem(
                         rating: "Good",
-                        color: .green,
+                        color: FasoltTheme.good,
                         description: "Normal recall. Stability increases proportionally — the standard path."
                     )
                     ratingItem(
                         rating: "Easy",
-                        color: .blue,
+                        color: FasoltTheme.easy,
                         description: "Effortless recall. Large stability increase, difficulty decreases."
                     )
                 }
             }
 
-            Section("How Intervals Grow") {
+            Section("How intervals grow") {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("A typical progression for a card rated \"Good\" each time:")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink1)
 
                     HStack(spacing: 4) {
                         ForEach(["1d", "3d", "8d", "21d", "55d", "4mo"], id: \.self) { interval in
                             Text(interval)
                                 .font(.caption.monospaced())
+                                .foregroundStyle(FasoltTheme.ink0)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
-                                .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                                .background(FasoltTheme.paper2, in: RoundedRectangle(cornerRadius: 4))
                             if interval != "4mo" {
                                 Image(systemName: "arrow.right")
                                     .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(FasoltTheme.ink3)
                             }
                         }
                     }
 
                     Text("Intervals grow roughly exponentially. \"Easy\" makes them grow faster; \"Again\" resets them.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(FasoltTheme.ink1)
                 }
             }
 
-            Section("Card States") {
+            Section("Card states") {
                 VStack(alignment: .leading, spacing: 8) {
                     stateItem(
                         state: "New",
@@ -119,7 +120,9 @@ struct HelpView: View {
                 }
             }
         }
-        .navigationTitle("How It Works")
+        .scrollContentBackground(.hidden)
+        .background(FasoltTheme.paper0.ignoresSafeArea())
+        .navigationTitle("How it works")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -127,9 +130,10 @@ struct HelpView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.subheadline.weight(.medium))
+                .foregroundStyle(FasoltTheme.ink0)
             Text(description)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FasoltTheme.ink2)
         }
     }
 
@@ -141,7 +145,7 @@ struct HelpView: View {
                 .frame(width: 44, alignment: .leading)
             Text(description)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FasoltTheme.ink2)
         }
     }
 
@@ -149,9 +153,10 @@ struct HelpView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(state)
                 .font(.subheadline.weight(.medium))
+                .foregroundStyle(FasoltTheme.ink0)
             Text(description)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(FasoltTheme.ink2)
         }
     }
 }

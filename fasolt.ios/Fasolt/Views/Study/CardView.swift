@@ -14,13 +14,13 @@ struct CardView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: FasoltTheme.cardRadius, style: .continuous)
                 .fill(FasoltTheme.paper1)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: FasoltTheme.cardRadius, style: .continuous)
                         .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
                 )
-                .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
 
             VStack(spacing: 0) {
                 AccentStripe(horizontalInset: 24)
