@@ -191,23 +191,19 @@ function onDeleted() {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-sm text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="py-12 text-center text-sm text-ink-2">Loading…</div>
 
   <div v-else-if="card" class="space-y-6">
     <!-- Breadcrumb + deck navigation -->
-    <div class="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
-      <div class="min-w-0 truncate">
-        <template v-if="deckContext">
-          <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
-          <span class="mx-1.5">/</span>
-          <RouterLink :to="`/decks/${deckContext.id}`" class="hover:text-foreground transition-colors">{{ deckContext.name }}</RouterLink>
-        </template>
-        <template v-else>
-          <RouterLink to="/cards" class="hover:text-foreground transition-colors">Cards</RouterLink>
-        </template>
-        <span class="mx-1.5">/</span>
-        <span class="text-foreground">{{ truncatedFront }}</span>
-      </div>
+    <div class="flex items-center justify-between gap-3 text-[11px] text-ink-2">
+      <RouterLink v-if="deckContext" :to="`/decks/${deckContext.id}`" class="fa-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        {{ deckContext.name }}
+      </RouterLink>
+      <RouterLink v-else to="/cards" class="fa-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Cards
+      </RouterLink>
       <div
         v-if="deckContext && deckCards && navIndex >= 0 && deckCards.cards.length > 1"
         class="flex shrink-0 items-center gap-1"
@@ -222,7 +218,7 @@ function onDeleted() {
         >
           <ChevronLeft class="size-3.5" />
         </Button>
-        <span class="tabular-nums px-1">{{ navIndex + 1 }} / {{ deckCards.cards.length }}</span>
+        <span class="fa-num px-1">{{ navIndex + 1 }} / {{ deckCards.cards.length }}</span>
         <Button
           variant="ghost"
           size="sm"
@@ -239,7 +235,7 @@ function onDeleted() {
     <!-- Header -->
     <div class="flex items-start justify-between">
       <div class="flex items-center gap-2.5">
-        <h1 class="text-base font-bold tracking-tight">{{ truncatedFront }}</h1>
+        <h1 class="text-base font-semibold tracking-tight text-ink-0">{{ truncatedFront }}</h1>
         <Badge variant="outline" class="text-xs">{{ card.state }}</Badge>
       </div>
       <div class="flex items-center gap-2">
@@ -268,123 +264,123 @@ function onDeleted() {
     </div>
 
     <!-- Metadata -->
-    <div class="space-y-1 text-sm text-muted-foreground">
+    <div class="space-y-1 text-sm text-ink-1">
       <div v-if="card.sourceFile" class="flex flex-wrap gap-x-6">
-        <span>Source: <span class="text-foreground">{{ card.sourceFile }}</span></span>
+        <span>Source: <span class="text-ink-0">{{ card.sourceFile }}</span></span>
       </div>
       <div v-if="card.decks.length > 0">
         Decks:
         <template v-for="(d, i) in card.decks" :key="d.id">
-          <RouterLink :to="`/decks/${d.id}`" class="text-foreground hover:text-accent transition-colors">{{ d.name }}</RouterLink><span v-if="i < card.decks.length - 1">, </span>
+          <RouterLink :to="`/decks/${d.id}`" class="text-accent-text hover:underline transition-colors">{{ d.name }}</RouterLink><span v-if="i < card.decks.length - 1">, </span>
         </template>
       </div>
     </div>
 
-    <!-- SRS Stats -->
-    <div class="bg-secondary rounded-lg px-4 py-3 grid grid-cols-4 sm:grid-cols-7 gap-4">
+    <!-- SRS Stats — open row of number + quiet label, one soft surface, no per-tile borders -->
+    <div class="bg-paper-2 rounded-xl px-5 py-4 grid grid-cols-4 sm:grid-cols-7 gap-4">
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">State</div>
-        <div class="text-sm font-semibold mt-0.5">{{ card.state }}</div>
+        <div class="fa-cap">State</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0">{{ card.state }}</div>
       </div>
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Due</div>
-        <div class="text-sm font-semibold mt-0.5">{{ card.dueAt ? formatDate(card.dueAt) : '—' }}</div>
+        <div class="fa-cap">Due</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0">{{ card.dueAt ? formatDate(card.dueAt) : '—' }}</div>
       </div>
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Stability</div>
-        <div class="text-sm font-semibold mt-0.5">{{ card.stability != null ? card.stability.toFixed(2) : '—' }}</div>
+        <div class="fa-cap">Stability</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0 fa-num">{{ card.stability != null ? card.stability.toFixed(2) : '—' }}</div>
       </div>
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Difficulty</div>
-        <div class="text-sm font-semibold mt-0.5">{{ card.difficulty != null ? card.difficulty.toFixed(2) : '—' }}</div>
+        <div class="fa-cap">Difficulty</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0 fa-num">{{ card.difficulty != null ? card.difficulty.toFixed(2) : '—' }}</div>
       </div>
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Step</div>
-        <div class="text-sm font-semibold mt-0.5">{{ card.step ?? '—' }}</div>
+        <div class="fa-cap">Step</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0 fa-num">{{ card.step ?? '—' }}</div>
       </div>
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Last Review</div>
-        <div class="text-sm font-semibold mt-0.5">{{ card.lastReviewedAt ? formatDate(card.lastReviewedAt) : '—' }}</div>
+        <div class="fa-cap">Last review</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0">{{ card.lastReviewedAt ? formatDate(card.lastReviewedAt) : '—' }}</div>
       </div>
       <div>
-        <div class="text-[9px] uppercase tracking-widest text-muted-foreground">Created</div>
-        <div class="text-sm font-semibold mt-0.5">{{ formatDate(card.createdAt) }}</div>
+        <div class="fa-cap">Created</div>
+        <div class="text-sm font-semibold mt-1 text-ink-0">{{ formatDate(card.createdAt) }}</div>
       </div>
     </div>
 
-    <div v-if="resetSuccess" class="text-sm text-green-600 dark:text-green-400">Progress reset.</div>
+    <div v-if="resetSuccess" class="text-sm" style="color: var(--c-good)">Progress reset.</div>
 
     <!-- Edit mode -->
     <div v-if="editing" class="space-y-4">
       <div class="space-y-1">
-        <label class="text-[11px] font-medium text-muted-foreground">Source file</label>
+        <label class="fa-cap">Source file</label>
         <Input v-model="editSourceFile" placeholder="e.g. notes.md" class="h-8 text-sm" />
       </div>
       <div class="space-y-1">
-        <label class="text-[11px] font-medium text-muted-foreground">Decks</label>
+        <label class="fa-cap">Decks</label>
         <div class="flex flex-wrap gap-2">
           <label
             v-for="d in decksStore.decks"
             :key="d.id"
-            class="flex items-center gap-1.5 text-sm cursor-pointer"
+            class="flex items-center gap-1.5 text-sm cursor-pointer text-ink-1"
           >
             <input
               type="checkbox"
               :checked="editDeckIds.includes(d.id)"
-              class="rounded border-border"
+              class="rounded border-rule-1 accent-[var(--accent)]"
               @change="editDeckIds.includes(d.id) ? editDeckIds = editDeckIds.filter(id => id !== d.id) : editDeckIds.push(d.id)"
             />
             {{ d.name }}
           </label>
         </div>
       </div>
-      <div class="space-y-1">
-        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front (question)</div>
+      <div class="space-y-1.5">
+        <div class="fa-cap border-b border-rule-1 pb-1.5 mb-2">Front (question)</div>
         <textarea
           v-model="front"
-          class="w-full rounded border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-full rounded-lg border border-rule-1 bg-paper-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
           rows="3"
         />
         <details class="mt-2">
-          <summary class="cursor-pointer text-sm text-muted-foreground">SVG (front)</summary>
+          <summary class="cursor-pointer text-sm text-ink-2">SVG (front)</summary>
           <div class="mt-2 grid grid-cols-2 gap-2">
             <textarea
               v-model="editFrontSvg"
-              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-sm font-mono"
-              placeholder="Paste SVG markup here..."
+              class="min-h-[100px] rounded-lg border border-rule-1 bg-paper-1 px-3 py-2 text-sm fa-mono"
+              placeholder="Paste SVG markup here…"
             />
-            <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
+            <div class="flex items-center justify-center rounded-lg border border-rule-1 bg-paper-2 p-2 min-h-[100px]">
               <div v-if="editFrontSvg" class="max-h-[200px] w-full [&>svg]:max-h-[200px] [&>svg]:w-full" v-html="sanitizeSvg(editFrontSvg)" />
-              <span v-else class="text-sm text-muted-foreground">Preview</span>
+              <span v-else class="text-sm text-ink-2">Preview</span>
             </div>
           </div>
           <Button v-if="editFrontSvg" variant="ghost" size="sm" class="mt-1 text-sm" @click="editFrontSvg = ''">Clear SVG</Button>
         </details>
       </div>
-      <div class="space-y-1">
-        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back (answer)</div>
+      <div class="space-y-1.5">
+        <div class="fa-cap border-b border-rule-1 pb-1.5 mb-2">Back (answer)</div>
         <textarea
           v-model="back"
-          class="w-full rounded border border-border bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          class="w-full rounded-lg border border-rule-1 bg-paper-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
           rows="8"
         />
         <details class="mt-2">
-          <summary class="cursor-pointer text-sm text-muted-foreground">SVG (back)</summary>
+          <summary class="cursor-pointer text-sm text-ink-2">SVG (back)</summary>
           <div class="mt-2 grid grid-cols-2 gap-2">
             <textarea
               v-model="editBackSvg"
-              class="min-h-[100px] rounded border border-border bg-background px-3 py-2 text-sm font-mono"
-              placeholder="Paste SVG markup here..."
+              class="min-h-[100px] rounded-lg border border-rule-1 bg-paper-1 px-3 py-2 text-sm fa-mono"
+              placeholder="Paste SVG markup here…"
             />
-            <div class="flex items-center justify-center rounded border border-border/40 bg-muted/30 p-2 min-h-[100px]">
+            <div class="flex items-center justify-center rounded-lg border border-rule-1 bg-paper-2 p-2 min-h-[100px]">
               <div v-if="editBackSvg" class="max-h-[200px] w-full [&>svg]:max-h-[200px] [&>svg]:w-full" v-html="sanitizeSvg(editBackSvg)" />
-              <span v-else class="text-sm text-muted-foreground">Preview</span>
+              <span v-else class="text-sm text-ink-2">Preview</span>
             </div>
           </div>
           <Button v-if="editBackSvg" variant="ghost" size="sm" class="mt-1 text-sm" @click="editBackSvg = ''">Clear SVG</Button>
         </details>
       </div>
-      <div v-if="error" class="text-sm text-destructive">{{ error }}</div>
+      <div v-if="error" class="text-sm" style="color: var(--c-again)">{{ error }}</div>
       <div class="flex gap-2">
         <Button size="sm" class="text-sm" :disabled="saving" @click="save">
           {{ saving ? 'Saving...' : 'Save' }}
@@ -394,20 +390,20 @@ function onDeleted() {
     </div>
 
     <!-- View mode -->
-    <div v-else class="space-y-5">
+    <div v-else class="space-y-6">
       <div>
-        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Front</div>
-        <div v-if="card.frontSvg" class="mb-3 flex justify-center rounded border border-border/40 bg-muted/30 p-4">
+        <div class="fa-cap border-b border-rule-1 pb-1.5 mb-3">Front</div>
+        <div v-if="card.frontSvg" class="mb-3 flex justify-center rounded-lg bg-paper-2 p-4">
           <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.frontSvg)" />
         </div>
-        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.front)" />
+        <div class="fa-prose max-w-none" v-html="render(card.front)" />
       </div>
       <div>
-        <div class="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground border-b-2 border-border pb-1.5 mb-3">Back</div>
-        <div v-if="card.backSvg" class="mb-3 flex justify-center rounded border border-border/40 bg-muted/30 p-4">
+        <div class="fa-cap border-b border-rule-1 pb-1.5 mb-3">Back</div>
+        <div v-if="card.backSvg" class="mb-3 flex justify-center rounded-lg bg-paper-2 p-4">
           <div class="max-h-[300px] w-full [&>svg]:max-h-[300px] [&>svg]:w-full" v-html="sanitizeSvg(card.backSvg)" />
         </div>
-        <div class="prose dark:prose-invert max-w-none rounded border border-border/60 px-5 py-4" v-html="render(card.back)" />
+        <div class="fa-prose max-w-none" v-html="render(card.back)" />
       </div>
     </div>
 

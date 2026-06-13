@@ -50,13 +50,24 @@ async function confirmDelete() {
           This action is permanent and cannot be undone. All your cards, decks, and study progress will be deleted.
         </DialogDescription>
       </DialogHeader>
-      <div v-if="error" class="rounded border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{{ error }}</div>
+      <div v-if="error" class="fa-error-box">{{ error }}</div>
       <DialogFooter>
         <Button variant="outline" @click="emit('update:open', false)">Cancel</Button>
         <Button variant="destructive" :disabled="deleting" @click="confirmDelete">
-          {{ deleting ? 'Deleting...' : 'Delete my account' }}
+          {{ deleting ? 'Deleting…' : 'Delete my account' }}
         </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.fa-error-box {
+  border: 1px solid var(--rule-1);
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 12.5px;
+  color: var(--c-again);
+  background: var(--paper-2);
+}
+</style>

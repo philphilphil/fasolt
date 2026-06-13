@@ -91,18 +91,18 @@ async function copyMcpUrl() {
 <template>
   <div>
     <Tabs v-model="tab" class="w-full">
-      <TabsList class="bg-card/60 border border-border/60 rounded-md p-1 gap-1">
+      <TabsList class="bg-paper-2 rounded-md p-1 gap-1">
         <TabsTrigger value="chatgpt" class="text-xs px-3">ChatGPT</TabsTrigger>
         <TabsTrigger value="claude" class="text-xs px-3">Claude</TabsTrigger>
         <TabsTrigger value="mistral" class="text-xs px-3">Mistral</TabsTrigger>
-        <TabsTrigger value="other" class="text-xs px-3 text-muted-foreground/70 data-[state=active]:text-foreground">Other</TabsTrigger>
+        <TabsTrigger value="other" class="text-xs px-3 text-ink-2 data-[state=active]:text-ink-0">Other</TabsTrigger>
       </TabsList>
 
       <!-- ChatGPT -->
       <TabsContent value="chatgpt" class="mt-4">
         <div
-          class="flex flex-col overflow-hidden rounded-xl border border-border/60 shadow-2xl glow-accent-lg lg:h-[420px]"
-          style="background: #ffffff; font-family: 'Söhne', 'Inter', system-ui, -apple-system, sans-serif;"
+          class="flex flex-col overflow-hidden rounded-xl border lg:h-[420px]"
+          style="background: #ffffff; border-color: var(--rule-1); box-shadow: var(--sh-2); font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;"
         >
           <!-- Window chrome -->
           <div class="flex items-center gap-2 px-4 py-3 border-b" style="border-color: #ececec; background: #f9f9f9;">
@@ -136,9 +136,9 @@ async function copyMcpUrl() {
               </div>
               <div class="flex-1 leading-relaxed">
                 <div v-if="phase === 'thinking'" class="flex gap-1 items-center pt-1.5" style="color: #8e8ea0">
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #8e8ea0;"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #8e8ea0; animation-delay: 0.15s;"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #8e8ea0; animation-delay: 0.3s;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #8e8ea0;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #8e8ea0; opacity: 0.6;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #8e8ea0; opacity: 0.35;"></span>
                 </div>
                 <template v-else>
                   <p class="mb-3">I'll create flashcards from your notes on LLM basics:</p>
@@ -169,8 +169,8 @@ async function copyMcpUrl() {
       <!-- Claude -->
       <TabsContent value="claude" class="mt-4">
         <div
-          class="flex flex-col overflow-hidden rounded-xl border border-border/60 shadow-2xl glow-accent-lg lg:h-[420px]"
-          style="background: #faf9f5; font-family: 'Styrene B', 'Inter', system-ui, -apple-system, sans-serif;"
+          class="flex flex-col overflow-hidden rounded-xl border lg:h-[420px]"
+          style="background: #faf9f5; border-color: var(--rule-1); box-shadow: var(--sh-2); font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;"
         >
           <!-- Window chrome -->
           <div class="flex items-center gap-2 px-4 py-3 border-b" style="border-color: #e8e6dc; background: #f5f3eb;">
@@ -207,9 +207,9 @@ async function copyMcpUrl() {
               </div>
               <div class="flex-1 leading-relaxed">
                 <div v-if="phase === 'thinking'" class="flex gap-1 items-center pt-1.5" style="color: #91918b">
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #d97757;"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #d97757; animation-delay: 0.15s;"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #d97757; animation-delay: 0.3s;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #d97757;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #d97757; opacity: 0.6;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #d97757; opacity: 0.35;"></span>
                 </div>
                 <template v-else>
                   <p class="mb-3">Here are flashcards from your LLM basics notes:</p>
@@ -240,8 +240,8 @@ async function copyMcpUrl() {
       <!-- Mistral Le Chat -->
       <TabsContent value="mistral" class="mt-4">
         <div
-          class="flex flex-col overflow-hidden rounded-xl border border-border/60 shadow-2xl glow-accent-lg lg:h-[420px]"
-          style="background: #faf6f1; font-family: 'Inter', system-ui, -apple-system, sans-serif;"
+          class="flex flex-col overflow-hidden rounded-xl border lg:h-[420px]"
+          style="background: #faf6f1; border-color: var(--rule-1); box-shadow: var(--sh-2); font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;"
         >
           <!-- Window chrome -->
           <div class="flex items-center gap-2 px-4 py-3 border-b" style="border-color: #e9e1d4; background: #f3ede2;">
@@ -284,9 +284,9 @@ async function copyMcpUrl() {
               </div>
               <div class="flex-1 leading-relaxed">
                 <div v-if="phase === 'thinking'" class="flex gap-1 items-center pt-1.5" style="color: #8b7e6a">
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #fa520f;"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #fa520f; animation-delay: 0.15s;"></span>
-                  <span class="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style="background: #fa520f; animation-delay: 0.3s;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #fa520f;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #fa520f; opacity: 0.6;"></span>
+                  <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: #fa520f; opacity: 0.35;"></span>
                 </div>
                 <template v-else>
                   <p class="mb-3">Voilà — flashcards from your LLM basics notes:</p>
@@ -316,16 +316,17 @@ async function copyMcpUrl() {
 
       <!-- Other / Developers -->
       <TabsContent value="other" class="mt-4">
-        <div class="mb-3 rounded-md border border-border/60 bg-card/60 px-4 py-3 font-mono text-[12px]">
-          <div class="mb-1.5 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-accent/80">
-            <span class="inline-block h-1.5 w-1.5 rounded-full bg-accent animate-pulse"></span>
+        <div class="mb-3 rounded-md border bg-paper-1 px-4 py-3" style="border-color: var(--rule-1);">
+          <div class="fa-cap mb-1.5 flex items-center gap-2">
+            <span class="fa-pulse"></span>
             Connect your agent to the MCP
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-muted-foreground">$</span>
-            <code class="flex-1 select-all break-all text-foreground">https://fasolt.app/mcp</code>
+          <div class="fa-mono flex items-center gap-2 text-[12px]">
+            <span class="text-ink-2">$</span>
+            <code class="flex-1 select-all break-all text-ink-0">https://fasolt.app/mcp</code>
             <button
-              class="rounded border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:border-accent/50 transition-colors"
+              class="fa-mono rounded border px-2 py-0.5 text-[10px] text-ink-1 hover:text-ink-0"
+              style="border-color: var(--rule-1);"
               type="button"
               @click="copyMcpUrl"
             >
@@ -334,14 +335,14 @@ async function copyMcpUrl() {
           </div>
         </div>
         <TerminalDemo />
-        <p class="mt-3 text-xs text-muted-foreground">
+        <p class="mt-3 text-xs text-ink-2">
           Streamable HTTP transport. Works with Claude Code, Cursor, and any MCP-compatible client.
         </p>
       </TabsContent>
     </Tabs>
 
-    <p class="mt-4 text-xs text-muted-foreground">
-      <RouterLink to="/mcp-setup" class="text-accent hover:underline">How to connect →</RouterLink>
+    <p class="mt-4 text-xs text-ink-2">
+      <RouterLink to="/mcp-setup" class="text-accent-text hover:underline">How to connect →</RouterLink>
     </p>
   </div>
 </template>

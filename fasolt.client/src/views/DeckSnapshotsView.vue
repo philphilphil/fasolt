@@ -4,7 +4,6 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useSnapshotsStore } from '@/stores/snapshots'
 import { useDecksStore } from '@/stores/decks'
 import type { DeckDetail } from '@/types'
-import { Button } from '@/components/ui/button'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,69 +43,125 @@ function formatDate(iso: string) {
 </script>
 
 <template>
-  <div v-if="loading" class="py-12 text-center text-xs text-muted-foreground">Loading...</div>
+  <div v-if="loading" class="loading">Loading…</div>
 
-  <div v-else class="space-y-6">
-    <!-- Breadcrumb -->
-    <div class="text-[11px] text-muted-foreground">
-      <RouterLink to="/decks" class="hover:text-foreground transition-colors">Decks</RouterLink>
-      <span class="mx-1.5">/</span>
-      <RouterLink :to="`/decks/${deckId}`" class="hover:text-foreground transition-colors">{{ deck?.name }}</RouterLink>
-      <span class="mx-1.5">/</span>
-      <span class="text-foreground">Snapshots</span>
-    </div>
+  <div v-else class="snapshots-page">
+    <RouterLink :to="`/decks/${deckId}`" class="fa-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      {{ deck?.name || 'Deck' }}
+    </RouterLink>
 
     <!-- Header -->
-    <div class="flex items-start justify-between">
+    <header class="page-head">
       <div>
-        <h1 class="text-xl font-bold tracking-tight">Snapshots</h1>
-        <p class="text-sm text-muted-foreground mt-1">Restore {{ deck?.name }} to a previous state</p>
+        <h1 class="page-title">Snapshots</h1>
+        <p class="page-sub">Restore {{ deck?.name }} to a previous state</p>
       </div>
-      <Button variant="outline" size="sm" class="text-xs" @click="router.push(`/decks/${deckId}`)">
-        Back to deck
-      </Button>
-    </div>
+      <button class="fa-btn" @click="router.push(`/decks/${deckId}`)">Back to deck</button>
+    </header>
 
     <!-- Snapshots list -->
-    <div v-if="snapshotsStore.snapshots.length > 0" class="flex flex-col gap-2">
+    <div v-if="snapshotsStore.snapshots.length > 0" class="snap-list">
       <div
         v-for="snapshot in snapshotsStore.snapshots"
         :key="snapshot.id"
-        class="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
+        class="snap-row"
       >
-        <div>
-          <div class="text-[13px] font-semibold">{{ formatDate(snapshot.createdAt) }}</div>
-          <div class="text-[11px] text-muted-foreground">
+        <div class="snap-text">
+          <div class="snap-date fa-mono fa-num">{{ formatDate(snapshot.createdAt) }}</div>
+          <div class="snap-meta">
             {{ snapshot.cardCount }} cards
-            <span class="mx-1">·</span>
-            <span v-if="snapshot.contentChanges === 0" class="text-muted-foreground">no content differences</span>
-            <span v-else-if="snapshot.contentChanges != null" class="text-amber-500">{{ snapshot.contentChanges }} content difference{{ snapshot.contentChanges !== 1 ? 's' : '' }}</span>
+            <span class="snap-dot">·</span>
+            <span v-if="snapshot.contentChanges === 0">no content differences</span>
+            <span v-else-if="snapshot.contentChanges != null" class="snap-changes">{{ snapshot.contentChanges }} content difference{{ snapshot.contentChanges !== 1 ? 's' : '' }}</span>
           </div>
         </div>
-        <div class="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            class="text-xs"
+        <div class="snap-actions">
+          <button
+            class="fa-btn"
             @click="router.push(`/decks/${deckId}/snapshots/${snapshot.id}/restore`)"
           >
             Restore
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            class="text-xs text-muted-foreground hover:text-destructive"
+          </button>
+          <button
+            class="fa-btn fa-btn-ghost snap-delete"
             @click="handleDelete(snapshot.id)"
           >
             Delete
-          </Button>
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Empty state -->
-    <div v-else class="py-12 text-center text-xs text-muted-foreground">
+    <div v-else class="empty">
       No snapshots yet. Create one in Settings.
     </div>
   </div>
 </template>
+
+<style scoped>
+.snapshots-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.loading {
+  padding: 48px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+
+/* Header */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.page-head .page-title { font-size: 22px; }
+.page-sub {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+/* Snapshot list — hairline rows, no boxed cards */
+.snap-list { display: flex; flex-direction: column; }
+.snap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--rule-1);
+}
+.snap-row:last-child { border-bottom: none; }
+.snap-text { min-width: 0; }
+.snap-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-0);
+}
+.snap-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.snap-dot { margin: 0 5px; color: var(--ink-3); }
+.snap-changes { color: var(--accent-text); }
+.snap-actions { display: flex; gap: 8px; flex: none; }
+.snap-delete { color: var(--ink-2); }
+.snap-delete:hover { color: var(--c-again); }
+
+/* Empty state */
+.empty {
+  padding: 48px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+</style>

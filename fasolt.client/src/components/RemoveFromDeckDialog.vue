@@ -81,11 +81,11 @@ async function removeFrom(deckId: string, cardIds: string[]) {
           <span class="fa-tag" :style="{ background: deckColor(row.id) }" />
           <div class="remove-row-text">
             <div class="remove-row-name">{{ row.name }}</div>
-            <div class="fa-mono remove-row-sub">
+            <div class="remove-row-sub">
               {{ row.selectedCount }} of selection {{ row.selectedCount === 1 ? 'is' : 'are' }} in this deck
             </div>
           </div>
-          <span class="remove-row-cta fa-mono">remove ›</span>
+          <span class="remove-row-cta">Remove ›</span>
         </button>
 
         <div v-if="deckRows.length === 0" class="remove-empty">

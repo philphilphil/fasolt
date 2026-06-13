@@ -84,6 +84,13 @@ async function createDeck() {
 
 function startReview(id: string) { router.push(`/review?deckId=${id}`) }
 function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=cram`) }
+
+// Things-style progress ring: how much of a deck is due. r=16 → circumference ≈ 100.53.
+const RING_C = 100.53
+function ringDash(deck: { cardCount: number; dueCount: number }): string {
+  const pct = deck.cardCount ? Math.min(1, deck.dueCount / deck.cardCount) : 0
+  return `${(pct * RING_C).toFixed(1)} ${RING_C}`
+}
 </script>
 
 <template>
@@ -173,42 +180,48 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
 
     <div v-if="decks.loading" class="empty">Loading decks…</div>
 
-    <div v-else class="deck-grid">
-      <article
+    <div v-else-if="decks.decks.length === 0" class="empty">
+      No decks yet. Create one to organize your cards.
+    </div>
+
+    <div v-else class="deck-list">
+      <div
         v-for="deck in sortedDecks"
         :key="deck.id"
-        class="deck-card"
+        class="deck-row"
         :class="{ 'is-suspended': deck.isSuspended }"
       >
-        <span class="deck-stripe" :style="{ background: deckColor(deck.id) }" aria-hidden="true" />
-        <header class="deck-card-head">
-          <div class="deck-card-title">
-            <span class="fa-tag" :style="{ background: deckColor(deck.id) }" aria-hidden="true" />
-            <h3>
-              <RouterLink :to="`/decks/${deck.id}`" class="deck-card-link">{{ deck.name }}</RouterLink>
-            </h3>
-          </div>
-          <span v-if="deck.isSuspended" class="paused-chip fa-cap">paused</span>
-        </header>
-        <p class="deck-card-desc">
-          {{ deck.description || 'No description yet — ask your AI to add one.' }}
-        </p>
-        <footer class="deck-card-foot">
-          <div class="deck-card-counts">
-            <div class="count-block">
-              <span class="fa-mono count-num">{{ deck.cardCount }}</span>
-              <span class="fa-cap count-label">cards</span>
+        <RouterLink :to="`/decks/${deck.id}`" class="deck-row-main" :aria-label="`Open ${deck.name}`">
+          <svg
+            v-if="!deck.isSuspended && deck.cardCount > 0"
+            class="deck-ring" width="22" height="22" viewBox="0 0 36 36" aria-hidden="true"
+          >
+            <circle cx="18" cy="18" r="16" fill="none" stroke="var(--rule-1)" stroke-width="3" />
+            <circle cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" :stroke-dasharray="ringDash(deck)" transform="rotate(-90 18 18)" />
+          </svg>
+          <span v-else class="deck-ring-spacer" aria-hidden="true" />
+          <span class="fa-tag" :style="{ background: deckColor(deck.id) }" aria-hidden="true" />
+          <div class="deck-row-text">
+            <div class="deck-row-name-line">
+              <span class="deck-row-name">{{ deck.name }}</span>
+              <span v-if="deck.isSuspended" class="paused-chip">Paused</span>
             </div>
-            <div class="count-block">
-              <span class="fa-mono count-num" :class="{ 'is-due': deck.dueCount > 0 }">{{ deck.dueCount }}</span>
-              <span class="fa-cap count-label">due</span>
+            <div class="deck-row-sub">
+              {{ deck.description || `${deck.cardCount} ${deck.cardCount === 1 ? 'card' : 'cards'}` }}
             </div>
           </div>
-          <div v-if="!deck.isSuspended && deck.cardCount > 0" class="deck-card-actions">
+        </RouterLink>
+
+        <div class="deck-row-trail">
+          <span v-if="deck.dueCount > 0 && !deck.isSuspended" class="deck-row-due">{{ deck.dueCount }} due</span>
+          <span v-else-if="deck.isSuspended" class="deck-row-meta">{{ deck.cardCount }} cards</span>
+          <span v-else class="deck-row-meta">All caught up</span>
+
+          <div v-if="!deck.isSuspended && deck.cardCount > 0" class="deck-row-actions">
             <button
               v-if="deck.dueCount > 0"
               type="button"
-              class="fa-btn fa-btn-accent deck-card-cta"
+              class="fa-btn fa-btn-accent deck-row-cta"
               :aria-label="`Review ${deck.name}`"
               @click="startReview(deck.id)"
             >
@@ -217,30 +230,29 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
             </button>
             <button
               type="button"
-              class="deck-card-cram"
+              class="deck-row-cram"
               :aria-label="`Custom study for ${deck.name}`"
               @click="startCustomStudy(deck.id)"
             >
               Custom
             </button>
           </div>
-          <span v-else class="fa-cap deck-card-status">
-            {{ deck.isSuspended ? 'resume' : 'empty' }}
-          </span>
-        </footer>
-      </article>
 
-      <button type="button" class="new-deck-card fa-stripe-bg" @click="dialogOpen = true">
-        <div class="plus-tile">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <RouterLink :to="`/decks/${deck.id}`" class="deck-chevron-link" tabindex="-1" aria-hidden="true">
+            <svg class="deck-chevron" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+          </RouterLink>
         </div>
-        <div class="new-deck-label">New deck</div>
-        <div class="new-deck-hint">or ask your AI: "make a deck from notes/biology.md"</div>
-      </button>
-    </div>
+      </div>
 
-    <div v-if="!decks.loading && decks.decks.length === 0" class="empty">
-      No decks yet. Create one to organize your cards.
+      <button type="button" class="new-deck-row" @click="dialogOpen = true">
+        <span class="plus-tile">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
+        <span class="new-deck-text">
+          <span class="new-deck-label">New deck</span>
+          <span class="new-deck-hint">or ask your AI: "make a deck from notes/biology.md"</span>
+        </span>
+      </button>
     </div>
   </div>
 </template>
@@ -267,204 +279,157 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
 }
 .meta-text { font-size: 13px; color: var(--ink-1); }
 .meta-text strong { color: var(--ink-0); font-weight: 600; }
-.meta-mcp {
+
+/* Deck list — rows on the page, hairline separators, no outer box */
+.deck-list { display: flex; flex-direction: column; }
+
+.deck-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--ink-2);
+  gap: 12px;
+  border-bottom: 1px solid var(--rule-1);
+  transition: background .12s;
 }
+.deck-row:hover { background: var(--paper-2); }
+.deck-row.is-suspended { opacity: 0.65; }
 
-.deck-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.deck-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
   gap: 14px;
-}
-@media (max-width: 1000px) { .deck-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 640px) { .deck-grid { grid-template-columns: 1fr; } }
-
-.deck-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 196px;
-  padding: 16px 18px 14px;
-  border: 1px solid var(--rule-1);
-  border-radius: 12px;
-  background: var(--paper-1);
-  text-align: left;
-  font: inherit;
+  padding: 15px 4px;
+  text-decoration: none;
   color: inherit;
-  transition: border-color .12s, transform .08s, box-shadow .12s;
+  border-radius: 8px;
+  outline: none;
 }
-.deck-card:has(.deck-card-link:hover),
-.deck-card:has(.deck-card-link:focus-visible) {
-  border-color: var(--ink-3);
-  transform: translateY(-1px);
-  box-shadow: var(--sh-2);
-}
-.deck-card.is-suspended { opacity: 0.7; }
+.deck-row-main:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
+.deck-ring { flex: none; }
+.deck-ring-spacer { width: 22px; height: 22px; flex: none; }
 
-.deck-stripe {
-  position: absolute;
-  top: 0;
-  left: 16px;
-  right: 16px;
-  height: 3px;
-  border-radius: 0 0 2px 2px;
-}
-
-.deck-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 6px;
-}
-.deck-card-title {
+.deck-row-text { flex: 1; min-width: 0; }
+.deck-row-name-line {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
-.deck-card-title h3 {
-  font-size: 15px;
-  font-weight: 600;
+.deck-row-name {
+  font-size: 15.5px;
   color: var(--ink-0);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 0;
-}
-.deck-card-link {
-  color: inherit;
-  text-decoration: none;
-  outline: none;
-}
-.deck-card-link::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  z-index: 0;
-  cursor: pointer;
-}
-.deck-card-link:focus-visible::after {
-  box-shadow: 0 0 0 2px var(--accent);
 }
 .paused-chip {
-  font-size: 9px;
-  color: var(--c-hard);
-  padding: 2px 6px;
-  border: 1px solid var(--c-hard);
-  border-radius: 4px;
+  flex: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-2);
+  padding: 1px 7px;
+  border: 1px solid var(--rule-1);
+  border-radius: 999px;
 }
-.deck-card-desc {
+.deck-row-sub {
   font-size: 12.5px;
   color: var(--ink-2);
-  line-height: 1.4;
-  min-height: 36px;
-  margin: 0;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.deck-card-foot {
-  margin-top: auto;
+
+.deck-row-trail {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--rule-1);
+  padding-right: 2px;
+  flex: none;
 }
-.deck-card-counts {
-  display: flex;
-  gap: 14px;
-  align-items: baseline;
-}
-.count-block {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-.count-num {
-  font-size: 18px;
+.deck-row-due {
+  font-size: 14px;
+  color: var(--accent-text);
   font-weight: 600;
-  color: var(--ink-0);
+  white-space: nowrap;
 }
-.count-num.is-due { color: var(--accent); }
-.count-label { font-size: 9px; }
-.deck-card-actions {
+.deck-row-meta {
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.deck-row-actions {
   display: flex;
   align-items: center;
   gap: 6px;
-  position: relative;
-  z-index: 1;
 }
-.deck-card-cta {
-  height: 26px;
-  padding: 0 10px;
-  font-size: 11.5px;
+.deck-row-cta {
+  height: 28px;
+  padding: 0 11px;
+  font-size: 12px;
 }
-.deck-card-cram {
-  height: 26px;
+.deck-row-cram {
+  height: 28px;
   padding: 0 10px;
-  border-radius: 6px;
+  border-radius: 7px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: color .12s, background .12s, border-color .12s;
 }
-.deck-card-cram:hover {
+.deck-row-cram:hover {
   color: var(--ink-0);
   background: var(--paper-2);
   border-color: var(--rule-1);
 }
-.deck-card-status {
-  font-size: 9px;
-  color: var(--ink-2);
+.deck-chevron-link {
+  display: inline-flex;
+  color: var(--ink-3);
 }
+.deck-chevron { flex: none; }
 
-.new-deck-card {
+/* New deck — quiet row, no dashed box / accent hover */
+.new-deck-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 196px;
-  border: 1px dashed var(--rule-1);
-  border-radius: 12px;
-  color: var(--ink-2);
-  background-color: transparent;
+  gap: 14px;
+  padding: 15px 4px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: border-color .12s, color .12s;
+  color: var(--ink-1);
   font: inherit;
-}
-.new-deck-card:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.plus-tile {
-  width: 36px;
-  height: 36px;
   border-radius: 8px;
-  border: 1px solid currentColor;
+  transition: background .12s;
+}
+.new-deck-row:hover { background: var(--paper-2); }
+.plus-tile {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 6px;
+  border: 1px solid var(--rule-1);
+  color: var(--ink-2);
   display: grid;
   place-items: center;
 }
+.new-deck-text { display: flex; flex-direction: column; min-width: 0; }
 .new-deck-label {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 500;
+  color: var(--ink-0);
 }
 .new-deck-hint {
-  font-size: 11px;
-  color: var(--ink-3);
-  text-align: center;
-  max-width: 220px;
-  line-height: 1.4;
+  font-size: 12px;
+  color: var(--ink-2);
+  margin-top: 2px;
 }
 
 .empty {
@@ -472,5 +437,9 @@ function startCustomStudy(id: string) { router.push(`/review?deckId=${id}&mode=c
   text-align: center;
   color: var(--ink-2);
   font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .deck-row-cram { display: none; }
 }
 </style>

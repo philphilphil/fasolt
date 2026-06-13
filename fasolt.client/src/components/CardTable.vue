@@ -336,10 +336,11 @@ const table = useVueTable({
   background: var(--paper-2);
 }
 .card-table-head {
-  font-family: 'Geist Mono', ui-monospace, monospace;
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-family: inherit;
+  text-transform: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
   color: var(--ink-2);
   padding: 10px 14px;
   height: 36px;
@@ -352,7 +353,7 @@ const table = useVueTable({
   align-items: center;
   gap: 5px;
 }
-.sort-icon { color: var(--accent); font-family: 'Geist Mono', monospace; }
+.sort-icon { color: var(--accent); font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
 
 :deep(.card-table-row) {
   border-bottom: 1px solid var(--rule-2);
@@ -437,7 +438,7 @@ const table = useVueTable({
 :deep(.state-chip) {
   display: inline-block;
   font-size: 10.5px;
-  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   padding: 2px 7px;
   border: 1px solid currentColor;
   border-radius: 3px;
@@ -537,7 +538,14 @@ const table = useVueTable({
 }
 :deep(.sel-box.is-indeterminate::after) {
   display: block;
-  background: no-repeat center/10px 2px linear-gradient(white, white);
+  inset: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+  background: var(--accent-on);
 }
 :deep(.card-table-row:hover .sel-box:not(.is-checked):not(.is-indeterminate)) {
   border-color: var(--ink-3);

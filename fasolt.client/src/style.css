@@ -191,6 +191,15 @@
   }
   .fa-link:hover { color: var(--accent-text); border-color: var(--accent); }
 
+  /* Single quiet back link — replaces multi-part breadcrumb trails. */
+  .fa-back {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--ink-2);
+    text-decoration: none; transition: color .12s;
+  }
+  .fa-back:hover { color: var(--ink-0); }
+  .fa-back svg { width: 14px; height: 14px; }
+
   /* Accent dot — static, used for active states. No pulse/glow (de-glossed). */
   .fa-pulse {
     display: inline-block;

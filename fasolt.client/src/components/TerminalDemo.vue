@@ -24,46 +24,48 @@ const lines: TerminalLine[] = [
 </script>
 
 <template>
+  <!-- Terminal mock keeps a dark + mono treatment by design, but de-glossed:
+       no glow, no gradient, at most a whisper-soft shadow, system monospace. -->
   <div
-    class="overflow-hidden rounded border border-border/60 shadow-2xl glow-accent-lg"
-    style="background: #0a0e17"
+    class="fa-mono overflow-hidden rounded-xl border"
+    style="background: #16181d; border-color: #2a2d35; box-shadow: var(--sh-2)"
   >
     <!-- Window chrome -->
-    <div class="flex items-center gap-2 px-4 py-3 border-b border-white/5" style="background: #0f1420">
-      <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57]/80"></span>
-      <span class="h-2.5 w-2.5 rounded-full bg-[#febc2e]/80"></span>
-      <span class="h-2.5 w-2.5 rounded-full bg-[#28c840]/80"></span>
-      <span class="ml-3 text-[11px] text-white/20">terminal</span>
+    <div class="flex items-center gap-2 px-4 py-3 border-b" style="background: #1c1f26; border-color: #2a2d35">
+      <span class="h-2.5 w-2.5 rounded-full" style="background: var(--c-again)"></span>
+      <span class="h-2.5 w-2.5 rounded-full" style="background: var(--c-hard)"></span>
+      <span class="h-2.5 w-2.5 rounded-full" style="background: var(--c-good)"></span>
+      <span class="ml-3 text-[11px]" style="color: #6b7280">terminal</span>
     </div>
 
     <!-- Terminal body -->
-    <div class="px-5 py-4 text-[12.5px] leading-relaxed" style="color: #d1d5db">
+    <div class="px-5 py-4 text-[12.5px] leading-relaxed" style="color: #c5c8cf">
       <template v-for="(line, i) in lines" :key="i">
         <div v-if="line.type === 'blank'" class="h-3"></div>
         <div v-else-if="line.type === 'prompt'" class="flex gap-2 mb-1">
-          <span class="text-[hsl(188,86%,53%)]">›</span>
-          <span class="text-white/90">{{ line.text }}</span>
+          <span style="color: var(--accent)">›</span>
+          <span style="color: #e8eaee">{{ line.text }}</span>
         </div>
         <div v-else-if="line.type === 'success'" class="flex gap-2">
-          <span class="text-emerald-400/90">{{ line.text }}</span>
+          <span style="color: var(--c-good)">{{ line.text }}</span>
         </div>
         <div v-else-if="line.type === 'dim'" class="flex gap-2">
-          <span class="text-white/30">{{ line.text }}</span>
+          <span style="color: #6b7280">{{ line.text }}</span>
         </div>
         <div v-else-if="line.type === 'output-link'" class="flex gap-1">
-          <span class="text-white/60">{{ line.text.split('https://')[0] }}</span><span class="text-[hsl(188,86%,53%)] underline decoration-[hsl(188,86%,53%)]/30 underline-offset-2">https://{{ line.text.split('https://')[1] }}</span>
+          <span style="color: #9ca3af">{{ line.text.split('https://')[0] }}</span><span class="underline underline-offset-2" style="color: var(--accent)">https://{{ line.text.split('https://')[1] }}</span>
         </div>
         <div v-else-if="line.type === 'output'" class="flex gap-2">
-          <span class="text-white/60">{{ line.text }}</span>
+          <span style="color: #9ca3af">{{ line.text }}</span>
         </div>
       </template>
 
-      <!-- Cursor -->
+      <!-- Cursor — static block, no glow/pulse -->
       <div class="flex gap-2 mt-1">
-        <span class="text-[hsl(188,86%,53%)]">›</span>
+        <span style="color: var(--accent)">›</span>
         <span
-          class="inline-block w-[7px] h-[14px] align-text-bottom animate-glow-pulse rounded-sm"
-          style="background: hsl(188, 86%, 53%)"
+          class="inline-block w-[7px] h-[14px] align-text-bottom rounded-sm"
+          style="background: var(--accent)"
         ></span>
       </div>
     </div>

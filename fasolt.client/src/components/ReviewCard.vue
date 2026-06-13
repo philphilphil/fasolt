@@ -111,7 +111,7 @@ function openEdit(cardId: string) {
   align-items: flex-start;
   gap: 12px;
 }
-.card-label { color: var(--accent); }
+.card-label { color: var(--ink-2); }
 
 .card-body {
   flex: 1;
@@ -125,9 +125,10 @@ function openEdit(cardId: string) {
   gap: 20px;
 }
 .card-question {
-  font-family: 'Instrument Serif', serif;
-  font-size: 44px;
-  line-height: 1.1;
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.15;
   letter-spacing: -0.02em;
   text-align: center;
   max-width: 640px;
@@ -135,8 +136,8 @@ function openEdit(cardId: string) {
 }
 .card-question :deep(p) { margin: 0; }
 .card-question :deep(code) {
-  font-family: 'Geist Mono', monospace;
-  font-size: 0.65em;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.8em;
   vertical-align: baseline;
   padding: 0 6px;
   background: var(--paper-2);
@@ -169,7 +170,7 @@ function openEdit(cardId: string) {
 .card-prose :deep(p) { margin: 0 0 0.6em; line-height: 1.6; font-size: 15px; }
 .card-prose :deep(strong) { color: var(--ink-0); font-weight: 600; }
 .card-prose :deep(code) {
-  font-family: 'Geist Mono', monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 0.92em;
   padding: 1px 5px;
   background: var(--paper-2);
@@ -184,7 +185,7 @@ function openEdit(cardId: string) {
   border: 1px solid var(--rule-1);
   border-radius: 6px;
   overflow-x: auto;
-  font-family: 'Geist Mono', monospace;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 13px;
 }
 .card-prose :deep(pre code) { background: transparent; border: none; padding: 0; }
@@ -242,7 +243,7 @@ function openEdit(cardId: string) {
   flex-shrink: 0;
 }
 .card-id:hover { color: var(--ink-1); }
-.card-state { font-size: 9px; }
+.card-state { font-size: 11px; color: var(--ink-2); }
 .card-edit {
   display: inline-flex;
   align-items: center;

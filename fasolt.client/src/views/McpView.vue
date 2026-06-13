@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Button } from '@/components/ui/button'
 import { Copy, Check, ChevronDown } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import AppFooter from '@/components/AppFooter.vue'
@@ -33,32 +32,28 @@ function copyToClipboard(text: string, key: string) {
 
 <template>
   <div :class="auth.isAuthenticated ? '' : 'flex min-h-screen flex-col bg-background text-foreground'">
-    <nav v-if="!auth.isAuthenticated" class="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <nav v-if="!auth.isAuthenticated" class="mcp-nav sticky top-0 z-50 border-b">
       <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
         <RouterLink to="/" class="flex items-center">
           <FasoltWordmark :size="32" />
         </RouterLink>
         <div class="flex items-center gap-2">
           <ThemeToggle />
-          <a href="/login">
-            <Button variant="ghost" size="sm" class="text-sm">Log in</Button>
-          </a>
-          <a href="/register">
-            <Button size="sm" class="text-sm">Sign up</Button>
-          </a>
+          <a href="/login" class="fa-btn fa-btn-ghost">Log in</a>
+          <a href="/register" class="fa-btn fa-btn-primary">Sign up</a>
         </div>
       </div>
     </nav>
 
     <main :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'">
       <div :class="auth.isAuthenticated ? 'mcp-page' : 'flex flex-col gap-6'">
-        <h1 class="page-title">MCP Setup</h1>
+        <h1 class="page-title">MCP setup</h1>
 
-        <p class="text-sm text-muted-foreground leading-relaxed">
+        <p class="mcp-intro">
           Connect your AI agent to create flashcards from your notes. Copy your MCP URL and add it to your client.
         </p>
 
-        <p class="text-sm text-muted-foreground">
+        <p class="mcp-intro">
           You'll be asked to log in when your AI client first connects. Pick your client below to see the steps.
         </p>
 
@@ -69,13 +64,14 @@ function copyToClipboard(text: string, key: string) {
               <ChevronDown class="mcp-client-chevron" :size="16" />
             </summary>
             <div class="mcp-client-body">
-              <div class="relative">
-                <pre class="rounded border border-border bg-secondary px-3 py-2.5 pr-10 text-sm overflow-x-auto whitespace-pre-wrap break-all">{{ remoteClaudeCommand }}</pre>
+              <div class="mcp-code">
+                <pre class="mcp-pre fa-mono whitespace-pre-wrap break-all">{{ remoteClaudeCommand }}</pre>
                 <button
-                  class="absolute right-2 top-2 rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  class="mcp-copy"
+                  aria-label="Copy command"
                   @click="copyToClipboard(remoteClaudeCommand, 'claude')"
                 >
-                  <Check v-if="copiedStates['claude']" class="h-3.5 w-3.5 text-success" />
+                  <Check v-if="copiedStates['claude']" class="h-3.5 w-3.5" :style="{ color: 'var(--c-good)' }" />
                   <Copy v-else class="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -88,25 +84,26 @@ function copyToClipboard(text: string, key: string) {
               <ChevronDown class="mcp-client-chevron" :size="16" />
             </summary>
             <div class="mcp-client-body">
-              <div class="rounded border border-border bg-secondary px-3 py-2.5 text-sm text-muted-foreground">
-                <ol class="list-decimal list-inside space-y-1.5">
-                  <li>Go to <a href="https://claude.ai/customize/connectors" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">Customize</a> → <span class="font-medium text-foreground">Connectors</span></li>
-                  <li>Click <span class="font-medium text-foreground">+</span> then <span class="font-medium text-foreground">Add Custom Connector</span></li>
+              <div class="fa-prose mcp-steps">
+                <ol>
+                  <li>Go to <a href="https://claude.ai/customize/connectors" target="_blank" rel="noopener noreferrer">Customize</a> → <strong>Connectors</strong></li>
+                  <li>Click <strong>+</strong> then <strong>Add Custom Connector</strong></li>
                   <li>Paste your MCP URL:
-                    <span class="inline-flex items-center gap-1.5 mt-1">
-                      <code class="rounded border border-border bg-background px-1.5 py-0.5 text-xs">{{ origin }}/mcp</code>
+                    <span class="mcp-inline-url">
+                      <code class="fa-mono">{{ origin }}/mcp</code>
                       <button
-                        class="rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                        class="mcp-copy mcp-copy-sm"
+                        aria-label="Copy URL"
                         @click="copyToClipboard(`${origin}/mcp`, 'claudeai-url')"
                       >
-                        <Check v-if="copiedStates['claudeai-url']" class="h-3 w-3 text-success" />
+                        <Check v-if="copiedStates['claudeai-url']" class="h-3 w-3" :style="{ color: 'var(--c-good)' }" />
                         <Copy v-else class="h-3 w-3" />
                       </button>
                     </span>
                   </li>
                   <li>Authorize with your fasolt account</li>
                 </ol>
-                <p class="mt-2"><a href="https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">See documentation</a></p>
+                <p><a href="https://support.anthropic.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp" target="_blank" rel="noopener noreferrer">See documentation</a></p>
               </div>
             </div>
           </details>
@@ -117,25 +114,26 @@ function copyToClipboard(text: string, key: string) {
               <ChevronDown class="mcp-client-chevron" :size="16" />
             </summary>
             <div class="mcp-client-body">
-              <div class="rounded border border-border bg-secondary px-3 py-2.5 text-sm text-muted-foreground">
-                <ol class="list-decimal list-inside space-y-1.5">
-                  <li>Open Le Chat → <span class="font-medium text-foreground">Intelligence</span> → <a href="https://chat.mistral.ai/connections" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">Connectors</a></li>
-                  <li>Click <span class="font-medium text-foreground">+ Add Connector</span> → <span class="font-medium text-foreground">Custom MCP Connector</span></li>
-                  <li>Set <span class="font-medium text-foreground">Connector name</span> to <code class="rounded border border-border bg-background px-1 py-0.5 text-xs">fasolt</code> and paste the server URL:
-                    <span class="inline-flex items-center gap-1.5 mt-1">
-                      <code class="rounded border border-border bg-background px-1.5 py-0.5 text-xs">{{ origin }}/mcp</code>
+              <div class="fa-prose mcp-steps">
+                <ol>
+                  <li>Open Le Chat → <strong>Intelligence</strong> → <a href="https://chat.mistral.ai/connections" target="_blank" rel="noopener noreferrer">Connectors</a></li>
+                  <li>Click <strong>+ Add Connector</strong> → <strong>Custom MCP Connector</strong></li>
+                  <li>Set <strong>Connector name</strong> to <code class="fa-mono">fasolt</code> and paste the server URL:
+                    <span class="mcp-inline-url">
+                      <code class="fa-mono">{{ origin }}/mcp</code>
                       <button
-                        class="rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                        class="mcp-copy mcp-copy-sm"
+                        aria-label="Copy URL"
                         @click="copyToClipboard(`${origin}/mcp`, 'mistral-url')"
                       >
-                        <Check v-if="copiedStates['mistral-url']" class="h-3 w-3 text-success" />
+                        <Check v-if="copiedStates['mistral-url']" class="h-3 w-3" :style="{ color: 'var(--c-good)' }" />
                         <Copy v-else class="h-3 w-3" />
                       </button>
                     </span>
                   </li>
-                  <li>Click <span class="font-medium text-foreground">Connect</span> and authorize with your fasolt account</li>
+                  <li>Click <strong>Connect</strong> and authorize with your fasolt account</li>
                 </ol>
-                <p class="mt-2"><a href="https://docs.mistral.ai/le-chat/knowledge-integrations/connectors/mcp-connectors/" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">See documentation</a></p>
+                <p><a href="https://docs.mistral.ai/le-chat/knowledge-integrations/connectors/mcp-connectors/" target="_blank" rel="noopener noreferrer">See documentation</a></p>
               </div>
             </div>
           </details>
@@ -146,26 +144,27 @@ function copyToClipboard(text: string, key: string) {
               <ChevronDown class="mcp-client-chevron" :size="16" />
             </summary>
             <div class="mcp-client-body">
-              <p class="text-sm text-muted-foreground mb-2">Requires Pro, Team, Enterprise, or Edu plan.</p>
-              <div class="rounded border border-border bg-secondary px-3 py-2.5 text-sm text-muted-foreground">
-                <ol class="list-decimal list-inside space-y-1.5">
-                  <li>Enable <span class="font-medium text-foreground">Developer Mode</span> in <span class="font-medium text-foreground">Settings</span> → <span class="font-medium text-foreground">Apps</span> → <span class="font-medium text-foreground">Advanced Settings</span></li>
-                  <li>Click <span class="font-medium text-foreground">Create App</span></li>
+              <p class="mcp-note">Requires Pro, Team, Enterprise, or Edu plan.</p>
+              <div class="fa-prose mcp-steps">
+                <ol>
+                  <li>Enable <strong>Developer Mode</strong> in <strong>Settings</strong> → <strong>Apps</strong> → <strong>Advanced Settings</strong></li>
+                  <li>Click <strong>Create App</strong></li>
                   <li>Paste your MCP URL:
-                    <span class="inline-flex items-center gap-1.5 mt-1">
-                      <code class="rounded border border-border bg-background px-1.5 py-0.5 text-xs">{{ origin }}/mcp</code>
+                    <span class="mcp-inline-url">
+                      <code class="fa-mono">{{ origin }}/mcp</code>
                       <button
-                        class="rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                        class="mcp-copy mcp-copy-sm"
+                        aria-label="Copy URL"
                         @click="copyToClipboard(`${origin}/mcp`, 'chatgpt-url')"
                       >
-                        <Check v-if="copiedStates['chatgpt-url']" class="h-3 w-3 text-success" />
+                        <Check v-if="copiedStates['chatgpt-url']" class="h-3 w-3" :style="{ color: 'var(--c-good)' }" />
                         <Copy v-else class="h-3 w-3" />
                       </button>
                     </span>
                   </li>
                   <li>Authorize with your fasolt account</li>
                 </ol>
-                <p class="mt-2"><a href="https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta" target="_blank" rel="noopener noreferrer" class="text-foreground underline underline-offset-2">See documentation</a></p>
+                <p><a href="https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt-beta" target="_blank" rel="noopener noreferrer">See documentation</a></p>
               </div>
             </div>
           </details>
@@ -176,16 +175,17 @@ function copyToClipboard(text: string, key: string) {
               <ChevronDown class="mcp-client-chevron" :size="16" />
             </summary>
             <div class="mcp-client-body">
-              <p class="text-sm text-muted-foreground mb-2">
-                Add to <code class="rounded border border-border bg-secondary px-1 py-0.5 text-xs">.vscode/mcp.json</code> or <code class="rounded border border-border bg-secondary px-1 py-0.5 text-xs">~/.copilot/mcp-config.json</code>:
+              <p class="mcp-note">
+                Add to <code class="fa-mono mcp-inline-code">.vscode/mcp.json</code> or <code class="fa-mono mcp-inline-code">~/.copilot/mcp-config.json</code>:
               </p>
-              <div class="relative">
-                <pre class="rounded border border-border bg-secondary px-3 py-2.5 pr-10 text-sm overflow-x-auto">{{ remoteCopilotConfig }}</pre>
+              <div class="mcp-code">
+                <pre class="mcp-pre fa-mono">{{ remoteCopilotConfig }}</pre>
                 <button
-                  class="absolute right-2 top-2 rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  class="mcp-copy"
+                  aria-label="Copy config"
                   @click="copyToClipboard(remoteCopilotConfig, 'copilot')"
                 >
-                  <Check v-if="copiedStates['copilot']" class="h-3.5 w-3.5 text-success" />
+                  <Check v-if="copiedStates['copilot']" class="h-3.5 w-3.5" :style="{ color: 'var(--c-good)' }" />
                   <Copy v-else class="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -200,54 +200,122 @@ function copyToClipboard(text: string, key: string) {
 </template>
 
 <style scoped>
+.mcp-nav {
+  background: var(--paper-0);
+}
 .mcp-page {
   padding: 28px 0 40px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
 }
+.mcp-intro {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-1);
+  margin: 0;
+  max-width: 60ch;
+}
+
+/* Client list — rows separated by hairlines, no boxed cards */
 .mcp-accordion {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  border-top: 1px solid var(--rule-1);
 }
 .mcp-client {
-  border: 1px solid var(--rule-1);
-  border-radius: 10px;
-  background: var(--paper-1);
-  overflow: hidden;
-  transition: border-color .12s;
-}
-.mcp-client[open] {
-  border-color: var(--ink-3);
+  border-bottom: 1px solid var(--rule-1);
 }
 .mcp-client-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 14px 4px;
   cursor: pointer;
   user-select: none;
   list-style: none;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--ink-0);
-  transition: background .12s;
+  transition: color .12s;
 }
 .mcp-client-head::-webkit-details-marker { display: none; }
-.mcp-client-head:hover { background: var(--paper-2); }
-.mcp-client-name { letter-spacing: -0.005em; }
+.mcp-client-head:hover .mcp-client-name { color: var(--accent-text); }
+.mcp-client-name { letter-spacing: -0.01em; transition: color .12s; }
 .mcp-client-chevron {
-  color: var(--ink-2);
+  color: var(--ink-3);
   transition: transform .15s ease, color .12s;
 }
 .mcp-client[open] .mcp-client-chevron {
   transform: rotate(180deg);
-  color: var(--accent);
+  color: var(--ink-2);
 }
 .mcp-client-body {
-  padding: 0 16px 16px;
-  border-top: 1px solid var(--rule-1);
-  padding-top: 14px;
+  padding: 2px 4px 18px;
+}
+
+/* Step lists (fa-prose handles type; trim trailing margins) */
+.mcp-steps { font-size: 14px; }
+.mcp-steps ol { margin: 0; }
+.mcp-steps li { margin: .3em 0; }
+.mcp-steps p { margin: .8em 0 0; }
+.mcp-note {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 0 0 10px;
+}
+
+/* Inline code chip */
+.mcp-inline-code,
+.mcp-inline-url code {
+  font-size: 12.5px;
+  padding: 1px 6px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule-1);
+  border-radius: 5px;
+  color: var(--ink-0);
+}
+.mcp-inline-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Code block — quiet sunken surface, system mono, flat copy button */
+.mcp-code {
+  position: relative;
+  margin-top: 4px;
+}
+.mcp-pre {
+  margin: 0;
+  padding: 12px 40px 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-0);
+  background: var(--paper-2);
+  border: 1px solid var(--rule-1);
+  border-radius: 9px;
+  overflow-x: auto;
+}
+.mcp-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color .12s, background .12s;
+}
+.mcp-copy:hover { color: var(--ink-0); background: var(--paper-1); }
+.mcp-copy-sm {
+  position: static;
+  padding: 3px;
 }
 </style>

@@ -187,19 +187,19 @@ onMounted(fetchUsers)
   <div class="space-y-4">
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-lg font-semibold tracking-tight">Users</h2>
-        <p class="text-sm text-muted-foreground">{{ totalCount }} total</p>
+        <h2 class="text-lg font-semibold tracking-tight text-ink-0">Users</h2>
+        <p class="text-sm text-ink-2">{{ totalCount }} total</p>
       </div>
     </div>
 
-    <div v-if="errorMessage" class="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
+    <div v-if="errorMessage" class="admin-error">
       {{ errorMessage }}
       <button class="ml-2 underline" @click="errorMessage = null">Dismiss</button>
     </div>
 
     <div class="flex flex-wrap items-end gap-3">
-      <div class="flex flex-col gap-1 flex-1 min-w-[200px]">
-        <label class="text-xs font-medium text-muted-foreground" for="user-search">Search</label>
+      <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+        <label class="fa-cap" for="user-search">Search</label>
         <Input
           id="user-search"
           v-model="search"
@@ -207,12 +207,12 @@ onMounted(fetchUsers)
           placeholder="Email or username..."
         />
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-muted-foreground" for="user-provider">Provider</label>
+      <div class="flex flex-col gap-1.5">
+        <label class="fa-cap" for="user-provider">Provider</label>
         <select
           id="user-provider"
           v-model="providerFilter"
-          class="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          class="admin-select"
         >
           <option value="">All</option>
           <option value="Email">Email</option>
@@ -220,18 +220,18 @@ onMounted(fetchUsers)
           <option value="Apple">Apple</option>
         </select>
       </div>
-      <label class="flex h-10 items-center gap-2 text-sm">
-        <input v-model="lockedOnly" type="checkbox" class="h-4 w-4 rounded border-input" />
+      <label class="flex h-9 items-center gap-2 text-sm text-ink-1">
+        <input v-model="lockedOnly" type="checkbox" class="h-4 w-4 rounded accent-[var(--accent)] border-input" />
         Locked only
       </label>
-      <label class="flex h-10 items-center gap-2 text-sm">
-        <input v-model="hasPushOnly" type="checkbox" class="h-4 w-4 rounded border-input" />
+      <label class="flex h-9 items-center gap-2 text-sm text-ink-1">
+        <input v-model="hasPushOnly" type="checkbox" class="h-4 w-4 rounded accent-[var(--accent)] border-input" />
         Push enabled
       </label>
       <Button v-if="hasActiveFilters()" variant="ghost" size="sm" @click="clearFilters">Clear</Button>
     </div>
 
-    <div class="rounded-md border">
+    <div class="fa-surface overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -247,13 +247,13 @@ onMounted(fetchUsers)
         </TableHeader>
         <TableBody>
           <TableRow v-if="isLoading">
-            <TableCell :colspan="8" class="text-center text-muted-foreground">Loading…</TableCell>
+            <TableCell :colspan="8" class="text-center text-ink-2">Loading…</TableCell>
           </TableRow>
           <TableRow v-else-if="users.length === 0">
-            <TableCell :colspan="8" class="text-center text-muted-foreground">No users match the current filters.</TableCell>
+            <TableCell :colspan="8" class="text-center text-ink-2">No users match the current filters.</TableCell>
           </TableRow>
           <TableRow v-for="u in users" :key="u.id">
-            <TableCell class="font-medium">
+            <TableCell class="font-medium text-ink-0">
               <span class="inline-flex items-center gap-2">
                 {{ u.displayName || u.email }}
                 <span
@@ -264,7 +264,7 @@ onMounted(fetchUsers)
                 >&#x2713;</span>
                 <span
                   v-else
-                  class="text-muted-foreground"
+                  class="text-ink-3"
                   title="Email not confirmed"
                   aria-label="Email not confirmed"
                 >&#x25CB;</span>
@@ -272,20 +272,20 @@ onMounted(fetchUsers)
             </TableCell>
             <TableCell>
               <Badge v-if="u.externalProvider" variant="secondary">{{ u.externalProvider }}</Badge>
-              <span v-else class="text-xs text-muted-foreground">Email</span>
+              <span v-else class="text-xs text-ink-2">Email</span>
             </TableCell>
-            <TableCell class="text-right tabular-nums">{{ u.cardCount }}</TableCell>
-            <TableCell class="text-right tabular-nums">{{ u.deckCount }}</TableCell>
+            <TableCell class="text-right tabular-nums text-ink-1">{{ u.cardCount }}</TableCell>
+            <TableCell class="text-right tabular-nums text-ink-1">{{ u.deckCount }}</TableCell>
             <TableCell>
               <Badge v-if="u.hasPush" variant="secondary">Yes</Badge>
-              <span v-else class="text-muted-foreground">—</span>
+              <span v-else class="text-ink-3">—</span>
             </TableCell>
             <TableCell>
               <Badge v-if="u.isLockedOut" variant="destructive">Locked</Badge>
               <Badge v-else variant="secondary">Active</Badge>
             </TableCell>
             <TableCell
-              class="whitespace-nowrap text-sm text-muted-foreground"
+              class="whitespace-nowrap text-sm text-ink-2"
               :title="u.lastActivityAt ? new Date(u.lastActivityAt).toLocaleString() : ''"
             >
               {{ formatLastActivity(u.lastActivityAt) }}
@@ -304,7 +304,7 @@ onMounted(fetchUsers)
     </div>
 
     <div v-if="totalPages() > 1" class="flex items-center justify-between">
-      <p class="text-sm text-muted-foreground">
+      <p class="text-sm text-ink-2">
         Page {{ page }} of {{ totalPages() }}
       </p>
       <div class="flex gap-2">
@@ -344,3 +344,26 @@ onMounted(fetchUsers)
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+.admin-error {
+  border: 1px solid var(--c-again);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--c-again);
+}
+.admin-select {
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  color: var(--ink-0);
+  padding: 0 12px;
+  font-size: 13px;
+}
+.admin-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+}
+</style>

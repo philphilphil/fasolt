@@ -62,7 +62,7 @@ const activeDeck = computed(() => {
 const activeDeckLabel = computed(() => activeDeck.value?.name || 'All decks')
 const activeDeckColor = computed(() => deckColor(activeDeck.value?.id || 'all-decks'))
 
-const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
+const modeLabel = computed(() => review.mode === 'cram' ? 'Cram' : 'Review')
 </script>
 
 <template>
@@ -133,7 +133,7 @@ const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
     <div v-else-if="review.loading" class="state">Loading cards…</div>
 
     <div v-else-if="review.noDueCards" class="state-block">
-      <h2 class="fa-serif state-title">All caught up.</h2>
+      <h2 class="state-title">All caught up.</h2>
       <p class="state-sub">No cards are due for review right now.</p>
       <button class="fa-btn fa-btn-primary" @click="onDone">Back to study</button>
     </div>
@@ -178,7 +178,7 @@ const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
   gap: 14px;
   flex-wrap: wrap;
 }
-.context-mode { color: var(--accent); }
+.context-mode { color: var(--ink-2); }
 .context-vrule { width: 1px; height: 12px; background: var(--rule-1); }
 .context-deck {
   display: flex;
@@ -272,9 +272,11 @@ const modeLabel = computed(() => review.mode === 'cram' ? 'CRAM' : 'REVIEW')
   padding: 40px 0;
 }
 .state-title {
-  font-size: 56px;
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1;
+  line-height: 1.05;
   margin: 0;
   color: var(--ink-0);
 }

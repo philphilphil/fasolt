@@ -151,7 +151,7 @@ async function onDeckMembershipChanged() {
     <header class="cards-head">
       <div class="cards-title">
         <h1 class="page-title">Cards</h1>
-        <span class="fa-mono cards-summary">
+        <span class="cards-summary">
           {{ totalCards.toLocaleString() }} total ·
           {{ stateCounts.review }} review ·
           {{ stateCounts.learning + stateCounts.relearning }} learning ·
@@ -235,10 +235,10 @@ async function onDeckMembershipChanged() {
 
     <!-- Result count + sort -->
     <div v-else class="result-row">
-      <span class="fa-mono">
+      <span>
         Showing {{ filteredCards.length.toLocaleString() }} of {{ totalCards.toLocaleString() }}
       </span>
-      <span class="fa-mono result-hint">Select rows to suspend, change decks, or delete in bulk</span>
+      <span class="result-hint">Select rows to suspend, change decks, or delete in bulk</span>
     </div>
 
     <CardTable
@@ -371,8 +371,8 @@ async function onDeckMembershipChanged() {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-.filter-pill.is-active .pill-label { color: var(--accent); }
-.filter-pill.is-active .pill-value { color: var(--accent-hi); }
+.filter-pill.is-active .pill-label { color: var(--accent-text); }
+.filter-pill.is-active .pill-value { color: var(--ink-0); }
 .pill-label { font-size: 9px; color: var(--ink-2); }
 .pill-value { color: var(--ink-0); }
 .pill-select {

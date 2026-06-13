@@ -67,87 +67,74 @@ function startCycle() {
   }, 5300))
 }
 
+const ratings = [
+  { label: 'Again', color: 'var(--c-again)', tint: 'color-mix(in srgb, var(--c-again) 12%, transparent)' },
+  { label: 'Hard', color: 'var(--c-hard)', tint: 'color-mix(in srgb, var(--c-hard) 14%, transparent)' },
+  { label: 'Good', color: 'var(--c-good)', tint: 'color-mix(in srgb, var(--c-good) 12%, transparent)' },
+  { label: 'Easy', color: 'var(--c-easy)', tint: 'color-mix(in srgb, var(--c-easy) 12%, transparent)' },
+]
+
 onMounted(startCycle)
 onBeforeUnmount(clearTimers)
 </script>
 
 <template>
-  <div class="flex flex-col overflow-hidden rounded-xl border border-border/60 bg-card/60 shadow-2xl glow-accent-lg lg:h-[420px]">
+  <div class="preview">
     <!-- Window chrome -->
-    <div class="flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-card/80">
-      <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57]/80"></span>
-      <span class="h-2.5 w-2.5 rounded-full bg-[#febc2e]/80"></span>
-      <span class="h-2.5 w-2.5 rounded-full bg-[#28c840]/80"></span>
-      <span class="ml-3 text-[11px] text-muted-foreground/70">fasolt — Study</span>
+    <div class="chrome">
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="chrome-title">fasolt — Study</span>
     </div>
 
     <!-- Body -->
-    <div class="flex-1 px-4 py-4 sm:px-5 sm:py-5">
-      <!-- Context bar -->
-      <div class="mb-3 flex items-center justify-between text-[10px] text-muted-foreground">
-        <div class="flex items-center gap-2">
-          <span class="text-accent uppercase tracking-[0.15em]">Review</span>
-          <span class="text-border">|</span>
-          <span>{{ currentIndex + 1 }} of {{ totalInDeck }}</span>
+    <div class="body">
+      <!-- Today / progress header -->
+      <div class="head">
+        <div class="deck-label">
+          <span class="deck-dot"></span>
+          LLM Basics
         </div>
-        <span class="hidden sm:flex items-center gap-1">
-          <span class="rounded border border-border/60 px-1.5 py-0.5 text-[9px] font-mono">space</span>
-          flip
-        </span>
+        <span class="counter fa-num">{{ currentIndex + 1 }} of {{ totalInDeck }}</span>
       </div>
 
       <!-- Progress meter -->
-      <div class="mb-5 h-1 w-full overflow-hidden rounded bg-border/60">
-        <div class="h-full bg-accent transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+      <div class="meter">
+        <div class="meter-fill" :style="{ width: progressPct + '%' }"></div>
       </div>
 
       <!-- Card -->
-      <div
-        class="relative rounded border border-border/60 bg-background/60 p-5 transition-all duration-300"
-        :class="isExiting ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-0'"
-        style="min-height: 140px;"
-      >
-        <div class="text-[10px] uppercase tracking-[0.2em] mb-3 text-accent/70">
-          {{ isFlipped ? 'Answer' : 'Question' }}
-        </div>
-        <div
-          class="text-[13.5px] leading-relaxed transition-colors duration-300"
-          :class="isFlipped ? 'text-muted-foreground' : 'text-foreground'"
-        >
+      <div class="card" :class="{ 'is-exiting': isExiting }">
+        <div class="card-label">{{ isFlipped ? 'Answer' : 'Question' }}</div>
+        <div class="card-front" :class="{ 'is-muted': isFlipped }">
           {{ card.front }}
         </div>
-        <div
-          v-if="isFlipped"
-          class="mt-3 text-[13.5px] leading-relaxed text-foreground"
-          style="animation: fade-in 350ms ease-out;"
-        >
+        <div v-if="isFlipped" class="card-back">
           {{ card.back }}
         </div>
       </div>
 
       <!-- Below card -->
-      <div class="mt-4 transition-opacity duration-300" :class="isExiting ? 'opacity-0' : 'opacity-100'">
-        <div v-if="!showRating" class="text-center text-[11px] text-muted-foreground">
-          Click the card or press
-          <span class="rounded border border-border/60 px-1.5 py-0.5 text-[9px] font-mono">space</span>
-          to reveal the answer
+      <div class="actions" :class="{ 'is-exiting': isExiting }">
+        <div v-if="!showRating" class="hint">
+          Click the card or press <kbd class="fa-kbd">space</kbd> to reveal the answer
         </div>
-        <div v-else class="flex flex-wrap justify-center gap-2" style="animation: fade-in 250ms ease-out;">
+        <div v-else class="rating-row">
           <button
-            v-for="(r, i) in [
-              { label: 'Again', cls: 'border-destructive/50 text-destructive', activeCls: 'bg-destructive/10' },
-              { label: 'Hard', cls: 'border-warning/50 text-warning', activeCls: 'bg-warning/10' },
-              { label: 'Good', cls: 'border-success/50 text-success', activeCls: 'bg-success/10' },
-              { label: 'Easy', cls: 'border-accent/50 text-accent', activeCls: 'bg-accent/10' },
-            ]"
+            v-for="(r, i) in ratings"
             :key="r.label"
-            class="flex-1 min-w-[70px] rounded border px-3 py-2 text-[11px] font-medium transition-all"
-            :class="[r.cls, highlightedRating === i ? r.activeCls : 'bg-transparent']"
+            class="rating-btn"
+            :class="{ 'is-active': highlightedRating === i }"
+            :style="{
+              '--rb-color': r.color,
+              '--rb-tint': r.tint,
+            }"
             type="button"
             tabindex="-1"
           >
             {{ r.label }}
-            <span class="ml-1 text-[9px] opacity-50">{{ i + 1 }}</span>
+            <span class="rating-key fa-num">{{ i + 1 }}</span>
           </button>
         </div>
       </div>
@@ -156,6 +143,169 @@ onBeforeUnmount(clearTimers)
 </template>
 
 <style scoped>
+.preview {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  box-shadow: var(--sh-2);
+}
+@media (min-width: 1024px) {
+  .preview { height: 420px; }
+}
+
+/* Window chrome */
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--rule-1);
+  background: var(--paper-1);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--ink-3);
+}
+.chrome-title {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+/* Body */
+.body {
+  flex: 1;
+  padding: 18px 18px 20px;
+}
+@media (min-width: 640px) {
+  .body { padding: 20px; }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.deck-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-1);
+  font-size: 13px;
+  font-weight: 600;
+}
+.deck-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2e7cf6;
+}
+.counter {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+/* Progress meter */
+.meter {
+  height: 4px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--paper-2);
+  margin-bottom: 20px;
+}
+.meter-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width .5s ease;
+}
+
+/* Card */
+.card {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  padding: 18px;
+  min-height: 140px;
+  transition: opacity .3s, transform .3s;
+}
+.card.is-exiting {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.card-label {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.card-front {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-0);
+  transition: color .3s;
+}
+.card-front.is-muted { color: var(--ink-2); }
+.card-back {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-0);
+  animation: fade-in 350ms ease-out;
+}
+
+/* Below card */
+.actions {
+  margin-top: 16px;
+  transition: opacity .3s;
+}
+.actions.is-exiting { opacity: 0; }
+.hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.rating-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  animation: fade-in 250ms ease-out;
+}
+.rating-btn {
+  flex: 1;
+  min-width: 70px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 9px;
+  border: 1px solid var(--rule-1);
+  background: var(--paper-1);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-1);
+  transition: background .12s, border-color .12s, color .12s;
+}
+.rating-btn.is-active {
+  border-color: var(--rb-color);
+  background: var(--rb-tint);
+  color: var(--ink-0);
+}
+.rating-key {
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }

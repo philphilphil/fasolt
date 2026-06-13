@@ -46,7 +46,7 @@ async function confirmDelete() {
           </template>
         </DialogDescription>
       </DialogHeader>
-      <div v-if="error" class="text-xs text-destructive">{{ error }}</div>
+      <div v-if="error" class="fa-error">{{ error }}</div>
       <DialogFooter>
         <Button variant="outline" @click="emit('update:open', false)">Cancel</Button>
         <Button variant="destructive" @click="confirmDelete">Delete</Button>
@@ -54,3 +54,10 @@ async function confirmDelete() {
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.fa-error {
+  font-size: 12.5px;
+  color: var(--c-again);
+}
+</style>
