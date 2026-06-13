@@ -15,6 +15,7 @@ using FSRS.Core.Extensions;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using dotenv.net;
+using Fasolt.Server.Api.McpResources;
 using Serilog;
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true, probeLevelsToSearch: 5));
@@ -341,6 +342,7 @@ builder.Services.AddScoped<DeviceTokenService>();
 builder.Services.AddScoped<SchedulingSettingsService>();
 builder.Services.AddScoped<DeckSnapshotService>();
 builder.Services.AddScoped<AccountDataService>();
+builder.Services.AddScoped<McpResourceService>();
 
 var apnsKeyId = builder.Configuration["APNS_KEY_ID"];
 var apnsKeyBase64 = builder.Configuration["APNS_KEY_BASE64"];
@@ -405,11 +407,18 @@ builder.Services.AddMcpServer(options =>
                (delete_cards, sweeping update_cards, deck deletes). Snapshots are
                cheap — skipped if nothing changed — and let the user restore at
                https://fasolt.app if the change was wrong.
+
+            # Resources
+            Decks, today's due queue, and recently created cards are also exposed
+            as MCP resources. Clients with a resource picker (Claude Code,
+            Claude Desktop) can attach them via @-mentions. Resource URIs:
+            fasolt://deck/{deckId}, fasolt://due-today, fasolt://recent.
             """;
     })
     .WithHttpTransport()
     .AddAuthorizationFilters()
     .WithToolsFromAssembly()
+    .AddFasoltResources()
     .WithRequestFilters(filters =>
     {
         filters.AddCallToolFilter(next => async (context, cancellationToken) =>
