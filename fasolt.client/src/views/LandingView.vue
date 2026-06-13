@@ -28,7 +28,6 @@ import { ArrowRight, ArrowDown } from 'lucide-vue-next'
     <!-- Hero -->
     <section class="relative mx-auto max-w-5xl px-6 pt-6 pb-12 sm:pt-10 sm:pb-16">
       <div class="max-w-2xl">
-        <p class="fa-cap mb-4 text-accent-text">Spaced repetition</p>
         <h1 class="page-title text-3xl sm:text-5xl mb-5">
           Spaced repetition,<br class="hidden sm:block" />
           powered by the <span class="text-accent-text">AI you already use</span>.
