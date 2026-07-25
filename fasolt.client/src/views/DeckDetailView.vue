@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
 import { useCardsStore } from '@/stores/cards'
-import type { DeckDetail } from '@/types'
+import type { Deck, DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -14,6 +14,7 @@ import { History } from 'lucide-vue-next'
 import CardTable from '@/components/CardTable.vue'
 import BulkActionBar from '@/components/BulkActionBar.vue'
 import AddToDeckDialog from '@/components/AddToDeckDialog.vue'
+import DeckShareSection from '@/components/DeckShareSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -168,6 +169,13 @@ async function onAddedToOtherDeck() {
   }
 }
 
+function onVisibilityUpdated(updated: Deck) {
+  if (!deck.value) return
+  // The visibility endpoint returns a DeckDto (no cards) — merge so the card
+  // list and selection survive a publish/unpublish.
+  deck.value = { ...deck.value, ...updated }
+}
+
 const stateCounts = computed(() => {
   const counts: Record<string, number> = {}
   for (const c of deck.value?.cards ?? []) {
@@ -189,8 +197,20 @@ const stateCounts = computed(() => {
     <!-- Header -->
     <header class="deck-header">
       <div class="deck-header-text">
-        <h1 class="page-title">{{ deck.name }}</h1>
+        <div class="deck-title-line">
+          <h1 class="page-title">{{ deck.name }}</h1>
+          <span v-if="deck.visibility !== 'private'" class="visibility-chip">
+            {{ deck.visibility === 'public' ? 'Public' : 'Unlisted' }}
+          </span>
+        </div>
         <p v-if="deck.description" class="deck-description">{{ deck.description }}</p>
+        <p v-if="deck.copiedFromDeckPublicId" class="deck-attribution">
+          Copied from
+          <RouterLink :to="`/library/${deck.copiedFromDeckPublicId}`" class="fa-link">
+            <template v-if="deck.copiedFromHandle">@{{ deck.copiedFromHandle }}</template>
+            <template v-else>the library</template>
+          </RouterLink>
+        </p>
       </div>
       <div class="deck-actions">
         <button
@@ -245,6 +265,16 @@ const stateCounts = computed(() => {
         </span>
       </span>
     </div>
+
+    <div class="fa-rule" />
+
+    <!-- Sharing -->
+    <DeckShareSection
+      :deck-id="deck.id"
+      :visibility="deck.visibility"
+      :copy-count="deck.copyCount"
+      @updated="onVisibilityUpdated"
+    />
 
     <div class="fa-rule" />
 
@@ -373,10 +403,29 @@ const stateCounts = computed(() => {
 }
 .deck-header-text { min-width: 0; }
 .deck-page .page-title { font-size: 26px; }
+.deck-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.visibility-chip {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-text);
+  padding: 1px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
 .deck-description {
   margin: 6px 0 0;
   font-size: 14px;
   color: var(--ink-1);
+}
+.deck-attribution {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
 }
 .deck-actions {
   display: flex;

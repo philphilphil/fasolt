@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiFetch } from '@/api/client'
+import type { HandleInfo } from '@/types'
 
 interface User {
   email: string
@@ -13,6 +14,8 @@ interface User {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isLoading = ref(true)
+  // Publishing identity — fetched on demand (only the share UI needs it).
+  const handle = ref<HandleInfo | null>(null)
   const isAuthenticated = computed(() => user.value !== null)
   const isAdmin = computed(() => user.value?.isAdmin ?? false)
   const isExternalAccount = computed(() => user.value?.externalProvider != null)
@@ -59,8 +62,24 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
+  async function fetchHandle(): Promise<HandleInfo> {
+    const result = await apiFetch<HandleInfo>('/account/handle')
+    handle.value = result
+    return result
+  }
+
+  async function setHandle(newHandle: string): Promise<HandleInfo> {
+    const result = await apiFetch<HandleInfo>('/account/handle', {
+      method: 'PUT',
+      body: JSON.stringify({ handle: newHandle }),
+    })
+    handle.value = result
+    return result
+  }
+
   return {
     user,
+    handle,
     isLoading,
     isAuthenticated,
     isAdmin,
@@ -71,5 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
     changeEmail,
     changePassword,
     deleteAccount,
+    fetchHandle,
+    setHandle,
   }
 })

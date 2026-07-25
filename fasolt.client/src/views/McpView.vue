@@ -38,6 +38,7 @@ function copyToClipboard(text: string, key: string) {
           <FasoltWordmark :size="32" />
         </RouterLink>
         <div class="flex items-center gap-2">
+          <RouterLink to="/library" class="fa-btn fa-btn-ghost">Library</RouterLink>
           <ThemeToggle />
           <a href="/login" class="fa-btn fa-btn-ghost">Log in</a>
           <a href="/register" class="fa-btn fa-btn-primary">Sign up</a>

@@ -48,6 +48,20 @@ const router = createRouter({
       component: () => import('@/views/TermsOfServiceView.vue'),
       meta: { public: true, landing: true, title: 'Terms of service' },
     },
+    // Public deck library — browsable logged out (SEO + signup funnel), and
+    // rendered inside the app shell once you're signed in.
+    {
+      path: '/library',
+      name: 'library',
+      component: () => import('@/views/LibraryView.vue'),
+      meta: { public: true, title: 'Deck library' },
+    },
+    {
+      path: '/library/:publicId',
+      name: 'library-deck',
+      component: () => import('@/views/LibraryDeckView.vue'),
+      meta: { public: true, title: 'Deck library' },
+    },
     // App routes (require auth)
     { path: '/study', name: 'study', component: StudyView, meta: { title: 'Study' } },
     { path: '/progress', name: 'progress', component: () => import('@/views/ProgressView.vue'), meta: { title: 'Progress' } },

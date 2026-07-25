@@ -3,6 +3,10 @@ const BASE_URL = '/api'
 export interface ApiError {
   status: number
   errors: Record<string, string[]>
+  /** Machine-readable code from endpoints that return `{ error, message }`. */
+  code?: string
+  /** Human-readable message that goes with `code`. */
+  message?: string
 }
 
 export function isApiError(error: unknown): error is ApiError {
@@ -23,15 +27,19 @@ export async function apiFetch<T = void>(path: string, options?: RequestInit): P
 
   if (!response.ok) {
     let errors: Record<string, string[]> = {}
+    let code: string | undefined
+    let message: string | undefined
     try {
       const body = await response.json()
       if (body.errors) {
         errors = body.errors
       }
+      if (typeof body.error === 'string') code = body.error
+      if (typeof body.message === 'string') message = body.message
     } catch {
       // No JSON body
     }
-    throw { status: response.status, errors } as ApiError
+    throw { status: response.status, errors, code, message } as ApiError
   }
 
   const text = await response.text()

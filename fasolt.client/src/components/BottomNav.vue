@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import {
-  Brain, BarChart3, FileText, Layers, FolderOpen, Bot, Settings, ShieldCheck,
+  Brain, BarChart3, FileText, Layers, FolderOpen, Globe, Bot, Settings, ShieldCheck,
 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -16,6 +16,7 @@ const tabs = computed(() => {
     { name: 'Cards', path: '/cards', Icon: FileText },
     { name: 'Decks', path: '/decks', Icon: Layers },
     { name: 'Sources', path: '/sources', Icon: FolderOpen },
+    { name: 'Library', path: '/library', Icon: Globe },
     { name: 'MCP', path: '/mcp-setup', Icon: Bot },
     { name: 'Settings', path: '/settings', Icon: Settings },
   ]
