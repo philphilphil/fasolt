@@ -122,8 +122,8 @@ public class McpResourceServiceTests : IAsyncLifetime
         await deckSvc.AddCards(UserId, deck.Id, [kept.Id, suspended.Id]);
 
         // Suspend the second card via direct DB mutation (no service method needed for the test)
-        var card = await db.Cards.FirstAsync(c => c.PublicId == suspended.Id);
-        card.IsSuspended = true;
+        var state = await db.ReviewStateForPublicId(UserId, suspended.Id);
+        state.IsSuspended = true;
         await db.SaveChangesAsync();
 
         var svc = CreateService(db);
@@ -317,7 +317,7 @@ public class McpResourceServiceTests : IAsyncLifetime
 
         var kept = await cardSvc.CreateCard(UserId, "kept", "ok", null);
         var sus = await cardSvc.CreateCard(UserId, "suspended", "no", null);
-        var susEntity = await db.Cards.FirstAsync(c => c.PublicId == sus.Id);
+        var susEntity = await db.ReviewStateForPublicId(UserId, sus.Id);
         susEntity.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -429,7 +429,7 @@ public class McpResourceServiceTests : IAsyncLifetime
 
         var kept = await cardSvc.CreateCard(UserId, "kept-recent", "back", null);
         var sus = await cardSvc.CreateCard(UserId, "suspended-recent", "back", null);
-        var susEntity = await db.Cards.FirstAsync(c => c.PublicId == sus.Id);
+        var susEntity = await db.ReviewStateForPublicId(UserId, sus.Id);
         susEntity.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -529,7 +529,7 @@ public class McpResourceServiceTests : IAsyncLifetime
         var c = await cardSvc.CreateCard(UserId, "c-front", "c-back", null);
         await deckSvc.AddCards(UserId, deck.Id, [a.Id, b.Id, c.Id]);
 
-        var susEntity = await db.Cards.FirstAsync(x => x.PublicId == c.Id);
+        var susEntity = await db.ReviewStateForPublicId(UserId, c.Id);
         susEntity.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -559,7 +559,7 @@ public class McpResourceServiceTests : IAsyncLifetime
                 Front = $"due-{i:000}",
                 Back = "back",
                 CreatedAt = DateTimeOffset.UtcNow,
-                DueAt = null, // new => due today
+                // No ReviewState row => new => due today
             });
         }
         db.Cards.AddRange(cards);

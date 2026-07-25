@@ -106,15 +106,16 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var card = await cardSvc.CreateCard(UserId, "Front", "Back", "source.md");
         await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
 
-        // Set FSRS and suspension state on the card entity directly
+        // Set FSRS and suspension state on the card's review state directly
         var theCard = db.Cards.First(c => c.UserId == UserId);
-        theCard.Stability = 12.5;
-        theCard.Difficulty = 0.3;
-        theCard.Step = 2;
-        theCard.DueAt = DateTimeOffset.Parse("2026-04-01T00:00:00Z");
-        theCard.State = "review";
-        theCard.LastReviewedAt = DateTimeOffset.Parse("2026-03-20T00:00:00Z");
-        theCard.IsSuspended = true;
+        var theState = await db.ReviewStateFor(UserId, theCard.Id);
+        theState.Stability = 12.5;
+        theState.Difficulty = 0.3;
+        theState.Step = 2;
+        theState.DueAt = DateTimeOffset.Parse("2026-04-01T00:00:00Z");
+        theState.State = "review";
+        theState.LastReviewedAt = DateTimeOffset.Parse("2026-03-20T00:00:00Z");
+        theState.IsSuspended = true;
         await db.SaveChangesAsync();
 
         var svc = new DeckSnapshotService(db);
@@ -372,8 +373,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Stability = 8.5;
-            card.DueAt = DateTimeOffset.Parse("2026-04-15T00:00:00Z");
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 8.5;
+            state.DueAt = DateTimeOffset.Parse("2026-04-15T00:00:00Z");
             await db.SaveChangesAsync();
 
             var svc = new DeckSnapshotService(db);
@@ -478,9 +480,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Stability = 99.9;
-            card.Difficulty = 0.8;
-            card.State = "review";
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 99.9;
+            state.Difficulty = 0.8;
+            state.State = "review";
             await db.SaveChangesAsync();
         }
 
@@ -507,7 +510,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed front";
-            card.Stability = 50.0;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 50.0;
             await db.SaveChangesAsync();
         }
 
@@ -840,9 +844,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed front";
-            card.Stability = 42.0;
-            card.State = "review";
-            card.DueAt = DateTimeOffset.Parse("2026-05-01T00:00:00Z");
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 42.0;
+            state.State = "review";
+            state.DueAt = DateTimeOffset.Parse("2026-05-01T00:00:00Z");
             await db.SaveChangesAsync();
         }
 
@@ -858,10 +863,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        var restoredState = await checkDb.ReviewStateFor(UserId, restored.Id);
         restored.Front.Should().Be("Restore NoFsrs Q0", "content should be reverted");
-        restored.Stability.Should().Be(42.0, "FSRS should NOT be reverted");
-        restored.State.Should().Be("review", "FSRS should NOT be reverted");
-        restored.DueAt.Should().NotBeNull("FSRS should NOT be reverted");
+        restoredState.Stability.Should().Be(42.0, "FSRS should NOT be reverted");
+        restoredState.State.Should().Be("review", "FSRS should NOT be reverted");
+        restoredState.DueAt.Should().NotBeNull("FSRS should NOT be reverted");
     }
 
     [Fact]
@@ -1305,7 +1311,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed";
-            card.IsSuspended = true;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.IsSuspended = true;
             await db.SaveChangesAsync();
         }
 
@@ -1320,8 +1327,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        var restoredState = await checkDb.ReviewStateFor(UserId, restored.Id);
         restored.Front.Should().Be("Restore KeepSuspend Q0", "content reverted");
-        restored.IsSuspended.Should().BeTrue("suspension state should NOT be reverted");
+        restoredState.IsSuspended.Should().BeTrue("suspension state should NOT be reverted");
     }
 
     [Fact]
@@ -1375,7 +1383,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.IsSuspended = true;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.IsSuspended = true;
             await db.SaveChangesAsync();
 
             var svc = new DeckSnapshotService(db);
@@ -1406,7 +1415,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restoredCard = checkDb.Cards.First(c => c.UserId == UserId);
-        restoredCard.IsSuspended.Should().BeTrue();
+        var restoredState = await checkDb.ReviewStateFor(UserId, restoredCard.Id);
+        restoredState.IsSuspended.Should().BeTrue();
     }
 
     #endregion
@@ -1421,9 +1431,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Stability = 10.0;
-            card.State = "review";
-            card.IsSuspended = true;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 10.0;
+            state.State = "review";
+            state.IsSuspended = true;
             await db.SaveChangesAsync();
 
             var svc = new DeckSnapshotService(db);
@@ -1435,9 +1446,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Modified front";
             card.Back = "Modified back";
-            card.Stability = 99.0;
-            card.State = "learning";
-            card.IsSuspended = false;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 99.0;
+            state.State = "learning";
+            state.IsSuspended = false;
             await db.SaveChangesAsync();
         }
 
@@ -1454,11 +1466,12 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        var restoredState = await checkDb.ReviewStateFor(UserId, restored.Id);
         restored.Front.Should().Be("Restore Revert Q0");
         restored.Back.Should().Be("Restore Revert A0");
         // FSRS state should NOT be reverted — only content is restored
-        restored.Stability.Should().Be(99.0, "FSRS state should be preserved");
-        restored.State.Should().Be("learning", "FSRS state should be preserved");
+        restoredState.Stability.Should().Be(99.0, "FSRS state should be preserved");
+        restoredState.State.Should().Be("learning", "FSRS state should be preserved");
     }
 
     #endregion

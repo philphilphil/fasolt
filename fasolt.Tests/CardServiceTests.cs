@@ -278,11 +278,11 @@ public class CardServiceTests : IAsyncLifetime
         var card = await svc.CreateCard(UserId, "Old front", "Old back", "notes.md");
 
         // Simulate some SRS state by updating directly
-        var entity = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
-        entity!.Stability = 5.0;
-        entity.Difficulty = 4.2;
-        entity.Step = 2;
-        entity.State = "review";
+        var state = await db.ReviewStateForPublicId(UserId, card.Id);
+        state.Stability = 5.0;
+        state.Difficulty = 4.2;
+        state.Step = 2;
+        state.State = "review";
         await db.SaveChangesAsync();
 
         var result = await svc.UpdateCardFields(UserId, card.Id,
@@ -294,8 +294,8 @@ public class CardServiceTests : IAsyncLifetime
 
         // Verify SRS state preserved
         await using var db2 = _db.CreateDbContext();
-        var reloaded = await db2.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
-        reloaded!.Stability.Should().Be(5.0);
+        var reloaded = await db2.ReviewStateForPublicId(UserId, card.Id);
+        reloaded.Stability.Should().Be(5.0);
         reloaded.Difficulty.Should().Be(4.2);
         reloaded.Step.Should().Be(2);
         reloaded.State.Should().Be("review");
@@ -341,13 +341,13 @@ public class CardServiceTests : IAsyncLifetime
         var card = await svc.CreateCard(UserId, "Reset Q", "Reset A", null);
 
         // Simulate SRS state
-        var entity = await db.Cards.FindAsync(db.Cards.First(c => c.PublicId == card.Id).Id);
-        entity!.Stability = 5.0;
-        entity.Difficulty = 4.2;
-        entity.Step = 3;
-        entity.State = "review";
-        entity.DueAt = DateTimeOffset.UtcNow;
-        entity.LastReviewedAt = DateTimeOffset.UtcNow;
+        var state = await db.ReviewStateForPublicId(UserId, card.Id);
+        state.Stability = 5.0;
+        state.Difficulty = 4.2;
+        state.Step = 3;
+        state.State = "review";
+        state.DueAt = DateTimeOffset.UtcNow;
+        state.LastReviewedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
 
         var result = await svc.ResetProgress(UserId, card.Id);

@@ -24,7 +24,10 @@ public class SearchService(AppDbContext db)
         var cards = await cardsQuery
             .OrderByDescending(c => c.CreatedAt)
             .Take(10)
-            .Select(c => new CardSearchResult(c.PublicId, c.Front, c.State))
+            .Select(c => new CardSearchResult(
+                c.PublicId,
+                c.Front,
+                c.ReviewStates.Where(r => r.UserId == userId).Select(r => r.State).FirstOrDefault() ?? "new"))
             .ToListAsync();
 
         var decksQuery = db.Decks.Where(d => d.UserId == userId);

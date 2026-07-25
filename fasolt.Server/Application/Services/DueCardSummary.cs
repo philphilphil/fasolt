@@ -11,8 +11,9 @@ public static class DueCardQuery
         AppDbContext db, string userId, DateTimeOffset now, CancellationToken ct = default)
     {
         var dueCardsByDeck = await db.Cards
-            .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now))
-            .Where(c => !c.IsSuspended)
+            .Where(c => c.UserId == userId)
+            .Where(ReviewStateQuery.DueBy(userId, now))
+            .Where(ReviewStateQuery.NotSuspendedBy(userId))
             .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended))
             .SelectMany(c => c.DeckCards.DefaultIfEmpty(),
                 (card, deckCard) => new { DeckName = deckCard != null ? deckCard.Deck.Name : null })

@@ -67,7 +67,8 @@ public class CardService(AppDbContext db)
         // Reload DeckCards so ToDto reflects the assigned deck
         await db.Entry(card).Collection(c => c.DeckCards).Query().Include(dc => dc.Deck).LoadAsync();
 
-        return ToDto(card);
+        // A brand-new card has no ReviewState row yet.
+        return ToDto(card, null);
     }
 
     public async Task<BulkCreateResult> BulkCreateCards(string userId, List<BulkCardItem> cards, string? sourceFile, string? deckId)
@@ -156,7 +157,6 @@ public class CardService(AppDbContext db)
                 Front = trimmedFront,
                 Back = item.Back.Trim(),
                 CreatedAt = DateTimeOffset.UtcNow,
-                State = "new",
                 FrontSvg = SvgSanitizer.Sanitize(item.FrontSvg),
                 BackSvg = SvgSanitizer.Sanitize(item.BackSvg),
             };
@@ -179,14 +179,15 @@ public class CardService(AppDbContext db)
 
         await db.SaveChangesAsync();
 
+        // Freshly created cards have no ReviewState row yet — they are "new".
         var createdDtos = created.Select(c => new CardDto(
             c.PublicId, c.SourceFile, c.Front, c.Back,
-            c.State, c.CreatedAt,
+            "new", c.CreatedAt,
             deckId is not null
                 ? [new CardDeckInfoDto(deckId, "", false)]
                 : [],
-            c.IsSuspended,
-            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
+            false,
+            null, null, null, null, null,
             c.FrontSvg, c.BackSvg)).ToList();
 
         return BulkCreateResult.Success(new BulkCreateCardsResponse(createdDtos, skipped));
@@ -204,10 +205,7 @@ public class CardService(AppDbContext db)
         var includeSrs = include is null || include.Contains("srs");
         var includeSvg = include is null || include.Contains("svg");
 
-        IQueryable<Card> query = db.Cards
-            .Where(c => c.UserId == userId)
-            .OrderByDescending(c => c.CreatedAt)
-            .ThenBy(c => c.Id);
+        IQueryable<Card> query = db.Cards.Where(c => c.UserId == userId);
 
         if (sourceFile is not null)
             query = query.Where(c => c.SourceFile == sourceFile);
@@ -228,24 +226,28 @@ public class CardService(AppDbContext db)
                     (c.CreatedAt == cursor.CreatedAt && c.Id.CompareTo(cursor.Id) > 0));
         }
 
-        var cards = await query
-            .Take(take + 1)
-            .Select(c => new CardDto(
+        var cards = await (
+            from c in query
+            join r in db.ReviewStates.Where(r => r.UserId == userId) on c.Id equals r.CardId into g
+            from rs in g.DefaultIfEmpty()
+            orderby c.CreatedAt descending, c.Id
+            select new CardDto(
                 c.PublicId,
                 c.SourceFile,
                 c.Front,
                 c.Back,
-                includeSrs ? c.State : null,
+                includeSrs ? rs.State ?? "new" : null,
                 c.CreatedAt,
                 c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
-                c.IsSuspended,
-                includeSrs ? c.DueAt : null,
-                includeSrs ? c.Stability : null,
-                includeSrs ? c.Difficulty : null,
-                includeSrs ? c.Step : null,
-                includeSrs ? c.LastReviewedAt : null,
+                rs != null && rs.IsSuspended,
+                includeSrs ? rs.DueAt : null,
+                includeSrs ? rs.Stability : null,
+                includeSrs ? rs.Difficulty : null,
+                includeSrs ? rs.Step : null,
+                includeSrs ? rs.LastReviewedAt : null,
                 includeSvg ? c.FrontSvg : null,
                 includeSvg ? c.BackSvg : null))
+            .Take(take + 1)
             .ToListAsync();
 
         var hasMore = cards.Count > take;
@@ -261,7 +263,7 @@ public class CardService(AppDbContext db)
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
             .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
 
-        return card is null ? null : ToDto(card);
+        return card is null ? null : ToDto(card, await LoadState(userId, card.Id));
     }
 
     public async Task<CardDto?> UpdateCard(string userId, string publicId, UpdateCardRequest request)
@@ -303,7 +305,7 @@ public class CardService(AppDbContext db)
         // Reload DeckCards after potential changes
         await db.Entry(card).Collection(c => c.DeckCards).Query().Include(dc => dc.Deck).LoadAsync();
 
-        return ToDto(card);
+        return ToDto(card, await LoadState(userId, card.Id));
     }
 
     public async Task<UpdateCardResult> UpdateCardFields(string userId, string publicId, UpdateCardFieldsRequest req)
@@ -347,7 +349,7 @@ public class CardService(AppDbContext db)
 
         await db.SaveChangesAsync();
 
-        return UpdateCardResult.Success(ToDto(card));
+        return UpdateCardResult.Success(ToDto(card, await LoadState(userId, card.Id)));
     }
 
     public async Task<RenameSourceResult> RenameSource(string userId, string from, string to)
@@ -389,11 +391,35 @@ public class CardService(AppDbContext db)
             .ExecuteDeleteAsync();
     }
 
+    /// <returns>Number of cards matched (not the number of ReviewState rows touched).</returns>
     public async Task<int> SetSuspendedBulk(string userId, List<string> publicIds, bool isSuspended)
     {
-        return await db.Cards
+        var cardIds = await db.Cards
             .Where(c => c.UserId == userId && publicIds.Contains(c.PublicId))
-            .ExecuteUpdateAsync(s => s.SetProperty(c => c.IsSuspended, isSuspended));
+            .Select(c => c.Id)
+            .ToListAsync();
+
+        if (cardIds.Count == 0) return 0;
+
+        var states = await ReviewStateQuery.LoadForCardsAsync(db, userId, cardIds);
+
+        foreach (var cardId in cardIds)
+        {
+            if (states.TryGetValue(cardId, out var state))
+            {
+                state.IsSuspended = isSuspended;
+                if (state.IsPristine) db.ReviewStates.Remove(state);
+            }
+            else if (isSuspended)
+            {
+                // Lazy creation: only suspending needs a row; unsuspending a card
+                // without one is already a no-op.
+                db.ReviewStates.Add(new ReviewState { UserId = userId, CardId = cardId, IsSuspended = true });
+            }
+        }
+
+        await db.SaveChangesAsync();
+        return cardIds.Count;
     }
 
     public async Task<CardDto?> ResetProgress(string userId, string publicId)
@@ -404,16 +430,27 @@ public class CardService(AppDbContext db)
 
         if (card is null) return null;
 
-        card.Stability = null;
-        card.Difficulty = null;
-        card.Step = null;
-        card.DueAt = null;
-        card.State = "new";
-        card.LastReviewedAt = null;
+        var state = await LoadState(userId, card.Id);
+        if (state is not null)
+        {
+            state.Stability = null;
+            state.Difficulty = null;
+            state.Step = null;
+            state.DueAt = null;
+            state.State = "new";
+            state.LastReviewedAt = null;
 
-        await db.SaveChangesAsync();
+            // Suspension survives a reset; without it the row carries no information.
+            if (state.IsPristine)
+            {
+                db.ReviewStates.Remove(state);
+                state = null;
+            }
 
-        return ToDto(card);
+            await db.SaveChangesAsync();
+        }
+
+        return ToDto(card, state);
     }
 
     public async Task<CardDto?> SetSuspended(string userId, string publicId, bool isSuspended)
@@ -424,17 +461,28 @@ public class CardService(AppDbContext db)
 
         if (card is null) return null;
 
-        card.IsSuspended = isSuspended;
+        var state = await ReviewStateQuery.GetOrCreateAsync(db, userId, card.Id);
+        state.IsSuspended = isSuspended;
+
+        if (state.IsPristine)
+        {
+            db.ReviewStates.Remove(state);
+            state = null;
+        }
+
         await db.SaveChangesAsync();
 
-        return ToDto(card);
+        return ToDto(card, state);
     }
 
-    private static CardDto ToDto(Card c) =>
-        new(c.PublicId, c.SourceFile, c.Front, c.Back, c.State, c.CreatedAt,
+    private Task<ReviewState?> LoadState(string userId, Guid cardId) =>
+        db.ReviewStates.FirstOrDefaultAsync(r => r.UserId == userId && r.CardId == cardId);
+
+    private static CardDto ToDto(Card c, ReviewState? rs) =>
+        new(c.PublicId, c.SourceFile, c.Front, c.Back, rs?.State ?? "new", c.CreatedAt,
             c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
-            c.IsSuspended,
-            c.DueAt, c.Stability, c.Difficulty, c.Step, c.LastReviewedAt,
+            rs?.IsSuspended ?? false,
+            rs?.DueAt, rs?.Stability, rs?.Difficulty, rs?.Step, rs?.LastReviewedAt,
             c.FrontSvg, c.BackSvg);
 
     private sealed class SourceFrontComparer : IEqualityComparer<(string, string)>

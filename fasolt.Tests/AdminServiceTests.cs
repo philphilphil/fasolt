@@ -337,37 +337,56 @@ public class AdminServiceTests : IAsyncLifetime
         });
 
         var now = DateTimeOffset.UtcNow;
-        db.Cards.AddRange(
-            new Card
+        var dueCard = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "due1",
+            UserId = SeededUserId,
+            Front = "f1",
+            Back = "b1",
+            CreatedAt = now,
+        };
+        var futureCard = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "future1",
+            UserId = SeededUserId,
+            Front = "f2",
+            Back = "b2",
+            CreatedAt = now,
+        };
+        var suspendedDueCard = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "suspdue1",
+            UserId = SeededUserId,
+            Front = "f3",
+            Back = "b3",
+            CreatedAt = now,
+        };
+        db.Cards.AddRange(dueCard, futureCard, suspendedDueCard);
+        db.ReviewStates.AddRange(
+            new ReviewState
             {
-                Id = Guid.NewGuid(),
-                PublicId = "due1",
                 UserId = SeededUserId,
-                Front = "f1",
-                Back = "b1",
+                CardId = dueCard.Id,
+                State = "review",
                 DueAt = now.AddMinutes(-5),
-                CreatedAt = now,
             },
-            new Card
+            new ReviewState
             {
-                Id = Guid.NewGuid(),
-                PublicId = "future1",
                 UserId = SeededUserId,
-                Front = "f2",
-                Back = "b2",
+                CardId = futureCard.Id,
+                State = "review",
                 DueAt = now.AddDays(2),
-                CreatedAt = now,
             },
-            new Card
+            new ReviewState
             {
-                Id = Guid.NewGuid(),
-                PublicId = "suspdue1",
                 UserId = SeededUserId,
-                Front = "f3",
-                Back = "b3",
+                CardId = suspendedDueCard.Id,
+                State = "review",
                 DueAt = now.AddMinutes(-5),
                 IsSuspended = true,
-                CreatedAt = now,
             });
         db.Decks.Add(new Deck
         {

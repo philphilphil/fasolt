@@ -15,13 +15,10 @@ public class Card
     public string? BackSvg { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
-    public double? Stability { get; set; }
-    public double? Difficulty { get; set; }
-    public int? Step { get; set; }
-    public DateTimeOffset? DueAt { get; set; }
-    public string State { get; set; } = "new";
-    public DateTimeOffset? LastReviewedAt { get; set; }
-    public bool IsSuspended { get; set; } = false;
     public List<DeckCard> DeckCards { get; set; } = [];
+
+    /// <summary>Per-user SRS state. At most one row per user; absent means "new".</summary>
+    public List<ReviewState> ReviewStates { get; set; } = [];
+
     public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

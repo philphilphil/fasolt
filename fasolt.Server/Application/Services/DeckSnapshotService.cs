@@ -22,6 +22,11 @@ public class DeckSnapshotService(AppDbContext db)
             .Include(d => d.Cards).ThenInclude(dc => dc.Card)
             .ToListAsync();
 
+        // SRS state lives in ReviewStates now — load the owner's rows for every card
+        // in one go so snapshots keep capturing scheduling data.
+        var allCardIds = decks.SelectMany(d => d.Cards).Select(dc => dc.CardId).Distinct().ToList();
+        var states = await ReviewStateQuery.LoadForCardsAsync(db, userId, allCardIds);
+
         var createdDecks = new List<string>();
         var skippedDecks = new List<string>();
         foreach (var deck in decks)
@@ -44,12 +49,16 @@ public class DeckSnapshotService(AppDbContext db)
             var data = new SnapshotData(
                 deck.Name,
                 deck.Description,
-                cards.Select(c => new SnapshotCardData(
-                    c.Id, c.PublicId, c.Front, c.Back, c.FrontSvg, c.BackSvg,
-                    c.SourceFile, c.CreatedAt,
-                    c.Stability, c.Difficulty, c.Step, c.DueAt, c.State, c.LastReviewedAt,
-                    c.IsSuspended
-                )).ToList());
+                cards.Select(c =>
+                {
+                    var rs = states.GetValueOrDefault(c.Id);
+                    return new SnapshotCardData(
+                        c.Id, c.PublicId, c.Front, c.Back, c.FrontSvg, c.BackSvg,
+                        c.SourceFile, c.CreatedAt,
+                        rs?.Stability, rs?.Difficulty, rs?.Step, rs?.DueAt,
+                        rs?.State ?? "new", rs?.LastReviewedAt,
+                        rs?.IsSuspended ?? false);
+                }).ToList());
 
             var snapshot = new DeckSnapshot
             {
@@ -249,6 +258,16 @@ public class DeckSnapshotService(AppDbContext db)
                     BackSvg = sc.BackSvg,
                     SourceFile = sc.SourceFile,
                     CreatedAt = sc.CreatedAt,
+                };
+                db.Cards.Add(newCard);
+                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = sc.CardId });
+
+                // Restore the SRS state alongside the card. A pristine-new snapshot
+                // needs no row — absence of a row already means "new".
+                var restoredState = new ReviewState
+                {
+                    UserId = userId,
+                    CardId = sc.CardId,
                     Stability = sc.Stability,
                     Difficulty = sc.Difficulty,
                     Step = sc.Step,
@@ -257,8 +276,8 @@ public class DeckSnapshotService(AppDbContext db)
                     LastReviewedAt = sc.LastReviewedAt,
                     IsSuspended = sc.IsSuspended,
                 };
-                db.Cards.Add(newCard);
-                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = sc.CardId });
+                if (!restoredState.IsPristine)
+                    db.ReviewStates.Add(restoredState);
             }
         }
 

@@ -101,8 +101,11 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
         var usersWithPush = await db.DeviceTokens.Select(d => d.UserId).Distinct().CountAsync();
         var totalCards = await db.Cards.CountAsync();
         var totalDecks = await db.Decks.CountAsync();
-        var dueCards = await db.Cards.CountAsync(c =>
-            !c.IsSuspended && c.DueAt != null && c.DueAt <= now);
+        // Only cards with an actual scheduled due date count here (unchanged from the
+        // pre-ReviewState query, which also required DueAt != null), so a card without
+        // a ReviewState row can never qualify.
+        var dueCards = await db.ReviewStates.CountAsync(r =>
+            !r.IsSuspended && r.DueAt != null && r.DueAt <= now);
 
         var registrationsLast7d = await db.Logs.CountAsync(l =>
             l.Type == LogType.UserRegistered && l.CreatedAt >= sevenDaysAgo);

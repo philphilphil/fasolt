@@ -15,7 +15,8 @@ public static class DevSeedHistory
     private const int RngSeed = 42;
     private const int HistoryDays = 60;
 
-    public static (List<Deck> Decks, List<Card> Cards, List<DeckCard> DeckCards, List<ReviewLog> Logs, int BestStreak)
+    public static (List<Deck> Decks, List<Card> Cards, List<DeckCard> DeckCards, List<ReviewLog> Logs,
+        List<ReviewState> ReviewStates, int BestStreak)
         Build(string adminUserId, DateTimeOffset now)
     {
         var rng = new Random(RngSeed);
@@ -47,8 +48,7 @@ public static class DevSeedHistory
                     UserId = adminUserId,
                     Front = front,
                     Back = back,
-                    State = "new",
-                    CreatedAt = now.AddDays(-ageDays).AddMinutes(rng.Next(0, 24 * 60)),
+                            CreatedAt = now.AddDays(-ageDays).AddMinutes(rng.Next(0, 24 * 60)),
                 };
                 cards.Add(card);
                 deckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
@@ -81,8 +81,7 @@ public static class DevSeedHistory
                 FrontSvg = spec.FrontSvg,
                 BackSvg = spec.BackSvg,
                 SourceFile = "visual-notes.md",
-                State = "new",
-                CreatedAt = now.AddDays(-ageDays).AddMinutes(rng.Next(0, 24 * 60)),
+                    CreatedAt = now.AddDays(-ageDays).AddMinutes(rng.Next(0, 24 * 60)),
             };
             cards.Add(card);
             deckCards.Add(new DeckCard { DeckId = visualDeck.Id, CardId = card.Id });
@@ -98,31 +97,36 @@ public static class DevSeedHistory
         var historyCards = cards.Where(_ => rng.NextDouble() > 0.20).ToList();
 
         var logs = new List<ReviewLog>();
+        var states = new List<ReviewState>();
         foreach (var card in historyCards)
-            SimulateReviews(card, now, rng, restDays, logs);
+        {
+            var state = SimulateReviews(card, now, rng, restDays, logs);
+            if (state is not null) states.Add(state);
+        }
 
         // Pin a handful of cards to "due today" so the Study hero has something
         // to chew on without waiting for the SRS clock.
-        var reviewableToday = cards
-            .Where(c => c.State is "review" or "learning" or "relearning")
+        var reviewableToday = states
+            .Where(s => s.State is "review" or "learning" or "relearning")
             .OrderBy(_ => rng.Next())
             .Take(18)
             .ToList();
-        foreach (var c in reviewableToday)
-            c.DueAt = now.AddMinutes(-rng.Next(5, 240));
+        foreach (var s in reviewableToday)
+            s.DueAt = now.AddMinutes(-rng.Next(5, 240));
 
         // Suspend one card so the Cards screen has a suspended row to test.
-        var toSuspend = cards.FirstOrDefault(c => c.State == "review");
+        var toSuspend = states.FirstOrDefault(s => s.State == "review");
         if (toSuspend is not null) toSuspend.IsSuspended = true;
 
         // Compute best streak from the generated logs so the user profile is
         // consistent with what the Progress page will display.
         var bestStreak = ComputeBestStreak(logs, now);
 
-        return (decks, cards, deckCards, logs, bestStreak);
+        return (decks, cards, deckCards, logs, states, bestStreak);
     }
 
-    private static void SimulateReviews(
+    /// <returns>The card's resulting ReviewState, or null when no reviews were generated.</returns>
+    private static ReviewState? SimulateReviews(
         Card card,
         DateTimeOffset now,
         Random rng,
@@ -205,15 +209,19 @@ public static class DevSeedHistory
             cursor = scheduledDue.AddMinutes(rng.Next(-90, 240));
         }
 
-        if (reviewCount > 0)
+        if (reviewCount == 0) return null;
+
+        return new ReviewState
         {
-            card.State = state;
-            card.Stability = stability;
-            card.Difficulty = difficulty;
-            card.Step = step;
-            card.DueAt = logs.Last(l => l.CardId == card.Id).ScheduledDueAfter;
-            card.LastReviewedAt = logs.Last(l => l.CardId == card.Id).ReviewedAt;
-        }
+            UserId = card.UserId,
+            CardId = card.Id,
+            State = state,
+            Stability = stability,
+            Difficulty = difficulty,
+            Step = step,
+            DueAt = logs.Last(l => l.CardId == card.Id).ScheduledDueAfter,
+            LastReviewedAt = logs.Last(l => l.CardId == card.Id).ReviewedAt,
+        };
     }
 
     private static string PickRating(Random rng)

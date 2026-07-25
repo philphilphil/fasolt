@@ -163,10 +163,10 @@ public class ReviewServiceTests : IAsyncLifetime
         await svc.RateCard(UserId, new RateCardRequest(card2Id, "easy"));
 
         // Manually set due dates for precise control
-        var card1 = await db.Cards.FindAsync(db.Cards.First(c => c.PublicId == card1Id).Id);
-        var card2 = await db.Cards.FindAsync(db.Cards.First(c => c.PublicId == card2Id).Id);
-        card1!.DueAt = start.AddDays(1);
-        card2!.DueAt = start.AddDays(7);
+        var state1 = await db.ReviewStateForPublicId(UserId, card1Id);
+        var state2 = await db.ReviewStateForPublicId(UserId, card2Id);
+        state1.DueAt = start.AddDays(1);
+        state2.DueAt = start.AddDays(7);
         await db.SaveChangesAsync();
 
         // Day 2: only card1 due
@@ -372,7 +372,7 @@ public class ReviewServiceTests : IAsyncLifetime
 
         // Suspend the first card
         var suspendedPublicId = cardIds[0];
-        var suspended = await db.Cards.FirstAsync(c => c.PublicId == suspendedPublicId);
+        var suspended = await db.ReviewStateForPublicId(UserId, suspendedPublicId);
         suspended.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -449,9 +449,9 @@ public class ReviewServiceTests : IAsyncLifetime
             await svc.RateCard(UserId, new RateCardRequest(cardPublicId, "good"));
 
         // Snapshot state of cards and review-log count.
-        var before = await db.Cards
-            .Where(c => cardIds.Contains(c.PublicId))
-            .Select(c => new { c.PublicId, c.DueAt, c.Stability, c.Difficulty, c.State, c.Step, c.LastReviewedAt })
+        var before = await db.ReviewStates
+            .Where(r => r.UserId == UserId && cardIds.Contains(r.Card.PublicId))
+            .Select(r => new { r.Card.PublicId, r.DueAt, r.Stability, r.Difficulty, r.State, r.Step, r.LastReviewedAt })
             .ToListAsync();
         var beforeLogCount = await db.ReviewLogs.CountAsync(r => r.UserId == UserId);
 
@@ -462,9 +462,9 @@ public class ReviewServiceTests : IAsyncLifetime
 
         // Verify nothing mutated.
         await using var verifyDb = _db.CreateDbContext();
-        var after = await verifyDb.Cards
-            .Where(c => cardIds.Contains(c.PublicId))
-            .Select(c => new { c.PublicId, c.DueAt, c.Stability, c.Difficulty, c.State, c.Step, c.LastReviewedAt })
+        var after = await verifyDb.ReviewStates
+            .Where(r => r.UserId == UserId && cardIds.Contains(r.Card.PublicId))
+            .Select(r => new { r.Card.PublicId, r.DueAt, r.Stability, r.Difficulty, r.State, r.Step, r.LastReviewedAt })
             .ToListAsync();
         var afterLogCount = await verifyDb.ReviewLogs.CountAsync(r => r.UserId == UserId);
 

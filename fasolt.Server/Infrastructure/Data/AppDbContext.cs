@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<ReviewLog> ReviewLogs => Set<ReviewLog>();
     public DbSet<Card> Cards => Set<Card>();
+    public DbSet<ReviewState> ReviewStates => Set<ReviewState>();
     public DbSet<Deck> Decks => Set<Deck>();
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
     public DbSet<ConsentGrant> ConsentGrants => Set<ConsentGrant>();
@@ -39,14 +40,24 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.HasIndex(e => new { e.UserId, e.SourceFile });
 
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-            entity.Property(e => e.State).HasMaxLength(20).HasDefaultValue("new").IsRequired();
-            entity.HasIndex(e => new { e.UserId, e.DueAt });
             entity.Property(e => e.SearchVector)
                 .HasColumnType("tsvector")
                 .HasComputedColumnSql(
                     """to_tsvector('english', coalesce("Front",'') || ' ' || coalesce("Back",''))""",
                     stored: true);
             entity.HasIndex(e => e.SearchVector).HasMethod("gin");
+        });
+
+        builder.Entity<ReviewState>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.CardId });
+            entity.Property(e => e.State).HasMaxLength(20).HasDefaultValue("new").IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.DueAt });
+            entity.HasIndex(e => e.CardId);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Card).WithMany(c => c.ReviewStates).HasForeignKey(e => e.CardId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Ignore(e => e.IsPristine);
         });
 
         builder.Entity<Deck>(entity =>

@@ -129,10 +129,11 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         var dueDayStarts = await ComputeDueDayStarts(userId, windowStart, todayStart, tz, dayStartHour);
 
         // Whether today itself has any due cards right now
-        var hasDueToday = await db.Cards.AnyAsync(c =>
-            c.UserId == userId && !c.IsSuspended &&
-            (!c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended)) &&
-            (c.DueAt == null || c.DueAt <= todayEnd));
+        var hasDueToday = await db.Cards
+            .Where(c => c.UserId == userId)
+            .Where(ReviewStateQuery.NotSuspendedBy(userId))
+            .Where(ReviewStateQuery.DueBy(userId, todayEnd))
+            .AnyAsync(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
 
         var activity = new List<DailyActivityDto>(days);
         for (var d = windowStart; d <= todayStart; d = d.AddDays(1))
