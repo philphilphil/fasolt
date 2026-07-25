@@ -401,22 +401,15 @@ public class CardService(AppDbContext db)
 
         if (cardIds.Count == 0) return 0;
 
+        // Lazy creation: only suspending needs a row; unsuspending a card without one
+        // is already a no-op. The rows are created with ON CONFLICT DO NOTHING, so a
+        // concurrent request materializing the same row cannot fail this one.
+        if (isSuspended) await ReviewStateQuery.EnsureExistAsync(db, userId, cardIds);
+
         var states = await ReviewStateQuery.LoadForCardsAsync(db, userId, cardIds);
 
-        foreach (var cardId in cardIds)
-        {
-            if (states.TryGetValue(cardId, out var state))
-            {
-                state.IsSuspended = isSuspended;
-                if (state.IsPristine) db.ReviewStates.Remove(state);
-            }
-            else if (isSuspended)
-            {
-                // Lazy creation: only suspending needs a row; unsuspending a card
-                // without one is already a no-op.
-                db.ReviewStates.Add(new ReviewState { UserId = userId, CardId = cardId, IsSuspended = true });
-            }
-        }
+        foreach (var state in states.Values)
+            state.IsSuspended = isSuspended;
 
         await db.SaveChangesAsync();
         return cardIds.Count;
@@ -439,13 +432,9 @@ public class CardService(AppDbContext db)
             state.DueAt = null;
             state.State = "new";
             state.LastReviewedAt = null;
-
-            // Suspension survives a reset; without it the row carries no information.
-            if (state.IsPristine)
-            {
-                db.ReviewStates.Remove(state);
-                state = null;
-            }
+            // Suspension survives a reset. A row left carrying nothing but the "new"
+            // default is kept rather than deleted: it is equivalent to having no row,
+            // and deleting it would race with a concurrent review of the same card.
 
             await db.SaveChangesAsync();
         }
@@ -461,16 +450,16 @@ public class CardService(AppDbContext db)
 
         if (card is null) return null;
 
-        var state = await ReviewStateQuery.GetOrCreateAsync(db, userId, card.Id);
-        state.IsSuspended = isSuspended;
+        // Only suspending needs a row; unsuspending a card that has none is a no-op.
+        var state = isSuspended
+            ? await ReviewStateQuery.GetOrCreateAsync(db, userId, card.Id)
+            : await LoadState(userId, card.Id);
 
-        if (state.IsPristine)
+        if (state is not null)
         {
-            db.ReviewStates.Remove(state);
-            state = null;
+            state.IsSuspended = isSuspended;
+            await db.SaveChangesAsync();
         }
-
-        await db.SaveChangesAsync();
 
         return ToDto(card, state);
     }
