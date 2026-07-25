@@ -43,5 +43,21 @@ export const useLibraryStore = defineStore('library', () => {
     return apiFetch<Deck>(`/library/decks/${publicId}/copy`, { method: 'POST' })
   }
 
-  return { decks, totalCount, page, pageSize, loading, fetchDecks, getDeck, copyDeck }
+  /**
+   * Links a public/unlisted deck into the caller's account — the deck stays the
+   * author's, so it keeps following their edits. Idempotent server-side.
+   */
+  function subscribeDeck(publicId: string): Promise<Deck> {
+    return apiFetch<Deck>(`/library/decks/${publicId}/subscribe`, { method: 'POST' })
+  }
+
+  /** Drops the link and the review progress that only this link gave access to. */
+  function unsubscribeDeck(publicId: string): Promise<void> {
+    return apiFetch(`/library/decks/${publicId}/subscribe`, { method: 'DELETE' })
+  }
+
+  return {
+    decks, totalCount, page, pageSize, loading,
+    fetchDecks, getDeck, copyDeck, subscribeDeck, unsubscribeDeck,
+  }
 })

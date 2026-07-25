@@ -39,6 +39,10 @@ export interface Deck {
   copyCount: number
   copiedFromDeckPublicId: string | null
   copiedFromHandle: string | null
+  /** True for a deck linked from the library: the author owns it, the content is read-only. */
+  isLinked: boolean
+  /** Handle of the author, for linked decks. */
+  authorHandle: string | null
 }
 
 export interface DeckDetail extends Deck {

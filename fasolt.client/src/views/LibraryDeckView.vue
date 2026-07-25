@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useLibraryStore } from '@/stores/library'
+import { useDecksStore } from '@/stores/decks'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/api/client'
 import { formatDocumentTitle } from '@/router'
@@ -13,6 +14,7 @@ import AppFooter from '@/components/AppFooter.vue'
 const route = useRoute()
 const router = useRouter()
 const library = useLibraryStore()
+const decks = useDecksStore()
 const auth = useAuthStore()
 
 const publicId = computed(() => route.params.publicId as string)
@@ -25,9 +27,25 @@ const loadError = ref('')
 const sampleIndex = ref(0)
 const isFlipped = ref(false)
 
-const importing = ref(false)
+/** Which CTA the visitor picked — carried through the logged-out auth funnel. */
+type ImportMode = 'copy' | 'link'
+
+const importing = ref<ImportMode | null>(null)
 const importError = ref('')
 const importedDeck = ref<Deck | null>(null)
+const justLinked = ref(false)
+
+/**
+ * A linked deck keeps the author's public id, and a deck the visitor owns is in
+ * their list under that same id — so the caller's own deck list is all we need
+ * to tell owner from subscriber from stranger.
+ */
+const myDecksLoading = ref(false)
+const myDeck = computed(() =>
+  auth.isAuthenticated ? decks.decks.find(d => d.id === publicId.value) ?? null : null,
+)
+const isOwner = computed(() => !!myDeck.value && !myDeck.value.isLinked)
+const linkedDeck = computed(() => (myDeck.value?.isLinked ? myDeck.value : null))
 
 const currentSample = computed(() => deck.value?.sampleCards[sampleIndex.value] ?? null)
 const publishedLabel = computed(() =>
@@ -39,11 +57,19 @@ const publishedLabel = computed(() =>
 /**
  * Logged-out CTA target. The Razor login/register pages honour a local
  * `returnUrl`, so we bounce through auth and come back to this deck page with
- * `?import=1` — which triggers the copy as soon as the user is signed in.
+ * `?import=<mode>` — which runs the import the visitor asked for as soon as
+ * they are signed in.
  */
-function authUrl(path: '/login' | '/register') {
-  const returnUrl = `/library/${publicId.value}?import=1`
+function authUrl(path: '/login' | '/register', mode: ImportMode = 'copy') {
+  const returnUrl = `/library/${publicId.value}?import=${mode}`
   return `${path}?returnUrl=${encodeURIComponent(returnUrl)}`
+}
+
+/** `1` is the pre-link-mode spelling of "copy"; links carrying it may still be in flight. */
+function parseImportMode(value: unknown): ImportMode | null {
+  if (value === 'link') return 'link'
+  if (value === 'copy' || value === '1') return 'copy'
+  return null
 }
 
 /** The router's afterEach resets the title from route meta, so re-apply ours after navigations. */
@@ -71,18 +97,41 @@ async function load() {
   }
 }
 
+/** Owner/subscriber state comes from the caller's own deck list. */
+async function loadMyDecks() {
+  if (!auth.isAuthenticated) return
+  myDecksLoading.value = true
+  try {
+    await decks.fetchDecks()
+  } catch {
+    // Leave the CTAs in their default state; the import call reports the real error.
+  } finally {
+    myDecksLoading.value = false
+  }
+}
+
 onMounted(async () => {
+  const myDecks = loadMyDecks()
   await load()
-  if (route.query.import === '1') {
+  const mode = parseImportMode(route.query.import)
+  if (mode) {
     // Strip the flag first so a refresh (or the back button) can't import twice.
     const { import: _flag, ...rest } = route.query
     await router.replace({ query: rest })
     applyTitle()
-    if (auth.isAuthenticated && deck.value) await copyToMyDecks()
+    if (auth.isAuthenticated && deck.value) {
+      await (mode === 'link' ? linkDeck() : copyToMyDecks())
+    }
   }
+  await myDecks
 })
 
-watch(publicId, load)
+watch(publicId, () => {
+  importedDeck.value = null
+  justLinked.value = false
+  importError.value = ''
+  load()
+})
 
 function showSample(index: number) {
   if (!deck.value) return
@@ -92,30 +141,59 @@ function showSample(index: number) {
   isFlipped.value = false
 }
 
+/** Maps an import failure to a sentence, or bounces to login when the session is gone. */
+function reportImportFailure(e: unknown, mode: ImportMode) {
+  if (isApiError(e) && e.status === 401) {
+    window.location.href = authUrl('/login', mode)
+    return
+  }
+  const fallback = 'Could not import this deck. Please try again.'
+  importError.value = isApiError(e)
+    ? e.status === 403
+      ? 'Verify your email address before importing decks.'
+      : e.message || fallback
+    : fallback
+}
+
 async function copyToMyDecks() {
   if (!deck.value || importing.value) return
   if (!auth.isAuthenticated) {
-    window.location.href = authUrl('/register')
+    window.location.href = authUrl('/register', 'copy')
     return
   }
-  importing.value = true
+  importing.value = 'copy'
   importError.value = ''
+  justLinked.value = false
   try {
     importedDeck.value = await library.copyDeck(publicId.value)
     // Reflect the new import count without a full refetch round-trip.
     deck.value = { ...deck.value, copyCount: deck.value.copyCount + 1 }
   } catch (e) {
-    if (isApiError(e) && e.status === 401) {
-      window.location.href = authUrl('/login')
-      return
-    }
-    importError.value = isApiError(e)
-      ? e.status === 403
-        ? 'Verify your email address before importing decks.'
-        : e.message || 'Could not import this deck. Please try again.'
-      : 'Could not import this deck. Please try again.'
+    reportImportFailure(e, 'copy')
   } finally {
-    importing.value = false
+    importing.value = null
+  }
+}
+
+async function linkDeck() {
+  if (!deck.value || importing.value) return
+  if (!auth.isAuthenticated) {
+    window.location.href = authUrl('/register', 'link')
+    return
+  }
+  importing.value = 'link'
+  importError.value = ''
+  importedDeck.value = null
+  try {
+    await library.subscribeDeck(publicId.value)
+    justLinked.value = true
+    // The linked deck now belongs in the caller's list — that list is also what
+    // drives the "Linked ✓" state of this CTA.
+    await loadMyDecks()
+  } catch (e) {
+    reportImportFailure(e, 'link')
+  } finally {
+    importing.value = null
   }
 }
 </script>
@@ -165,30 +243,56 @@ async function copyToMyDecks() {
                 </template>
               </div>
             </div>
-            <div class="deck-actions">
-              <button
-                v-if="auth.isAuthenticated"
-                type="button"
-                class="fa-btn fa-btn-primary"
-                :disabled="importing"
-                @click="copyToMyDecks"
-              >
-                {{ importing ? 'Importing…' : 'Copy to my decks' }}
-              </button>
+            <div v-if="!myDecksLoading" class="deck-actions">
+              <template v-if="isOwner">
+                <RouterLink :to="`/decks/${publicId}`" class="fa-btn">Manage this deck</RouterLink>
+              </template>
+              <template v-else-if="auth.isAuthenticated">
+                <button
+                  type="button"
+                  class="fa-btn fa-btn-primary"
+                  :disabled="!!importing"
+                  @click="copyToMyDecks"
+                >
+                  {{ importing === 'copy' ? 'Copying…' : 'Copy to my decks' }}
+                </button>
+                <RouterLink v-if="linkedDeck" :to="`/decks/${publicId}`" class="fa-btn fa-btn-accent">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+                  Linked — go to deck
+                </RouterLink>
+                <button
+                  v-else
+                  type="button"
+                  class="fa-btn"
+                  :disabled="!!importing"
+                  @click="linkDeck"
+                >
+                  {{ importing === 'link' ? 'Linking…' : 'Link deck' }}
+                </button>
+              </template>
               <template v-else>
-                <a :href="authUrl('/register')" class="fa-btn fa-btn-primary">Copy to my decks</a>
-                <a :href="authUrl('/login')" class="fa-btn">Log in</a>
+                <a :href="authUrl('/register', 'copy')" class="fa-btn fa-btn-primary">Copy to my decks</a>
+                <a :href="authUrl('/register', 'link')" class="fa-btn">Link deck</a>
+                <a :href="authUrl('/login', 'copy')" class="fa-btn fa-btn-ghost">Log in</a>
               </template>
             </div>
           </header>
 
-          <div v-if="!auth.isAuthenticated" class="cta-note">
-            Free account required — sign up and this deck lands in your account, ready to study.
+          <div v-if="isOwner" class="cta-note">This is your deck — you're looking at its public page.</div>
+          <div v-else class="cta-note">
+            <strong>Link</strong> follows the author's updates and keeps your own study progress.
+            <strong>Copy</strong> gives you an independent deck you can edit.
+            <template v-if="!auth.isAuthenticated"> Free account required.</template>
           </div>
 
           <div v-if="importedDeck" class="import-success">
             Imported as a copy — your own cards, your own progress.
             <RouterLink :to="`/decks/${importedDeck.id}`" class="fa-link">Open {{ importedDeck.name }}</RouterLink>
+          </div>
+
+          <div v-else-if="justLinked" class="import-success">
+            Linked — this deck follows {{ deck.authorHandle ? `@${deck.authorHandle}` : 'the author' }}'s updates.
+            <RouterLink :to="`/decks/${publicId}`" class="fa-link">Open {{ deck.name }}</RouterLink>
           </div>
 
           <div v-if="importError" class="import-error">{{ importError }}</div>
@@ -274,7 +378,9 @@ async function copyToMyDecks() {
 .cta-note {
   font-size: 12.5px;
   color: var(--ink-2);
+  max-width: 560px;
 }
+.cta-note strong { color: var(--ink-1); font-weight: 600; }
 
 .import-success {
   display: flex;

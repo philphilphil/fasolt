@@ -89,4 +89,24 @@ describe('library store', () => {
     expect(mockApiFetch).toHaveBeenCalledWith('/library/decks/V1StGXR8Z5/copy', { method: 'POST' })
     expect(result.id).toBe('newdeck')
   })
+
+  it('subscribeDeck posts to the subscribe endpoint', async () => {
+    mockApiFetch.mockResolvedValueOnce({ id: 'V1StGXR8Z5', name: 'Spanish Vocabulary', isLinked: true })
+
+    const store = useLibraryStore()
+    const result = await store.subscribeDeck('V1StGXR8Z5')
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/library/decks/V1StGXR8Z5/subscribe', { method: 'POST' })
+    // A linked deck keeps the author's public id — that's what the deck route uses.
+    expect(result.id).toBe('V1StGXR8Z5')
+  })
+
+  it('unsubscribeDeck deletes the subscription', async () => {
+    mockApiFetch.mockResolvedValueOnce(undefined)
+
+    const store = useLibraryStore()
+    await store.unsubscribeDeck('V1StGXR8Z5')
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/library/decks/V1StGXR8Z5/subscribe', { method: 'DELETE' })
+  })
 })

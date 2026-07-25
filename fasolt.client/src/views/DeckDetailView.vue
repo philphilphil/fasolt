@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
 import { useCardsStore } from '@/stores/cards'
+import { useLibraryStore } from '@/stores/library'
 import type { Deck, DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { History } from 'lucide-vue-next'
+import { History, Link2 } from 'lucide-vue-next'
 import CardTable from '@/components/CardTable.vue'
 import BulkActionBar from '@/components/BulkActionBar.vue'
 import AddToDeckDialog from '@/components/AddToDeckDialog.vue'
@@ -20,9 +21,18 @@ const route = useRoute()
 const router = useRouter()
 const decks = useDecksStore()
 const cardsStore = useCardsStore()
+const library = useLibraryStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
+
+/** A linked deck belongs to its author: read-only content, but our own SRS state. */
+const isLinked = computed(() => deck.value?.isLinked === true)
+
+const convertOpen = ref(false)
+const unlinkOpen = ref(false)
+const linkBusy = ref(false)
+const linkError = ref('')
 
 const editOpen = ref(false)
 const editName = ref('')
@@ -57,14 +67,27 @@ async function copyDeckId() {
   setTimeout(() => idCopied.value = false, 2000)
 }
 
-onMounted(async () => {
+async function load(id: string) {
+  loading.value = true
+  selectedIds.value = []
+  linkError.value = ''
   try {
-    deck.value = await decks.getDeckDetail(route.params.id as string)
+    deck.value = await decks.getDeckDetail(id)
   } catch {
+    // Gone (deleted, or a linked deck the author unpublished) — back to the list.
     router.replace('/decks')
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => load(route.params.id as string))
+
+// Converting a link to a copy lands on a different deck id on the same route,
+// which reuses this component instead of remounting it.
+watch(() => route.params.id, (id, previous) => {
+  if (!id || id === previous) return
+  load(id as string)
 })
 
 async function refresh() {
@@ -103,8 +126,41 @@ async function handleDelete() {
 
 async function toggleSuspended() {
   if (!deck.value) return
+  // On a linked deck this pauses the subscription, not the author's deck.
   await decks.setSuspended(deck.value.id, !deck.value.isSuspended)
   deck.value = await decks.getDeckDetail(deck.value.id)
+}
+
+// --- Linked decks ---
+async function convertToCopy() {
+  if (!deck.value || linkBusy.value) return
+  linkBusy.value = true
+  linkError.value = ''
+  try {
+    const copy = await decks.convertToCopy(deck.value.id)
+    convertOpen.value = false
+    router.replace(`/decks/${copy.id}`)
+  } catch {
+    linkError.value = 'Could not convert this deck to a copy. Please try again.'
+  } finally {
+    linkBusy.value = false
+  }
+}
+
+async function unlink() {
+  if (!deck.value || linkBusy.value) return
+  linkBusy.value = true
+  linkError.value = ''
+  try {
+    await library.unsubscribeDeck(deck.value.id)
+    decks.decks = decks.decks.filter(d => d.id !== deck.value!.id)
+    unlinkOpen.value = false
+    router.replace('/decks')
+  } catch {
+    linkError.value = 'Could not unlink this deck. Please try again.'
+  } finally {
+    linkBusy.value = false
+  }
 }
 
 // --- Bulk actions ---
@@ -199,12 +255,19 @@ const stateCounts = computed(() => {
       <div class="deck-header-text">
         <div class="deck-title-line">
           <h1 class="page-title">{{ deck.name }}</h1>
-          <span v-if="deck.visibility !== 'private'" class="visibility-chip">
+          <RouterLink v-if="isLinked" :to="`/library/${deck.id}`" class="linked-chip">
+            <Link2 class="h-3 w-3" />
+            Linked<template v-if="deck.authorHandle"> · @{{ deck.authorHandle }}</template>
+          </RouterLink>
+          <span v-else-if="deck.visibility !== 'private'" class="visibility-chip">
             {{ deck.visibility === 'public' ? 'Public' : 'Unlisted' }}
           </span>
         </div>
         <p v-if="deck.description" class="deck-description">{{ deck.description }}</p>
-        <p v-if="deck.copiedFromDeckPublicId" class="deck-attribution">
+        <p v-if="isLinked" class="deck-attribution">
+          This deck follows the author's updates. Its cards are read-only — your study progress is your own.
+        </p>
+        <p v-else-if="deck.copiedFromDeckPublicId" class="deck-attribution">
           Copied from
           <RouterLink :to="`/library/${deck.copiedFromDeckPublicId}`" class="fa-link">
             <template v-if="deck.copiedFromHandle">@{{ deck.copiedFromHandle }}</template>
@@ -228,23 +291,34 @@ const stateCounts = computed(() => {
         >
           Custom study
         </button>
-        <button class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
+        <button v-if="!isLinked" class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
           <History class="h-3.5 w-3.5" />Snapshots
         </button>
         <button class="fa-btn" @click="toggleSuspended">
-          {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
+          <template v-if="isLinked">{{ deck.isSuspended ? 'Resume' : 'Pause' }}</template>
+          <template v-else>{{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}</template>
         </button>
-        <button class="fa-btn" @click="copyDeckId">
+        <!-- The deck id is the author's — nothing the subscriber can address by it. -->
+        <button v-if="!isLinked" class="fa-btn" @click="copyDeckId">
           {{ idCopied ? 'Copied!' : 'Copy ID' }}
         </button>
-        <button class="fa-btn" @click="openEdit">Edit</button>
-        <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
+        <template v-if="isLinked">
+          <button class="fa-btn" @click="convertOpen = true">Convert to copy</button>
+          <button class="fa-btn delete-btn" @click="unlinkOpen = true">Unlink</button>
+        </template>
+        <template v-else>
+          <button class="fa-btn" @click="openEdit">Edit</button>
+          <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
+        </template>
       </div>
     </header>
 
+    <div v-if="linkError" class="bulk-error">{{ linkError }}</div>
+
     <!-- Inactive banner -->
     <div v-if="deck.isSuspended" class="suspended-banner">
-      This deck is suspended. Cards are excluded from study.
+      <template v-if="isLinked">You've paused this linked deck. Its cards are excluded from study.</template>
+      <template v-else>This deck is suspended. Cards are excluded from study.</template>
     </div>
 
     <!-- Stat line — quiet whitespace, no boxed tile -->
@@ -268,22 +342,24 @@ const stateCounts = computed(() => {
 
     <div class="fa-rule" />
 
-    <!-- Sharing -->
-    <DeckShareSection
-      :deck-id="deck.id"
-      :visibility="deck.visibility"
-      :copy-count="deck.copyCount"
-      @updated="onVisibilityUpdated"
-    />
+    <!-- Sharing — only the author can change how their deck is shared. -->
+    <template v-if="!isLinked">
+      <DeckShareSection
+        :deck-id="deck.id"
+        :visibility="deck.visibility"
+        :copy-count="deck.copyCount"
+        @updated="onVisibilityUpdated"
+      />
 
-    <div class="fa-rule" />
+      <div class="fa-rule" />
+    </template>
 
     <!-- Cards section -->
     <div class="cards-section">
       <div class="fa-cap section-label">Cards in this deck</div>
 
       <BulkActionBar
-        v-if="selectedCount > 0"
+        v-if="!isLinked && selectedCount > 0"
         :count="selectedCount"
         :some-suspended="someSuspended"
         :all-suspended="allSuspended"
@@ -304,13 +380,15 @@ const stateCounts = computed(() => {
         v-model:selectedIds="selectedIds"
         :cards="deck.cards"
         :deck-context="{ id: deck.id, name: deck.name }"
-        selectable
+        :selectable="!isLinked"
+        :read-only="isLinked"
       >
         <template #empty>No cards in this deck yet.</template>
       </CardTable>
 
       <div v-else class="cards-empty">
-        No cards in this deck yet. Add cards from the Cards view.
+        <template v-if="isLinked">This deck has no cards yet.</template>
+        <template v-else>No cards in this deck yet. Add cards from the Cards view.</template>
       </div>
     </div>
 
@@ -359,6 +437,48 @@ const stateCounts = computed(() => {
       :card-ids="selectedIds"
       @added="onAddedToOtherDeck"
     />
+
+    <!-- Convert a linked deck into an owned copy -->
+    <Dialog v-model:open="convertOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Convert to a copy?</DialogTitle>
+          <DialogDescription>
+            "{{ deck.name }}" becomes your own deck: {{ deck.cardCount }} card{{ deck.cardCount === 1 ? '' : 's' }}
+            are copied into your account and your review progress comes with them. The copy stops
+            following
+            <template v-if="deck.authorHandle">@{{ deck.authorHandle }}</template>
+            <template v-else>the author</template>, so their future changes won't reach it — but you
+            can edit the cards yourself.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="gap-2">
+          <Button variant="outline" size="sm" :disabled="linkBusy" @click="convertOpen = false">Cancel</Button>
+          <Button size="sm" :disabled="linkBusy" @click="convertToCopy">
+            {{ linkBusy ? 'Converting…' : 'Convert to copy' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Unlink a linked deck -->
+    <Dialog v-model:open="unlinkOpen">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Unlink this deck?</DialogTitle>
+          <DialogDescription>
+            "{{ deck.name }}" is removed from your decks along with your review progress for its
+            cards. The author's deck is not affected, and you can link it again from the library.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="gap-2">
+          <Button variant="outline" size="sm" :disabled="linkBusy" @click="unlinkOpen = false">Cancel</Button>
+          <Button variant="destructive" size="sm" :disabled="linkBusy" @click="unlink">
+            {{ linkBusy ? 'Unlinking…' : 'Unlink' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Bulk delete confirm -->
     <Dialog :open="bulkDeleteOpen" @update:open="bulkDeleteOpen = $event">
@@ -417,6 +537,20 @@ const stateCounts = computed(() => {
   border: 1px solid var(--accent);
   border-radius: 999px;
 }
+.linked-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-text);
+  padding: 1px 8px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.linked-chip:hover { background: var(--accent-soft); }
 .deck-description {
   margin: 6px 0 0;
   font-size: 14px;

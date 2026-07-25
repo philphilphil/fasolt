@@ -101,4 +101,19 @@ describe('decks store', () => {
 
     expect(mockApiFetch).toHaveBeenCalledWith('/decks/d1?deleteCards=true', { method: 'DELETE' })
   })
+
+  it('convertToCopy posts and replaces the linked deck with the new copy', async () => {
+    const store = useDecksStore()
+    await seedStore(store, [
+      makeDeck({ id: 'linked1', name: 'Shared Deck' }),
+      makeDeck({ id: 'd2', name: 'Other' }),
+    ])
+
+    mockApiFetch.mockResolvedValueOnce(makeDeck({ id: 'copy1', name: 'Shared Deck' }))
+    const result = await store.convertToCopy('linked1')
+
+    expect(mockApiFetch).toHaveBeenCalledWith('/decks/linked1/convert-to-copy', { method: 'POST' })
+    expect(result.id).toBe('copy1')
+    expect(store.decks.map(d => d.id)).toEqual(['copy1', 'd2'])
+  })
 })

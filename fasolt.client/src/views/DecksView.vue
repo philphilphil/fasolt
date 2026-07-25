@@ -204,9 +204,12 @@ function ringDash(deck: { cardCount: number; dueCount: number }): string {
           <div class="deck-row-text">
             <div class="deck-row-name-line">
               <span class="deck-row-name">{{ deck.name }}</span>
+              <span v-if="deck.isLinked" class="linked-chip">Linked</span>
               <span v-if="deck.isSuspended" class="paused-chip">Paused</span>
             </div>
             <div class="deck-row-sub">
+              <span v-if="deck.isLinked && deck.authorHandle" class="deck-row-handle">@{{ deck.authorHandle }}</span>
+              <span v-if="deck.isLinked && deck.authorHandle" class="deck-row-sep">·</span>
               {{ deck.description || `${deck.cardCount} ${deck.cardCount === 1 ? 'card' : 'cards'}` }}
             </div>
           </div>
@@ -332,6 +335,17 @@ function ringDash(deck: { cardCount: number; dueCount: number }): string {
   border: 1px solid var(--rule-1);
   border-radius: 999px;
 }
+.linked-chip {
+  flex: none;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-text);
+  padding: 1px 7px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
+.deck-row-handle { color: var(--accent-text); }
+.deck-row-sep { color: var(--ink-3); margin: 0 4px; }
 .deck-row-sub {
   font-size: 12.5px;
   color: var(--ink-2);
