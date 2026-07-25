@@ -28,5 +28,9 @@ public class Deck
     public string? CopiedFromHandle { get; set; }
 
     public List<DeckCard> Cards { get; set; } = [];
+
+    /// <summary>Users who have linked this deck. Empty for private decks.</summary>
+    public List<DeckSubscription> Subscriptions { get; set; } = [];
+
     public NpgsqlTsVector SearchVector { get; set; } = null!;
 }

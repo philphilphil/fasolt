@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
@@ -10,7 +11,10 @@ public static class DeckEndpoints
 {
     public static void MapDeckEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/decks").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
+        var group = app.MapGroup("/api/decks")
+            .RequireAuthorization("EmailVerified")
+            .RequireRateLimiting("api")
+            .AddLinkedContentGuard();
 
         group.MapPost("/", Create);
         group.MapGet("/", List);
@@ -22,6 +26,7 @@ public static class DeckEndpoints
         group.MapDelete("/{id}/cards/{cardId}", RemoveCard);
         group.MapPut("/{id}/suspended", SetSuspended);
         group.MapPut("/{id}/visibility", SetVisibility);
+        group.MapPost("/{id}/convert-to-copy", ConvertToCopy);
     }
 
     private const int MaxBulkIds = 500;
@@ -168,6 +173,10 @@ public static class DeckEndpoints
         return Results.Ok(new RemoveCardsFromDeckResponse(result.RemovedCount));
     }
 
+    /// <summary>
+    /// Pauses or resumes a deck. On a linked deck this is the caller's own pause of
+    /// the subscription — same request shape, so clients need no new endpoint.
+    /// </summary>
     private static async Task<IResult> SetSuspended(
         string id,
         SetDeckSuspendedRequest request,
@@ -225,6 +234,33 @@ public static class DeckEndpoints
                 message = $"You can have at most {PublishingService.MaxPublicDecksPerUser} public decks.",
             }),
             _ => Results.Ok(result.Deck),
+        };
+    }
+
+    /// <summary>
+    /// Converts a linked deck into an owned copy, carrying the caller's review
+    /// progress over to the new cards and dropping the subscription.
+    /// </summary>
+    private static async Task<IResult> ConvertToCopy(
+        string id,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        DeckSubscriptionService subscriptionService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var result = await subscriptionService.ConvertToCopy(user.Id, id);
+
+        return result.Error switch
+        {
+            ConvertToCopyError.NotFound => Results.NotFound(),
+            ConvertToCopyError.DeckTooLarge => Results.BadRequest(new
+            {
+                error = "deck_too_large",
+                message = $"Decks with more than {PublishingService.MaxCardsInPublicDeck} cards cannot be imported.",
+            }),
+            _ => Results.Created($"/api/decks/{result.Deck!.Id}", result.Deck),
         };
     }
 }

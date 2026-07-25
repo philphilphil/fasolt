@@ -26,48 +26,87 @@ public class DeckService(AppDbContext db)
         return ToDto(deck, 0, 0);
     }
 
+    /// <summary>
+    /// The caller's own decks plus the decks they have linked. Card and due counts
+    /// are always computed from the caller's own <see cref="ReviewState"/> rows, so a
+    /// linked deck shows the subscriber's progress, not the author's.
+    /// </summary>
     public async Task<List<DeckDto>> ListDecks(string userId)
     {
         var now = DateTimeOffset.UtcNow;
 
         // Projected to an anonymous shape first: DeckVisibility.ToWire() has no SQL
         // translation, so the enum→string mapping happens client-side.
-        var rows = await db.Decks
+        var owned = await db.Decks
             .Where(d => d.UserId == userId)
-            .OrderBy(d => d.Name)
             .Select(d => new
             {
                 Deck = d,
+                IsLinked = false,
+                AuthorHandle = (string?)null,
+                IsSuspended = d.IsSuspended,
                 CardCount = d.Cards.Count,
                 DueCount = d.Cards.Count(dc => !dc.Card.ReviewStates.Any(r =>
                     r.UserId == userId && (r.IsSuspended || r.DueAt > now))),
             })
             .ToListAsync();
 
-        return rows.Select(r => ToDto(r.Deck, r.CardCount, r.DueCount)).ToList();
+        var linked = await db.DeckSubscriptions
+            .Where(s => s.UserId == userId)
+            .Select(s => new
+            {
+                Deck = s.Deck,
+                IsLinked = true,
+                AuthorHandle = s.Deck.User.Handle,
+                // The subscriber's own pause, never the owner's.
+                IsSuspended = s.IsSuspended,
+                CardCount = s.Deck.Cards.Count,
+                DueCount = s.Deck.Cards.Count(dc => !dc.Card.ReviewStates.Any(r =>
+                    r.UserId == userId && (r.IsSuspended || r.DueAt > now))),
+            })
+            .ToListAsync();
+
+        return owned.Concat(linked)
+            .OrderBy(r => r.Deck.Name)
+            .Select(r => ToDto(r.Deck, r.CardCount, r.DueCount, r.IsLinked, r.AuthorHandle, r.IsSuspended))
+            .ToList();
     }
 
-    private static DeckDto ToDto(Deck deck, int cardCount, int dueCount) => new(
+    private static DeckDto ToDto(
+        Deck deck, int cardCount, int dueCount,
+        bool isLinked = false, string? authorHandle = null, bool? isSuspended = null) => new(
         deck.PublicId,
         deck.Name,
         deck.Description,
         cardCount,
         dueCount,
         deck.CreatedAt,
-        deck.IsSuspended,
+        isSuspended ?? deck.IsSuspended,
         deck.Visibility.ToWire(),
         deck.PublishedAt,
         deck.CopyCount,
         deck.CopiedFromDeckPublicId,
-        deck.CopiedFromHandle);
+        deck.CopiedFromHandle,
+        isLinked,
+        authorHandle);
 
     public async Task<DeckDetailDto?> GetDeck(string userId, string publicId)
     {
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == publicId && d.UserId == userId);
 
-        if (deck is null) return null;
+        DeckSubscription? subscription = null;
+        if (deck is null)
+        {
+            subscription = await db.DeckSubscriptions
+                .Include(s => s.Deck)
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.Deck.PublicId == publicId);
 
+            if (subscription is null) return null;
+            deck = subscription.Deck;
+        }
+
+        var isLinked = subscription is not null;
         var now = DateTimeOffset.UtcNow;
 
         var cards = await (
@@ -76,7 +115,9 @@ public class DeckService(AppDbContext db)
             from rs in g.DefaultIfEmpty()
             orderby rs.DueAt
             select new DeckCardDto(
-                dc.Card.PublicId, dc.Card.Front, dc.Card.Back, dc.Card.SourceFile,
+                dc.Card.PublicId, dc.Card.Front, dc.Card.Back,
+                // Never expose the author's vault path to a subscriber.
+                isLinked ? null : dc.Card.SourceFile,
                 rs.State ?? "new", rs.DueAt,
                 rs != null && rs.IsSuspended,
                 rs.Stability, rs.Difficulty, rs.Step, rs.LastReviewedAt,
@@ -85,10 +126,16 @@ public class DeckService(AppDbContext db)
 
         var dueCount = cards.Count(c => !c.IsSuspended && (c.DueAt == null || c.DueAt <= now));
 
+        var authorHandle = isLinked
+            ? await db.Users.Where(u => u.Id == deck.UserId).Select(u => u.Handle).FirstOrDefaultAsync()
+            : null;
+
         return new DeckDetailDto(
-            deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards, deck.IsSuspended,
+            deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards,
+            subscription?.IsSuspended ?? deck.IsSuspended,
             deck.Visibility.ToWire(), deck.PublishedAt, deck.CopyCount,
-            deck.CopiedFromDeckPublicId, deck.CopiedFromHandle);
+            deck.CopiedFromDeckPublicId, deck.CopiedFromHandle,
+            isLinked, authorHandle);
     }
 
     public async Task<DeckDto?> UpdateDeck(string userId, string publicId, string name, string? description)
@@ -96,7 +143,11 @@ public class DeckService(AppDbContext db)
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == publicId && d.UserId == userId);
 
-        if (deck is null) return null;
+        if (deck is null)
+        {
+            await ThrowIfLinked(userId, publicId);
+            return null;
+        }
 
         deck.Name = name.Trim();
         deck.Description = description?.Trim();
@@ -105,12 +156,30 @@ public class DeckService(AppDbContext db)
         return await ToDtoWithCounts(deck, userId);
     }
 
+    /// <summary>
+    /// Pauses or resumes a deck for the caller. On an owned deck that is the owner's
+    /// <see cref="Deck.IsSuspended"/>; on a linked deck it is the caller's own
+    /// <see cref="DeckSubscription.IsSuspended"/>, which leaves the author and every
+    /// other subscriber alone.
+    /// </summary>
     public async Task<DeckDto?> SetSuspended(string userId, string publicId, bool isSuspended)
     {
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == publicId && d.UserId == userId);
 
-        if (deck is null) return null;
+        if (deck is null)
+        {
+            var subscription = await db.DeckSubscriptions
+                .Include(s => s.Deck)
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.Deck.PublicId == publicId);
+
+            if (subscription is null) return null;
+
+            subscription.IsSuspended = isSuspended;
+            await db.SaveChangesAsync();
+
+            return await ToDtoWithCounts(subscription.Deck, userId, subscription);
+        }
 
         deck.IsSuspended = isSuspended;
         await db.SaveChangesAsync();
@@ -118,7 +187,7 @@ public class DeckService(AppDbContext db)
         return await ToDtoWithCounts(deck, userId);
     }
 
-    private async Task<DeckDto> ToDtoWithCounts(Deck deck, string userId)
+    private async Task<DeckDto> ToDtoWithCounts(Deck deck, string userId, DeckSubscription? subscription = null)
     {
         var now = DateTimeOffset.UtcNow;
         var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
@@ -126,7 +195,26 @@ public class DeckService(AppDbContext db)
             dc.DeckId == deck.Id && !dc.Card.ReviewStates.Any(r =>
                 r.UserId == userId && (r.IsSuspended || r.DueAt > now)));
 
-        return ToDto(deck, cardCount, dueCount);
+        if (subscription is null) return ToDto(deck, cardCount, dueCount);
+
+        var authorHandle = await db.Users
+            .Where(u => u.Id == deck.UserId)
+            .Select(u => u.Handle)
+            .FirstOrDefaultAsync();
+
+        return ToDto(deck, cardCount, dueCount, isLinked: true, authorHandle, subscription.IsSuspended);
+    }
+
+    /// <summary>
+    /// Turns the "not one of your decks" case into a 403 when the deck is one the
+    /// caller has linked: it exists and they can see it, they just cannot change it.
+    /// </summary>
+    private async Task ThrowIfLinked(string userId, string deckPublicId)
+    {
+        var linked = await db.DeckSubscriptions
+            .AnyAsync(s => s.UserId == userId && s.Deck.PublicId == deckPublicId);
+
+        if (linked) throw LinkedContentException.Deck();
     }
 
     /// <returns>Result with Deleted flag and DeletedCardCount</returns>
@@ -135,7 +223,11 @@ public class DeckService(AppDbContext db)
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == publicId && d.UserId == userId);
 
-        if (deck is null) return new DeleteDeckResult(false, 0);
+        if (deck is null)
+        {
+            await ThrowIfLinked(userId, publicId);
+            return new DeleteDeckResult(false, 0);
+        }
 
         var cardIds = deleteCards
             ? await db.DeckCards
@@ -143,6 +235,10 @@ public class DeckService(AppDbContext db)
                 .Select(dc => dc.CardId)
                 .ToListAsync()
             : [];
+
+        // Subscribers lose the deck with it. Done before the delete cascades the
+        // subscription rows away, so their orphaned SRS rows can still be found.
+        await DeckSubscriptionService.RemoveAllSubscriptions(db, deck.Id);
 
         // Delete snapshots for this deck
         await db.DeckSnapshots
@@ -169,7 +265,11 @@ public class DeckService(AppDbContext db)
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
 
-        if (deck is null) return AddCardsResult.DeckNotFound;
+        if (deck is null)
+        {
+            await ThrowIfLinked(userId, deckPublicId);
+            return AddCardsResult.DeckNotFound;
+        }
 
         var userCards = await db.Cards
             .Where(c => c.UserId == userId && cardPublicIds.Contains(c.PublicId))
@@ -206,7 +306,11 @@ public class DeckService(AppDbContext db)
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
 
-        if (deck is null) return RemoveCardResult.DeckNotFound;
+        if (deck is null)
+        {
+            await ThrowIfLinked(userId, deckPublicId);
+            return RemoveCardResult.DeckNotFound;
+        }
 
         var card = await db.Cards
             .FirstOrDefaultAsync(c => c.PublicId == cardPublicId && c.UserId == userId);
@@ -228,7 +332,11 @@ public class DeckService(AppDbContext db)
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
 
-        if (deck is null) return new RemoveCardsResult(false, 0);
+        if (deck is null)
+        {
+            await ThrowIfLinked(userId, deckPublicId);
+            return new RemoveCardsResult(false, 0);
+        }
 
         var cardIds = await db.Cards
             .Where(c => c.UserId == userId && cardPublicIds.Contains(c.PublicId))

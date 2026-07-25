@@ -269,11 +269,10 @@ public class CardService(AppDbContext db)
 
     public async Task<CardDto?> GetCard(string userId, string publicId)
     {
-        var card = await db.Cards
-            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
+        var card = await StudyableCardsWithVisibleDecks(userId)
+            .FirstOrDefaultAsync(c => c.PublicId == publicId);
 
-        return card is null ? null : ToDto(card, await LoadState(userId, card.Id));
+        return card is null ? null : await ToViewerDto(card, await LoadState(userId, card.Id), userId);
     }
 
     public async Task<CardDto?> UpdateCard(string userId, string publicId, UpdateCardRequest request)
@@ -282,7 +281,11 @@ public class CardService(AppDbContext db)
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
             .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
 
-        if (card is null) return null;
+        if (card is null)
+        {
+            await ThrowIfLinkedCard(userId, publicId);
+            return null;
+        }
 
         var errors = ValidateCardFields(request.Front, request.Back);
         if (errors.Count > 0)
@@ -305,7 +308,15 @@ public class CardService(AppDbContext db)
             foreach (var deckPublicId in request.DeckIds)
             {
                 var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
-                if (deck is not null) targetDecks.Add(deck);
+                if (deck is not null)
+                {
+                    targetDecks.Add(deck);
+                    continue;
+                }
+
+                // Cards cannot be pushed into a deck linked from another account.
+                if (await db.DeckSubscriptions.AnyAsync(s => s.UserId == userId && s.Deck.PublicId == deckPublicId))
+                    throw LinkedContentException.Deck();
             }
 
             // Check before mutating anything: decks the card is already in are a no-op,
@@ -337,7 +348,11 @@ public class CardService(AppDbContext db)
             .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
             .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
 
-        if (card is null) return UpdateCardResult.NotFound();
+        if (card is null)
+        {
+            await ThrowIfLinkedCard(userId, publicId);
+            return UpdateCardResult.NotFound();
+        }
 
         return await ApplyCardFieldUpdates(userId, card, req);
     }
@@ -404,11 +419,18 @@ public class CardService(AppDbContext db)
             .Where(c => c.PublicId == publicId && c.UserId == userId)
             .ExecuteDeleteAsync();
 
-        return deleted > 0;
+        if (deleted > 0) return true;
+
+        await ThrowIfLinkedCard(userId, publicId);
+        return false;
     }
 
     public async Task<int> DeleteCards(string userId, List<string> publicIds)
     {
+        // Checked up front so a batch that touches linked content is rejected whole
+        // instead of deleting the caller's own cards and then failing.
+        await ThrowIfAnyLinkedCard(userId, publicIds);
+
         return await db.Cards
             .Where(c => c.UserId == userId && publicIds.Contains(c.PublicId))
             .ExecuteDeleteAsync();
@@ -417,8 +439,9 @@ public class CardService(AppDbContext db)
     /// <returns>Number of cards matched (not the number of ReviewState rows touched).</returns>
     public async Task<int> SetSuspendedBulk(string userId, List<string> publicIds, bool isSuspended)
     {
-        var cardIds = await db.Cards
-            .Where(c => c.UserId == userId && publicIds.Contains(c.PublicId))
+        // Suspension is the caller's own ReviewState, so linked cards are fair game.
+        var cardIds = await LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(c => publicIds.Contains(c.PublicId))
             .Select(c => c.Id)
             .ToListAsync();
 
@@ -440,9 +463,8 @@ public class CardService(AppDbContext db)
 
     public async Task<CardDto?> ResetProgress(string userId, string publicId)
     {
-        var card = await db.Cards
-            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
+        var card = await StudyableCardsWithVisibleDecks(userId)
+            .FirstOrDefaultAsync(c => c.PublicId == publicId);
 
         if (card is null) return null;
 
@@ -462,14 +484,13 @@ public class CardService(AppDbContext db)
             await db.SaveChangesAsync();
         }
 
-        return ToDto(card, state);
+        return await ToViewerDto(card, state, userId);
     }
 
     public async Task<CardDto?> SetSuspended(string userId, string publicId, bool isSuspended)
     {
-        var card = await db.Cards
-            .Include(c => c.DeckCards).ThenInclude(dc => dc.Deck)
-            .FirstOrDefaultAsync(c => c.PublicId == publicId && c.UserId == userId);
+        var card = await StudyableCardsWithVisibleDecks(userId)
+            .FirstOrDefaultAsync(c => c.PublicId == publicId);
 
         if (card is null) return null;
 
@@ -484,11 +505,64 @@ public class CardService(AppDbContext db)
             await db.SaveChangesAsync();
         }
 
-        return ToDto(card, state);
+        return await ToViewerDto(card, state, userId);
     }
 
     private Task<ReviewState?> LoadState(string userId, Guid cardId) =>
         db.ReviewStates.FirstOrDefaultAsync(r => r.UserId == userId && r.CardId == cardId);
+
+    /// <summary>
+    /// Cards the caller may act on for their own SRS state — authored or linked —
+    /// with only the decks they can actually see attached.
+    /// </summary>
+    private IQueryable<Card> StudyableCardsWithVisibleDecks(string userId) =>
+        LinkedDeckQuery.StudyableCards(db, userId)
+            .Include(c => c.DeckCards.Where(dc =>
+                dc.Deck.UserId == userId || dc.Deck.Subscriptions.Any(s => s.UserId == userId)))
+            .ThenInclude(dc => dc.Deck);
+
+    /// <summary>
+    /// Turns the "card is not yours" case into a 403 when the card is one the caller
+    /// reaches through a linked deck.
+    /// </summary>
+    private async Task ThrowIfLinkedCard(string userId, string cardPublicId)
+    {
+        var linked = await LinkedDeckQuery.StudyableCards(db, userId)
+            .AnyAsync(c => c.PublicId == cardPublicId && c.UserId != userId);
+
+        if (linked) throw LinkedContentException.Card();
+    }
+
+    private async Task ThrowIfAnyLinkedCard(string userId, List<string> cardPublicIds)
+    {
+        var linked = await LinkedDeckQuery.StudyableCards(db, userId)
+            .AnyAsync(c => cardPublicIds.Contains(c.PublicId) && c.UserId != userId);
+
+        if (linked) throw LinkedContentException.Card();
+    }
+
+    /// <summary>
+    /// Renders a card as the caller sees it. For a linked card the author's
+    /// <c>SourceFile</c> is withheld and the deck pause shown is the caller's own.
+    /// </summary>
+    private async Task<CardDto> ToViewerDto(Card c, ReviewState? rs, string userId)
+    {
+        if (c.UserId == userId) return ToDto(c, rs);
+
+        var pauses = await db.DeckSubscriptions
+            .Where(s => s.UserId == userId)
+            .ToDictionaryAsync(s => s.DeckId, s => s.IsSuspended);
+
+        return new CardDto(
+            c.PublicId, null, c.Front, c.Back, rs?.State ?? "new", c.CreatedAt,
+            c.DeckCards
+                .Select(dc => new CardDeckInfoDto(
+                    dc.Deck.PublicId, dc.Deck.Name, pauses.GetValueOrDefault(dc.DeckId, dc.Deck.IsSuspended)))
+                .ToList(),
+            rs?.IsSuspended ?? false,
+            rs?.DueAt, rs?.Stability, rs?.Difficulty, rs?.Step, rs?.LastReviewedAt,
+            c.FrontSvg, c.BackSvg);
+    }
 
     private static CardDto ToDto(Card c, ReviewState? rs) =>
         new(c.PublicId, c.SourceFile, c.Front, c.Back, rs?.State ?? "new", c.CreatedAt,

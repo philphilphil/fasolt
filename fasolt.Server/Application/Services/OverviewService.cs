@@ -12,11 +12,10 @@ public class OverviewService(AppDbContext db)
     {
         var now = DateTimeOffset.UtcNow;
 
-        // Study-active cards: no decks OR at least one active deck
-        var activeCards = db.Cards
-            .Where(c => c.UserId == userId)
+        // Study-active cards: authored or linked, minus everything the user paused
+        var activeCards = LinkedDeckQuery.StudyableCards(db, userId)
             .Where(ReviewStateQuery.NotSuspendedBy(userId))
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+            .Where(LinkedDeckQuery.NotDeckPausedFor(userId));
 
         var totalCards = await activeCards.CountAsync();
 
@@ -34,9 +33,12 @@ public class OverviewService(AppDbContext db)
             s => s,
             s => stateCounts.FirstOrDefault(x => x.State == s)?.Count ?? 0);
 
-        var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId);
+        var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId)
+            + await db.DeckSubscriptions.CountAsync(s => s.UserId == userId);
 
+        // Sources stay authored-only: a linked card's SourceFile belongs to its author.
         var totalSources = await activeCards
+            .Where(c => c.UserId == userId)
             .Where(c => c.SourceFile != null)
             .Select(c => c.SourceFile)
             .Distinct()

@@ -66,28 +66,34 @@ public class ReviewStateConcurrencyTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task RateCard_FirstReviewFromTwoConcurrentRequests_BothSucceed()
+    public async Task RateCard_WhenASecondRequestFindsTheLazyRowAlreadyThere_BothSucceed()
     {
         var card = await CreateCard();
 
         await using var dbA = _db.CreateDbContext();
         await using var dbB = _db.CreateDbContext();
 
-        var results = await Task.WhenAll(
-            CreateReviewService(dbA).RateCard(UserId, new RateCardRequest(card.PublicId, "good")),
-            CreateReviewService(dbB).RateCard(UserId, new RateCardRequest(card.PublicId, "good")));
+        // The interleaving is forced rather than raced: request A's
+        // INSERT ... ON CONFLICT DO NOTHING has already committed when B arrives and
+        // runs the same statement. Firing both reviews in parallel exercises the same
+        // code but leaves the winner — and therefore the final state and the number of
+        // surviving logs — up to the scheduler, which is not something to assert on.
+        await ReviewStateQuery.EnsureExistAsync(dbA, UserId, [card.Id]);
 
-        results.Should().NotContainNulls();
+        var first = await CreateReviewService(dbA).RateCard(UserId, new RateCardRequest(card.PublicId, "good"));
+        var second = await CreateReviewService(dbB).RateCard(UserId, new RateCardRequest(card.PublicId, "good"));
+
+        first.Should().NotBeNull();
+        second.Should().NotBeNull();
+        first!.State.Should().Be("learning", "the first 'good' takes the card into learning");
+        second!.State.Should().Be("review", "the second one graduates it");
 
         await using var verify = _db.CreateDbContext();
         var rows = await verify.ReviewStates.Where(r => r.CardId == card.Id).ToListAsync();
-        rows.Should().HaveCount(1);
-        // The resulting state depends on how far the two requests actually overlap: a
-        // true tie has both writing the first learning step, while a pair that ends up
-        // serialized graduates the card. Both are correct — what this test pins is that
-        // neither request failed and the lazy row was materialized exactly once.
-        rows[0].State.Should().BeOneOf("learning", "review");
-        (await verify.ReviewLogs.CountAsync(r => r.CardId == card.Id)).Should().Be(2);
+        rows.Should().HaveCount(1, "the lazy row is materialized exactly once");
+        rows[0].State.Should().Be("review", "the later request's write is the one that stands");
+        (await verify.ReviewLogs.CountAsync(r => r.CardId == card.Id))
+            .Should().Be(2, "every accepted review is logged, whichever request made it");
     }
 
     [Fact]

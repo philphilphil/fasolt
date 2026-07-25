@@ -17,6 +17,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
     public DbSet<ReviewState> ReviewStates => Set<ReviewState>();
     public DbSet<Deck> Decks => Set<Deck>();
     public DbSet<DeckCard> DeckCards => Set<DeckCard>();
+    public DbSet<DeckSubscription> DeckSubscriptions => Set<DeckSubscription>();
     public DbSet<ConsentGrant> ConsentGrants => Set<ConsentGrant>();
     public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
     public DbSet<DeckSnapshot> DeckSnapshots => Set<DeckSnapshot>();
@@ -106,6 +107,15 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.HasIndex(e => e.CardId);
             entity.HasOne(e => e.Deck).WithMany(d => d.Cards).HasForeignKey(e => e.DeckId).OnDelete(DeleteBehavior.Cascade);
             entity.HasOne(e => e.Card).WithMany(c => c.DeckCards).HasForeignKey(e => e.CardId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<DeckSubscription>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.DeckId });
+            entity.HasIndex(e => e.DeckId);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Deck).WithMany(d => d.Subscriptions).HasForeignKey(e => e.DeckId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<ConsentGrant>(entity =>

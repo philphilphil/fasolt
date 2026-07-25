@@ -19,6 +19,14 @@ public static class LibraryEndpoints
         group.MapPost("/decks/{publicId}/copy", CopyDeck)
             .RequireAuthorization("EmailVerified")
             .RequireRateLimiting("api");
+
+        group.MapPost("/decks/{publicId}/subscribe", Subscribe)
+            .RequireAuthorization("EmailVerified")
+            .RequireRateLimiting("api");
+
+        group.MapDelete("/decks/{publicId}/subscribe", Unsubscribe)
+            .RequireAuthorization("EmailVerified")
+            .RequireRateLimiting("api");
     }
 
     private static async Task<IResult> ListPublicDecks(
@@ -60,5 +68,47 @@ public static class LibraryEndpoints
             }),
             _ => Results.Created($"/api/decks/{result.Deck!.Id}", result.Deck),
         };
+    }
+
+    /// <summary>
+    /// Links a shared deck into the caller's account. Idempotent: a repeat subscribe
+    /// returns 200 with the existing link instead of 201.
+    /// </summary>
+    private static async Task<IResult> Subscribe(
+        string publicId,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        DeckSubscriptionService subscriptionService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var result = await subscriptionService.Subscribe(user.Id, publicId);
+
+        return result.Error switch
+        {
+            SubscribeError.NotFound => Results.NotFound(),
+            SubscribeError.OwnDeck => Results.BadRequest(new
+            {
+                error = "own_deck",
+                message = "You already own this deck.",
+            }),
+            _ => result.Created
+                ? Results.Created($"/api/decks/{result.Deck!.Id}", result.Deck)
+                : Results.Ok(result.Deck),
+        };
+    }
+
+    private static async Task<IResult> Unsubscribe(
+        string publicId,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        DeckSubscriptionService subscriptionService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var removed = await subscriptionService.Unsubscribe(user.Id, publicId);
+        return removed ? Results.NoContent() : Results.NotFound();
     }
 }

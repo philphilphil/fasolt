@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Dtos;
+using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure;
 using Fasolt.Server.Infrastructure.Data;
@@ -92,6 +93,15 @@ public class LibraryEndpointsTests
             // Importing still requires an account.
             (await client.PostAsync($"/api/library/decks/{publicDeck.PublicId}/copy", null))
                 .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            (await client.PostAsync($"/api/library/decks/{publicDeck.PublicId}/subscribe", null))
+                .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            (await client.DeleteAsync($"/api/library/decks/{publicDeck.PublicId}/subscribe"))
+                .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            (await client.PostAsync($"/api/decks/{publicDeck.PublicId}/convert-to-copy", null))
+                .StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            // The link-mode endpoints resolve their service from the container.
+            scope.ServiceProvider.GetRequiredService<DeckSubscriptionService>().Should().NotBeNull();
         }
         finally
         {

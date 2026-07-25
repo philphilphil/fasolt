@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
@@ -10,7 +11,10 @@ public static class CardEndpoints
 {
     public static void MapCardEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/cards").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
+        var group = app.MapGroup("/api/cards")
+            .RequireAuthorization("EmailVerified")
+            .RequireRateLimiting("api")
+            .AddLinkedContentGuard();
 
         group.MapPost("/", Create);
         group.MapPost("/bulk", BulkCreate);

@@ -129,11 +129,10 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         var dueDayStarts = await ComputeDueDayStarts(userId, windowStart, todayStart, tz, dayStartHour);
 
         // Whether today itself has any due cards right now
-        var hasDueToday = await db.Cards
-            .Where(c => c.UserId == userId)
+        var hasDueToday = await LinkedDeckQuery.StudyableCards(db, userId)
             .Where(ReviewStateQuery.NotSuspendedBy(userId))
             .Where(ReviewStateQuery.DueBy(userId, todayEnd))
-            .AnyAsync(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+            .AnyAsync(LinkedDeckQuery.NotDeckPausedFor(userId));
 
         var activity = new List<DailyActivityDto>(days);
         for (var d = windowStart; d <= todayStart; d = d.AddDays(1))
@@ -169,9 +168,9 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
 
     private async Task<int> ComputeCurrentStreak(string userId, DateTimeOffset now, TimeZoneInfo tz, int dayStartHour)
     {
-        // Short-circuit: if user has no cards at all, return 0
-        var earliestCardCreatedAt = await db.Cards
-            .Where(c => c.UserId == userId)
+        // Short-circuit: if user has no cards at all, return 0. Linked cards count —
+        // a user studying nothing but linked decks still has a streak.
+        var earliestCardCreatedAt = await LinkedDeckQuery.StudyableCards(db, userId)
             .Select(c => (DateTimeOffset?)c.CreatedAt)
             .MinAsync();
 
@@ -233,8 +232,8 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
     {
         var todayEnd = todayStart.AddDays(1);
 
-        var cards = await db.Cards
-            .Where(c => c.UserId == userId && c.CreatedAt <= todayEnd)
+        var cards = await LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(c => c.CreatedAt <= todayEnd)
             .Select(c => new { c.Id, c.CreatedAt })
             .ToListAsync();
 

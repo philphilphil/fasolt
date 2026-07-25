@@ -350,6 +350,7 @@ builder.Services.AddScoped<AccountDataService>();
 builder.Services.AddScoped<McpResourceService>();
 builder.Services.AddScoped<LibraryService>();
 builder.Services.AddScoped<PublishingService>();
+builder.Services.AddScoped<DeckSubscriptionService>();
 
 var apnsKeyId = builder.Configuration["APNS_KEY_ID"];
 var apnsKeyBase64 = builder.Configuration["APNS_KEY_BASE64"];

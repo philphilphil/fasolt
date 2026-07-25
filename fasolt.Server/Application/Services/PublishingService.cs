@@ -81,7 +81,15 @@ public partial class PublishingService(AppDbContext db)
     public async Task<SetVisibilityResult> SetVisibility(string userId, string deckPublicId, DeckVisibility visibility)
     {
         var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
-        if (deck is null) return new SetVisibilityResult(SetVisibilityError.DeckNotFound, null);
+        if (deck is null)
+        {
+            // Publishing someone else's deck is forbidden, not merely missing.
+            var linked = await db.DeckSubscriptions
+                .AnyAsync(s => s.UserId == userId && s.Deck.PublicId == deckPublicId);
+            if (linked) throw LinkedContentException.Deck();
+
+            return new SetVisibilityResult(SetVisibilityError.DeckNotFound, null);
+        }
 
         if (visibility == DeckVisibility.Public && deck.Visibility != DeckVisibility.Public)
         {
@@ -106,6 +114,11 @@ public partial class PublishingService(AppDbContext db)
 
         ApplyVisibility(deck, visibility);
         await db.SaveChangesAsync();
+
+        // A private deck can no longer be resolved by anyone else, so the links to
+        // it go with it.
+        if (visibility == DeckVisibility.Private)
+            await DeckSubscriptionService.RemoveAllSubscriptions(db, deck.Id);
 
         return new SetVisibilityResult(SetVisibilityError.None, await ToDto(deck, userId));
     }
@@ -141,6 +154,7 @@ public partial class PublishingService(AppDbContext db)
 
         ApplyVisibility(deck, DeckVisibility.Private);
         await db.SaveChangesAsync();
+        await DeckSubscriptionService.RemoveAllSubscriptions(db, deck.Id);
         return true;
     }
 
