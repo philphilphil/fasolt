@@ -91,6 +91,40 @@ public class DeckSubscriptionServiceTests : IAsyncLifetime
         (await db.DeckSubscriptions.CountAsync(s => s.UserId == SubscriberId)).Should().Be(1);
     }
 
+    /// <summary>
+    /// A subscribe that overlaps an unpublish must not leave a live link to a private
+    /// deck: nothing re-checks visibility for an existing subscription, so such a row
+    /// would grant permanent access with no surface for the owner to revoke it.
+    /// </summary>
+    [Fact]
+    public async Task Subscribe_WaitsForAnInFlightUnpublish_AndThenFindsNothing()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-race");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, cardCount: 1);
+
+        // Stands in for an unpublish that has written the visibility but not yet
+        // committed — exactly the window the row lock has to cover.
+        await using var unpublisher = _db.CreateDbContext();
+        await using var unpublish = await unpublisher.Database.BeginTransactionAsync();
+        await unpublisher.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE "Decks" SET "Visibility" = 'Private', "PublishedAt" = NULL WHERE "Id" = {deck.Id}
+            """);
+
+        await using var joiner = _db.CreateDbContext();
+        var subscribe = new DeckSubscriptionService(joiner).Subscribe(SubscriberId, deck.PublicId);
+
+        await Task.Delay(300);
+        subscribe.IsCompleted.Should().BeFalse("the deck row is locked by the in-flight unpublish");
+
+        await unpublish.CommitAsync();
+
+        (await subscribe).Error.Should().Be(SubscribeError.NotFound);
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckSubscriptions.AnyAsync(s => s.DeckId == deck.Id)).Should().BeFalse();
+    }
+
     // ---- unlink ------------------------------------------------------------
 
     [Fact]
@@ -251,6 +285,74 @@ public class DeckSubscriptionServiceTests : IAsyncLifetime
 
         states.Should().HaveCount(2, "the copy gets its own row and the still-linked original keeps its own");
         states.Should().OnlyContain(r => r.State == "review" && r.Stability == 3.0);
+    }
+
+    [Fact]
+    public async Task ConvertToCopy_MovesTheReviewHistoryOntoTheCopy()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-logs");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Logged", cardCount: 0);
+        var card = LinkedDeckTestData.AddCard(db, deck, "Q", "A");
+        await db.SaveChangesAsync();
+        await LinkedDeckTestData.Subscribe(db, SubscriberId, deck);
+
+        db.ReviewLogs.Add(new ReviewLog
+        {
+            UserId = SubscriberId,
+            CardId = card.Id,
+            Rating = "good",
+            ReviewedAt = DateTimeOffset.UtcNow.AddDays(-1),
+            ScheduledDueAfter = DateTimeOffset.UtcNow.AddDays(2),
+            StateAfter = "review",
+        });
+        await db.SaveChangesAsync();
+
+        var result = await new DeckSubscriptionService(db).ConvertToCopy(SubscriberId, deck.PublicId);
+        result.Error.Should().Be(ConvertToCopyError.None);
+
+        await using var verify = _db.CreateDbContext();
+        var copiedCardId = await verify.DeckCards
+            .Where(dc => dc.Deck.PublicId == result.Deck!.Id)
+            .Select(dc => dc.CardId)
+            .SingleAsync();
+
+        var log = await verify.ReviewLogs.SingleAsync(r => r.UserId == SubscriberId);
+        log.CardId.Should().Be(copiedCardId,
+            "history left on the author's card cascade-deletes with it, silently shrinking "
+            + "the converter's totals for a deck they now own outright");
+
+        // The author deleting the original must no longer touch the converter's history.
+        await verify.Cards.Where(c => c.Id == card.Id).ExecuteDeleteAsync();
+        (await verify.ReviewLogs.CountAsync(r => r.UserId == SubscriberId)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ConvertToCopy_ReportsTheScheduledDueCount_NotEveryCard()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-due");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Scheduled", cardCount: 0);
+        var scheduled = LinkedDeckTestData.AddCard(db, deck, "Later", "A");
+        LinkedDeckTestData.AddCard(db, deck, "Now", "B");
+        await db.SaveChangesAsync();
+        await LinkedDeckTestData.Subscribe(db, SubscriberId, deck);
+
+        var state = await db.ReviewStateFor(SubscriberId, scheduled.Id);
+        state.State = "review";
+        state.DueAt = DateTimeOffset.UtcNow.AddDays(7);
+        await db.SaveChangesAsync();
+
+        var result = await new DeckSubscriptionService(db).ConvertToCopy(SubscriberId, deck.PublicId);
+
+        result.Deck!.CardCount.Should().Be(2);
+        result.Deck.DueCount.Should().Be(1, "the copy inherits the caller's schedule");
+
+        // Same number the deck list computes for the copy from its ReviewState rows.
+        await using var verify = _db.CreateDbContext();
+        var listed = (await new DeckService(verify).ListDecks(SubscriberId))
+            .Single(d => d.Id == result.Deck.Id);
+        listed.DueCount.Should().Be(result.Deck.DueCount);
     }
 
     [Fact]

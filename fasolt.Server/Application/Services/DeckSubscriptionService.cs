@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure;
@@ -20,10 +21,18 @@ public class DeckSubscriptionService(AppDbContext db)
     /// </summary>
     public async Task<SubscribeResult> Subscribe(string userId, string deckPublicId)
     {
-        var deck = await db.Decks
-            .FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.Visibility != DeckVisibility.Private);
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
-        if (deck is null) return new SubscribeResult(SubscribeError.NotFound, null, false);
+        // The deck row is locked for the rest of the transaction. Unpublishing takes
+        // the same lock before it removes the links, so the deck cannot go private
+        // between the visibility check and the insert below — which would leave a
+        // subscription to a private deck that nothing ever cleans up. It also
+        // serialises concurrent subscribes to the same deck, so the existence check
+        // is enough to keep this idempotent.
+        var deck = await LockDeck(db, deckPublicId);
+
+        if (deck is null || deck.Visibility == DeckVisibility.Private)
+            return new SubscribeResult(SubscribeError.NotFound, null, false);
         if (deck.UserId == userId) return new SubscribeResult(SubscribeError.OwnDeck, null, false);
 
         var subscription = await db.DeckSubscriptions
@@ -40,27 +49,35 @@ public class DeckSubscriptionService(AppDbContext db)
                 SubscribedAt = DateTimeOffset.UtcNow,
             };
             db.DeckSubscriptions.Add(subscription);
-
-            try
-            {
-                await db.SaveChangesAsync();
-                created = true;
-            }
-            catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "23505" })
-            {
-                // A concurrent subscribe won the race. Keep its row — subscribing is
-                // idempotent, so this request reports the existing link as success.
-                db.Entry(subscription).State = EntityState.Detached;
-                subscription = await db.DeckSubscriptions
-                    .FirstAsync(s => s.UserId == userId && s.DeckId == deck.Id);
-            }
+            await db.SaveChangesAsync();
+            created = true;
         }
 
-        return new SubscribeResult(
-            SubscribeError.None,
-            await ToLinkedDto(deck, userId, subscription.IsSuspended),
-            created);
+        var dto = await ToLinkedDto(deck, userId, subscription.IsSuspended);
+
+        await transaction.CommitAsync();
+
+        return new SubscribeResult(SubscribeError.None, dto, created);
     }
+
+    /// <summary>
+    /// Loads a deck by public id and holds a row lock on it until the ambient
+    /// transaction ends. Every path that adds or removes links to a deck takes this
+    /// lock first, and always before touching <see cref="DeckSubscription"/> rows, so
+    /// they serialise in a single order.
+    /// </summary>
+    internal static async Task<Deck?> LockDeck(AppDbContext db, string deckPublicId)
+    {
+        var decks = await db.Decks
+            .FromSql($"""SELECT * FROM "Decks" WHERE "PublicId" = {deckPublicId} FOR UPDATE""")
+            .ToListAsync();
+
+        return decks.FirstOrDefault();
+    }
+
+    /// <inheritdoc cref="LockDeck(AppDbContext, string)"/>
+    internal static Task LockDeck(AppDbContext db, Guid deckId) =>
+        db.Database.ExecuteSqlInterpolatedAsync($"""SELECT 1 FROM "Decks" WHERE "Id" = {deckId} FOR UPDATE""");
 
     /// <summary>
     /// Drops the link and the SRS rows that only existed because of it. Cards the
@@ -185,6 +202,11 @@ public class DeckSubscriptionService(AppDbContext db)
 
         await db.SaveChangesAsync();
 
+        // The history follows the state onto the copy, otherwise it stays hanging off
+        // the author's cards and cascade-deletes with them — shrinking the converter's
+        // totals and streaks for a deck they now own outright.
+        await MoveReviewLogsToCopy(db, userId, source.Id, newCardIdBySourceId);
+
         await DeleteOrphanedReviewStates(db, userId, source.Id);
         db.DeckSubscriptions.Remove(subscription);
         await db.SaveChangesAsync();
@@ -197,10 +219,17 @@ public class DeckSubscriptionService(AppDbContext db)
 
         await transaction.CommitAsync();
 
+        // The copy inherits the caller's schedule, so its due count is the same one
+        // every other deck DTO reports — not "all cards", which would flash a wrong
+        // badge until the next full refresh.
+        var dueCount = sourceCards.Count(sc =>
+            !states.TryGetValue(sc.CardId, out var carried)
+            || (!carried.IsSuspended && (carried.DueAt is null || carried.DueAt <= now)));
+
         return new ConvertToCopyResult(
             ConvertToCopyError.None,
             new DeckDto(
-                copy.PublicId, copy.Name, copy.Description, sourceCards.Count, sourceCards.Count,
+                copy.PublicId, copy.Name, copy.Description, sourceCards.Count, dueCount,
                 copy.CreatedAt, copy.IsSuspended,
                 copy.Visibility.ToWire(), copy.PublishedAt, copy.CopyCount,
                 copy.CopiedFromDeckPublicId, copy.CopiedFromHandle));
@@ -213,8 +242,21 @@ public class DeckSubscriptionService(AppDbContext db)
     /// </summary>
     public static async Task RemoveAllSubscriptions(AppDbContext db, Guid deckId)
     {
+        // The SRS cleanup and the link removal have to land together: half-applied,
+        // this either wipes subscribers' progress while their links survive, or leaves
+        // live links to a deck nobody can reach any more. Callers that sequence this
+        // with a mutation of their own open the transaction themselves — this covers
+        // the rest without nesting.
+        await using IDbContextTransaction? transaction = db.Database.CurrentTransaction is null
+            ? await db.Database.BeginTransactionAsync()
+            : null;
+
         var hasSubscribers = await db.DeckSubscriptions.AnyAsync(s => s.DeckId == deckId);
-        if (!hasSubscribers) return;
+        if (!hasSubscribers)
+        {
+            if (transaction is not null) await transaction.CommitAsync();
+            return;
+        }
 
         // Same rule as a single unlink, applied per subscriber: drop the rows for
         // cards this deck was the only route to, keep everything else.
@@ -247,6 +289,42 @@ public class DeckSubscriptionService(AppDbContext db)
         {
             entry.State = EntityState.Detached;
         }
+
+        if (transaction is not null) await transaction.CommitAsync();
+    }
+
+    /// <summary>
+    /// Re-points the caller's review log rows from the author's cards to their copies.
+    /// Follows the same rule as the SRS cleanup: a card the caller still reaches
+    /// through another linked deck keeps its history there, and a card they authored
+    /// is never touched.
+    /// </summary>
+    private static Task MoveReviewLogsToCopy(
+        AppDbContext db, string userId, Guid deckId, Dictionary<Guid, Guid> newCardIdBySourceId)
+    {
+        if (newCardIdBySourceId.Count == 0) return Task.CompletedTask;
+
+        var sourceIds = newCardIdBySourceId.Keys.ToArray();
+        var copyIds = sourceIds.Select(id => newCardIdBySourceId[id]).ToArray();
+
+        return db.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE "ReviewLogs" rl
+            SET "CardId" = m.new_id
+            FROM (
+                SELECT * FROM unnest({sourceIds}::uuid[], {copyIds}::uuid[]) AS t(old_id, new_id)
+            ) m
+            WHERE rl."UserId" = {userId}
+              AND rl."CardId" = m.old_id
+              AND NOT EXISTS (
+                  SELECT 1 FROM "Cards" c
+                  WHERE c."Id" = rl."CardId" AND c."UserId" = {userId})
+              AND NOT EXISTS (
+                  SELECT 1 FROM "DeckCards" dc2
+                  JOIN "DeckSubscriptions" ds ON ds."DeckId" = dc2."DeckId"
+                  WHERE dc2."CardId" = rl."CardId"
+                    AND ds."UserId" = {userId}
+                    AND ds."DeckId" <> {deckId})
+            """);
     }
 
     /// <summary>

@@ -49,6 +49,14 @@ async function copyId() {
   setTimeout(() => idCopied.value = false, 2000)
 }
 
+// A linked card belongs to the deck's author. It stays fully readable — and its SRS
+// state is the viewer's own, so Reset Progress still applies — but every content
+// mutation would 403, so those affordances are not offered at all.
+const isLinked = computed(() => card.value?.isLinked === true)
+
+// Cards can only be assigned to decks the user owns; a linked deck would 403.
+const assignableDecks = computed(() => decksStore.decks.filter(d => !d.isLinked))
+
 const deckContext = computed(() => {
   const id = route.query.deckId as string | undefined
   if (!id) return null
@@ -134,7 +142,7 @@ watch(() => route.params.id, async (newId, oldId) => {
 })
 
 function startEdit() {
-  if (!card.value) return
+  if (!card.value || isLinked.value) return
   front.value = card.value.front
   back.value = card.value.back
   editFrontSvg.value = card.value.frontSvg ?? ''
@@ -237,12 +245,13 @@ function onDeleted() {
       <div class="flex items-center gap-2.5">
         <h1 class="text-base font-semibold tracking-tight text-ink-0">{{ truncatedFront }}</h1>
         <Badge variant="outline" class="text-xs">{{ card.state }}</Badge>
+        <Badge v-if="isLinked" variant="outline" class="text-xs">Linked</Badge>
       </div>
       <div class="flex items-center gap-2">
         <Button variant="outline" size="sm" class="h-7 text-xs" @click="copyId">
           {{ idCopied ? 'Copied!' : 'Copy ID' }}
         </Button>
-        <Button v-if="!editing" variant="outline" size="sm" class="h-7 text-xs" @click="startEdit">Edit</Button>
+        <Button v-if="!editing && !isLinked" variant="outline" size="sm" class="h-7 text-xs" @click="startEdit">Edit</Button>
         <Button
           v-if="!editing"
           variant="outline"
@@ -253,6 +262,7 @@ function onDeleted() {
           Reset Progress
         </Button>
         <Button
+          v-if="!isLinked"
           variant="outline"
           size="sm"
           class="h-7 text-xs text-destructive hover:text-destructive"
@@ -320,7 +330,7 @@ function onDeleted() {
         <label class="fa-cap">Decks</label>
         <div class="flex flex-wrap gap-2">
           <label
-            v-for="d in decksStore.decks"
+            v-for="d in assignableDecks"
             :key="d.id"
             class="flex items-center gap-1.5 text-sm cursor-pointer text-ink-1"
           >

@@ -263,4 +263,65 @@ public class LinkedDeckStudyTests : IAsyncLifetime
 
         cards.Items.Should().ContainSingle().Which.Front.Should().Be("Own Q");
     }
+
+    [Fact]
+    public async Task ListCards_FilteredByALinkedDeck_ReturnsNothingRatherThanEverything()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, deck, _, _) = await SeedLinkedDeck(db);
+        await new CardService(db).CreateCard(UserId, "Own Q", "A", null);
+
+        var cards = await new CardService(db).ListCards(UserId, null, deck.PublicId, null, null);
+
+        cards.Items.Should().BeEmpty(
+            "a deck the caller only links holds none of their authored cards — presenting "
+            + "their whole collection as that deck's contents would be worse than nothing");
+    }
+
+    [Fact]
+    public async Task GetCard_MarksLinkedCardsSoTheUiCanHideMutations()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, deck, linked, _) = await SeedLinkedDeck(db);
+        var ownDeck = await new DeckService(db).CreateDeck(UserId, "Mine", null);
+        var own = await new CardService(db).CreateCard(UserId, "Own Q", "A", null, deckId: ownDeck.Id);
+        var svc = new CardService(db);
+
+        var linkedDto = await svc.GetCard(UserId, linked.PublicId);
+        linkedDto!.IsLinked.Should().BeTrue();
+        linkedDto.Decks.Should().ContainSingle().Which.Id.Should().Be(deck.PublicId);
+
+        var ownDto = await svc.GetCard(UserId, own.Id);
+        ownDto!.IsLinked.Should().BeFalse();
+        ownDto.Decks.Should().ContainSingle().Which.Id.Should().Be(ownDeck.Id);
+    }
+
+    // ---- notification counts -----------------------------------------------
+
+    [Fact]
+    public async Task DueCardSummary_CountsLinkedCardsLikeTheStudyQueue()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, deck, _, _) = await SeedLinkedDeck(db);
+        await new CardService(db).CreateCard(UserId, "Own Q", "A", null);
+
+        var summary = await DueCardQuery.GetDueCardSummary(db, UserId, _time.GetUtcNow());
+
+        var queue = await CreateReviewService(db).GetDueCards(UserId);
+        summary.TotalDue.Should().Be(queue.Count).And.Be(3);
+        summary.Breakdown.Should().Contain(deck.Name).And.Contain("Unsorted");
+    }
+
+    [Fact]
+    public async Task DueCardSummary_RespectsTheSubscribersOwnPause()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, deck, _, _) = await SeedLinkedDeck(db);
+        await new DeckService(db).SetSuspended(UserId, deck.PublicId, true);
+
+        var summary = await DueCardQuery.GetDueCardSummary(db, UserId, _time.GetUtcNow());
+
+        summary.TotalDue.Should().Be(0);
+        summary.Breakdown.Should().BeEmpty();
+    }
 }

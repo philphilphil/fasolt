@@ -78,6 +78,49 @@ public class LinkedDeckAuthorizationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task BulkUpdate_TouchingLinkedContent_LeavesTheCallersOwnCardsUntouched()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, _, linked) = await SeedLinkedDeck(db);
+        var svc = new CardService(db);
+        var first = await svc.CreateCard(UserId, "Own 1", "A1", null);
+        var last = await svc.CreateCard(UserId, "Own 2", "A2", null);
+
+        // The linked card sits in the middle: without an up-front check the first
+        // item is already committed by the time the batch fails.
+        var bulk = async () => await svc.BulkUpdateCards(UserId,
+        [
+            new BulkUpdateCardItem(first.Id, NewBack: "Changed 1"),
+            new BulkUpdateCardItem(linked.PublicId, NewBack: "Hijacked"),
+            new BulkUpdateCardItem(last.Id, NewBack: "Changed 2"),
+        ]);
+        await bulk.Should().ThrowAsync<LinkedContentException>();
+
+        await using var verify = _db.CreateDbContext();
+        var backs = await verify.Cards.Select(c => c.Back).ToListAsync();
+        backs.Should().BeEquivalentTo(["Author A", "A1", "A2"],
+            "a batch rejected for linked content must not have applied any of its items");
+    }
+
+    [Fact]
+    public async Task CreatingCardsIntoALinkedDeck_IsForbidden_NotReportedAsMissing()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, deck, _) = await SeedLinkedDeck(db);
+        var svc = new CardService(db);
+
+        var single = async () => await svc.CreateCard(UserId, "Own", "A", null, deckId: deck.PublicId);
+        await single.Should().ThrowAsync<LinkedContentException>();
+
+        var bulk = async () => await svc.BulkCreateCards(
+            UserId, [new BulkCardItem("Own", "A")], null, deck.PublicId);
+        await bulk.Should().ThrowAsync<LinkedContentException>();
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckCards.CountAsync(dc => dc.DeckId == deck.Id)).Should().Be(1);
+    }
+
+    [Fact]
     public async Task AddingAnOwnCardToALinkedDeck_IsForbidden()
     {
         await using var db = _db.CreateDbContext();

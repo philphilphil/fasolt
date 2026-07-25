@@ -14,6 +14,8 @@ export interface Card {
   lastReviewedAt: string | null
   isSuspended: boolean
   decks: { id: string; name: string; isSuspended: boolean }[]
+  /** True for a card reached through a linked deck: readable, but not editable or deletable. */
+  isLinked: boolean
 }
 
 export interface Stat {

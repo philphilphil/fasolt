@@ -232,10 +232,7 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
     {
         var todayEnd = todayStart.AddDays(1);
 
-        var cards = await LinkedDeckQuery.StudyableCards(db, userId)
-            .Where(c => c.CreatedAt <= todayEnd)
-            .Select(c => new { c.Id, c.CreatedAt })
-            .ToListAsync();
+        var cards = await LoadStudyableCardStarts(userId, todayEnd);
 
         if (cards.Count == 0)
             return new HashSet<DateTimeOffset>();
@@ -260,20 +257,21 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
 
         var dueDayStarts = new HashSet<DateTimeOffset>();
 
-        foreach (var card in cards)
+        foreach (var (cardId, availableFrom) in cards)
         {
-            var cardCreatedDay = GetDayBoundaries(card.CreatedAt, tz, dayStartHour).Start;
-            var startCursor = cardCreatedDay < cutoff ? cutoff : cardCreatedDay;
+            var availableDay = GetDayBoundaries(availableFrom, tz, dayStartHour).Start;
+            var startCursor = availableDay < cutoff ? cutoff : availableDay;
             if (startCursor >= todayStart)
                 continue;
 
-            // Initial effective-due at startCursor: MAX of pre-window scheduled-dues, or CreatedAt if none.
-            // (Cards created within the window have no pre-window logs, so they start at CreatedAt.)
-            var effectiveDue = preWindowMaxByCard.TryGetValue(card.Id, out var preMax)
+            // Initial effective-due at startCursor: MAX of pre-window scheduled-dues, or
+            // the day the card became the user's to study if none. (Cards that became
+            // available within the window have no pre-window logs, so they start there.)
+            var effectiveDue = preWindowMaxByCard.TryGetValue(cardId, out var preMax)
                 ? preMax
-                : card.CreatedAt;
+                : availableFrom;
 
-            var logs = logsByCard.TryGetValue(card.Id, out var l) ? l : null;
+            var logs = logsByCard.TryGetValue(cardId, out var l) ? l : null;
             var logIdx = 0;
 
             for (var cursor = startCursor; cursor < todayStart; cursor = cursor.AddDays(1))
@@ -296,6 +294,52 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         }
 
         return dueDayStarts;
+    }
+
+    /// <summary>
+    /// The cards the user could have been expected to study, each with the moment it
+    /// became theirs to study.
+    /// </summary>
+    /// <remarks>
+    /// For an authored card that is its creation time. For a linked card it is the
+    /// later of the author's creation time and the user's subscription — the author
+    /// may have written the deck years ago, and days before the link existed were
+    /// never the user's to miss, so counting them as due days would retroactively
+    /// break their streak and repaint past rest days as missed.
+    /// </remarks>
+    private async Task<Dictionary<Guid, DateTimeOffset>> LoadStudyableCardStarts(
+        string userId, DateTimeOffset availableBy)
+    {
+        var starts = await db.Cards
+            .Where(c => c.UserId == userId && c.CreatedAt <= availableBy)
+            .Select(c => new { c.Id, AvailableFrom = c.CreatedAt })
+            .ToDictionaryAsync(c => c.Id, c => c.AvailableFrom);
+
+        var linked = await db.DeckCards
+            .Where(dc => dc.Deck.Subscriptions.Any(s => s.UserId == userId))
+            .Select(dc => new
+            {
+                dc.CardId,
+                dc.Card.CreatedAt,
+                SubscribedAt = dc.Deck.Subscriptions
+                    .Where(s => s.UserId == userId)
+                    .Min(s => (DateTimeOffset?)s.SubscribedAt),
+            })
+            .ToListAsync();
+
+        foreach (var card in linked)
+        {
+            var subscribedAt = card.SubscribedAt ?? card.CreatedAt;
+            var availableFrom = card.CreatedAt > subscribedAt ? card.CreatedAt : subscribedAt;
+
+            if (availableFrom > availableBy) continue;
+
+            // A card reachable through several links counts from the earliest of them.
+            if (!starts.TryGetValue(card.CardId, out var existing) || availableFrom < existing)
+                starts[card.CardId] = availableFrom;
+        }
+
+        return starts;
     }
 
     private static (DateTimeOffset Start, DateTimeOffset End) GetDayBoundaries(

@@ -382,4 +382,52 @@ public class StudyStatsServiceTests : IAsyncLifetime
         dayBeforeToday.Count.Should().Be(0);
         dayBeforeToday.HadDue.Should().BeTrue();
     }
+
+    // --- Linked decks only count from the day they were linked ---
+
+    /// <summary>
+    /// A linked card carries the author's <c>CreatedAt</c>, which may predate the
+    /// subscription by years. Days before the link existed were never the user's to
+    /// miss, so they must not be repainted as due days — that would retroactively
+    /// break a streak built entirely on the user's own cards.
+    /// </summary>
+    [Fact]
+    public async Task LinkingAnOldDeck_DoesNotRetroactivelyBreakTheStreakOrRepaintRestDays()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        // Day 1: study an own card "easy" so it is scheduled well past day 2.
+        var day1 = _time.GetUtcNow();
+        var own = await CreateCardAt(db, day1.AddHours(-1));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(own, "easy"));
+
+        // Day 2 is a rest day. Day 3: study again — streak 2 over a preserved rest day.
+        _time.SetUtcNow(day1.AddDays(2));
+        var second = await CreateCardAt(db, _time.GetUtcNow().AddMinutes(-5));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(second, "good"));
+
+        var before = await CreateStatsService(db).GetStats(UserId);
+        before.CurrentStreak.Should().Be(2);
+
+        // Today: link a deck whose cards the author wrote a year ago.
+        var author = await LinkedDeckTestData.AddUser(db, "author-old");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Ancient", cardCount: 0);
+        var old = LinkedDeckTestData.AddCard(db, deck, "Old Q", "A");
+        old.CreatedAt = day1.AddDays(-365);
+        await db.SaveChangesAsync();
+        db.DeckSubscriptions.Add(new DeckSubscription
+        {
+            UserId = UserId,
+            DeckId = deck.Id,
+            SubscribedAt = _time.GetUtcNow(),
+        });
+        await db.SaveChangesAsync();
+
+        var after = await CreateStatsService(db).GetStats(UserId);
+        after.CurrentStreak.Should().Be(2, "the linked deck's history is the author's, not the subscriber's");
+
+        var progress = await CreateStatsService(db).GetProgress(UserId, 14);
+        progress.DailyActivity[^2].HadDue.Should().BeFalse("day 2 was a rest day before the link and stays one");
+    }
 }

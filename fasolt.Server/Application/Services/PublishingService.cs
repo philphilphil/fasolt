@@ -112,13 +112,30 @@ public partial class PublishingService(AppDbContext db)
                 return new SetVisibilityResult(SetVisibilityError.PublicDeckLimit, null);
         }
 
-        ApplyVisibility(deck, visibility);
-        await db.SaveChangesAsync();
-
         // A private deck can no longer be resolved by anyone else, so the links to
-        // it go with it.
+        // it go with it. Both halves land in one transaction — committing the
+        // visibility alone would leave subscribers studying a deck the owner believes
+        // is private, with no surface to revoke it.
         if (visibility == DeckVisibility.Private)
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync();
+
+            // Locks the deck row before any subscription is touched, in the same order
+            // Subscribe takes its locks, so a subscribe racing this either lands before
+            // the cleanup (and is removed by it) or blocks and then sees the deck as
+            // private.
+            ApplyVisibility(deck, visibility);
+            await db.SaveChangesAsync();
+
             await DeckSubscriptionService.RemoveAllSubscriptions(db, deck.Id);
+
+            await transaction.CommitAsync();
+        }
+        else
+        {
+            ApplyVisibility(deck, visibility);
+            await db.SaveChangesAsync();
+        }
 
         return new SetVisibilityResult(SetVisibilityError.None, await ToDto(deck, userId));
     }
@@ -152,9 +169,14 @@ public partial class PublishingService(AppDbContext db)
         var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId);
         if (deck is null) return false;
 
+        // One transaction, for the same reason as SetVisibility's private path.
+        await using var transaction = await db.Database.BeginTransactionAsync();
+
         ApplyVisibility(deck, DeckVisibility.Private);
         await db.SaveChangesAsync();
         await DeckSubscriptionService.RemoveAllSubscriptions(db, deck.Id);
+
+        await transaction.CommitAsync();
         return true;
     }
 

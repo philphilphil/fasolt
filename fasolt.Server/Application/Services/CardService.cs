@@ -34,7 +34,10 @@ public class CardService(AppDbContext db)
         {
             var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
             if (deck is null)
+            {
+                await ThrowIfLinkedDeck(userId, deckId);
                 throw new KeyNotFoundException("Deck not found or does not belong to you");
+            }
             if (await PublishingService.WouldExceedPublicCardCap(db, deck.Id, 1))
                 throw new PublishedDeckFullException();
             deckGuid = deck.Id;
@@ -80,7 +83,11 @@ public class CardService(AppDbContext db)
         if (deckId is not null)
         {
             var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
-            if (deck is null) return BulkCreateResult.DeckNotFound();
+            if (deck is null)
+            {
+                await ThrowIfLinkedDeck(userId, deckId);
+                return BulkCreateResult.DeckNotFound();
+            }
             deckGuid = deck.Id;
         }
 
@@ -222,9 +229,16 @@ public class CardService(AppDbContext db)
 
         if (deckId is not null)
         {
-            var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
-            if (deck is not null)
-                query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deck.Id));
+            // ListCards only ever returns authored cards, so an unresolvable deck —
+            // including one the caller merely links — filters everything out rather
+            // than silently widening the result to the caller's whole collection and
+            // presenting it as that deck's contents.
+            var deckGuid = await db.Decks
+                .Where(d => d.PublicId == deckId && d.UserId == userId)
+                .Select(d => (Guid?)d.Id)
+                .FirstOrDefaultAsync();
+
+            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
         }
 
         if (after is not null)
@@ -269,8 +283,7 @@ public class CardService(AppDbContext db)
 
     public async Task<CardDto?> GetCard(string userId, string publicId)
     {
-        var card = await StudyableCardsWithVisibleDecks(userId)
-            .FirstOrDefaultAsync(c => c.PublicId == publicId);
+        var card = await FindStudyableCard(userId, publicId);
 
         return card is null ? null : await ToViewerDto(card, await LoadState(userId, card.Id), userId);
     }
@@ -359,6 +372,11 @@ public class CardService(AppDbContext db)
 
     public async Task<List<BulkUpdateCardResult>> BulkUpdateCards(string userId, List<BulkUpdateCardItem> items)
     {
+        // Checked up front, like DeleteCards: each item is saved on its own, so
+        // discovering a linked card halfway would leave the earlier items applied
+        // while the caller only sees a 403.
+        await ThrowIfAnyLinkedCard(userId, items.Select(i => i.CardId).ToList());
+
         var results = new List<BulkUpdateCardResult>();
 
         foreach (var item in items)
@@ -463,8 +481,7 @@ public class CardService(AppDbContext db)
 
     public async Task<CardDto?> ResetProgress(string userId, string publicId)
     {
-        var card = await StudyableCardsWithVisibleDecks(userId)
-            .FirstOrDefaultAsync(c => c.PublicId == publicId);
+        var card = await FindStudyableCard(userId, publicId);
 
         if (card is null) return null;
 
@@ -489,8 +506,7 @@ public class CardService(AppDbContext db)
 
     public async Task<CardDto?> SetSuspended(string userId, string publicId, bool isSuspended)
     {
-        var card = await StudyableCardsWithVisibleDecks(userId)
-            .FirstOrDefaultAsync(c => c.PublicId == publicId);
+        var card = await FindStudyableCard(userId, publicId);
 
         if (card is null) return null;
 
@@ -512,14 +528,27 @@ public class CardService(AppDbContext db)
         db.ReviewStates.FirstOrDefaultAsync(r => r.UserId == userId && r.CardId == cardId);
 
     /// <summary>
-    /// Cards the caller may act on for their own SRS state — authored or linked —
-    /// with only the decks they can actually see attached.
+    /// Loads a card the caller may act on for their own SRS state — authored or
+    /// linked — with only the decks they can actually see attached.
     /// </summary>
-    private IQueryable<Card> StudyableCardsWithVisibleDecks(string userId) =>
-        LinkedDeckQuery.StudyableCards(db, userId)
-            .Include(c => c.DeckCards.Where(dc =>
-                dc.Deck.UserId == userId || dc.Deck.Subscriptions.Any(s => s.UserId == userId)))
-            .ThenInclude(dc => dc.Deck);
+    /// <remarks>
+    /// The deck memberships are loaded explicitly because <c>Include</c> cannot be
+    /// composed onto <see cref="LinkedDeckQuery.StudyableCards"/>'s set operation.
+    /// </remarks>
+    private async Task<Card?> FindStudyableCard(string userId, string publicId)
+    {
+        var card = await LinkedDeckQuery.StudyableCards(db, userId)
+            .FirstOrDefaultAsync(c => c.PublicId == publicId);
+
+        if (card is null) return null;
+
+        await db.Entry(card).Collection(c => c.DeckCards).Query()
+            .Where(dc => dc.Deck.UserId == userId || dc.Deck.Subscriptions.Any(s => s.UserId == userId))
+            .Include(dc => dc.Deck)
+            .LoadAsync();
+
+        return card;
+    }
 
     /// <summary>
     /// Turns the "card is not yours" case into a 403 when the card is one the caller
@@ -531,6 +560,19 @@ public class CardService(AppDbContext db)
             .AnyAsync(c => c.PublicId == cardPublicId && c.UserId != userId);
 
         if (linked) throw LinkedContentException.Card();
+    }
+
+    /// <summary>
+    /// Turns the "deck is not yours" case into a 403 when the deck is one the caller
+    /// links, so every path that refuses to write into a linked deck says so the same
+    /// way instead of reporting it as missing.
+    /// </summary>
+    private async Task ThrowIfLinkedDeck(string userId, string deckPublicId)
+    {
+        var linked = await db.DeckSubscriptions
+            .AnyAsync(s => s.UserId == userId && s.Deck.PublicId == deckPublicId);
+
+        if (linked) throw LinkedContentException.Deck();
     }
 
     private async Task ThrowIfAnyLinkedCard(string userId, List<string> cardPublicIds)
@@ -561,7 +603,8 @@ public class CardService(AppDbContext db)
                 .ToList(),
             rs?.IsSuspended ?? false,
             rs?.DueAt, rs?.Stability, rs?.Difficulty, rs?.Step, rs?.LastReviewedAt,
-            c.FrontSvg, c.BackSvg);
+            c.FrontSvg, c.BackSvg,
+            IsLinked: true);
     }
 
     private static CardDto ToDto(Card c, ReviewState? rs) =>

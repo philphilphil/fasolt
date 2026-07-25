@@ -236,6 +236,16 @@ public class DeckService(AppDbContext db)
                 .ToListAsync()
             : [];
 
+        // Everything below is one transaction: unlinking the subscribers and wiping
+        // their progress must not survive a failure that leaves the deck itself in
+        // place, still published.
+        await using var transaction = await db.Database.BeginTransactionAsync();
+
+        // Locked first, in the same order Subscribe takes its locks, so the two cannot
+        // deadlock and a subscribe racing this delete is either seen by the cleanup
+        // below or finds no deck at all.
+        await DeckSubscriptionService.LockDeck(db, deck.Id);
+
         // Subscribers lose the deck with it. Done before the delete cascades the
         // subscription rows away, so their orphaned SRS rows can still be found.
         await DeckSubscriptionService.RemoveAllSubscriptions(db, deck.Id);
@@ -255,6 +265,8 @@ public class DeckService(AppDbContext db)
                 .Where(c => cardIds.Contains(c.Id) && c.UserId == userId)
                 .ExecuteDeleteAsync();
         }
+
+        await transaction.CommitAsync();
 
         return new DeleteDeckResult(true, deletedCardCount);
     }

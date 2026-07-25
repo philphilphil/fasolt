@@ -18,9 +18,18 @@ public static class LinkedDeckQuery
     /// deck and the card belong to the same account), so a card reached through a
     /// subscription is never one of the caller's own.
     /// </summary>
+    /// <remarks>
+    /// Deliberately a UNION rather than one <c>UserId == me OR EXISTS(…)</c> predicate.
+    /// The OR form cannot use the <c>Cards.UserId</c> index and makes every hot-path
+    /// query (due queue, stats, overview, search) scan the whole multi-tenant Cards
+    /// table; the UNION lets each branch use its own index. One consequence:
+    /// <c>Include</c> cannot be composed onto a set operation, so callers that need
+    /// navigations must load them explicitly.
+    /// </remarks>
     public static IQueryable<Card> StudyableCards(AppDbContext db, string userId) =>
-        db.Cards.Where(c => c.UserId == userId
-            || c.DeckCards.Any(dc => dc.Deck.Subscriptions.Any(s => s.UserId == userId)));
+        db.Cards.Where(c => c.UserId == userId)
+            .Union(db.Cards.Where(c =>
+                c.DeckCards.Any(dc => dc.Deck.Subscriptions.Any(s => s.UserId == userId))));
 
     /// <summary>
     /// Cards not paused through a deck. For authored cards that is the owner's own
