@@ -35,6 +35,8 @@ public class CardService(AppDbContext db)
             var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
             if (deck is null)
                 throw new KeyNotFoundException("Deck not found or does not belong to you");
+            if (await PublishingService.WouldExceedPublicCardCap(db, deck.Id, 1))
+                throw new PublishedDeckFullException();
             deckGuid = deck.Id;
         }
 
@@ -167,6 +169,14 @@ public class CardService(AppDbContext db)
         // Add to deck if specified
         if (deckGuid.HasValue)
         {
+            // Only the cards that survived duplicate/validation filtering count towards
+            // the published-deck cap.
+            if (await PublishingService.WouldExceedPublicCardCap(db, deckGuid.Value, created.Count))
+            {
+                foreach (var card in created) db.Entry(card).State = EntityState.Detached;
+                return BulkCreateResult.PublishedDeckFull();
+            }
+
             foreach (var card in created)
             {
                 db.DeckCards.Add(new DeckCard
@@ -289,14 +299,27 @@ public class CardService(AppDbContext db)
 
         if (request.DeckIds is not null)
         {
-            db.DeckCards.RemoveRange(card.DeckCards);
+            var currentDeckIds = card.DeckCards.Select(dc => dc.DeckId).ToHashSet();
+
+            var targetDecks = new List<Deck>();
             foreach (var deckPublicId in request.DeckIds)
             {
                 var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
-                if (deck is not null)
-                {
-                    db.DeckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
-                }
+                if (deck is not null) targetDecks.Add(deck);
+            }
+
+            // Check before mutating anything: decks the card is already in are a no-op,
+            // the rest have to fit under the published-deck cap.
+            foreach (var deck in targetDecks.Where(d => !currentDeckIds.Contains(d.Id)))
+            {
+                if (await PublishingService.WouldExceedPublicCardCap(db, deck.Id, 1))
+                    throw new PublishedDeckFullException();
+            }
+
+            db.DeckCards.RemoveRange(card.DeckCards);
+            foreach (var deck in targetDecks)
+            {
+                db.DeckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
             }
         }
 
@@ -491,6 +514,7 @@ public class BulkCreateResult
 {
     public bool IsSuccess { get; private init; }
     public bool IsDeckNotFound { get; private init; }
+    public bool IsPublishedDeckFull { get; private init; }
     public BulkCreateCardsResponse? Response { get; private init; }
 
     public static BulkCreateResult Success(BulkCreateCardsResponse response) =>
@@ -498,4 +522,7 @@ public class BulkCreateResult
 
     public static BulkCreateResult DeckNotFound() =>
         new() { IsDeckNotFound = true };
+
+    public static BulkCreateResult PublishedDeckFull() =>
+        new() { IsPublishedDeckFull = true };
 }

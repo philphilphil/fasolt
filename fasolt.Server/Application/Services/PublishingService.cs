@@ -110,6 +110,29 @@ public partial class PublishingService(AppDbContext db)
         return new SetVisibilityResult(SetVisibilityError.None, await ToDto(deck, userId));
     }
 
+    /// <summary>
+    /// Re-checks the published-deck card cap on the paths that add cards to a deck.
+    /// <see cref="SetVisibility"/> only sees a deck as it stands at publish time, so
+    /// without this a deck published just under the cap could grow without limit
+    /// while still listed in the library.
+    /// </summary>
+    /// <returns>
+    /// True when adding <paramref name="adding"/> cards would push a <c>Public</c>
+    /// deck past <see cref="MaxCardsInPublicDeck"/>. Private and unlisted decks are
+    /// never capped — the same asymmetry as at publish time.
+    /// </returns>
+    public static async Task<bool> WouldExceedPublicCardCap(AppDbContext db, Guid deckId, int adding)
+    {
+        if (adding <= 0) return false;
+
+        var isPublic = await db.Decks
+            .AnyAsync(d => d.Id == deckId && d.Visibility == DeckVisibility.Public);
+        if (!isPublic) return false;
+
+        var current = await db.DeckCards.CountAsync(dc => dc.DeckId == deckId);
+        return current + adding > MaxCardsInPublicDeck;
+    }
+
     /// <summary>Admin action: force a deck back to Private, whoever owns it.</summary>
     public async Task<bool> Unlist(string deckPublicId)
     {
@@ -161,6 +184,15 @@ public partial class PublishingService(AppDbContext db)
             deck.CopiedFromDeckPublicId, deck.CopiedFromHandle);
     }
 }
+
+/// <summary>
+/// Thrown by the single-card paths when adding the card would push a published deck
+/// past <see cref="PublishingService.MaxCardsInPublicDeck"/>. The bulk paths report
+/// the same condition through their result types instead.
+/// </summary>
+public class PublishedDeckFullException()
+    : Exception($"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. " +
+                "Unpublish the deck before adding more.");
 
 public enum SetHandleError { None, Invalid, Taken, UserNotFound }
 

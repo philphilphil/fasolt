@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Api.Endpoints;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
@@ -315,17 +316,9 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
             }));
 
-    // Anonymous library browsing: keyed by IP and roomier than "api", because a
-    // single visitor paging through the library fires several reads per screen.
-    options.AddPolicy("library", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 120,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0,
-            }));
+    // Anonymous library browsing: keyed by IP. Shared with SeoMiddleware, which meters
+    // the anonymous HTML routes itself.
+    options.AddPolicy("library", LibraryRateLimit.Partition);
 
     options.AddPolicy("api", context =>
     {

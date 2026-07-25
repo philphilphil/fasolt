@@ -20,6 +20,7 @@ const publicId = computed(() => route.params.publicId as string)
 const deck = ref<LibraryDeckDetail | null>(null)
 const loading = ref(true)
 const notFound = ref(false)
+const loadError = ref('')
 
 const sampleIndex = ref(0)
 const isFlipped = ref(false)
@@ -53,14 +54,18 @@ function applyTitle() {
 async function load() {
   loading.value = true
   notFound.value = false
+  loadError.value = ''
   sampleIndex.value = 0
   isFlipped.value = false
   try {
     deck.value = await library.getDeck(publicId.value)
     applyTitle()
-  } catch {
+  } catch (e) {
     deck.value = null
-    notFound.value = true
+    // Only a 404 means the deck is really gone. Rate limiting (429), a 5xx or a
+    // dropped connection must not tell the visitor a live share link is dead.
+    if (isApiError(e) && e.status === 404) notFound.value = true
+    else loadError.value = 'Could not load this deck right now. Please try again.'
   } finally {
     loading.value = false
   }
@@ -119,7 +124,11 @@ async function copyToMyDecks() {
   <div :class="auth.isAuthenticated ? '' : 'flex min-h-screen flex-col bg-paper-0 text-ink-0'">
     <PublicNav v-if="!auth.isAuthenticated" />
 
-    <main :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'">
+    <!-- Signed in, AppLayout already provides the <main> landmark; nesting a second one is invalid. -->
+    <component
+      :is="auth.isAuthenticated ? 'div' : 'main'"
+      :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'"
+    >
       <div class="library-deck-page">
         <RouterLink to="/library" class="fa-back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -130,6 +139,11 @@ async function copyToMyDecks() {
 
         <div v-else-if="notFound" class="empty">
           This deck isn't available. It may have been unpublished or deleted.
+        </div>
+
+        <div v-else-if="loadError" class="empty">
+          <p>{{ loadError }}</p>
+          <button type="button" class="fa-btn empty-action" @click="load">Try again</button>
         </div>
 
         <template v-else-if="deck">
@@ -208,7 +222,7 @@ async function copyToMyDecks() {
           <div v-else class="empty">This deck has no cards to preview yet.</div>
         </template>
       </div>
-    </main>
+    </component>
 
     <AppFooter v-if="!auth.isAuthenticated" />
   </div>
@@ -314,4 +328,6 @@ async function copyToMyDecks() {
   color: var(--ink-2);
   font-size: 13px;
 }
+.empty p { margin: 0; }
+.empty-action { margin-top: 12px; }
 </style>

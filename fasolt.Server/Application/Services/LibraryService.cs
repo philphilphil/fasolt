@@ -19,9 +19,16 @@ public class LibraryService(AppDbContext db)
     public const int DefaultPageSize = 24;
     public const int MaxPageSize = 50;
 
+    /// <summary>
+    /// Ceiling on <c>?page=</c>. This is an anonymous endpoint, so an absurd page
+    /// number must not overflow the <c>Skip()</c> arithmetic into a negative OFFSET
+    /// (Postgres rejects those) or make us pay for a pointless deep scan.
+    /// </summary>
+    public const int MaxPage = 1000;
+
     public async Task<LibraryListResponse> ListPublicDecks(string? query, string? sort, int page, int pageSize)
     {
-        page = Math.Max(page, 1);
+        page = Math.Clamp(page, 1, MaxPage);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
         var decks = db.Decks.Where(d => d.Visibility == DeckVisibility.Public);
@@ -165,9 +172,20 @@ public class LibraryService(AppDbContext db)
             db.DeckCards.Add(new DeckCard { DeckId = copy.Id, CardId = card.Id });
         }
 
-        source.CopyCount += 1;
-
         await db.SaveChangesAsync();
+
+        // Copying your own deck must not inflate the count that drives the library's
+        // "popular" sort.
+        if (source.UserId != userId)
+        {
+            // Atomic increment rather than a tracked read-modify-write: EF would write
+            // the absolute value read at the top of this method, so simultaneous copies
+            // of the same deck would overwrite each other's increments.
+            await db.Decks
+                .Where(d => d.Id == source.Id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(d => d.CopyCount, d => d.CopyCount + 1));
+        }
+
         await transaction.CommitAsync();
 
         return new CopyDeckResult(

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure;
@@ -146,6 +147,77 @@ public class LibraryEndpointsTests
         finally
         {
             await db.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task DeckNameWithRegexSubstitutionTokensDoesNotCorruptThePage()
+    {
+        // Deck names are user text and land in a Regex.Replace *replacement*, where
+        // "$'" means "everything after the match" — unescaped it splices the rest of
+        // index.html into <title>.
+        var webRoot = Directory.CreateTempSubdirectory("fasolt-seo-dollar-").FullName;
+        await File.WriteAllTextAsync(Path.Combine(webRoot, "index.html"), """
+            <!doctype html>
+            <html><head>
+            <meta name="description" content="original description" />
+            <title>fasolt</title>
+            </head><body><div id="app"></div></body></html>
+            """);
+
+        var seoFactory = _factory.WithWebHostBuilder(builder => builder.UseWebRoot(webRoot));
+
+        using var scope = seoFactory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var (userId, publicDeck, _, _) = await Seed(db);
+        publicDeck.Name = "Best $' deck $& ever $$";
+        publicDeck.Description = "Costs $$$ per $` card";
+        await db.SaveChangesAsync();
+
+        try
+        {
+            var page = await seoFactory.CreateClient().GetStringAsync($"/library/{publicDeck.PublicId}");
+
+            page.Should().Contain("Best $&#39; deck $&amp; ever $$");
+            page.Should().Contain("Costs $$$ per $` card");
+            page.Should().NotContain("original description");
+            // A leaked substitution token would duplicate the document.
+            page.Split("<div id=\"app\">").Should().HaveCount(2);
+        }
+        finally
+        {
+            await db.Users.Where(u => u.Id == userId).ExecuteDeleteAsync();
+            Directory.Delete(webRoot, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task AnonymousLibraryHtmlRoutesAreRateLimited()
+    {
+        // SeoMiddleware answers these routes itself, ahead of UseRateLimiter, so it
+        // has to meter them or they are the one unthrottled anonymous surface.
+        var webRoot = Directory.CreateTempSubdirectory("fasolt-seo-rl-").FullName;
+        await File.WriteAllTextAsync(Path.Combine(webRoot, "index.html"),
+            "<!doctype html><html><head><title>fasolt</title></head><body></body></html>");
+
+        var seoFactory = _factory.WithWebHostBuilder(builder => builder.UseWebRoot(webRoot));
+
+        try
+        {
+            var client = seoFactory.CreateClient();
+
+            for (var i = 0; i < LibraryRateLimit.PermitLimit; i++)
+            {
+                (await client.GetAsync("/library")).StatusCode
+                    .Should().Be(HttpStatusCode.OK, "request {0} is still inside the window's budget", i + 1);
+            }
+
+            (await client.GetAsync("/library")).StatusCode
+                .Should().Be(HttpStatusCode.TooManyRequests);
+        }
+        finally
+        {
             Directory.Delete(webRoot, recursive: true);
         }
     }

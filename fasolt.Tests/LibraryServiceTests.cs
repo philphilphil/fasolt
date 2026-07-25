@@ -165,6 +165,24 @@ public class LibraryServiceTests : IAsyncLifetime
         second.Items.Select(d => d.Name).Should().ContainInOrder("Deck 2", "Deck 3");
     }
 
+    [Fact]
+    public async Task ListPublicDecks_ClampsAbsurdPageNumbers()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await AddAuthor(db, "author-four-b");
+        await AddDeck(db, author, DeckVisibility.Public, "Only Deck");
+
+        var svc = new LibraryService(db);
+
+        // (page - 1) * pageSize would overflow Int32 and hand Postgres a negative
+        // OFFSET — a 500 on an anonymous, crawler-facing endpoint.
+        var result = await svc.ListPublicDecks(null, null, 89478487, 24);
+
+        result.Page.Should().Be(LibraryService.MaxPage);
+        result.Items.Should().BeEmpty();
+        result.TotalCount.Should().Be(1);
+    }
+
     // ---- anonymous deck detail --------------------------------------------
 
     [Fact]
@@ -286,6 +304,45 @@ public class LibraryServiceTests : IAsyncLifetime
         await svc.CopyDeck(ImporterId, source.PublicId);
 
         (await db.Decks.AsNoTracking().FirstAsync(d => d.Id == source.Id)).CopyCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task CopyDeck_ConcurrentCopiesDoNotLoseIncrements()
+    {
+        await using var setup = _db.CreateDbContext();
+        var author = await AddAuthor(setup, "author-nine-b");
+        var source = await AddDeck(setup, author, DeckVisibility.Public, "Contended", cardCount: 1);
+
+        // A tracked read-modify-write would have every racer write the same stale
+        // value; the count has to be incremented in SQL.
+        const int copies = 8;
+        var importers = new List<string>();
+        for (var i = 0; i < copies; i++)
+            importers.Add(await AddAuthor(setup, $"importer-{i}"));
+
+        await Task.WhenAll(importers.Select(async importer =>
+        {
+            await using var db = _db.CreateDbContext();
+            await new LibraryService(db).CopyDeck(importer, source.PublicId);
+        }));
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.Decks.AsNoTracking().FirstAsync(d => d.Id == source.Id))
+            .CopyCount.Should().Be(copies);
+    }
+
+    [Fact]
+    public async Task CopyDeck_DoesNotCountCopiesOfYourOwnDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await AddAuthor(db, "author-nine-c");
+        var source = await AddDeck(db, author, DeckVisibility.Public, "Self Serve", cardCount: 1);
+
+        var svc = new LibraryService(db);
+        var result = await svc.CopyDeck(author, source.PublicId);
+
+        result.Error.Should().Be(CopyDeckError.None);
+        (await db.Decks.AsNoTracking().FirstAsync(d => d.Id == source.Id)).CopyCount.Should().Be(0);
     }
 
     [Fact]

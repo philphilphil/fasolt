@@ -50,6 +50,10 @@ public static class CardEndpoints
         {
             return Results.BadRequest(new { error = "validation_error", message = ex.Message });
         }
+        catch (PublishedDeckFullException ex)
+        {
+            return Results.BadRequest(new { error = "deck_full", message = ex.Message });
+        }
     }
 
     private static async Task<IResult> List(
@@ -97,8 +101,15 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var dto = await cardService.UpdateCard(user.Id, id, request);
-        return dto is null ? Results.NotFound() : Results.Ok(dto);
+        try
+        {
+            var dto = await cardService.UpdateCard(user.Id, id, request);
+            return dto is null ? Results.NotFound() : Results.Ok(dto);
+        }
+        catch (PublishedDeckFullException ex)
+        {
+            return Results.BadRequest(new { error = "deck_full", message = ex.Message });
+        }
     }
 
     private static async Task<IResult> Delete(
@@ -211,6 +222,14 @@ public static class CardEndpoints
 
         if (result.IsDeckNotFound)
             return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
+
+        if (result.IsPublishedDeckFull)
+            return Results.BadRequest(new
+            {
+                error = "deck_full",
+                message = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                    + "Unpublish the deck before adding more.",
+            });
 
         return Results.Created("/api/cards/bulk", result.Response);
     }

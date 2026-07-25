@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure;
@@ -305,6 +306,97 @@ public class PublishingServiceTests : IAsyncLifetime
         var result = await svc.SetVisibility(UserId, deck.PublicId, DeckVisibility.Unlisted);
 
         result.Error.Should().Be(SetVisibilityError.DeckNotFound);
+    }
+
+    // ---- card cap after publishing -----------------------------------------
+    // Publishing only checks the deck as it stands at that moment, so every path
+    // that adds cards has to re-check — otherwise a deck published at 999 cards
+    // could grow without limit while listed in the library.
+
+    [Fact]
+    public async Task AddCards_CannotPushAPublishedDeckOverTheCardCap()
+    {
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "grower");
+        var deck = await AddDeck(db, userId, cardCount: PublishingService.MaxCardsInPublicDeck,
+            visibility: DeckVisibility.Public);
+
+        var extra = await new CardService(db).CreateCard(userId, "One more", "Nope", null);
+        var result = await new DeckService(db).AddCards(userId, deck.PublicId, [extra.Id]);
+
+        result.Should().Be(AddCardsResult.PublishedDeckFull);
+        (await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id))
+            .Should().Be(PublishingService.MaxCardsInPublicDeck);
+    }
+
+    [Fact]
+    public async Task AddCards_IsUncappedForDecksThatAreNotPublic()
+    {
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "private-grower");
+        var deck = await AddDeck(db, userId, cardCount: PublishingService.MaxCardsInPublicDeck,
+            visibility: DeckVisibility.Unlisted);
+
+        var extra = await new CardService(db).CreateCard(userId, "One more", "Fine", null);
+        var result = await new DeckService(db).AddCards(userId, deck.PublicId, [extra.Id]);
+
+        result.Should().Be(AddCardsResult.Success);
+        (await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id))
+            .Should().Be(PublishingService.MaxCardsInPublicDeck + 1);
+    }
+
+    [Fact]
+    public async Task CreateCard_IntoAFullPublishedDeckIsRejected()
+    {
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "single-adder");
+        var deck = await AddDeck(db, userId, cardCount: PublishingService.MaxCardsInPublicDeck,
+            visibility: DeckVisibility.Public);
+
+        var act = () => new CardService(db).CreateCard(userId, "Q", "A", null, deckId: deck.PublicId);
+
+        await act.Should().ThrowAsync<PublishedDeckFullException>();
+        (await db.Cards.CountAsync(c => c.UserId == userId && c.Front == "Q")).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task BulkCreateCards_IntoAFullPublishedDeckCreatesNothing()
+    {
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "bulk-adder");
+        var deck = await AddDeck(db, userId, cardCount: PublishingService.MaxCardsInPublicDeck,
+            visibility: DeckVisibility.Public);
+
+        var result = await new CardService(db).BulkCreateCards(
+            userId,
+            [new BulkCardItem("Bulk Q", "Bulk A")],
+            sourceFile: null,
+            deckId: deck.PublicId);
+
+        result.IsPublishedDeckFull.Should().BeTrue();
+        result.IsSuccess.Should().BeFalse();
+        (await db.Cards.CountAsync(c => c.UserId == userId && c.Front == "Bulk Q")).Should().Be(0);
+        (await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id))
+            .Should().Be(PublishingService.MaxCardsInPublicDeck);
+    }
+
+    [Fact]
+    public async Task UpdateCard_CannotAssignAnExtraCardToAFullPublishedDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "reassigner");
+        var deck = await AddDeck(db, userId, cardCount: PublishingService.MaxCardsInPublicDeck,
+            visibility: DeckVisibility.Public);
+
+        var svc = new CardService(db);
+        var loose = await svc.CreateCard(userId, "Loose Q", "Loose A", null);
+
+        var act = () => svc.UpdateCard(userId, loose.Id,
+            new UpdateCardRequest("Loose Q", "Loose A", null, null, null, [deck.PublicId]));
+
+        await act.Should().ThrowAsync<PublishedDeckFullException>();
+        (await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id))
+            .Should().Be(PublishingService.MaxCardsInPublicDeck);
     }
 
     // ---- admin actions -----------------------------------------------------

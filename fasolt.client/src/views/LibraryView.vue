@@ -92,7 +92,11 @@ function goToPage(value: number) {
   <div :class="auth.isAuthenticated ? '' : 'flex min-h-screen flex-col bg-paper-0 text-ink-0'">
     <PublicNav v-if="!auth.isAuthenticated" />
 
-    <main :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'">
+    <!-- Signed in, AppLayout already provides the <main> landmark; nesting a second one is invalid. -->
+    <component
+      :is="auth.isAuthenticated ? 'div' : 'main'"
+      :class="auth.isAuthenticated ? '' : 'mx-auto w-full max-w-5xl flex-1 px-6 py-12'"
+    >
       <div class="library-page">
         <header>
           <h1 class="page-title">Deck library</h1>
@@ -139,7 +143,13 @@ function goToPage(value: number) {
         <div v-else-if="library.loading" class="empty">Loading decks…</div>
 
         <div v-else-if="library.decks.length === 0" class="empty">
-          <template v-if="activeQuery">No decks match “{{ activeQuery }}”.</template>
+          <!-- A ?page= past the end also lands here, and the pagination controls below
+               are hidden, so offer the way back explicitly. -->
+          <template v-if="library.totalCount > 0 && page > 1">
+            <p>Page {{ page }} is past the end of the library.</p>
+            <button type="button" class="fa-btn empty-action" @click="goToPage(1)">Back to page 1</button>
+          </template>
+          <template v-else-if="activeQuery">No decks match “{{ activeQuery }}”.</template>
           <template v-else>No public decks yet. Publish one of yours to get the library started.</template>
         </div>
 
@@ -187,7 +197,7 @@ function goToPage(value: number) {
           </div>
         </template>
       </div>
-    </main>
+    </component>
 
     <AppFooter v-if="!auth.isAuthenticated" />
   </div>
@@ -308,4 +318,6 @@ function goToPage(value: number) {
   color: var(--ink-2);
   font-size: 13px;
 }
+.empty p { margin: 0; }
+.empty-action { margin-top: 12px; }
 </style>

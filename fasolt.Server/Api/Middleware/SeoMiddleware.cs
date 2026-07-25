@@ -1,7 +1,9 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
@@ -40,6 +42,15 @@ public partial class SeoMiddleware(RequestDelegate next, IWebHostEnvironment env
 
     private string? _cachedIndexHtml;
 
+    /// <summary>
+    /// This middleware answers requests itself, and it sits ahead of
+    /// <c>UseRateLimiter</c> (it has to own /sitemap.xml before the static-file
+    /// middleware sees it), so the anonymous routes it serves would otherwise be
+    /// completely unmetered. Same ceiling as the "library" endpoint policy.
+    /// </summary>
+    private readonly PartitionedRateLimiter<HttpContext> _rateLimiter =
+        PartitionedRateLimiter.Create<HttpContext, string>(LibraryRateLimit.Partition);
+
     public async Task InvokeAsync(HttpContext context)
     {
         if (!HttpMethods.IsGet(context.Request.Method))
@@ -52,6 +63,13 @@ public partial class SeoMiddleware(RequestDelegate next, IWebHostEnvironment env
 
         if (path.Equals(SitemapPath, StringComparison.OrdinalIgnoreCase))
         {
+            using var sitemapLease = await _rateLimiter.AcquireAsync(context, 1, context.RequestAborted);
+            if (!sitemapLease.IsAcquired)
+            {
+                await WriteTooManyRequests(context);
+                return;
+            }
+
             await WriteSitemap(context, context.RequestServices.GetRequiredService<AppDbContext>());
             return;
         }
@@ -59,6 +77,13 @@ public partial class SeoMiddleware(RequestDelegate next, IWebHostEnvironment env
         if (!IsLibraryRoute(path, out var deckPublicId) || !WantsHtml(context.Request))
         {
             await next(context);
+            return;
+        }
+
+        using var lease = await _rateLimiter.AcquireAsync(context, 1, context.RequestAborted);
+        if (!lease.IsAcquired)
+        {
+            await WriteTooManyRequests(context);
             return;
         }
 
@@ -101,6 +126,14 @@ public partial class SeoMiddleware(RequestDelegate next, IWebHostEnvironment env
         context.Response.StatusCode = StatusCodes.Status200OK;
         context.Response.ContentType = "text/html; charset=utf-8";
         await context.Response.WriteAsync(html, Encoding.UTF8);
+    }
+
+    private static async Task WriteTooManyRequests(HttpContext context)
+    {
+        context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        context.Response.Headers.RetryAfter = ((int)LibraryRateLimit.Window.TotalSeconds).ToString();
+        await context.Response.WriteAsync("Too many requests.", Encoding.UTF8);
     }
 
     private static bool IsLibraryRoute(PathString path, out string? deckPublicId)
@@ -168,8 +201,9 @@ public partial class SeoMiddleware(RequestDelegate next, IWebHostEnvironment env
         var safeDescription = WebUtility.HtmlEncode(description);
         var safeUrl = WebUtility.HtmlEncode(canonicalUrl);
 
-        html = TitleTag().Replace(html, $"<title>{safeTitle}</title>", 1);
-        html = DescriptionTag().Replace(html, $"""<meta name="description" content="{safeDescription}" />""", 1);
+        html = TitleTag().Replace(html, EscapeReplacement($"<title>{safeTitle}</title>"), 1);
+        html = DescriptionTag().Replace(
+            html, EscapeReplacement($"""<meta name="description" content="{safeDescription}" />"""), 1);
 
         var tags = $"""
             <link rel="canonical" href="{safeUrl}" />
@@ -189,6 +223,14 @@ public partial class SeoMiddleware(RequestDelegate next, IWebHostEnvironment env
         var headClose = html.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
         return headClose < 0 ? html : html.Insert(headClose, tags + "\n  ");
     }
+
+    /// <summary>
+    /// Regex replacement strings treat <c>$</c> as a substitution token ($&amp;, $', $`,
+    /// $$ …), and deck names and descriptions are user-supplied, so a name containing
+    /// <c>$'</c> would splice the rest of index.html into the tag. HtmlEncode does not
+    /// touch <c>$</c>; this does.
+    /// </summary>
+    private static string EscapeReplacement(string replacement) => replacement.Replace("$", "$$");
 
     private static async Task WriteSitemap(HttpContext context, AppDbContext db)
     {

@@ -186,7 +186,10 @@ public class DeckService(AppDbContext db)
             .Select(dc => dc.CardId)
             .ToListAsync();
 
-        var newCardIds = userCardGuids.Except(existingCardIds);
+        var newCardIds = userCardGuids.Except(existingCardIds).ToList();
+
+        if (await PublishingService.WouldExceedPublicCardCap(db, deck.Id, newCardIds.Count))
+            return AddCardsResult.PublishedDeckFull;
 
         foreach (var cardId in newCardIds)
         {
@@ -241,6 +244,6 @@ public class DeckService(AppDbContext db)
 }
 
 public record DeleteDeckResult(bool Deleted, int DeletedCardCount);
-public enum AddCardsResult { Success, DeckNotFound, CardsNotFound }
+public enum AddCardsResult { Success, DeckNotFound, CardsNotFound, PublishedDeckFull }
 public enum RemoveCardResult { Success, DeckNotFound, CardNotFound }
 public record RemoveCardsResult(bool DeckFound, int RemovedCount);

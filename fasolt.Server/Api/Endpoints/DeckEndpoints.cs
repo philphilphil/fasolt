@@ -123,6 +123,12 @@ public static class DeckEndpoints
             {
                 ["cardIds"] = ["One or more cards not found."]
             }),
+            AddCardsResult.PublishedDeckFull => Results.BadRequest(new
+            {
+                error = "deck_full",
+                message = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                    + "Unpublish the deck before adding more.",
+            }),
             _ => Results.NoContent(),
         };
     }

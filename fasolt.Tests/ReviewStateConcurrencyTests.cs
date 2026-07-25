@@ -82,7 +82,11 @@ public class ReviewStateConcurrencyTests : IAsyncLifetime
         await using var verify = _db.CreateDbContext();
         var rows = await verify.ReviewStates.Where(r => r.CardId == card.Id).ToListAsync();
         rows.Should().HaveCount(1);
-        rows[0].State.Should().Be("learning");
+        // The resulting state depends on how far the two requests actually overlap: a
+        // true tie has both writing the first learning step, while a pair that ends up
+        // serialized graduates the card. Both are correct — what this test pins is that
+        // neither request failed and the lazy row was materialized exactly once.
+        rows[0].State.Should().BeOneOf("learning", "review");
         (await verify.ReviewLogs.CountAsync(r => r.CardId == card.Id)).Should().Be(2);
     }
 

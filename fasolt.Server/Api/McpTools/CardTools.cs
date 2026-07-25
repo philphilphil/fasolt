@@ -66,6 +66,11 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var result = await cardService.BulkCreateCards(userId, cards, sourceFile, deckId);
         if (result.IsDeckNotFound)
             return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
+        if (result.IsPublishedDeckFull)
+            return JsonSerializer.Serialize(new
+            {
+                error = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. Unpublish the deck before adding more.",
+            }, McpJson.Options);
 
         var response = result.Response!;
         if (deckId is not null)
