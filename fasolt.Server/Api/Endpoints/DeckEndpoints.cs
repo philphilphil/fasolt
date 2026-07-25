@@ -21,6 +21,7 @@ public static class DeckEndpoints
         group.MapPost("/{id}/cards/bulk-remove", BulkRemoveCards);
         group.MapDelete("/{id}/cards/{cardId}", RemoveCard);
         group.MapPut("/{id}/suspended", SetSuspended);
+        group.MapPut("/{id}/visibility", SetVisibility);
     }
 
     private const int MaxBulkIds = 500;
@@ -173,5 +174,51 @@ public static class DeckEndpoints
 
         var dto = await deckService.SetSuspended(user.Id, id, request.IsSuspended);
         return dto is null ? Results.NotFound() : Results.Ok(dto);
+    }
+
+    private static async Task<IResult> SetVisibility(
+        string id,
+        SetDeckVisibilityRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        PublishingService publishingService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        if (!DeckVisibilityWire.TryParse(request.Visibility, out var visibility))
+            return Results.BadRequest(new
+            {
+                error = "invalid_visibility",
+                message = "Visibility must be one of: private, unlisted, public.",
+            });
+
+        var result = await publishingService.SetVisibility(user.Id, id, visibility);
+
+        return result.Error switch
+        {
+            SetVisibilityError.DeckNotFound => Results.NotFound(),
+            SetVisibilityError.HandleRequired => Results.BadRequest(new
+            {
+                error = "handle_required",
+                message = "Set an account handle before publishing a deck.",
+            }),
+            SetVisibilityError.PublishingDisabled => Results.BadRequest(new
+            {
+                error = "publishing_disabled",
+                message = "Publishing is disabled for this account.",
+            }),
+            SetVisibilityError.DeckTooLarge => Results.BadRequest(new
+            {
+                error = "deck_too_large",
+                message = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards.",
+            }),
+            SetVisibilityError.PublicDeckLimit => Results.BadRequest(new
+            {
+                error = "public_deck_limit",
+                message = $"You can have at most {PublishingService.MaxPublicDecksPerUser} public decks.",
+            }),
+            _ => Results.Ok(result.Deck),
+        };
     }
 }

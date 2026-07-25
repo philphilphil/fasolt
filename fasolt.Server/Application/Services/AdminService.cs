@@ -64,6 +64,8 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
                 LastCardCreatedAt = db.Cards.Where(c => c.UserId == u.Id).Max(c => (DateTimeOffset?)c.CreatedAt),
                 LastDeckCreatedAt = db.Decks.Where(d => d.UserId == u.Id).Max(d => (DateTimeOffset?)d.CreatedAt),
                 u.LastLoginAt,
+                u.Handle,
+                u.CanPublish,
             })
             .ToListAsync();
 
@@ -84,7 +86,9 @@ public class AdminService(AppDbContext db, ApnsService? apnsService = null)
                 u.LockoutEnabled && u.LockoutEnd > now,
                 u.HasPush,
                 u.EmailConfirmed,
-                lastActivity);
+                lastActivity,
+                u.Handle,
+                u.CanPublish);
         }).ToList();
 
         return new AdminUserListResponse(users, totalCount, page, pageSize);

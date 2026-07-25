@@ -39,16 +39,20 @@ public class ReviewStateMigrationTests : IAsyncLifetime
 
         await using (var legacy = _db.CreateDbContext())
         {
-            legacy.Users.Add(new AppUser
-            {
-                Id = userId,
-                UserName = "migration@fasolt.test",
-                NormalizedUserName = "MIGRATION@FASOLT.TEST",
-                Email = "migration@fasolt.test",
-                NormalizedEmail = "MIGRATION@FASOLT.TEST",
-                EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString(),
-            });
+            // Raw SQL, not the AppUser entity: at this migration the AspNetUsers table
+            // predates columns the current model maps (Handle, CanPublish, …), so an
+            // EF insert would reference columns that do not exist yet.
+            await legacy.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO "AspNetUsers"
+                    ("Id", "UserName", "NormalizedUserName", "Email", "NormalizedEmail",
+                     "EmailConfirmed", "SecurityStamp", "PhoneNumberConfirmed",
+                     "TwoFactorEnabled", "LockoutEnabled", "AccessFailedCount",
+                     "NotificationIntervalHours", "BestStreak")
+                VALUES
+                    ({userId}, 'migration@fasolt.test', 'MIGRATION@FASOLT.TEST',
+                     'migration@fasolt.test', 'MIGRATION@FASOLT.TEST',
+                     true, {Guid.NewGuid().ToString()}, false, false, false, 0, 8, 0)
+                """);
 
             // The Card entity no longer maps the SRS columns, so cards go in as
             // pristine-new rows (the pre-split defaults) and the SRS state is set

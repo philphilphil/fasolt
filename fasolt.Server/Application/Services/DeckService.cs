@@ -23,27 +23,43 @@ public class DeckService(AppDbContext db)
         db.Decks.Add(deck);
         await db.SaveChangesAsync();
 
-        return new DeckDto(deck.PublicId, deck.Name, deck.Description, 0, 0, deck.CreatedAt, deck.IsSuspended);
+        return ToDto(deck, 0, 0);
     }
 
     public async Task<List<DeckDto>> ListDecks(string userId)
     {
         var now = DateTimeOffset.UtcNow;
 
-        return await db.Decks
+        // Projected to an anonymous shape first: DeckVisibility.ToWire() has no SQL
+        // translation, so the enum→string mapping happens client-side.
+        var rows = await db.Decks
             .Where(d => d.UserId == userId)
             .OrderBy(d => d.Name)
-            .Select(d => new DeckDto(
-                d.PublicId,
-                d.Name,
-                d.Description,
-                d.Cards.Count,
-                d.Cards.Count(dc => !dc.Card.ReviewStates.Any(r =>
+            .Select(d => new
+            {
+                Deck = d,
+                CardCount = d.Cards.Count,
+                DueCount = d.Cards.Count(dc => !dc.Card.ReviewStates.Any(r =>
                     r.UserId == userId && (r.IsSuspended || r.DueAt > now))),
-                d.CreatedAt,
-                d.IsSuspended))
+            })
             .ToListAsync();
+
+        return rows.Select(r => ToDto(r.Deck, r.CardCount, r.DueCount)).ToList();
     }
+
+    private static DeckDto ToDto(Deck deck, int cardCount, int dueCount) => new(
+        deck.PublicId,
+        deck.Name,
+        deck.Description,
+        cardCount,
+        dueCount,
+        deck.CreatedAt,
+        deck.IsSuspended,
+        deck.Visibility.ToWire(),
+        deck.PublishedAt,
+        deck.CopyCount,
+        deck.CopiedFromDeckPublicId,
+        deck.CopiedFromHandle);
 
     public async Task<DeckDetailDto?> GetDeck(string userId, string publicId)
     {
@@ -69,7 +85,10 @@ public class DeckService(AppDbContext db)
 
         var dueCount = cards.Count(c => !c.IsSuspended && (c.DueAt == null || c.DueAt <= now));
 
-        return new DeckDetailDto(deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards, deck.IsSuspended);
+        return new DeckDetailDto(
+            deck.PublicId, deck.Name, deck.Description, cards.Count, dueCount, cards, deck.IsSuspended,
+            deck.Visibility.ToWire(), deck.PublishedAt, deck.CopyCount,
+            deck.CopiedFromDeckPublicId, deck.CopiedFromHandle);
     }
 
     public async Task<DeckDto?> UpdateDeck(string userId, string publicId, string name, string? description)
@@ -83,13 +102,7 @@ public class DeckService(AppDbContext db)
         deck.Description = description?.Trim();
         await db.SaveChangesAsync();
 
-        var now = DateTimeOffset.UtcNow;
-        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
-        var dueCount = await db.DeckCards.CountAsync(dc =>
-            dc.DeckId == deck.Id && !dc.Card.ReviewStates.Any(r =>
-                r.UserId == userId && (r.IsSuspended || r.DueAt > now)));
-
-        return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt, deck.IsSuspended);
+        return await ToDtoWithCounts(deck, userId);
     }
 
     public async Task<DeckDto?> SetSuspended(string userId, string publicId, bool isSuspended)
@@ -102,13 +115,18 @@ public class DeckService(AppDbContext db)
         deck.IsSuspended = isSuspended;
         await db.SaveChangesAsync();
 
+        return await ToDtoWithCounts(deck, userId);
+    }
+
+    private async Task<DeckDto> ToDtoWithCounts(Deck deck, string userId)
+    {
         var now = DateTimeOffset.UtcNow;
         var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
         var dueCount = await db.DeckCards.CountAsync(dc =>
             dc.DeckId == deck.Id && !dc.Card.ReviewStates.Any(r =>
                 r.UserId == userId && (r.IsSuspended || r.DueAt > now)));
 
-        return new DeckDto(deck.PublicId, deck.Name, deck.Description, cardCount, dueCount, deck.CreatedAt, deck.IsSuspended);
+        return ToDto(deck, cardCount, dueCount);
     }
 
     /// <returns>Result with Deleted flag and DeletedCardCount</returns>

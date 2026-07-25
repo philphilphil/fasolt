@@ -72,7 +72,8 @@ public class AccountDataService(AppDbContext db, IOpenIddictTokenManager tokenMa
                 ExternalProvider: user.ExternalProvider,
                 DesiredRetention: user.DesiredRetention,
                 MaximumInterval: user.MaximumInterval,
-                NotificationIntervalHours: user.NotificationIntervalHours
+                NotificationIntervalHours: user.NotificationIntervalHours,
+                Handle: user.Handle
             ),
             Decks: decks.Select(d => new AccountExportDeck(
                 Name: d.Name,

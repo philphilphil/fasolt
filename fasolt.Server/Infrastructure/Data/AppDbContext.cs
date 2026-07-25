@@ -67,6 +67,17 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.HasIndex(e => e.PublicId).IsUnique();
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.HasIndex(e => e.UserId);
+            entity.Property(e => e.Visibility)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .HasDefaultValue(DeckVisibility.Private)
+                .IsRequired();
+            entity.Property(e => e.CopyCount).HasDefaultValue(0);
+            entity.Property(e => e.CopiedFromDeckPublicId).HasMaxLength(12);
+            entity.Property(e => e.CopiedFromHandle).HasMaxLength(30);
+            // Library listing/sort paths always filter on Visibility first.
+            entity.HasIndex(e => new { e.Visibility, e.CopyCount });
+            entity.HasIndex(e => new { e.Visibility, e.PublishedAt });
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.Property(e => e.SearchVector)
                 .HasColumnType("tsvector")
@@ -134,6 +145,11 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.Property(e => e.ExternalProvider).HasMaxLength(50);
             entity.Property(e => e.ExternalProviderId).HasMaxLength(255);
             entity.Property(e => e.BestStreak).HasDefaultValue(0);
+            entity.Property(e => e.Handle).HasMaxLength(30);
+            entity.Property(e => e.CanPublish).HasDefaultValue(true);
+            entity.HasIndex(e => e.Handle)
+                .IsUnique()
+                .HasFilter("\"Handle\" IS NOT NULL");
             entity.HasIndex(e => new { e.ExternalProvider, e.ExternalProviderId })
                 .IsUnique()
                 .HasFilter("\"ExternalProvider\" IS NOT NULL");

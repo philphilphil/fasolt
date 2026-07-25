@@ -4,9 +4,17 @@ public record CreateDeckRequest(string Name, string? Description);
 
 public record UpdateDeckRequest(string Name, string? Description);
 
-public record DeckDto(string Id, string Name, string? Description, int CardCount, int DueCount, DateTimeOffset CreatedAt, bool IsSuspended);
+public record DeckDto(
+    string Id, string Name, string? Description, int CardCount, int DueCount,
+    DateTimeOffset CreatedAt, bool IsSuspended,
+    string Visibility = "private", DateTimeOffset? PublishedAt = null, int CopyCount = 0,
+    string? CopiedFromDeckPublicId = null, string? CopiedFromHandle = null);
 
-public record DeckDetailDto(string Id, string Name, string? Description, int CardCount, int DueCount, List<DeckCardDto> Cards, bool IsSuspended);
+public record DeckDetailDto(
+    string Id, string Name, string? Description, int CardCount, int DueCount,
+    List<DeckCardDto> Cards, bool IsSuspended,
+    string Visibility = "private", DateTimeOffset? PublishedAt = null, int CopyCount = 0,
+    string? CopiedFromDeckPublicId = null, string? CopiedFromHandle = null);
 
 public record SetDeckSuspendedRequest(bool IsSuspended);
 

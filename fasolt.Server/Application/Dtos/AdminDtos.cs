@@ -10,7 +10,9 @@ public record AdminUserDto(
     bool IsLockedOut,
     bool HasPush,
     bool EmailConfirmed,
-    DateTimeOffset? LastActivityAt);
+    DateTimeOffset? LastActivityAt,
+    string? Handle = null,
+    bool CanPublish = true);
 
 public record AdminUserListResponse(
     List<AdminUserDto> Users,

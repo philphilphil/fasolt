@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
 
@@ -18,6 +19,8 @@ public static class AdminEndpoints
         group.MapGet("/logs", GetLogs);
         group.MapPost("/users/{id}/push", TriggerPushForUser);
         group.MapGet("/stats", GetStats);
+        group.MapPost("/decks/{id}/unlist", UnlistDeck);
+        group.MapPost("/users/{id}/can-publish", SetCanPublish);
     }
 
     private static async Task<IResult> ListUsers(
@@ -113,6 +116,35 @@ public static class AdminEndpoints
         await adminService.LogAdminAction($"User deleted: {email}");
 
         return Results.Ok();
+    }
+
+    private static async Task<IResult> UnlistDeck(
+        string id,
+        PublishingService publishingService,
+        AdminService adminService)
+    {
+        var unlisted = await publishingService.Unlist(id);
+        if (!unlisted) return Results.NotFound();
+
+        await adminService.LogAdminAction($"Deck unlisted: {id}");
+        return Results.Ok(new { id, visibility = "private" });
+    }
+
+    private static async Task<IResult> SetCanPublish(
+        string id,
+        SetUserCanPublishRequest request,
+        UserManager<AppUser> userManager,
+        PublishingService publishingService,
+        AdminService adminService)
+    {
+        var user = await userManager.FindByIdAsync(id);
+        if (user is null) return Results.NotFound();
+
+        await publishingService.SetCanPublish(id, request.CanPublish);
+        await adminService.LogAdminAction(
+            $"Publishing {(request.CanPublish ? "enabled" : "disabled")} for user: {user.Email}");
+
+        return Results.Ok(new { id, canPublish = request.CanPublish });
     }
 
     private static async Task<IResult> TriggerPushForUser(

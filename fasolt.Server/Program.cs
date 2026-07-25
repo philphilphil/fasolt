@@ -315,6 +315,18 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
             }));
 
+    // Anonymous library browsing: keyed by IP and roomier than "api", because a
+    // single visitor paging through the library fires several reads per screen.
+    options.AddPolicy("library", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+
     options.AddPolicy("api", context =>
     {
         var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
@@ -343,6 +355,8 @@ builder.Services.AddScoped<SchedulingSettingsService>();
 builder.Services.AddScoped<DeckSnapshotService>();
 builder.Services.AddScoped<AccountDataService>();
 builder.Services.AddScoped<McpResourceService>();
+builder.Services.AddScoped<LibraryService>();
+builder.Services.AddScoped<PublishingService>();
 
 var apnsKeyId = builder.Configuration["APNS_KEY_ID"];
 var apnsKeyBase64 = builder.Configuration["APNS_KEY_BASE64"];
@@ -630,6 +644,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Before the static-file middleware: it owns /sitemap.xml, and the library routes
+// need index.html rewritten rather than served verbatim.
+app.UseMiddleware<SeoMiddleware>();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors();
@@ -696,6 +713,7 @@ app.MapAccountEndpoints();
 app.MapCardEndpoints();
 app.MapReviewEndpoints();
 app.MapDeckEndpoints();
+app.MapLibraryEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapOAuthEndpoints();
