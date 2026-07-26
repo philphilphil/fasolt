@@ -1,11 +1,11 @@
 import SwiftUI
+import Textual
 
 /// A shared deck as seen before importing it: metadata, a few sample cards, and the
 /// two ways to take it — a copy you own, or a link that follows the author.
 struct ExploreDeckDetailView: View {
     @State private var viewModel: ExploreDeckViewModel
     @State private var sampleIndex = 0
-    @State private var isFlipped = false
     @State private var showUnlinkAlert = false
 
     init(viewModel: ExploreDeckViewModel) {
@@ -117,57 +117,111 @@ struct ExploreDeckDetailView: View {
 
     private func samples(_ deck: LibraryDeckDetailDTO) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 10) {
                 Text("Sample cards")
                     .sectionLabel()
                 Spacer()
+
+                if deck.sampleCards.count > 1 {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            sampleIndex = (sampleIndex - 1 + deck.sampleCards.count) % deck.sampleCards.count
+                        }
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(FasoltTheme.ink2)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 Text("\(min(sampleIndex + 1, deck.sampleCards.count)) / \(deck.sampleCards.count)")
                     .font(.system(size: 12))
                     .monospacedDigit()
                     .foregroundStyle(FasoltTheme.ink2)
-            }
 
-            TabView(selection: $sampleIndex) {
-                ForEach(Array(deck.sampleCards.enumerated()), id: \.offset) { index, card in
-                    sampleCard(card)
-                        .padding(.bottom, 4)
-                        .tag(index)
+                if deck.sampleCards.count > 1 {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            sampleIndex = (sampleIndex + 1) % deck.sampleCards.count
+                        }
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(FasoltTheme.ink2)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: 300)
-            .onChange(of: sampleIndex) { _, _ in isFlipped = false }
 
-            Text(isFlipped ? "Tap to see the front" : "Tap a card to reveal the back")
-                .font(.system(size: 12))
-                .foregroundStyle(FasoltTheme.ink2)
-                .frame(maxWidth: .infinity, alignment: .center)
+            let clampedIndex = min(sampleIndex, deck.sampleCards.count - 1)
+            sampleCard(deck.sampleCards[clampedIndex])
+                .id(clampedIndex)
         }
     }
 
+    /// Shows a sample card's front and back at once — no tap-to-flip.
     private func sampleCard(_ card: LibrarySampleCardDTO) -> some View {
-        Button {
-            withAnimation(.easeOut(duration: 0.15)) { isFlipped.toggle() }
-        } label: {
-            if isFlipped {
-                CardView(
-                    label: "Back",
-                    text: card.back,
-                    sourceFile: nil,
-                    svg: card.backSvg,
-                    questionText: card.front,
-                    showAnswer: true
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: FasoltTheme.cardRadius, style: .continuous)
+                .fill(FasoltTheme.paper1)
+                .overlay(
+                    RoundedRectangle(cornerRadius: FasoltTheme.cardRadius, style: .continuous)
+                        .strokeBorder(FasoltTheme.rule2, lineWidth: FasoltTheme.hairline)
                 )
-            } else {
-                CardView(
-                    label: "Front",
-                    text: card.front,
-                    sourceFile: nil,
-                    svg: card.frontSvg
-                )
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+
+            VStack(spacing: 0) {
+                AccentStripe(horizontalInset: 24)
+
+                VStack(alignment: .leading, spacing: 0) {
+                    CapsLabel(text: "Front", color: FasoltTheme.accent, size: 11)
+                        .padding(.horizontal, 22)
+                        .padding(.top, 20)
+                        .padding(.bottom, 10)
+
+                    if let frontSvg = card.frontSvg {
+                        SvgView(svg: frontSvg)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 160)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 8)
+                    }
+
+                    StructuredText(markdown: card.front)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(FasoltTheme.ink0)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 22)
+                        .padding(.bottom, 16)
+
+                    Rectangle()
+                        .fill(FasoltTheme.rule2)
+                        .frame(height: FasoltTheme.hairline)
+                        .padding(.horizontal, 22)
+
+                    CapsLabel(text: "Back", color: FasoltTheme.ink2, size: 11)
+                        .padding(.horizontal, 22)
+                        .padding(.top, 16)
+                        .padding(.bottom, 10)
+
+                    if let backSvg = card.backSvg {
+                        SvgView(svg: backSvg)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 160)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 8)
+                    }
+
+                    StructuredText(markdown: card.back)
+                        .font(.system(size: 16))
+                        .foregroundStyle(FasoltTheme.ink0)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 22)
+                        .padding(.bottom, 20)
+                }
             }
         }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Status
