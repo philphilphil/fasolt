@@ -120,16 +120,19 @@ public class LibraryService(AppDbContext db)
 
         if (source is null) return new CopyDeckResult(CopyDeckError.NotFound, null);
 
+        // Same ceiling as publishing. Unlisted decks are not capped at publish time, so
+        // this is the only guard against importing an unbounded deck — and it has to
+        // run before the cards are materialised, or an oversized deck is pulled into
+        // memory with its SVG blobs just to be refused.
+        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == source.Id);
+        if (cardCount > PublishingService.MaxCardsInPublicDeck)
+            return new CopyDeckResult(CopyDeckError.DeckTooLarge, null);
+
         var sourceCards = await db.DeckCards
             .Where(dc => dc.DeckId == source.Id)
             .OrderBy(dc => dc.Card.CreatedAt)
             .Select(dc => new { dc.Card.Front, dc.Card.Back, dc.Card.FrontSvg, dc.Card.BackSvg })
             .ToListAsync();
-
-        // Same ceiling as publishing. Unlisted decks are not capped at publish time,
-        // so this is the only guard against importing an unbounded deck.
-        if (sourceCards.Count > PublishingService.MaxCardsInPublicDeck)
-            return new CopyDeckResult(CopyDeckError.DeckTooLarge, null);
 
         var authorHandle = await db.Users
             .Where(u => u.Id == source.UserId)

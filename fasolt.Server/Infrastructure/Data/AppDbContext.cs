@@ -142,7 +142,7 @@ public class AppDbContext : IdentityDbContext<AppUser>, IDataProtectionKeyContex
             entity.HasIndex(e => new { e.UserId, e.ReviewedAt });
             entity.HasIndex(e => new { e.CardId, e.ReviewedAt });
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
-            entity.HasOne(e => e.Card).WithMany().HasForeignKey(e => e.CardId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Card).WithMany().HasForeignKey(e => e.CardId).OnDelete(DeleteBehavior.SetNull);
         });
 
         builder.Entity<AppUser>(entity =>

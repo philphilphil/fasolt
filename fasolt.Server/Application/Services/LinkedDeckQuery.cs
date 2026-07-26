@@ -19,16 +19,24 @@ public static class LinkedDeckQuery
     /// subscription is never one of the caller's own.
     /// </summary>
     /// <remarks>
-    /// Deliberately a UNION rather than one <c>UserId == me OR EXISTS(…)</c> predicate.
-    /// The OR form cannot use the <c>Cards.UserId</c> index and makes every hot-path
-    /// query (due queue, stats, overview, search) scan the whole multi-tenant Cards
-    /// table; the UNION lets each branch use its own index. One consequence:
+    /// Deliberately a set operation rather than one <c>UserId == me OR EXISTS(…)</c>
+    /// predicate. The OR form cannot use the <c>Cards.UserId</c> index and makes every
+    /// hot-path query (due queue, stats, overview, search) scan the whole multi-tenant
+    /// Cards table; two branches let each use its own index. One consequence:
     /// <c>Include</c> cannot be composed onto a set operation, so callers that need
     /// navigations must load them explicitly.
+    /// <para>
+    /// UNION ALL, not UNION: the branches are disjoint, so deduplicating would only
+    /// buy a sort over every Card column — fronts, backs, SVG blobs and the tsvector —
+    /// on each of those hot-path queries. Disjointness rests on
+    /// <see cref="DeckSubscriptionService.Subscribe"/> refusing a deck the caller owns,
+    /// which is the only path that creates a subscription; no database constraint
+    /// enforces it, so a self-subscription would surface here as duplicated cards.
+    /// </para>
     /// </remarks>
     public static IQueryable<Card> StudyableCards(AppDbContext db, string userId) =>
         db.Cards.Where(c => c.UserId == userId)
-            .Union(db.Cards.Where(c =>
+            .Concat(db.Cards.Where(c =>
                 c.DeckCards.Any(dc => dc.Deck.Subscriptions.Any(s => s.UserId == userId))));
 
     /// <summary>

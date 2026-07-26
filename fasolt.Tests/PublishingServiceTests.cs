@@ -206,6 +206,43 @@ public class PublishingServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SetVisibility_UnlistedRequiresCanPublish()
+    {
+        // An unlisted deck's share link resolves for anyone holding it, and copy and
+        // subscribe accept every non-private deck — so a ban that only covered the
+        // public transition would be one "unlisted" away from meaningless.
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "banned-unlister", canPublish: false);
+        var deck = await AddDeck(db, userId, cardCount: 1);
+        var svc = new PublishingService(db);
+
+        var result = await svc.SetVisibility(userId, deck.PublicId, DeckVisibility.Unlisted);
+
+        result.Error.Should().Be(SetVisibilityError.PublishingDisabled);
+        var stored = await db.Decks.AsNoTracking().FirstAsync(d => d.Id == deck.Id);
+        stored.Visibility.Should().Be(DeckVisibility.Private);
+        stored.PublishedAt.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetVisibility_BannedAuthorCannotRelistAnAlreadyUnlistedDeck()
+    {
+        // Going private and back is the loop the ban has to survive.
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "relister");
+        var deck = await AddDeck(db, userId, cardCount: 1, visibility: DeckVisibility.Unlisted);
+        var svc = new PublishingService(db);
+
+        await svc.SetCanPublish(userId, false);
+
+        // Taking it down is always allowed; putting it back is not.
+        (await svc.SetVisibility(userId, deck.PublicId, DeckVisibility.Private))
+            .Error.Should().Be(SetVisibilityError.None);
+        (await svc.SetVisibility(userId, deck.PublicId, DeckVisibility.Unlisted))
+            .Error.Should().Be(SetVisibilityError.PublishingDisabled);
+    }
+
+    [Fact]
     public async Task SetVisibility_PublicRejectsDeckOverCardCap()
     {
         await using var db = _db.CreateDbContext();

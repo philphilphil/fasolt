@@ -64,10 +64,9 @@ public class DeckTools(DeckService deckService, IHttpContextAccessor httpContext
                 AddCardsResult.Success => JsonSerializer.Serialize(new { success = true }, McpJson.Options),
                 AddCardsResult.DeckNotFound => JsonSerializer.Serialize(new { error = "Target deck not found" }, McpJson.Options),
                 AddCardsResult.CardsNotFound => JsonSerializer.Serialize(new { error = "One or more cards not found" }, McpJson.Options),
-                AddCardsResult.PublishedDeckFull => JsonSerializer.Serialize(new
-                {
-                    error = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. Unpublish the deck before adding more.",
-                }, McpJson.Options),
+                AddCardsResult.PublishedDeckFull => McpErrors.Structured("deck_full",
+                    $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                    + "Unpublish the deck before adding more."),
                 _ => JsonSerializer.Serialize(new { error = "Unexpected error" }, McpJson.Options),
             };
         }

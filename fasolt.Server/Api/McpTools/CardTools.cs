@@ -67,10 +67,9 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         if (result.IsDeckNotFound)
             return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
         if (result.IsPublishedDeckFull)
-            return JsonSerializer.Serialize(new
-            {
-                error = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. Unpublish the deck before adding more.",
-            }, McpJson.Options);
+            return McpErrors.Structured("deck_full",
+                $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                + "Unpublish the deck before adding more.");
 
         var response = result.Response!;
         if (deckId is not null)

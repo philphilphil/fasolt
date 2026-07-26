@@ -94,8 +94,19 @@ public static class SnapshotEndpoints
         var user = await userManager.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
 
-        var success = await snapshotService.Restore(user.Id, id, request);
-        return success ? Results.Ok() : Results.NotFound();
+        var result = await snapshotService.Restore(user.Id, id, request);
+
+        return result switch
+        {
+            RestoreResult.NotFound => Results.NotFound(),
+            RestoreResult.PublishedDeckFull => Results.BadRequest(new
+            {
+                error = "deck_full",
+                message = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                    + "Unpublish the deck before restoring more.",
+            }),
+            _ => Results.Ok(),
+        };
     }
 
     private static async Task<IResult> Delete(

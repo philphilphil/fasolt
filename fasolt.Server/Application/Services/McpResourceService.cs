@@ -248,23 +248,36 @@ public class McpResourceService(
                 HasSvg = c.FrontSvg != null || c.BackSvg != null,
                 c.CreatedAt,
                 rs.DueAt,
-                // Owned cards group under the owner's active decks, linked ones under
-                // the decks the caller subscribes to and has not paused.
-                DeckNames = c.DeckCards
-                    .Where(dc => (c.UserId == userId && !dc.Deck.IsSuspended)
-                        || (c.UserId != userId && dc.Deck.Subscriptions.Any(s => s.UserId == userId && !s.IsSuspended)))
-                    .Select(dc => dc.Deck.Name)
-                    .ToList(),
+                c.Id,
             })
             .Take(QueryHardCap)
             .ToListAsync();
+
+        // Deck names come from a second query rather than a correlated collection in
+        // the projection above: that cannot be translated over a set operation, and
+        // StudyableCards is one.
+        //
+        // Owned cards group under the owner's active decks, linked ones under the
+        // decks the caller subscribes to and has not paused.
+        var cardIds = raw.Select(c => c.Id).ToList();
+        var deckNamesByCard = (await db.DeckCards
+                .Where(dc => cardIds.Contains(dc.CardId)
+                    && ((dc.Card.UserId == userId && !dc.Deck.IsSuspended)
+                        || (dc.Card.UserId != userId
+                            && dc.Deck.Subscriptions.Any(s => s.UserId == userId && !s.IsSuspended))))
+                .Select(dc => new { dc.CardId, dc.Deck.Name })
+                .ToListAsync())
+            .GroupBy(x => x.CardId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Name).ToList());
 
         // Group by first (alphabetical) active deck name, or "(no deck)".
         var groups = raw
             .Select(c => new
             {
                 Card = new RenderableCard(c.Front, c.Back, c.SourceFile, c.HasSvg, c.CreatedAt, c.DueAt, null),
-                GroupName = c.DeckNames.Count == 0 ? "(no deck)" : c.DeckNames.OrderBy(n => n).First(),
+                GroupName = deckNamesByCard.TryGetValue(c.Id, out var names) && names.Count > 0
+                    ? names.OrderBy(n => n).First()
+                    : "(no deck)",
             })
             .GroupBy(x => x.GroupName)
             .OrderBy(g => g.Key == "(no deck)") // "(no deck)" last

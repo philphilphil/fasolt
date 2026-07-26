@@ -1,7 +1,10 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
+using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure;
 using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests;
@@ -1365,7 +1368,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
             var result = await svc.Restore(UserId, snapshotPublicId,
                 new RestoreRequest(diff.Deleted.Select(d => d.CardId).ToList(), []));
-            result.Should().BeTrue();
+            result.Should().Be(RestoreResult.Success);
         }
 
         await using var checkDb = _db.CreateDbContext();
@@ -1495,12 +1498,93 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var snapshots = await svc.ListByDeck(UserId, deckId);
             var result = await svc.Restore(UserId, snapshots[0].Id,
                 new RestoreRequest([Guid.NewGuid()], [Guid.NewGuid()]));
-            result.Should().BeTrue("restore should succeed even with unknown card IDs");
+            result.Should().Be(RestoreResult.Success, "restore should succeed even with unknown card IDs");
         }
     }
 
     [Fact]
-    public async Task Restore_SnapshotNotFound_ReturnsFalse()
+    public async Task Restore_CannotPushAPublishedDeckOverTheCardCap()
+    {
+        // Restore is an add path like any other: publishing only sees the deck as it
+        // stood at that moment, so a restore has to re-check the ceiling.
+        Guid deckId;
+        string deckPublicId;
+
+        await using (var db = _db.CreateDbContext())
+        {
+            // Seeded directly — a cap-sized deck through CardService is one round-trip
+            // per card.
+            var deck = new Deck
+            {
+                Id = Guid.NewGuid(),
+                PublicId = NanoIdGenerator.New(),
+                UserId = UserId,
+                Name = "Cap Restore",
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Decks.Add(deck);
+
+            for (var i = 0; i <= PublishingService.MaxCardsInPublicDeck; i++)
+            {
+                var card = new Card
+                {
+                    Id = Guid.NewGuid(),
+                    PublicId = NanoIdGenerator.New(),
+                    UserId = UserId,
+                    Front = $"Q{i}",
+                    Back = $"A{i}",
+                    CreatedAt = DateTimeOffset.UtcNow,
+                };
+                db.Cards.Add(card);
+                db.DeckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
+            }
+
+            await db.SaveChangesAsync();
+            deckId = deck.Id;
+            deckPublicId = deck.PublicId;
+        }
+
+        string snapshotPublicId;
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+            snapshotPublicId = (await svc.ListByDeck(UserId, deckPublicId))[0].Id;
+        }
+
+        // Drop one card so the deck fits the cap exactly, then publish it.
+        Guid deletedCardId;
+        await using (var db = _db.CreateDbContext())
+        {
+            deletedCardId = await db.DeckCards
+                .Where(dc => dc.DeckId == deckId)
+                .Select(dc => dc.CardId)
+                .FirstAsync();
+            await db.Cards.Where(c => c.Id == deletedCardId).ExecuteDeleteAsync();
+
+            var publishing = new PublishingService(db);
+            await publishing.SetHandle(UserId, "cap-restorer");
+            (await publishing.SetVisibility(UserId, deckPublicId, DeckVisibility.Public))
+                .Error.Should().Be(SetVisibilityError.None);
+        }
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var result = await new DeckSnapshotService(db).Restore(UserId, snapshotPublicId,
+                new RestoreRequest([deletedCardId], []));
+
+            result.Should().Be(RestoreResult.PublishedDeckFull);
+        }
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckCards.CountAsync(dc => dc.DeckId == deckId))
+            .Should().Be(PublishingService.MaxCardsInPublicDeck);
+        (await verify.Cards.AnyAsync(c => c.Id == deletedCardId))
+            .Should().BeFalse("a rejected restore must not recreate the card either");
+    }
+
+    [Fact]
+    public async Task Restore_SnapshotNotFound_ReturnsNotFound()
     {
         await using var db = _db.CreateDbContext();
         var svc = new DeckSnapshotService(db);
@@ -1508,11 +1592,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var result = await svc.Restore(UserId, "nonexistent123",
             new RestoreRequest([], []));
 
-        result.Should().BeFalse();
+        result.Should().Be(RestoreResult.NotFound);
     }
 
     [Fact]
-    public async Task Restore_DeletedDeck_ReturnsFalse()
+    public async Task Restore_DeletedDeck_ReturnsNotFound()
     {
         var (deckId, _) = await SeedDeck("Restore Deleted Deck", 1);
 
@@ -1541,7 +1625,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var svc = new DeckSnapshotService(db);
             var result = await svc.Restore(UserId, snapshotPublicId,
                 new RestoreRequest([], []));
-            result.Should().BeFalse();
+            result.Should().Be(RestoreResult.NotFound);
         }
     }
 

@@ -74,9 +74,9 @@ public partial class PublishingService(AppDbContext db)
     }
 
     /// <summary>
-    /// Moves one of the caller's decks to a new visibility. Only <c>Public</c> is
-    /// gated: it needs a handle, publishing rights, and both caps to hold. Going
-    /// back to <c>Private</c> always succeeds.
+    /// Moves one of the caller's decks to a new visibility. Leaving <c>Private</c>
+    /// needs publishing rights; <c>Public</c> additionally needs a handle and both
+    /// caps to hold. Going back to <c>Private</c> always succeeds.
     /// </summary>
     public async Task<SetVisibilityResult> SetVisibility(string userId, string deckPublicId, DeckVisibility visibility)
     {
@@ -91,7 +91,13 @@ public partial class PublishingService(AppDbContext db)
             return new SetVisibilityResult(SetVisibilityError.DeckNotFound, null);
         }
 
-        if (visibility == DeckVisibility.Public && deck.Visibility != DeckVisibility.Public)
+        // A ban has to cover unlisted too: an unlisted deck's share link resolves for
+        // anyone holding it, and copy/subscribe accept every non-private deck, so
+        // gating only the public transition leaves the ban routable around.
+        var leavingPrivate = deck.Visibility == DeckVisibility.Private && visibility != DeckVisibility.Private;
+        var becomingPublic = visibility == DeckVisibility.Public && deck.Visibility != DeckVisibility.Public;
+
+        if (leavingPrivate || becomingPublic)
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user is null) return new SetVisibilityResult(SetVisibilityError.DeckNotFound, null);
@@ -99,17 +105,22 @@ public partial class PublishingService(AppDbContext db)
             if (!user.CanPublish)
                 return new SetVisibilityResult(SetVisibilityError.PublishingDisabled, null);
 
-            if (string.IsNullOrEmpty(user.Handle))
-                return new SetVisibilityResult(SetVisibilityError.HandleRequired, null);
+            // The handle and both caps stay public-only — an unlisted deck is never
+            // listed under an author, and never appears in the library.
+            if (becomingPublic)
+            {
+                if (string.IsNullOrEmpty(user.Handle))
+                    return new SetVisibilityResult(SetVisibilityError.HandleRequired, null);
 
-            var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
-            if (cardCount > MaxCardsInPublicDeck)
-                return new SetVisibilityResult(SetVisibilityError.DeckTooLarge, null);
+                var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
+                if (cardCount > MaxCardsInPublicDeck)
+                    return new SetVisibilityResult(SetVisibilityError.DeckTooLarge, null);
 
-            var publicDeckCount = await db.Decks.CountAsync(d =>
-                d.UserId == userId && d.Visibility == DeckVisibility.Public && d.Id != deck.Id);
-            if (publicDeckCount >= MaxPublicDecksPerUser)
-                return new SetVisibilityResult(SetVisibilityError.PublicDeckLimit, null);
+                var publicDeckCount = await db.Decks.CountAsync(d =>
+                    d.UserId == userId && d.Visibility == DeckVisibility.Public && d.Id != deck.Id);
+                if (publicDeckCount >= MaxPublicDecksPerUser)
+                    return new SetVisibilityResult(SetVisibilityError.PublicDeckLimit, null);
+            }
         }
 
         // A private deck can no longer be resolved by anyone else, so the links to

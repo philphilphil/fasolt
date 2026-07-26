@@ -130,7 +130,7 @@ struct ExploreView: View {
                     .monospacedDigit()
                     .foregroundStyle(FasoltTheme.ink0)
                 CapsLabel(
-                    text: deck.copyCount > 0 ? "\(deck.copyCount) imports" : "cards",
+                    text: deck.cardCount == 1 ? "card" : "cards",
                     color: FasoltTheme.ink2,
                     size: 9.5
                 )

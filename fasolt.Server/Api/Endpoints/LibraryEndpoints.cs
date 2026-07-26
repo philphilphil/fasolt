@@ -93,6 +93,11 @@ public static class LibraryEndpoints
                 error = "own_deck",
                 message = "You already own this deck.",
             }),
+            SubscribeError.DeckTooLarge => Results.BadRequest(new
+            {
+                error = "deck_too_large",
+                message = $"Decks with more than {PublishingService.MaxCardsInPublicDeck} cards cannot be imported.",
+            }),
             _ => result.Created
                 ? Results.Created($"/api/decks/{result.Deck!.Id}", result.Deck)
                 : Results.Ok(result.Deck),

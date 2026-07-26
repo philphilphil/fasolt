@@ -73,6 +73,41 @@ public class DeckSubscriptionServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Subscribe_ToADeckOverTheCardCap_IsRejected()
+    {
+        // Unlisted decks are uncapped at publish time, so without this a subscriber
+        // could link an unbounded deck — and convert-to-copy, which does enforce the
+        // cap, would refuse it forever after.
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-huge");
+        var deck = await LinkedDeckTestData.AddDeck(
+            db, author, DeckVisibility.Unlisted, "Huge",
+            cardCount: PublishingService.MaxCardsInPublicDeck + 1);
+
+        var result = await new DeckSubscriptionService(db).Subscribe(SubscriberId, deck.PublicId);
+
+        result.Error.Should().Be(SubscribeError.DeckTooLarge);
+        result.Created.Should().BeFalse();
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckSubscriptions.CountAsync(s => s.UserId == SubscriberId)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Subscribe_ToADeckExactlyAtTheCardCap_IsAllowed()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-at-cap");
+        var deck = await LinkedDeckTestData.AddDeck(
+            db, author, DeckVisibility.Public, "At Cap",
+            cardCount: PublishingService.MaxCardsInPublicDeck);
+
+        var result = await new DeckSubscriptionService(db).Subscribe(SubscriberId, deck.PublicId);
+
+        result.Error.Should().Be(SubscribeError.None);
+    }
+
+    [Fact]
     public async Task Subscribe_Twice_IsIdempotentAndKeepsTheExistingPause()
     {
         await using var db = _db.CreateDbContext();
@@ -453,6 +488,43 @@ public class DeckSubscriptionServiceTests : IAsyncLifetime
         await using var verify = _db.CreateDbContext();
         var states = await verify.ReviewStates.Where(r => r.UserId == SubscriberId).ToListAsync();
         states.Should().ContainSingle().Which.CardId.Should().Be(kept.Id);
+    }
+
+    [Fact]
+    public async Task OwnerDeletingACard_KeepsTheSubscribersReviewHistoryAndStreak()
+    {
+        // The ReviewLog row belongs to the reviewer, not to the author's card. Under a
+        // cascade the author's delete would retroactively shrink every subscriber's
+        // streak and totals for reviews they really did.
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-history");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Historic", cardCount: 0);
+        var doomed = LinkedDeckTestData.AddCard(db, deck, "Doomed", "A");
+        LinkedDeckTestData.AddCard(db, deck, "Kept", "A");
+        await db.SaveChangesAsync();
+        await LinkedDeckTestData.Subscribe(db, SubscriberId, deck);
+
+        var time = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(
+            new DateTimeOffset(2025, 6, 2, 5, 0, 0, TimeSpan.Zero));
+        var stats = new StudyStatsService(db, time);
+        var review = new ReviewService(db, time, stats);
+
+        (await review.RateCard(SubscriberId, new Server.Application.Dtos.RateCardRequest(doomed.PublicId, "good")))
+            .Should().NotBeNull();
+
+        var before = await stats.GetStats(SubscriberId);
+        before.TotalAnswered.Should().Be(1);
+        before.CurrentStreak.Should().Be(1);
+
+        (await new CardService(db).DeleteCard(author, doomed.PublicId)).Should().BeTrue();
+
+        await using var verify = _db.CreateDbContext();
+        var log = await verify.ReviewLogs.SingleAsync(r => r.UserId == SubscriberId);
+        log.CardId.Should().BeNull("the card is gone but the review still happened");
+
+        var after = await new StudyStatsService(verify, time).GetStats(SubscriberId);
+        after.TotalAnswered.Should().Be(before.TotalAnswered);
+        after.CurrentStreak.Should().Be(before.CurrentStreak);
     }
 
     /// <summary>

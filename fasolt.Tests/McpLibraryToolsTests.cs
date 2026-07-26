@@ -222,17 +222,23 @@ public class McpLibraryToolsTests : IAsyncLifetime
         ErrorCode(raw).Should().Be("own_deck");
     }
 
-    [Fact]
-    public async Task ImportDeck_DeckOverTheCardCapIsRejected()
+    [Theory]
+    [InlineData("copy")]
+    [InlineData("link")]
+    public async Task ImportDeck_DeckOverTheCardCapIsRejected(string mode)
     {
         await using var db = _db.CreateDbContext();
         var author = await LinkedDeckTestData.AddUser(db, handle: "oversized");
         var deck = await LinkedDeckTestData.AddDeck(
             db, author, cardCount: PublishingService.MaxCardsInPublicDeck + 1);
 
-        var raw = await Tools(db).ImportDeck(deck.PublicId, "copy");
+        var raw = await Tools(db).ImportDeck(deck.PublicId, mode);
 
         ErrorCode(raw).Should().Be("deck_too_large");
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckSubscriptions.CountAsync(s => s.UserId == UserId)).Should().Be(0);
+        (await verify.Cards.CountAsync(c => c.UserId == UserId)).Should().Be(0);
     }
 
     [Theory]

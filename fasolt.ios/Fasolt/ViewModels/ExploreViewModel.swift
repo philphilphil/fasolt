@@ -34,6 +34,10 @@ final class ExploreViewModel {
         page = 1
         isLoading = true
         errorMessage = nil
+        // Token-guarded, unlike loadMore()'s reset: a superseded load() is always
+        // followed by the newer load(), which owns the flag from that point on —
+        // clearing it here would hide the spinner while the newer request runs.
+        defer { if token == requestToken { isLoading = false } }
 
         do {
             let response = try await repository.fetchDecks(query: searchText, sort: sort, page: 1)
@@ -47,14 +51,16 @@ final class ExploreViewModel {
             logger.error("Failed to load public decks: \(error)")
             errorMessage = "Could not load the library. Pull to refresh."
         }
-
-        if token == requestToken { isLoading = false }
     }
 
     func loadMore() async {
         guard canLoadMore else { return }
         let token = requestToken
         isLoadingMore = true
+        // Unconditional reset: if a subsequent load() supersedes this request (bumps
+        // requestToken), this call's data must not apply, but its flag still must
+        // clear — nothing else will ever reset isLoadingMore for it otherwise.
+        defer { isLoadingMore = false }
 
         do {
             let response = try await repository.fetchDecks(query: searchText, sort: sort, page: page + 1)
@@ -70,7 +76,5 @@ final class ExploreViewModel {
             // the next scroll asks for the same page again instead of ending the list
             // on one flaky request.
         }
-
-        if token == requestToken { isLoadingMore = false }
     }
 }

@@ -78,6 +78,8 @@ public class LibraryTools(
             SubscribeError.OwnDeck => McpErrors.Structured("own_deck",
                 "This deck already belongs to the user — a deck cannot be linked to its own author. "
                 + "It is already in list_decks."),
+            SubscribeError.DeckTooLarge => McpErrors.Structured("deck_too_large",
+                $"Decks with more than {PublishingService.MaxCardsInPublicDeck} cards cannot be imported."),
             // Subscribing twice is not an error, but the agent must not report a
             // fresh import that never happened.
             _ => JsonSerializer.Serialize(new

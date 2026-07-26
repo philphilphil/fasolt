@@ -237,18 +237,29 @@ public class StudyStatsService(AppDbContext db, TimeProvider timeProvider)
         if (cards.Count == 0)
             return new HashSet<DateTimeOffset>();
 
+        // Logs whose card is gone (CardId null) are skipped throughout: they still
+        // count as study activity, but there is no card left whose due days they could
+        // shift. The day-count queries above deliberately keep them.
+        //
         // For each card with logs before the walk window, fetch MAX(ScheduledDueAfter)
         // to initialise effective-due at cutoff (matches original "MAX over all eligible logs" semantics).
         var preWindowMaxByCard = await db.ReviewLogs
-            .Where(r => r.UserId == userId && r.ReviewedAt < cutoff && r.ScheduledDueAfter != null)
-            .GroupBy(r => r.CardId)
+            .Where(r => r.UserId == userId && r.ReviewedAt < cutoff
+                && r.ScheduledDueAfter != null && r.CardId != null)
+            .GroupBy(r => r.CardId!.Value)
             .Select(g => new { CardId = g.Key, MaxDue = g.Max(x => x.ScheduledDueAfter) })
             .ToDictionaryAsync(x => x.CardId, x => x.MaxDue!.Value);
 
         var inWindowLogs = await db.ReviewLogs
-            .Where(r => r.UserId == userId && r.ReviewedAt >= cutoff && r.ScheduledDueAfter != null)
+            .Where(r => r.UserId == userId && r.ReviewedAt >= cutoff
+                && r.ScheduledDueAfter != null && r.CardId != null)
             .OrderBy(r => r.ReviewedAt)
-            .Select(r => new { r.CardId, r.ReviewedAt, ScheduledDueAfter = r.ScheduledDueAfter!.Value })
+            .Select(r => new
+            {
+                CardId = r.CardId!.Value,
+                r.ReviewedAt,
+                ScheduledDueAfter = r.ScheduledDueAfter!.Value,
+            })
             .ToListAsync();
 
         var logsByCard = inWindowLogs

@@ -42,6 +42,14 @@ public class DeckSubscriptionService(AppDbContext db)
 
         if (subscription is null)
         {
+            // Same ceiling as the copy import. Without it an unlisted deck of any size
+            // can be linked, and convert-to-copy — which does enforce the cap — would
+            // then be permanently refused for it. Only new links are gated: a deck that
+            // outgrew the cap after someone linked it must stay idempotent for them.
+            var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == deck.Id);
+            if (cardCount > PublishingService.MaxCardsInPublicDeck)
+                return new SubscribeResult(SubscribeError.DeckTooLarge, null, false);
+
             subscription = new DeckSubscription
             {
                 UserId = userId,
@@ -118,6 +126,13 @@ public class DeckSubscriptionService(AppDbContext db)
 
         var source = subscription.Deck;
 
+        // Same ceiling as the copy import — a linked deck may have grown past it after
+        // the owner unlisted and relisted it. Counted before the cards are materialised,
+        // so an oversized deck is refused without loading its SVG blobs.
+        var cardCount = await db.DeckCards.CountAsync(dc => dc.DeckId == source.Id);
+        if (cardCount > PublishingService.MaxCardsInPublicDeck)
+            return new ConvertToCopyResult(ConvertToCopyError.DeckTooLarge, null);
+
         var sourceCards = await db.DeckCards
             .Where(dc => dc.DeckId == source.Id)
             .OrderBy(dc => dc.Card.CreatedAt)
@@ -130,11 +145,6 @@ public class DeckSubscriptionService(AppDbContext db)
                 dc.Card.BackSvg,
             })
             .ToListAsync();
-
-        // Same ceiling as the copy import — a linked deck may have grown past it
-        // after the owner unlisted and relisted it.
-        if (sourceCards.Count > PublishingService.MaxCardsInPublicDeck)
-            return new ConvertToCopyResult(ConvertToCopyError.DeckTooLarge, null);
 
         var authorHandle = await db.Users
             .Where(u => u.Id == source.UserId)
@@ -372,7 +382,7 @@ public class DeckSubscriptionService(AppDbContext db)
     }
 }
 
-public enum SubscribeError { None, NotFound, OwnDeck }
+public enum SubscribeError { None, NotFound, OwnDeck, DeckTooLarge }
 
 /// <param name="Created">False when the caller was already subscribed.</param>
 public record SubscribeResult(SubscribeError Error, DeckDto? Deck, bool Created);
