@@ -11,7 +11,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { History, Link2 } from 'lucide-vue-next'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { History, Link2, MoreHorizontal } from 'lucide-vue-next'
 import CardTable from '@/components/CardTable.vue'
 import BulkActionBar from '@/components/BulkActionBar.vue'
 import AddToDeckDialog from '@/components/AddToDeckDialog.vue'
@@ -291,25 +294,48 @@ const stateCounts = computed(() => {
         >
           Custom study
         </button>
-        <button v-if="!isLinked" class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
-          <History class="h-3.5 w-3.5" />Snapshots
-        </button>
-        <button class="fa-btn" @click="toggleSuspended">
-          <template v-if="isLinked">{{ deck.isSuspended ? 'Resume' : 'Pause' }}</template>
-          <template v-else>{{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}</template>
-        </button>
-        <!-- The deck id is the author's — nothing the subscriber can address by it. -->
-        <button v-if="!isLinked" class="fa-btn" @click="copyDeckId">
-          {{ idCopied ? 'Copied!' : 'Copy ID' }}
-        </button>
-        <template v-if="isLinked">
-          <button class="fa-btn" @click="convertOpen = true">Convert to copy</button>
-          <button class="fa-btn delete-btn" @click="unlinkOpen = true">Unlink</button>
-        </template>
-        <template v-else>
-          <button class="fa-btn" @click="openEdit">Edit</button>
-          <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
-        </template>
+
+        <DeckShareSection
+          v-if="!isLinked"
+          :deck-id="deck.id"
+          :visibility="deck.visibility"
+          :copy-count="deck.copyCount"
+          @updated="onVisibilityUpdated"
+        />
+
+        <button v-if="!isLinked" class="fa-btn" @click="openEdit">Edit</button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button type="button" class="fa-btn fa-btn-icon" aria-label="More actions">
+              <MoreHorizontal :size="16" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-56">
+            <template v-if="isLinked">
+              <DropdownMenuItem class="cursor-pointer" @click="toggleSuspended">
+                {{ deck.isSuspended ? 'Resume' : 'Pause' }}
+              </DropdownMenuItem>
+              <DropdownMenuItem class="cursor-pointer" @click="convertOpen = true">Convert to copy</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem class="cursor-pointer menu-item-destructive" @click="unlinkOpen = true">Unlink</DropdownMenuItem>
+            </template>
+            <template v-else>
+              <DropdownMenuItem class="cursor-pointer" @click="router.push(`/decks/${deck.id}/snapshots`)">
+                <History class="h-3.5 w-3.5" />Snapshots
+              </DropdownMenuItem>
+              <DropdownMenuItem class="cursor-pointer" @click="toggleSuspended">
+                {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
+              </DropdownMenuItem>
+              <!-- The deck id is the author's — nothing the subscriber can address by it. -->
+              <DropdownMenuItem class="cursor-pointer" @click="copyDeckId">
+                {{ idCopied ? 'Copied!' : 'Copy ID' }}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem class="cursor-pointer menu-item-destructive" @click="openDelete">Delete</DropdownMenuItem>
+            </template>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
 
@@ -341,18 +367,6 @@ const stateCounts = computed(() => {
     </div>
 
     <div class="fa-rule" />
-
-    <!-- Sharing — only the author can change how their deck is shared. -->
-    <template v-if="!isLinked">
-      <DeckShareSection
-        :deck-id="deck.id"
-        :visibility="deck.visibility"
-        :copy-count="deck.copyCount"
-        @updated="onVisibilityUpdated"
-      />
-
-      <div class="fa-rule" />
-    </template>
 
     <!-- Cards section -->
     <div class="cards-section">
@@ -568,8 +582,9 @@ const stateCounts = computed(() => {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
-.delete-btn { color: var(--c-again); }
-.delete-btn:hover { color: var(--c-again); border-color: var(--c-again); }
+.fa-btn-icon { padding: 0; width: 32px; }
+
+.menu-item-destructive { color: var(--c-again) !important; }
 
 /* Suspended banner — quiet surface, hairline, no glow */
 .suspended-banner {

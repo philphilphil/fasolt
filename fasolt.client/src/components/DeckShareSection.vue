@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, type Component } from 'vue'
 import { RouterLink } from 'vue-router'
-import { Check, Copy, Globe, Link2, Lock } from 'lucide-vue-next'
+import { Check, ChevronDown, Copy, Globe, Link2, Lock, Share2 } from 'lucide-vue-next'
 import { useDecksStore } from '@/stores/decks'
 import { useAuthStore } from '@/stores/auth'
 import { isApiError } from '@/api/client'
@@ -11,6 +11,9 @@ import { Input } from '@/components/ui/input'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const props = defineProps<{
   deckId: string
@@ -39,10 +42,16 @@ const OPTIONS: { value: DeckVisibility; label: string; hint: string; Icon: Compo
   { value: 'public', label: 'Public', hint: 'Listed in the public deck library for anyone to find and import.', Icon: Globe },
 ]
 
+const activeOption = computed(() => OPTIONS.find(o => o.value === props.visibility) ?? OPTIONS[0])
 const shareUrl = computed(() => `${window.location.origin}/library/${props.deckId}`)
 const isShared = computed(() => props.visibility !== 'private')
 const canPublish = computed(() => auth.handle?.canPublish ?? true)
 const urlCopied = ref(false)
+
+// Trigger reflects current state: a plain "Share" prompt, or the active
+// visibility once the deck is shared.
+const triggerIcon = computed(() => (isShared.value ? activeOption.value.Icon : Share2))
+const triggerLabel = computed(() => (isShared.value ? 'Shared' : 'Share'))
 
 onMounted(() => {
   // The share UI needs to know whether a handle exists before the user picks
@@ -110,146 +119,130 @@ async function copyShareUrl() {
 </script>
 
 <template>
-  <section class="share-section">
-    <div class="fa-cap section-label">Sharing</div>
-
-    <div class="visibility-options">
-      <button
+  <DropdownMenu>
+    <DropdownMenuTrigger as-child>
+      <button type="button" class="fa-btn share-trigger" :disabled="busy">
+        <component :is="triggerIcon" :size="14" />
+        {{ triggerLabel }}
+        <ChevronDown :size="13" class="share-trigger-chevron" />
+      </button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="start" class="w-72">
+      <DropdownMenuItem
         v-for="option in OPTIONS"
         :key="option.value"
-        type="button"
-        class="visibility-option"
-        :class="{ 'is-active': visibility === option.value }"
-        :aria-pressed="visibility === option.value"
-        :disabled="busy || (option.value === 'public' && !canPublish)"
+        role="menuitemradio"
+        :aria-checked="visibility === option.value"
+        :disabled="option.value === 'public' && !canPublish"
+        class="share-option cursor-pointer"
         @click="applyVisibility(option.value)"
       >
-        <component :is="option.Icon" :size="15" class="option-icon" />
-        <span class="option-text">
-          <span class="option-label">{{ option.label }}</span>
-          <span class="option-hint">{{ option.hint }}</span>
+        <component :is="option.Icon" :size="15" class="share-option-icon" />
+        <span class="share-option-text">
+          <span class="share-option-label">{{ option.label }}</span>
+          <span class="share-option-hint">{{ option.hint }}</span>
         </span>
-        <Check v-if="visibility === option.value" :size="15" class="option-check" />
-      </button>
-    </div>
+        <Check v-if="visibility === option.value" :size="15" class="share-option-check" />
+      </DropdownMenuItem>
 
-    <p v-if="!canPublish" class="share-note">
-      Publishing to the library is disabled for your account. You can still share an unlisted link.
-    </p>
+      <template v-if="isShared">
+        <DropdownMenuSeparator />
+        <DropdownMenuItem class="share-url-item cursor-pointer" @select.prevent="copyShareUrl">
+          <span class="share-url-text fa-mono">{{ shareUrl }}</span>
+          <span class="share-copy-action">
+            <Check v-if="urlCopied" :size="13" />
+            <Copy v-else :size="13" />
+            {{ urlCopied ? 'Copied!' : 'Copy link' }}
+          </span>
+        </DropdownMenuItem>
+        <p class="share-note share-note-menu">
+          <template v-if="copyCount > 0">
+            Imported <span class="fa-num">{{ copyCount }}</span> {{ copyCount === 1 ? 'time' : 'times' }} ·
+          </template>
+          <RouterLink :to="`/library/${deckId}`" class="fa-link">View the public page</RouterLink>
+        </p>
+      </template>
 
-    <div v-if="error" class="share-error">{{ error }}</div>
-
-    <template v-if="isShared">
-      <div class="share-url">
-        <span class="share-url-text fa-mono">{{ shareUrl }}</span>
-        <button type="button" class="fa-btn share-copy" @click="copyShareUrl">
-          <Check v-if="urlCopied" :size="13" />
-          <Copy v-else :size="13" />
-          {{ urlCopied ? 'Copied!' : 'Copy link' }}
-        </button>
-      </div>
-      <p class="share-note">
-        <template v-if="copyCount > 0">
-          Imported <span class="fa-num">{{ copyCount }}</span> {{ copyCount === 1 ? 'time' : 'times' }} ·
-        </template>
-        <RouterLink :to="`/library/${deckId}`" class="fa-link">View the public page</RouterLink>
+      <p v-if="!canPublish" class="share-note share-note-menu">
+        Publishing to the library is disabled for your account. You can still share an unlisted link.
       </p>
-    </template>
 
-    <Dialog v-model:open="handleOpen">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Choose your handle</DialogTitle>
-          <DialogDescription>
-            Public decks are credited to a handle. Pick one — 3–30 characters, lowercase
-            letters, numbers and hyphens.
-          </DialogDescription>
-        </DialogHeader>
-        <div class="handle-field">
-          <span class="handle-at">@</span>
-          <Input
-            v-model="handleInput"
-            placeholder="your-handle"
-            autocomplete="off"
-            @keydown.enter="saveHandle"
-          />
-        </div>
-        <div v-if="handleError" class="share-error">{{ handleError }}</div>
-        <DialogFooter class="gap-2">
-          <Button variant="outline" size="sm" :disabled="handleSaving" @click="handleOpen = false">Cancel</Button>
-          <Button size="sm" :disabled="handleSaving || !handleInput.trim()" @click="saveHandle">
-            {{ handleSaving ? 'Saving…' : 'Save handle' }}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  </section>
+      <div v-if="error" class="share-error share-note-menu">{{ error }}</div>
+    </DropdownMenuContent>
+  </DropdownMenu>
+
+  <Dialog v-model:open="handleOpen">
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Choose your handle</DialogTitle>
+        <DialogDescription>
+          Public decks are credited to a handle. Pick one — 3–30 characters, lowercase
+          letters, numbers and hyphens.
+        </DialogDescription>
+      </DialogHeader>
+      <div class="handle-field">
+        <span class="handle-at">@</span>
+        <Input
+          v-model="handleInput"
+          placeholder="your-handle"
+          autocomplete="off"
+          @keydown.enter="saveHandle"
+        />
+      </div>
+      <div v-if="handleError" class="share-error">{{ handleError }}</div>
+      <DialogFooter class="gap-2">
+        <Button variant="outline" size="sm" :disabled="handleSaving" @click="handleOpen = false">Cancel</Button>
+        <Button size="sm" :disabled="handleSaving || !handleInput.trim()" @click="saveHandle">
+          {{ handleSaving ? 'Saving…' : 'Save handle' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <style scoped>
-.share-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.section-label { margin-bottom: 2px; }
+.share-trigger { gap: 7px; }
+.share-trigger-chevron { color: var(--ink-2); }
 
-.visibility-options {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--rule-1);
-  border-radius: 10px;
-  overflow: hidden;
-  max-width: 560px;
-}
-.visibility-option {
-  display: flex;
-  align-items: flex-start;
+.share-option {
+  align-items: flex-start !important;
   gap: 10px;
-  padding: 11px 13px;
-  background: var(--paper-1);
-  border: none;
-  border-bottom: 1px solid var(--rule-1);
-  text-align: left;
-  font: inherit;
-  color: var(--ink-0);
-  cursor: pointer;
-  transition: background .12s;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
 }
-.visibility-option:last-child { border-bottom: none; }
-.visibility-option:hover:not(:disabled) { background: var(--paper-2); }
-.visibility-option:disabled { opacity: 0.5; cursor: not-allowed; }
-.visibility-option.is-active { background: var(--accent-soft); }
-.option-icon { flex: none; margin-top: 2px; color: var(--ink-2); }
-.visibility-option.is-active .option-icon { color: var(--accent-text); }
-.option-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.option-label { font-size: 13.5px; font-weight: 500; }
-.option-hint { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
-.option-check { flex: none; margin-top: 2px; color: var(--accent-text); }
+.share-option-icon { flex: none; margin-top: 2px; color: var(--ink-2); }
+.share-option[aria-checked="true"] .share-option-icon { color: var(--accent-text); }
+.share-option-text { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 1px; }
+.share-option-label { font-size: 13px; font-weight: 500; }
+.share-option-hint { font-size: 11.5px; color: var(--ink-2); white-space: normal; }
+.share-option-check { flex: none; margin-top: 2px; color: var(--accent-text); }
 
-.share-url {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  max-width: 560px;
+.share-url-item {
+  gap: 8px !important;
+  align-items: center !important;
 }
 .share-url-text {
   flex: 1;
   min-width: 0;
-  padding: 6px 10px;
-  border: 1px solid var(--rule-1);
-  border-radius: 8px;
-  background: var(--paper-2);
-  font-size: 12.5px;
-  color: var(--ink-1);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink-1);
 }
-.share-copy { flex: none; height: 30px; }
+.share-copy-action {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
 
 .share-note { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.share-note-menu { padding: 2px 8px 6px; }
 .share-error { font-size: 13px; color: var(--c-again); }
 
 .handle-field {
