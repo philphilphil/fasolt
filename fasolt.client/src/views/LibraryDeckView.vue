@@ -25,7 +25,6 @@ const notFound = ref(false)
 const loadError = ref('')
 
 const sampleIndex = ref(0)
-const isFlipped = ref(false)
 
 /** Which CTA the visitor picked — carried through the logged-out auth funnel. */
 type ImportMode = 'copy' | 'link'
@@ -82,7 +81,6 @@ async function load() {
   notFound.value = false
   loadError.value = ''
   sampleIndex.value = 0
-  isFlipped.value = false
   try {
     deck.value = await library.getDeck(publicId.value)
     applyTitle()
@@ -138,7 +136,6 @@ function showSample(index: number) {
   const count = deck.value.sampleCards.length
   if (count === 0) return
   sampleIndex.value = (index + count) % count
-  isFlipped.value = false
 }
 
 /** Maps an import failure to a sentence, or bounces to login when the session is gone. */
@@ -315,12 +312,7 @@ async function linkDeck() {
               </div>
             </div>
 
-            <LibraryCardPreview
-              v-if="currentSample"
-              :card="currentSample"
-              :is-flipped="isFlipped"
-              @flip="isFlipped = !isFlipped"
-            />
+            <LibraryCardPreview v-if="currentSample" :card="currentSample" />
           </section>
 
           <div v-else class="empty">This deck has no cards to preview yet.</div>

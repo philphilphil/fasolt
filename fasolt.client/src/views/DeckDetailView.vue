@@ -408,7 +408,12 @@ const stateCounts = computed(() => {
         </DialogHeader>
         <div class="space-y-3">
           <Input v-model="editName" placeholder="Deck name" @keydown.enter="saveEdit" />
-          <Input v-model="editDescription" placeholder="Description (optional)" @keydown.enter="saveEdit" />
+          <textarea
+            v-model="editDescription"
+            class="w-full rounded-lg border border-rule-1 bg-paper-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+            rows="4"
+            placeholder="Description (optional)"
+          />
         </div>
         <DialogFooter>
           <Button @click="saveEdit">Save</Button>
