@@ -25,11 +25,15 @@ public class McpLibraryToolsTests : IAsyncLifetime
     public async Task InitializeAsync() => await _db.InitializeAsync();
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
-    private LibraryTools Tools(AppDbContext db, string? userId = null) => new(
-        new LibraryService(db),
-        new DeckSubscriptionService(db),
-        new PublishingService(db),
-        McpTestContext.For(userId ?? UserId));
+    private LibraryTools Tools(AppDbContext db, string? userId = null)
+    {
+        var subscriptions = new DeckSubscriptionService(db);
+        return new LibraryTools(
+            new LibraryService(db, subscriptions),
+            subscriptions,
+            new PublishingService(db),
+            McpTestContext.For(userId ?? UserId));
+    }
 
     private static JsonElement Json(string raw) => JsonDocument.Parse(raw).RootElement.Clone();
 
@@ -126,6 +130,45 @@ public class McpLibraryToolsTests : IAsyncLifetime
         var root = Json(await Tools(db).ImportDeck(deck.PublicId, "copy"));
 
         root.GetProperty("deck").GetProperty("cardCount").GetInt32().Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ImportDeck_Copy_ConvertsAnExistingLinkAndSaysSo()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, handle: "convert-author");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Linked Then Copied", cardCount: 2);
+
+        await Tools(db).ImportDeck(deck.PublicId, "link");
+        var root = Json(await Tools(db).ImportDeck(deck.PublicId, "copy"));
+
+        root.TryGetProperty("error", out _).Should().BeFalse();
+        root.GetProperty("mode").GetString().Should().Be("copy");
+        root.GetProperty("converted").GetBoolean().Should().BeTrue();
+        root.GetProperty("message").GetString().Should().Contain("progress");
+
+        var copy = root.GetProperty("deck");
+        copy.GetProperty("id").GetString().Should().NotBe(deck.PublicId, "the copy is the caller's own deck");
+        copy.GetProperty("isLinked").GetBoolean().Should().BeFalse();
+        copy.GetProperty("cardCount").GetInt32().Should().Be(2);
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckSubscriptions.CountAsync(s => s.UserId == UserId)).Should().Be(0);
+        (await verify.Decks.CountAsync(d => d.UserId == UserId)).Should().Be(1, "no duplicate deck");
+        (await verify.Cards.CountAsync(c => c.UserId == UserId)).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ImportDeck_Copy_WithoutALinkIsNotReportedAsAConversion()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, handle: "plain-copy-author");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, cardCount: 1);
+
+        var root = Json(await Tools(db).ImportDeck(deck.PublicId, "copy"));
+
+        root.GetProperty("converted").GetBoolean().Should().BeFalse();
+        root.TryGetProperty("message", out _).Should().BeFalse("there is nothing to explain on a plain import");
     }
 
     // ---- import_deck: link -------------------------------------------------

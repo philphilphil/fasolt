@@ -34,8 +34,10 @@ final class PublicLibraryRepository {
         return try await apiClient.request(endpoint)
     }
 
-    /// Clones the deck into the caller's account. The copy is fully owned: its cards
-    /// are new, its progress starts fresh, and it stops following the author.
+    /// Clones the deck into the caller's account. The copy is fully owned and stops
+    /// following the author. If the caller was already linked to this deck, the
+    /// server converts that link into the copy instead, carrying review progress
+    /// over rather than starting fresh.
     func copyDeck(publicId: String) async throws -> DeckDTO {
         let endpoint = Endpoint(path: "/api/library/decks/\(publicId)/copy", method: .post)
         let deck: DeckDTO = try await apiClient.request(endpoint)

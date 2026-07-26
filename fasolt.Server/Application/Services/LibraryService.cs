@@ -11,7 +11,7 @@ namespace Fasolt.Server.Application.Services;
 /// Everything returned from here is world-readable: no internal user ids and no
 /// card <c>SourceFile</c> ever appear in these DTOs.
 /// </summary>
-public class LibraryService(AppDbContext db)
+public class LibraryService(AppDbContext db, DeckSubscriptionService subscriptions)
 {
     /// <summary>Sample card previews returned on a public deck page.</summary>
     public const int SampleCardCount = 10;
@@ -112,9 +112,22 @@ public class LibraryService(AppDbContext db)
     /// Clones a shared deck into the caller's account: new Card rows owned by the
     /// importer, no <c>SourceFile</c> (that is the author's vault path), and no
     /// ReviewState rows so every card starts new.
+    /// <para>
+    /// A caller who already links the deck gets a conversion instead — see
+    /// <see cref="DeckSubscriptionService.ConvertToCopy"/>.
+    /// </para>
     /// </summary>
     public async Task<CopyDeckResult> CopyDeck(string userId, string publicId)
     {
+        // Copying a deck the caller already links must not leave them with the link
+        // *and* a second deck — the same cards would sit in their due queue twice.
+        // Converting is the import they asked for, and it carries over the progress
+        // they built up through the link. Checked before the visibility lookup below:
+        // the subscription is its own proof of access, so this still works once the
+        // author has unlisted the deck.
+        if (await db.DeckSubscriptions.AnyAsync(s => s.UserId == userId && s.Deck.PublicId == publicId))
+            return FromConversion(await subscriptions.ConvertToCopy(userId, publicId));
+
         var source = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == publicId && d.Visibility != DeckVisibility.Private);
 
@@ -199,8 +212,28 @@ public class LibraryService(AppDbContext db)
                 copy.Visibility.ToWire(), copy.PublishedAt, copy.CopyCount,
                 copy.CopiedFromDeckPublicId, copy.CopiedFromHandle));
     }
+
+    /// <summary>
+    /// Maps a conversion onto the copy import's result shape. The two failures line up
+    /// one to one, so callers keep a single error surface. <c>NotFound</c> is only
+    /// reachable if the link disappeared between the check above and the conversion.
+    /// </summary>
+    private static CopyDeckResult FromConversion(ConvertToCopyResult result) => new(
+        result.Error switch
+        {
+            ConvertToCopyError.NotFound => CopyDeckError.NotFound,
+            ConvertToCopyError.DeckTooLarge => CopyDeckError.DeckTooLarge,
+            _ => CopyDeckError.None,
+        },
+        result.Deck,
+        Converted: result.Error == ConvertToCopyError.None);
 }
 
 public enum CopyDeckError { None, NotFound, DeckTooLarge }
 
-public record CopyDeckResult(CopyDeckError Error, DeckDto? Deck);
+/// <param name="Converted">
+/// True when the caller was already linked to the deck and the link was converted into
+/// the returned copy instead of a fresh one being cloned. No new deck was added to
+/// their account beyond the converted one, and their progress carried over.
+/// </param>
+public record CopyDeckResult(CopyDeckError Error, DeckDto? Deck, bool Converted = false);

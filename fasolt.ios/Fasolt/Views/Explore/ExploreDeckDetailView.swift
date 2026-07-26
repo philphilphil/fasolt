@@ -231,7 +231,9 @@ struct ExploreDeckDetailView: View {
         if let copied = viewModel.copiedDeck {
             statusLine(
                 icon: "checkmark.circle.fill",
-                text: "Copied as “\(copied.name)” — your own cards, your own progress.",
+                text: viewModel.copiedFromLink
+                    ? "Converted to “\(copied.name)” — your review progress is preserved and the link is gone."
+                    : "Copied as “\(copied.name)” — your own cards, your own progress.",
                 color: FasoltTheme.good
             )
         }
@@ -279,7 +281,9 @@ struct ExploreDeckDetailView: View {
                 Button {
                     Task { await viewModel.copyToMyDecks() }
                 } label: {
-                    Text(viewModel.importingMode == .copy ? "Copying…" : "Copy to my decks")
+                    Text(viewModel.relation == .linked
+                         ? (viewModel.importingMode == .copy ? "Converting…" : "Convert to copy")
+                         : (viewModel.importingMode == .copy ? "Copying…" : "Copy to my decks"))
                 }
                 .buttonStyle(AccentButtonStyle())
                 .disabled(viewModel.isBusy)

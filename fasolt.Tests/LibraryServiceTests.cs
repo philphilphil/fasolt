@@ -19,6 +19,9 @@ public class LibraryServiceTests : IAsyncLifetime
     public async Task InitializeAsync() => await _db.InitializeAsync();
     public async Task DisposeAsync() => await _db.DisposeAsync();
 
+    /// <summary>The copy import delegates to the subscription service when the caller already links the deck.</summary>
+    private static LibraryService Service(AppDbContext db) => new(db, new DeckSubscriptionService(db));
+
     private static async Task<string> AddAuthor(AppDbContext db, string handle)
     {
         var id = Guid.NewGuid().ToString();
@@ -96,7 +99,7 @@ public class LibraryServiceTests : IAsyncLifetime
         await AddDeck(db, author, DeckVisibility.Unlisted, "Unlisted Deck");
         await AddDeck(db, author, DeckVisibility.Private, "Private Deck");
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var result = await svc.ListPublicDecks(null, null, 1, 50);
 
         result.TotalCount.Should().Be(1);
@@ -114,7 +117,7 @@ public class LibraryServiceTests : IAsyncLifetime
         await AddDeck(db, author, DeckVisibility.Public, "Spanish Vocabulary");
         await AddDeck(db, author, DeckVisibility.Public, "Chemistry", description: "Periodic table basics");
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
 
         var byName = await svc.ListPublicDecks("spanish", null, 1, 50);
         byName.Items.Should().ContainSingle().Which.Name.Should().Be("Spanish Vocabulary");
@@ -136,7 +139,7 @@ public class LibraryServiceTests : IAsyncLifetime
         await AddDeck(db, author, DeckVisibility.Public, "Old Popular", copyCount: 9, publishedAt: now.AddDays(-10));
         await AddDeck(db, author, DeckVisibility.Public, "Fresh Quiet", copyCount: 0, publishedAt: now);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
 
         var popular = await svc.ListPublicDecks(null, "popular", 1, 50);
         popular.Items.Select(d => d.Name).Should().ContainInOrder("Old Popular", "Fresh Quiet");
@@ -153,7 +156,7 @@ public class LibraryServiceTests : IAsyncLifetime
         for (var i = 0; i < 5; i++)
             await AddDeck(db, author, DeckVisibility.Public, $"Deck {i}", copyCount: 5 - i);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
 
         var first = await svc.ListPublicDecks(null, "popular", 1, 2);
         first.TotalCount.Should().Be(5);
@@ -172,7 +175,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-four-b");
         await AddDeck(db, author, DeckVisibility.Public, "Only Deck");
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
 
         // (page - 1) * pageSize would overflow Int32 and hand Postgres a negative
         // OFFSET — a 500 on an anonymous, crawler-facing endpoint.
@@ -192,7 +195,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-five");
         var deck = await AddDeck(db, author, DeckVisibility.Unlisted, "Shared By Link", cardCount: 3);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var detail = await svc.GetPublicDeck(deck.PublicId);
 
         detail.Should().NotBeNull();
@@ -209,7 +212,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-six");
         var deck = await AddDeck(db, author, DeckVisibility.Private, "Not Yours", cardCount: 1);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
 
         (await svc.GetPublicDeck(deck.PublicId)).Should().BeNull();
     }
@@ -221,7 +224,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-seven");
         var deck = await AddDeck(db, author, DeckVisibility.Public, "Big Deck", cardCount: 25);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var detail = await svc.GetPublicDeck(deck.PublicId);
 
         detail!.CardCount.Should().Be(25);
@@ -258,7 +261,7 @@ public class LibraryServiceTests : IAsyncLifetime
         }
         await db.SaveChangesAsync();
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var result = await svc.CopyDeck(ImporterId, source.PublicId);
 
         result.Error.Should().Be(CopyDeckError.None);
@@ -299,7 +302,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-nine");
         var source = await AddDeck(db, author, DeckVisibility.Public, "Counted", cardCount: 1);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         await svc.CopyDeck(ImporterId, source.PublicId);
         await svc.CopyDeck(ImporterId, source.PublicId);
 
@@ -323,7 +326,7 @@ public class LibraryServiceTests : IAsyncLifetime
         await Task.WhenAll(importers.Select(async importer =>
         {
             await using var db = _db.CreateDbContext();
-            await new LibraryService(db).CopyDeck(importer, source.PublicId);
+            await Service(db).CopyDeck(importer, source.PublicId);
         }));
 
         await using var verify = _db.CreateDbContext();
@@ -338,7 +341,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-nine-c");
         var source = await AddDeck(db, author, DeckVisibility.Public, "Self Serve", cardCount: 1);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var result = await svc.CopyDeck(author, source.PublicId);
 
         result.Error.Should().Be(CopyDeckError.None);
@@ -352,7 +355,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-ten");
         var source = await AddDeck(db, author, DeckVisibility.Unlisted, "Link Only", cardCount: 2);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var result = await svc.CopyDeck(ImporterId, source.PublicId);
 
         result.Error.Should().Be(CopyDeckError.None);
@@ -366,7 +369,7 @@ public class LibraryServiceTests : IAsyncLifetime
         var author = await AddAuthor(db, "author-eleven");
         var source = await AddDeck(db, author, DeckVisibility.Private, "Mine Only", cardCount: 1);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var result = await svc.CopyDeck(ImporterId, source.PublicId);
 
         result.Error.Should().Be(CopyDeckError.NotFound);
@@ -382,10 +385,109 @@ public class LibraryServiceTests : IAsyncLifetime
         var source = await AddDeck(db, author, DeckVisibility.Unlisted, "Enormous",
             cardCount: PublishingService.MaxCardsInPublicDeck + 1);
 
-        var svc = new LibraryService(db);
+        var svc = Service(db);
         var result = await svc.CopyDeck(ImporterId, source.PublicId);
 
         result.Error.Should().Be(CopyDeckError.DeckTooLarge);
         (await db.Decks.CountAsync(d => d.UserId == ImporterId)).Should().Be(0);
+    }
+
+    // ---- copy import while already linked ----------------------------------
+
+    [Fact]
+    public async Task CopyDeck_WhileLinked_ConvertsTheLinkInsteadOfAddingASecondDeck()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await AddAuthor(db, "author-thirteen");
+        var source = await AddDeck(db, author, DeckVisibility.Public, "Already Linked", cardCount: 2);
+        await LinkedDeckTestData.Subscribe(db, ImporterId, source);
+
+        // Progress built up through the link — the whole point of converting instead
+        // of cloning is that this survives.
+        var studiedId = await db.DeckCards.Where(dc => dc.DeckId == source.Id && dc.Card.Front == "Question 0")
+            .Select(dc => dc.CardId).SingleAsync();
+        var due = DateTimeOffset.UtcNow.AddDays(6);
+        var state = await db.ReviewStateFor(ImporterId, studiedId);
+        state.State = "review";
+        state.Stability = 9.5;
+        state.Difficulty = 3.75;
+        state.DueAt = due;
+        await db.SaveChangesAsync();
+
+        var result = await Service(db).CopyDeck(ImporterId, source.PublicId);
+
+        result.Error.Should().Be(CopyDeckError.None);
+        result.Converted.Should().BeTrue();
+        result.Deck!.CardCount.Should().Be(2);
+        result.Deck.IsLinked.Should().BeFalse();
+        result.Deck.CopiedFromDeckPublicId.Should().Be(source.PublicId);
+
+        await using var verify = _db.CreateDbContext();
+
+        // One deck, not the link plus a duplicate — otherwise every card is in the
+        // due queue twice.
+        var ownedDecks = await verify.Decks.Where(d => d.UserId == ImporterId).ToListAsync();
+        ownedDecks.Should().ContainSingle().Which.PublicId.Should().Be(result.Deck.Id);
+        (await verify.DeckSubscriptions.AnyAsync(s => s.UserId == ImporterId)).Should().BeFalse();
+
+        var copiedStudiedId = await verify.DeckCards
+            .Where(dc => dc.DeckId == ownedDecks[0].Id && dc.Card.Front == "Question 0")
+            .Select(dc => dc.CardId)
+            .SingleAsync();
+        var carried = await verify.ReviewStates
+            .SingleAsync(r => r.UserId == ImporterId && r.CardId == copiedStudiedId);
+
+        carried.State.Should().Be("review");
+        carried.Stability.Should().Be(9.5);
+        carried.Difficulty.Should().Be(3.75);
+        carried.DueAt.Should().BeCloseTo(due, TimeSpan.FromMilliseconds(1));
+
+        // Counted exactly once, the same as reaching the conversion through
+        // /api/decks/{id}/convert-to-copy — never once for the link and again here.
+        (await verify.Decks.Where(d => d.Id == source.Id).Select(d => d.CopyCount).FirstAsync())
+            .Should().Be(1);
+    }
+
+    /// <summary>
+    /// The subscription is its own proof of access — a plain copy would 404 on both of
+    /// these. A subscriber must never be stranded with a link they can no longer turn
+    /// into something they own just because the deck stopped resolving in the library.
+    /// </summary>
+    [Theory]
+    [InlineData(DeckVisibility.Unlisted)]
+    [InlineData(DeckVisibility.Private)]
+    public async Task CopyDeck_WhileLinked_StillConvertsAfterTheAuthorTookTheDeckDown(
+        DeckVisibility visibility)
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await AddAuthor(db, "author-fourteen");
+        var source = await AddDeck(db, author, DeckVisibility.Public, "Taken Down", cardCount: 1);
+        await LinkedDeckTestData.Subscribe(db, ImporterId, source);
+
+        await db.Decks.Where(d => d.Id == source.Id)
+            .ExecuteUpdateAsync(s => s.SetProperty(d => d.Visibility, visibility));
+
+        var result = await Service(db).CopyDeck(ImporterId, source.PublicId);
+
+        result.Error.Should().Be(CopyDeckError.None);
+        result.Converted.Should().BeTrue();
+        result.Deck!.CardCount.Should().Be(1);
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckSubscriptions.AnyAsync(s => s.UserId == ImporterId)).Should().BeFalse();
+        (await verify.Decks.CountAsync(d => d.UserId == ImporterId)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CopyDeck_WhenNotLinked_IsAPlainCopy()
+    {
+        await using var db = _db.CreateDbContext();
+        var author = await AddAuthor(db, "author-fifteen");
+        var source = await AddDeck(db, author, DeckVisibility.Public, "Not Linked", cardCount: 1);
+
+        var result = await Service(db).CopyDeck(ImporterId, source.PublicId);
+
+        result.Error.Should().Be(CopyDeckError.None);
+        result.Converted.Should().BeFalse();
     }
 }

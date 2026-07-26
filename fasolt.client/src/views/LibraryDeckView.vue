@@ -32,6 +32,8 @@ type ImportMode = 'copy' | 'link'
 const importing = ref<ImportMode | null>(null)
 const importError = ref('')
 const importedDeck = ref<Deck | null>(null)
+/** True when `importedDeck` came from converting an existing link, not a fresh copy. */
+const importedFromLink = ref(false)
 const justLinked = ref(false)
 
 /**
@@ -126,6 +128,7 @@ onMounted(async () => {
 
 watch(publicId, () => {
   importedDeck.value = null
+  importedFromLink.value = false
   justLinked.value = false
   importError.value = ''
   load()
@@ -158,13 +161,21 @@ async function copyToMyDecks() {
     window.location.href = authUrl('/register', 'copy')
     return
   }
+  // Capture this before the call — a successful convert drops the link, so
+  // `linkedDeck` won't be true anymore once we refresh below.
+  const wasLinked = !!linkedDeck.value
   importing.value = 'copy'
   importError.value = ''
   justLinked.value = false
   try {
     importedDeck.value = await library.copyDeck(publicId.value)
+    importedFromLink.value = wasLinked
     // Reflect the new import count without a full refetch round-trip.
     deck.value = { ...deck.value, copyCount: deck.value.copyCount + 1 }
+    if (wasLinked) {
+      // The link is gone now — refresh so the "Linked — go to deck" CTA clears.
+      await loadMyDecks()
+    }
   } catch (e) {
     reportImportFailure(e, 'copy')
   } finally {
@@ -181,6 +192,7 @@ async function linkDeck() {
   importing.value = 'link'
   importError.value = ''
   importedDeck.value = null
+  importedFromLink.value = false
   try {
     await library.subscribeDeck(publicId.value)
     justLinked.value = true
@@ -251,7 +263,9 @@ async function linkDeck() {
                   :disabled="!!importing"
                   @click="copyToMyDecks"
                 >
-                  {{ importing === 'copy' ? 'Copying…' : 'Copy to my decks' }}
+                  {{ linkedDeck
+                    ? (importing === 'copy' ? 'Converting…' : 'Convert to copy')
+                    : (importing === 'copy' ? 'Copying…' : 'Copy to my decks') }}
                 </button>
                 <RouterLink v-if="linkedDeck" :to="`/decks/${publicId}`" class="fa-btn fa-btn-accent">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
@@ -276,6 +290,7 @@ async function linkDeck() {
           </header>
 
           <div v-if="isOwner" class="cta-note">This is your deck — you're looking at its public page.</div>
+          <div v-else-if="linkedDeck" class="cta-note">Converting keeps your review progress and removes the link.</div>
           <div v-else class="cta-note">
             <strong>Link</strong> follows the author's updates and keeps your own study progress.
             <strong>Copy</strong> gives you an independent deck you can edit.
@@ -283,7 +298,12 @@ async function linkDeck() {
           </div>
 
           <div v-if="importedDeck" class="import-success">
-            Imported as a copy — your own cards, your own progress.
+            <template v-if="importedFromLink">
+              Converted to a copy — your review progress is preserved and the link is gone.
+            </template>
+            <template v-else>
+              Imported as a copy — your own cards, your own progress.
+            </template>
             <RouterLink :to="`/decks/${importedDeck.id}`" class="fa-link">Open {{ importedDeck.name }}</RouterLink>
           </div>
 

@@ -24,8 +24,10 @@ final class ExploreDeckViewModel {
     var isLoading = false
     var errorMessage: String?
 
-    /// Non-nil once "Copy to my decks" succeeded — the copy is a new, separate deck.
+    /// Non-nil once a copy succeeded — the copy is a new, separate deck.
     var copiedDeck: DeckDTO?
+    /// True when `copiedDeck` came from converting an existing link rather than a fresh copy.
+    var copiedFromLink = false
     var importingMode: ImportMode?
     var isUnlinking = false
     var importError: String?
@@ -78,11 +80,15 @@ final class ExploreDeckViewModel {
 
     func copyToMyDecks() async {
         guard !isBusy else { return }
+        // Capture before the call — a successful convert removes the link, so
+        // `relation` won't read `.linked` anymore once we refresh below.
+        let wasLinked = relation == .linked
         importingMode = .copy
         importError = nil
 
         do {
             copiedDeck = try await repository.copyDeck(publicId: publicId)
+            copiedFromLink = wasLinked
             if let deck {
                 // Reflect the new import without a full round-trip.
                 self.deck = LibraryDeckDetailDTO(
@@ -96,6 +102,11 @@ final class ExploreDeckViewModel {
                     publishedAt: deck.publishedAt,
                     sampleCards: deck.sampleCards
                 )
+            }
+            if wasLinked {
+                // The link is gone now — refresh so the view stops offering "Unlink"
+                // and drops the stale "Linked" status line.
+                await refreshRelation()
             }
         } catch {
             logger.error("Copy failed for \(self.publicId): \(error)")
@@ -134,6 +145,7 @@ final class ExploreDeckViewModel {
         importingMode = .link
         importError = nil
         copiedDeck = nil
+        copiedFromLink = false
 
         do {
             _ = try await repository.subscribe(publicId: publicId)

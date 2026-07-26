@@ -33,7 +33,7 @@ public class LibraryTools(
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("Import a shared deck into the user's account. Mode 'copy' clones the cards into a deck the user owns outright and can edit; mode 'link' subscribes to the author's deck, which stays in sync with the author's changes but is read-only. Linking a deck that is already linked succeeds without creating a second copy (alreadyLinked: true).")]
+    [McpServerTool, Description("Import a shared deck into the user's account. Mode 'copy' clones the cards into a deck the user owns outright and can edit; mode 'link' subscribes to the author's deck, which stays in sync with the author's changes but is read-only. Linking a deck that is already linked succeeds without creating a second copy (alreadyLinked: true). Copying a deck the user already links converts that link into the owned copy, keeping their review progress, instead of adding a duplicate deck (converted: true).")]
     public async Task<string> ImportDeck(
         [Description("Public id of the shared deck — the `id` field from list_public_decks, or the last path segment of a /library/... share link")] string publicId,
         [Description("'copy' for an editable clone, 'link' for a live read-only subscription")] string mode)
@@ -59,11 +59,21 @@ public class LibraryTools(
             CopyDeckError.NotFound => DeckNotShared(),
             CopyDeckError.DeckTooLarge => McpErrors.Structured("deck_too_large",
                 $"Decks with more than {PublishingService.MaxCardsInPublicDeck} cards cannot be imported."),
+            // Copying a deck the user already links converts the link rather than
+            // cloning a second deck. The agent must not report that as a plain import:
+            // the read-only link is gone and the returned deck is the one they were
+            // already studying.
             _ => JsonSerializer.Serialize(new
             {
                 mode = "copy",
+                converted = result.Converted,
                 deck = result.Deck,
                 deckUrl = DeckUrl(result.Deck!.Id),
+                message = result.Converted
+                    ? "The user already had this deck linked. That link has been converted into an "
+                      + "editable copy they own — their review progress carried over and no duplicate "
+                      + "deck was created."
+                    : null,
             }, McpJson.Options),
         };
     }

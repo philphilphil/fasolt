@@ -47,6 +47,11 @@ public static class LibraryEndpoints
         return deck is null ? Results.NotFound() : Results.Ok(deck);
     }
 
+    /// <summary>
+    /// Imports a shared deck as a copy the caller owns. Copying a deck the caller
+    /// already links converts that link instead of adding a duplicate deck, and
+    /// returns 200 with the converted deck rather than 201.
+    /// </summary>
     private static async Task<IResult> CopyDeck(
         string publicId,
         ClaimsPrincipal principal,
@@ -66,7 +71,11 @@ public static class LibraryEndpoints
                 error = "deck_too_large",
                 message = $"Decks with more than {PublishingService.MaxCardsInPublicDeck} cards cannot be imported.",
             }),
-            _ => Results.Created($"/api/decks/{result.Deck!.Id}", result.Deck),
+            // A conversion is not a new import: the caller already had this deck as a
+            // link, so 200 rather than 201.
+            _ => result.Converted
+                ? Results.Ok(result.Deck)
+                : Results.Created($"/api/decks/{result.Deck!.Id}", result.Deck),
         };
     }
 
