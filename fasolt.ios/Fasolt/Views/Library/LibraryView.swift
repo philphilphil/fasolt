@@ -14,6 +14,7 @@ struct LibraryView: View {
     let deckRepository: DeckRepository
     let cardRepository: CardRepository
     let snapshotViewModel: SnapshotViewModel
+    let publicLibraryRepository: PublicLibraryRepository
 
     var body: some View {
         NavigationStack {
@@ -35,12 +36,12 @@ struct LibraryView: View {
                         viewModel: deckListViewModel,
                         deckRepository: deckRepository,
                         cardRepository: cardRepository,
-                        leadingToolbar: { snapshotsButton }
+                        leadingToolbar: { leadingButtons }
                     )
                 case .cards:
                     CardListContent(
                         viewModel: cardListViewModel,
-                        leadingToolbar: { snapshotsButton }
+                        leadingToolbar: { leadingButtons }
                     )
                 }
             }
@@ -52,6 +53,13 @@ struct LibraryView: View {
         }
     }
 
+    private var leadingButtons: some View {
+        HStack(spacing: 16) {
+            snapshotsButton
+            exploreButton
+        }
+    }
+
     private var snapshotsButton: some View {
         Button {
             showSnapshots = true
@@ -59,5 +67,14 @@ struct LibraryView: View {
             Image(systemName: "clock.arrow.circlepath")
         }
         .accessibilityLabel("Snapshots")
+    }
+
+    private var exploreButton: some View {
+        NavigationLink {
+            ExploreView(repository: publicLibraryRepository, deckRepository: deckRepository)
+        } label: {
+            Image(systemName: "globe")
+        }
+        .accessibilityLabel("Explore public decks")
     }
 }

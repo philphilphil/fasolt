@@ -13,7 +13,6 @@ struct MainTabView: View {
     @State private var publicLibraryRepository: PublicLibraryRepository?
     @State private var deckListViewModel: DeckListViewModel?
     @State private var cardListViewModel: CardListViewModel?
-    @State private var exploreViewModel: ExploreViewModel?
     @State private var studySession: StudySession?
     @State private var selectedTab: Int = 0
     @State private var router = NavigationRouter.shared
@@ -21,8 +20,7 @@ struct MainTabView: View {
     var body: some View {
         Group {
             if let cardRepository, let deckRepository, let notificationService,
-               let publicLibraryRepository, let deckListViewModel, let cardListViewModel,
-               let exploreViewModel {
+               let publicLibraryRepository, let deckListViewModel, let cardListViewModel {
                 let studyViewModelFactory: () -> StudyViewModel = {
                     let vm = StudyViewModel(cardRepository: cardRepository)
                     vm.notificationService = notificationService
@@ -44,22 +42,13 @@ struct MainTabView: View {
                         cardListViewModel: cardListViewModel,
                         deckRepository: deckRepository,
                         cardRepository: cardRepository,
-                        snapshotViewModel: snapshotViewModel
+                        snapshotViewModel: snapshotViewModel,
+                        publicLibraryRepository: publicLibraryRepository
                     )
                     .tabItem {
                         Label("Library", systemImage: "books.vertical.fill")
                     }
                     .tag(1)
-
-                    ExploreView(
-                        viewModel: exploreViewModel,
-                        repository: publicLibraryRepository,
-                        deckRepository: deckRepository
-                    )
-                    .tabItem {
-                        Label("Explore", systemImage: "globe")
-                    }
-                    .tag(2)
 
                     ProgressDashboardView(
                         viewModel: ProgressViewModel(apiClient: authService.apiClient)
@@ -67,7 +56,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Progress", systemImage: "chart.bar.fill")
                     }
-                    .tag(3)
+                    .tag(2)
 
                     SettingsView(
                         viewModel: SettingsViewModel(apiClient: authService.apiClient),
@@ -77,7 +66,7 @@ struct MainTabView: View {
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
-                    .tag(4)
+                    .tag(3)
                 }
                 .fullScreenCover(item: $studySession, onDismiss: {
                     NotificationCenter.default.post(name: .studySessionEnded, object: nil)
@@ -128,9 +117,6 @@ struct MainTabView: View {
                     cardRepository: cards,
                     deckRepository: decks
                 )
-            }
-            if exploreViewModel == nil {
-                exploreViewModel = ExploreViewModel(repository: publicLibrary)
             }
 
             let service = SyncService(

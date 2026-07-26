@@ -2,39 +2,40 @@ import SwiftUI
 
 /// The public deck library. Read-only: decks are browsed and imported here, never
 /// published — publishing stays on the web app, where handles are claimed.
+///
+/// Pushed onto the library tab's existing NavigationStack (not its own), so it
+/// intentionally has no NavigationStack of its own here.
 struct ExploreView: View {
     @State private var viewModel: ExploreViewModel
     private let repository: PublicLibraryRepository
     private let deckRepository: DeckRepository
 
-    init(viewModel: ExploreViewModel, repository: PublicLibraryRepository, deckRepository: DeckRepository) {
-        _viewModel = State(initialValue: viewModel)
+    init(repository: PublicLibraryRepository, deckRepository: DeckRepository) {
+        _viewModel = State(initialValue: ExploreViewModel(repository: repository))
         self.repository = repository
         self.deckRepository = deckRepository
     }
 
     var body: some View {
-        NavigationStack {
-            contentView
-                .scrollContentBackground(.hidden)
-                .background(FasoltTheme.paper0.ignoresSafeArea())
-                .navigationTitle("Explore")
-                .navigationBarTitleDisplayMode(.inline)
-                .tint(FasoltTheme.accent)
-                .searchable(text: $viewModel.searchText, prompt: "Search public decks")
-                .refreshable { await viewModel.load() }
-                .toolbar { toolbarContent }
-                .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
-                .offlineBanner()
-                .task { if viewModel.decks.isEmpty { await viewModel.load() } }
-                .onChange(of: viewModel.sort) { _, _ in Task { await viewModel.load() } }
-                .onSubmit(of: .search) { Task { await viewModel.load() } }
-                .onChange(of: viewModel.searchText) { _, newValue in
-                    // Clearing the box should restore the full listing right away;
-                    // typing waits for submit so every keystroke isn't a request.
-                    if newValue.isEmpty { Task { await viewModel.load() } }
-                }
-        }
+        contentView
+            .scrollContentBackground(.hidden)
+            .background(FasoltTheme.paper0.ignoresSafeArea())
+            .navigationTitle("Explore")
+            .navigationBarTitleDisplayMode(.inline)
+            .tint(FasoltTheme.accent)
+            .searchable(text: $viewModel.searchText, prompt: "Search public decks")
+            .refreshable { await viewModel.load() }
+            .toolbar { toolbarContent }
+            .overlay { if viewModel.isLoading && viewModel.decks.isEmpty { ProgressView() } }
+            .offlineBanner()
+            .task { if viewModel.decks.isEmpty { await viewModel.load() } }
+            .onChange(of: viewModel.sort) { _, _ in Task { await viewModel.load() } }
+            .onSubmit(of: .search) { Task { await viewModel.load() } }
+            .onChange(of: viewModel.searchText) { _, newValue in
+                // Clearing the box should restore the full listing right away;
+                // typing waits for submit so every keystroke isn't a request.
+                if newValue.isEmpty { Task { await viewModel.load() } }
+            }
     }
 
     @ViewBuilder
