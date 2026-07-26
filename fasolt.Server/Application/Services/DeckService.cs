@@ -217,6 +217,18 @@ public class DeckService(AppDbContext db)
         if (linked) throw LinkedContentException.Deck();
     }
 
+    /// <summary>
+    /// Same for cards: an id that names content the caller reaches through a linked
+    /// deck is refused as linked rather than reported missing.
+    /// </summary>
+    private async Task ThrowIfAnyLinkedCard(string userId, List<string> cardPublicIds)
+    {
+        var linked = await LinkedDeckQuery.StudyableCards(db, userId)
+            .AnyAsync(c => cardPublicIds.Contains(c.PublicId) && c.UserId != userId);
+
+        if (linked) throw LinkedContentException.Card();
+    }
+
     /// <returns>Result with Deleted flag and DeletedCardCount</returns>
     public async Task<DeleteDeckResult> DeleteDeck(string userId, string publicId, bool deleteCards = false)
     {
@@ -289,7 +301,13 @@ public class DeckService(AppDbContext db)
             .ToListAsync();
 
         if (userCards.Count != cardPublicIds.Count)
+        {
+            // A card the caller only reaches through a subscription is not missing —
+            // it belongs to the author and cannot be filed into a deck of the caller's
+            // own. Saying so beats reporting a card they can read as non-existent.
+            await ThrowIfAnyLinkedCard(userId, cardPublicIds);
             return AddCardsResult.CardsNotFound;
+        }
 
         var userCardGuids = userCards.Select(c => c.Id).ToList();
 

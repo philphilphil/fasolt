@@ -64,6 +64,12 @@ final class DeckDetailViewModel {
         await loadDetail()
     }
 
+    /// Drops the link to the author's deck. The deck leaves the caller's list, so the
+    /// screen showing it has nothing left to show.
+    func unlink() async throws {
+        try await deckRepository.unlink(id: deckId)
+    }
+
     func deleteCard(id: String) async throws {
         try await cardRepository.deleteCard(id: id)
         await loadDetail()

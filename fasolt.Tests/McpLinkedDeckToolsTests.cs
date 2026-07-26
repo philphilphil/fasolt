@@ -78,6 +78,47 @@ public class McpLinkedDeckToolsTests : IAsyncLifetime
         root.GetProperty("linkedDecks").GetInt32().Should().Be(1);
     }
 
+    [Fact]
+    public async Task ListCards_ForALinkedDeck_ServesTheAuthorsCardsWithoutSourceMetadata()
+    {
+        await using var db = _db.CreateDbContext();
+        var (deck, card) = await SeedLinkedDeck(db);
+
+        var root = Json(await Cards(db).ListCards(deckId: deck.PublicId));
+
+        var items = root.GetProperty("items").EnumerateArray().ToList();
+        var item = items.Should().ContainSingle().Subject;
+        item.GetProperty("id").GetString().Should().Be(card.PublicId);
+        item.GetProperty("front").GetString().Should().Be("Author Q");
+        item.GetProperty("isLinked").GetBoolean().Should().BeTrue();
+        // The author's vault path is never handed to a subscriber; nulls are dropped.
+        item.TryGetProperty("sourceFile", out _).Should().BeFalse();
+
+        var decks = item.GetProperty("decks").EnumerateArray().ToList();
+        decks.Should().ContainSingle()
+            .Which.GetProperty("id").GetString().Should().Be(deck.PublicId);
+    }
+
+    [Fact]
+    public async Task ListCards_ForALinkedDeck_DoesNotLeakTheAuthorsOtherDecks()
+    {
+        await using var db = _db.CreateDbContext();
+        var (deck, card) = await SeedLinkedDeck(db);
+
+        // The author also files the same card in a deck nobody subscribes to.
+        var other = await LinkedDeckTestData.AddDeck(
+            db, deck.UserId, DeckVisibility.Private, name: "Author's Private Deck");
+        db.DeckCards.Add(new DeckCard { DeckId = other.Id, CardId = card.Id });
+        await db.SaveChangesAsync();
+
+        var root = Json(await Cards(db).ListCards(deckId: deck.PublicId));
+
+        var decks = root.GetProperty("items").EnumerateArray().Single()
+            .GetProperty("decks").EnumerateArray().ToList();
+        decks.Should().ContainSingle()
+            .Which.GetProperty("id").GetString().Should().Be(deck.PublicId);
+    }
+
     // ---- write refusals ----------------------------------------------------
 
     [Fact]
@@ -169,6 +210,19 @@ public class McpLinkedDeckToolsTests : IAsyncLifetime
 
         var act = async () => await Decks(db).AssignCardsToDeck(null, [card.PublicId], fromDeckId: deck.PublicId);
 
+        await AssertLinkedContent(act, "assign_cards_to_deck");
+    }
+
+    [Fact]
+    public async Task AssignCardsToDeck_FilingALinkedCardIntoAnOwnDeckIsRefused()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, card) = await SeedLinkedDeck(db);
+        var own = await new DeckService(db).CreateDeck(UserId, "My Own Deck", null);
+
+        var act = async () => await Decks(db).AssignCardsToDeck(own.Id, [card.PublicId]);
+
+        // Not "card not found": the agent can read this card, it just cannot own it.
         await AssertLinkedContent(act, "assign_cards_to_deck");
     }
 

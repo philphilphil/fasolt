@@ -77,6 +77,9 @@ final class DeckRepository {
                 deck.cardCount = dto.cardCount
                 deck.dueCount = dto.dueCount
                 deck.isSuspended = dto.isSuspended
+                deck.isLinked = dto.isLinked
+                deck.authorHandle = dto.authorHandle
+                deck.copiedFromHandle = dto.copiedFromHandle
             } else {
                 let deck = CachedDeck(
                     publicId: dto.id,
@@ -88,7 +91,10 @@ final class DeckRepository {
                         logger.warning("Failed to parse createdAt '\(dto.createdAt)' for deck \(dto.id)")
                         return Date.now
                     }(),
-                    isSuspended: dto.isSuspended
+                    isSuspended: dto.isSuspended,
+                    isLinked: dto.isLinked,
+                    authorHandle: dto.authorHandle,
+                    copiedFromHandle: dto.copiedFromHandle
                 )
                 modelContext.insert(deck)
             }
@@ -105,6 +111,12 @@ final class DeckRepository {
         let detailId = detail.id
         let predicate = #Predicate<CachedDeck> { $0.publicId == detailId }
         guard let deck = try? modelContext.fetch(FetchDescriptor(predicate: predicate)).first else { return }
+
+        // The detail response is the fresher source for the sharing state, and the
+        // detail screen is what reads it back offline.
+        deck.isLinked = detail.isLinked
+        deck.authorHandle = detail.authorHandle
+        deck.copiedFromHandle = detail.copiedFromHandle
 
         let incomingCardIds = Set(detail.cards.map(\.id))
 
@@ -173,7 +185,10 @@ final class DeckRepository {
                 cardCount: deck.cardCount,
                 dueCount: deck.dueCount,
                 createdAt: DateFormatters.formatISO8601( deck.createdAt),
-                isSuspended: deck.isSuspended
+                isSuspended: deck.isSuspended,
+                copiedFromHandle: deck.copiedFromHandle,
+                isLinked: deck.isLinked,
+                authorHandle: deck.authorHandle
             )
         }
     }
@@ -205,7 +220,10 @@ final class DeckRepository {
             cardCount: deck.cardCount,
             dueCount: deck.dueCount,
             isSuspended: deck.isSuspended,
-            cards: cards
+            cards: cards,
+            copiedFromHandle: deck.copiedFromHandle,
+            isLinked: deck.isLinked,
+            authorHandle: deck.authorHandle
         )
     }
 
@@ -253,6 +271,28 @@ final class DeckRepository {
         let deck: DeckDTO = try await apiClient.request(endpoint)
         logger.info("Converted linked deck \(id) to copy \(deck.id)")
         return deck
+    }
+
+    /// Drops a linked deck from the caller's account. The route lives under
+    /// `/api/library`, but this is the linked deck's counterpart to deleting an owned
+    /// one — it removes the deck from the caller's list, along with the progress they
+    /// only had because of the link.
+    func unlink(id: String) async throws {
+        let endpoint = Endpoint(path: "/api/library/decks/\(id)/subscribe", method: .delete)
+        try await apiClient.request(endpoint)
+        logger.info("Unlinked deck \(id)")
+
+        // Drop it from the cache too, or an offline list keeps offering a deck the
+        // account no longer has.
+        let predicate = #Predicate<CachedDeck> { $0.publicId == id }
+        if let cached = try? modelContext.fetch(FetchDescriptor(predicate: predicate)).first {
+            modelContext.delete(cached)
+            do {
+                try modelContext.save()
+            } catch {
+                logger.error("Failed to evict unlinked deck from cache: \(error.localizedDescription)")
+            }
+        }
     }
 
     func deleteDeck(id: String, deleteCards: Bool) async throws {

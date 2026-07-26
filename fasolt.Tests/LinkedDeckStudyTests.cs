@@ -265,7 +265,7 @@ public class LinkedDeckStudyTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task ListCards_FilteredByALinkedDeck_ReturnsNothingRatherThanEverything()
+    public async Task ListCards_FilteredByALinkedDeck_ServesThatDecksCards()
     {
         await using var db = _db.CreateDbContext();
         var (_, deck, _, _) = await SeedLinkedDeck(db);
@@ -273,9 +273,36 @@ public class LinkedDeckStudyTests : IAsyncLifetime
 
         var cards = await new CardService(db).ListCards(UserId, null, deck.PublicId, null, null);
 
+        cards.Items.Should().HaveCount(2, "list_decks advertises the linked deck and its card "
+            + "count, so listing it must return its cards rather than an empty success");
+        cards.Items.Should().OnlyContain(c => c.Front.StartsWith("Linked"));
+        cards.Items.Should().OnlyContain(c => c.IsLinked);
+        // The author's vault path stays with the author.
+        cards.Items.Should().OnlyContain(c => c.SourceFile == null);
+    }
+
+    [Fact]
+    public async Task ListCards_FilteredByALinkedDeckAndASourceFile_ReturnsNothing()
+    {
+        await using var db = _db.CreateDbContext();
+        var (_, deck, _, _) = await SeedLinkedDeck(db);
+
+        var cards = await new CardService(db).ListCards(UserId, "vault/author.md", deck.PublicId, null, null);
+
         cards.Items.Should().BeEmpty(
-            "a deck the caller only links holds none of their authored cards — presenting "
-            + "their whole collection as that deck's contents would be worse than nothing");
+            "a linked card reports no sourceFile, so nothing can match one — and the author's "
+            + "vault paths must not be probeable through the filter");
+    }
+
+    [Fact]
+    public async Task ListCards_FilteredByAnUnknownDeck_ReturnsNothing()
+    {
+        await using var db = _db.CreateDbContext();
+        await new CardService(db).CreateCard(UserId, "Own Q", "A", null);
+
+        var cards = await new CardService(db).ListCards(UserId, null, "does-not-exist", null, null);
+
+        cards.Items.Should().BeEmpty("an unresolvable deck must not widen to the whole collection");
     }
 
     [Fact]

@@ -224,26 +224,45 @@ public class CardService(AppDbContext db)
 
         IQueryable<Card> query = db.Cards.Where(c => c.UserId == userId);
 
-        if (sourceFile is not null)
-            query = query.Where(c => c.SourceFile == sourceFile);
+        // True when deckId names a deck the caller links rather than owns: its cards
+        // belong to the author, so they are readable but carry no source metadata.
+        var linkedDeck = false;
 
         if (deckId is not null)
         {
-            // ListCards only ever returns authored cards, so an unresolvable deck —
-            // including one the caller merely links — filters everything out rather
-            // than silently widening the result to the caller's whole collection and
-            // presenting it as that deck's contents.
             var deckGuid = await db.Decks
                 .Where(d => d.PublicId == deckId && d.UserId == userId)
                 .Select(d => (Guid?)d.Id)
                 .FirstOrDefaultAsync();
 
-            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
+            if (deckGuid is null)
+            {
+                deckGuid = await db.DeckSubscriptions
+                    .Where(s => s.UserId == userId && s.Deck.PublicId == deckId)
+                    .Select(s => (Guid?)s.DeckId)
+                    .FirstOrDefaultAsync();
+                linkedDeck = deckGuid is not null;
+            }
+
+            // A linked deck's cards are the author's, so they are reached through the
+            // deck rather than through the caller's own collection. An unresolvable
+            // deck still filters everything out rather than silently widening the
+            // result to the caller's whole collection.
+            query = linkedDeck
+                ? db.Cards.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid))
+                : query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
         }
+
+        // A linked card reports no sourceFile, so filtering on one matches nothing —
+        // and the author's vault paths stay unprobeable.
+        if (sourceFile is not null)
+            query = linkedDeck ? query.Where(c => false) : query.Where(c => c.SourceFile == sourceFile);
 
         if (after is not null)
         {
-            var cursor = await db.Cards.Where(c => c.PublicId == after && c.UserId == userId)
+            // Scoped to the same set the page came from, so a linked deck's cursor
+            // resolves without reaching outside what the caller may read.
+            var cursor = await query.Where(c => c.PublicId == after)
                 .Select(c => new { c.CreatedAt, c.Id }).FirstOrDefaultAsync();
             if (cursor is not null)
                 query = query.Where(c => c.CreatedAt < cursor.CreatedAt ||
@@ -257,12 +276,23 @@ public class CardService(AppDbContext db)
             orderby c.CreatedAt descending, c.Id
             select new CardDto(
                 c.PublicId,
-                c.SourceFile,
+                linkedDeck ? null : c.SourceFile,
                 c.Front,
                 c.Back,
                 includeSrs ? rs.State ?? "new" : null,
                 c.CreatedAt,
-                c.DeckCards.Select(dc => new CardDeckInfoDto(dc.Deck.PublicId, dc.Deck.Name, dc.Deck.IsSuspended)).ToList(),
+                // On a linked deck only the decks the caller subscribes to are listed —
+                // the author's other decks are none of their business — and the pause
+                // shown is the caller's own.
+                c.DeckCards
+                    .Where(dc => !linkedDeck || dc.Deck.Subscriptions.Any(s => s.UserId == userId))
+                    .Select(dc => new CardDeckInfoDto(
+                        dc.Deck.PublicId,
+                        dc.Deck.Name,
+                        linkedDeck
+                            ? dc.Deck.Subscriptions.Any(s => s.UserId == userId && s.IsSuspended)
+                            : dc.Deck.IsSuspended))
+                    .ToList(),
                 rs != null && rs.IsSuspended,
                 includeSrs ? rs.DueAt : null,
                 includeSrs ? rs.Stability : null,
@@ -270,7 +300,8 @@ public class CardService(AppDbContext db)
                 includeSrs ? rs.Step : null,
                 includeSrs ? rs.LastReviewedAt : null,
                 includeSvg ? c.FrontSvg : null,
-                includeSvg ? c.BackSvg : null))
+                includeSvg ? c.BackSvg : null,
+                IsLinked: linkedDeck))
             .Take(take + 1)
             .ToListAsync();
 

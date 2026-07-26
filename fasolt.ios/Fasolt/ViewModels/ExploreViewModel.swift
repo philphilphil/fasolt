@@ -66,8 +66,9 @@ final class ExploreViewModel {
         } catch {
             guard token == requestToken else { return }
             logger.error("Failed to load more public decks: \(error)")
-            // Keep what's on screen; the next scroll retries.
-            hasMore = false
+            // Keep what's on screen and keep hasMore set: `page` did not advance, so
+            // the next scroll asks for the same page again instead of ending the list
+            // on one flaky request.
         }
 
         if token == requestToken { isLoadingMore = false }

@@ -50,12 +50,6 @@ final class PublicLibraryRepository {
         logger.info("Linked library deck \(publicId)")
         return deck
     }
-
-    func unsubscribe(publicId: String) async throws {
-        let endpoint = Endpoint(path: "/api/library/decks/\(publicId)/subscribe", method: .delete)
-        try await apiClient.request(endpoint)
-        logger.info("Unlinked deck \(publicId)")
-    }
 }
 
 // MARK: - Error copy

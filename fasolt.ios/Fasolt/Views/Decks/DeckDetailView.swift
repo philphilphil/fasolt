@@ -13,6 +13,7 @@ struct DeckDetailView: View {
     @State private var availableDecks: [DeckDTO] = []
     @State private var showCreateCardSheet = false
     @State private var showConvertAlert = false
+    @State private var showUnlinkAlert = false
     @State private var errorMessage: String?
     private let deckRepository: DeckRepository
 
@@ -21,7 +22,35 @@ struct DeckDetailView: View {
         self.deckRepository = deckRepository
     }
 
+    // Sheets and alerts are attached through helper functions rather than one long
+    // chain: the combined expression is past what the type checker will solve.
     var body: some View {
+        alerts(sheets(
+            content
+                .navigationTitle(viewModel.deckName)
+                .navigationBarTitleDisplayMode(.inline)
+                .offlineBanner()
+                .toolbar { toolbarContent }
+        ))
+        .refreshable {
+            await viewModel.loadDetail()
+        }
+        .task {
+            if viewModel.detail == nil {
+                await viewModel.loadDetail()
+            }
+            do { availableDecks = try await deckRepository.fetchDecks() } catch {
+                // Non-critical: deck picker in card edit will be empty
+            }
+        }
+        .onAppear {
+            if viewModel.detail != nil {
+                Task { await viewModel.loadDetail() }
+            }
+        }
+    }
+
+    private var content: some View {
         Group {
             if let detail = viewModel.detail {
                 VStack(spacing: 0) {
@@ -173,78 +202,87 @@ struct DeckDetailView: View {
                 ProgressView()
             }
         }
-        .navigationTitle(viewModel.deckName)
-        .navigationBarTitleDisplayMode(.inline)
-        .offlineBanner()
-        .toolbar {
-            if !viewModel.isLinked {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showCreateCardSheet = true
-                    } label: {
-                        Label("New Card", systemImage: "plus")
-                    }
-                }
-            }
+    }
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        if !viewModel.isLinked {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    if !viewModel.isLinked {
-                        Button {
-                            showEditSheet = true
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                    }
-
-                    Menu {
-                        Picker("Sort cards by", selection: $sortOrder) {
-                            ForEach(CardSortOrder.allCases, id: \.self) { order in
-                                Text(order.rawValue).tag(order)
-                            }
-                        }
-                    } label: {
-                        Label("Sort cards by", systemImage: "arrow.up.arrow.down")
-                    }
-
-                    Divider()
-
-                    if let detail = viewModel.detail, !detail.isSuspended, detail.cardCount > 0 {
-                        Button {
-                            startStudy(deckId: viewModel.deckId, mode: .cram)
-                        } label: {
-                            Label("Custom study", systemImage: "rectangle.stack.badge.play")
-                        }
-                    }
-
-                    Button {
-                        Task { await viewModel.toggleSuspended() }
-                    } label: {
-                        Label(
-                            suspendActionTitle,
-                            systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
-                        )
-                    }
-
-                    Divider()
-
-                    if viewModel.isLinked {
-                        Button {
-                            showConvertAlert = true
-                        } label: {
-                            Label("Convert to copy", systemImage: "doc.on.doc")
-                        }
-                    } else {
-                        Button(role: .destructive) {
-                            showDeleteDeckAlert = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
+                Button {
+                    showCreateCardSheet = true
                 } label: {
-                    Label("More", systemImage: "ellipsis.circle")
+                    Label("New Card", systemImage: "plus")
                 }
             }
         }
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+                if !viewModel.isLinked {
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                }
+
+                Menu {
+                    Picker("Sort cards by", selection: $sortOrder) {
+                        ForEach(CardSortOrder.allCases, id: \.self) { order in
+                            Text(order.rawValue).tag(order)
+                        }
+                    }
+                } label: {
+                    Label("Sort cards by", systemImage: "arrow.up.arrow.down")
+                }
+
+                Divider()
+
+                if let detail = viewModel.detail, !detail.isSuspended, detail.cardCount > 0 {
+                    Button {
+                        startStudy(deckId: viewModel.deckId, mode: .cram)
+                    } label: {
+                        Label("Custom study", systemImage: "rectangle.stack.badge.play")
+                    }
+                }
+
+                Button {
+                    Task { await viewModel.toggleSuspended() }
+                } label: {
+                    Label(
+                        suspendActionTitle,
+                        systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
+                    )
+                }
+
+                Divider()
+
+                if viewModel.isLinked {
+                    Button {
+                        showConvertAlert = true
+                    } label: {
+                        Label("Convert to copy", systemImage: "doc.on.doc")
+                    }
+
+                    Button(role: .destructive) {
+                        showUnlinkAlert = true
+                    } label: {
+                        Label("Unlink", systemImage: "minus.circle")
+                    }
+                } else {
+                    Button(role: .destructive) {
+                        showDeleteDeckAlert = true
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            } label: {
+                Label("More", systemImage: "ellipsis.circle")
+            }
+        }
+    }
+
+    private func sheets<V: View>(_ view: V) -> some View {
+        view
         .sheet(isPresented: $showEditSheet) {
             if let detail = viewModel.detail {
                 DeckFormSheet(
@@ -271,6 +309,10 @@ struct DeckDetailView: View {
                 try await viewModel.createCard(request)
             }
         }
+    }
+
+    private func alerts<V: View>(_ view: V) -> some View {
+        view
         .alert("Delete Card", isPresented: $showDeleteCardAlert, presenting: cardToDelete) { card in
             Button("Delete", role: .destructive) {
                 Task {
@@ -328,26 +370,25 @@ struct DeckDetailView: View {
         } message: {
             Text(convertAlertMessage)
         }
+        .alert("Unlink this deck?", isPresented: $showUnlinkAlert) {
+            Button("Unlink", role: .destructive) {
+                Task {
+                    do {
+                        try await viewModel.unlink()
+                        dismiss()
+                    } catch {
+                        errorMessage = "Could not unlink this deck."
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(unlinkAlertMessage)
+        }
         .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
-        }
-        .refreshable {
-            await viewModel.loadDetail()
-        }
-        .task {
-            if viewModel.detail == nil {
-                await viewModel.loadDetail()
-            }
-            do { availableDecks = try await deckRepository.fetchDecks() } catch {
-                // Non-critical: deck picker in card edit will be empty
-            }
-        }
-        .onAppear {
-            if viewModel.detail != nil {
-                Task { await viewModel.loadDetail() }
-            }
         }
     }
 
@@ -356,6 +397,13 @@ struct DeckDetailView: View {
         let isSuspended = viewModel.detail?.isSuspended == true
         if viewModel.isLinked { return isSuspended ? "Resume" : "Pause" }
         return isSuspended ? "Unsuspend" : "Suspend"
+    }
+
+    /// Same promise the web app makes, so the two read alike.
+    private var unlinkAlertMessage: String {
+        let name = viewModel.detail?.name ?? viewModel.deckName
+        return "\"\(name)\" is removed from your decks along with your review progress for its "
+            + "cards. The author's deck is not affected, and you can link it again from Explore."
     }
 
     private var convertAlertMessage: String {

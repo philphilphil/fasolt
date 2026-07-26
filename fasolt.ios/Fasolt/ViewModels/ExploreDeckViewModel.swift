@@ -27,9 +27,13 @@ final class ExploreDeckViewModel {
     /// Non-nil once "Copy to my decks" succeeded — the copy is a new, separate deck.
     var copiedDeck: DeckDTO?
     var importingMode: ImportMode?
+    var isUnlinking = false
     var importError: String?
 
     enum ImportMode: Sendable { case copy, link }
+
+    /// Any import or unlink in flight — the actions stay disabled until it settles.
+    var isBusy: Bool { importingMode != nil || isUnlinking }
 
     private let repository: PublicLibraryRepository
     private let deckRepository: DeckRepository
@@ -73,7 +77,7 @@ final class ExploreDeckViewModel {
     }
 
     func copyToMyDecks() async {
-        guard importingMode == nil else { return }
+        guard !isBusy else { return }
         importingMode = .copy
         importError = nil
 
@@ -104,8 +108,29 @@ final class ExploreDeckViewModel {
         importingMode = nil
     }
 
+    /// Undoes a link from the screen that created it. Progress made through the link
+    /// goes with it, which the confirmation in the view spells out.
+    func unlinkDeck() async {
+        guard !isBusy else { return }
+        isUnlinking = true
+        importError = nil
+
+        do {
+            try await deckRepository.unlink(id: publicId)
+            relation = .notImported
+        } catch {
+            logger.error("Unlink failed for \(self.publicId): \(error)")
+            importError = LibraryImportError.message(
+                for: error,
+                fallback: "Could not unlink this deck. Please try again."
+            )
+        }
+
+        isUnlinking = false
+    }
+
     func linkDeck() async {
-        guard importingMode == nil else { return }
+        guard !isBusy else { return }
         importingMode = .link
         importError = nil
         copiedDeck = nil

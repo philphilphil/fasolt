@@ -6,6 +6,7 @@ struct ExploreDeckDetailView: View {
     @State private var viewModel: ExploreDeckViewModel
     @State private var sampleIndex = 0
     @State private var isFlipped = false
+    @State private var showUnlinkAlert = false
 
     init(viewModel: ExploreDeckViewModel) {
         _viewModel = State(initialValue: viewModel)
@@ -49,6 +50,16 @@ struct ExploreDeckDetailView: View {
         .offlineBanner()
         .refreshable { await viewModel.load() }
         .task { if viewModel.deck == nil { await viewModel.load() } }
+        .alert("Unlink this deck?", isPresented: $showUnlinkAlert) {
+            Button("Unlink", role: .destructive) {
+                Task { await viewModel.unlinkDeck() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("\"\(viewModel.deck?.name ?? "This deck")\" is removed from your decks along with "
+                 + "your review progress for its cards. The author's deck is not affected, and you "
+                 + "can link it again at any time.")
+        }
     }
 
     // MARK: - Header
@@ -217,9 +228,19 @@ struct ExploreDeckDetailView: View {
                     Text(viewModel.importingMode == .copy ? "Copying…" : "Copy to my decks")
                 }
                 .buttonStyle(AccentButtonStyle())
-                .disabled(viewModel.importingMode != nil)
+                .disabled(viewModel.isBusy)
 
-                if viewModel.relation != .linked {
+                if viewModel.relation == .linked {
+                    // The link was made here, so it can be undone here.
+                    Button {
+                        showUnlinkAlert = true
+                    } label: {
+                        Text(viewModel.isUnlinking ? "Unlinking…" : "Unlink deck")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SoftAccentButtonStyle())
+                    .disabled(viewModel.isBusy)
+                } else {
                     Button {
                         Task { await viewModel.linkDeck() }
                     } label: {
@@ -227,7 +248,7 @@ struct ExploreDeckDetailView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SoftAccentButtonStyle())
-                    .disabled(viewModel.importingMode != nil)
+                    .disabled(viewModel.isBusy)
 
                     Text("A copy is yours to edit. A link stays in sync with the author.")
                         .font(.system(size: 12))

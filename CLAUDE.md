@@ -146,7 +146,7 @@ Cards:
 
 - `CreateCards` — create one or more flashcards, optionally linked to a source file and/or deck
 - `SearchCards` — search existing cards and decks by query text (use before creating to detect duplicates)
-- `ListCards` — list cards with slim metadata; filter by source file or deck, cursor pagination, opt-in `srs`/`svg` extras
+- `ListCards` — list cards with slim metadata; filter by source file or deck, cursor pagination, opt-in `srs`/`svg` extras. A linked deck's id lists that deck's cards, marked `isLinked` and without `sourceFile`
 - `GetCard` — get a single card by ID with full details and SRS state
 - `UpdateCards` — bulk update cards' text or source metadata by ID; preserves SRS history
 - `DeleteCards` — delete cards by IDs or by source file
