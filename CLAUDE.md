@@ -142,20 +142,43 @@ The server exposes a remote MCP endpoint at `/mcp` (streamable HTTP transport). 
 
 ### Available MCP Tools
 
+Cards:
+
 - `CreateCards` — create one or more flashcards, optionally linked to a source file and/or deck
-- `SearchCards` — search existing cards by query text (use before creating to detect duplicates)
-- `ListCards` — list cards, optionally filtered by source file or deck; supports pagination
-- `UpdateCards` — bulk update cards' text or source metadata by ID or natural key (sourceFile + front); preserves SRS history
+- `SearchCards` — search existing cards and decks by query text (use before creating to detect duplicates)
+- `ListCards` — list cards with slim metadata; filter by source file or deck, cursor pagination, opt-in `srs`/`svg` extras
+- `GetCard` — get a single card by ID with full details and SRS state
+- `UpdateCards` — bulk update cards' text or source metadata by ID; preserves SRS history
 - `DeleteCards` — delete cards by IDs or by source file
+- `RenameSourceFile` — rename the sourceFile of every card matching a path (vault moves/renames)
 - `AddSvgToCard` — add an SVG image to a card's front or back
-- `ListSources` — list all source files that cards were created from, with card and due counts
-- `ListDecks` — list all decks with card counts and due counts
+- `SuspendCard` — suspend or unsuspend a single card
+- `ResetCardProgress` — clear a card's SRS progress so it returns to 'new'
+
+Decks & sources:
+
+- `ListDecks` — list all decks with card and due counts; linked decks carry `isLinked` + `authorHandle`
 - `CreateDeck` — create a new deck for organizing flashcards
 - `UpdateDeck` — update a deck's name or description
 - `DeleteDeck` — delete a deck, optionally deleting all its cards too
 - `AssignCardsToDeck` — assign cards to a deck, remove from a deck, or move between decks
-- `SetDeckActive` — activate or deactivate a deck for study
-- `GetOverview` — get account overview: identity, total cards, due cards, cards by state, deck and source counts
+- `SetDeckSuspended` — suspend or unsuspend a deck (on a linked deck this is the subscriber's own pause)
+- `ListSources` — list all source files that cards were created from, with card and due counts
+
+Sharing (public library):
+
+- `ListPublicDecks` — browse/search the public deck library; `query`, `sort` (popular/recent), pagination
+- `ImportDeck` — import a shared deck by public id, as an editable `copy` or a live read-only `link`
+- `PublishDeck` — set one of your decks to `private`/`unlisted`/`public`; returns the share URL
+
+Snapshots & overview:
+
+- `CreateSnapshot` — snapshot every deck that has cards (skips unchanged decks; keeps the last 10 per deck)
+- `ListSnapshots` — list deck snapshots, optionally filtered to one deck
+- `GetOverview` — account overview: identity, total cards, due cards, cards by state, deck count (incl. linked), source count
+
+Content reached through a link (`isLinked`) belongs to its author and is read-only: every writing
+tool refuses it with a structured `linked_content` error pointing at convert-to-copy.
 
 ## Agent Teams
 

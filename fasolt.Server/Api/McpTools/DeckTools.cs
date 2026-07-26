@@ -8,7 +8,7 @@ namespace Fasolt.Server.Api.McpTools;
 [McpServerToolType]
 public class DeckTools(DeckService deckService, IHttpContextAccessor httpContextAccessor)
 {
-    [McpServerTool, Description("List all decks with card counts and due counts.")]
+    [McpServerTool, Description("List all decks with card counts and due counts. Decks the user imported as a link (isLinked: true, with the author's authorHandle) belong to another account: their counts are the user's own progress, but their cards are read-only and stay in sync with the author.")]
     public async Task<string> ListDecks()
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);

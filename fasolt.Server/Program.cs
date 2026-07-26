@@ -450,9 +450,10 @@ builder.Services.AddMcpServer(options =>
                 // The MCP SDK's default behaviour swallows non-McpException
                 // messages, returning a generic "An error occurred invoking 'X'."
                 // to the LLM. For argument/format/JSON errors the inner message
-                // is exactly what the LLM needs to self-correct its next call.
-                if (Fasolt.Server.Api.McpTools.McpErrorTranslator.IsInputError(ex))
-                    logger?.LogWarning(ex, "MCP tool {Tool} rejected bad arguments for user {UserId}", toolName, userId ?? "(anonymous)");
+                // is exactly what the LLM needs to self-correct its next call, and
+                // a refusal to touch linked content is likewise the caller's doing.
+                if (Fasolt.Server.Api.McpTools.McpErrorTranslator.IsCallerError(ex))
+                    logger?.LogWarning(ex, "MCP tool {Tool} rejected the call ({Reason}) for user {UserId}", toolName, ex.GetType().Name, userId ?? "(anonymous)");
                 else
                     logger?.LogError(ex, "MCP tool {Tool} threw for user {UserId}", toolName, userId ?? "(anonymous)");
                 return Fasolt.Server.Api.McpTools.McpErrorTranslator.ToErrorResult(ex, toolName);

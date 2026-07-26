@@ -8,7 +8,7 @@ namespace Fasolt.Server.Api.McpTools;
 [McpServerToolType]
 public class OverviewTools(OverviewService overviewService, IHttpContextAccessor httpContextAccessor)
 {
-    [McpServerTool, Description("Get an overview of the user's account: identity, total cards, due cards, cards by state, deck count, and source file count. Call this first to confirm which Fasolt account is connected.")]
+    [McpServerTool, Description("Get an overview of the user's account: identity, total cards, due cards, cards by state, deck count (including how many of those decks are read-only links to another user's deck), and source file count. Call this first to confirm which Fasolt account is connected.")]
     public async Task<string> GetOverview()
     {
         var userId = McpUserResolver.GetUserId(httpContextAccessor);
@@ -22,6 +22,7 @@ public class OverviewTools(OverviewService overviewService, IHttpContextAccessor
             overview.DueCards,
             overview.CardsByState,
             overview.TotalDecks,
+            overview.LinkedDecks,
             overview.TotalSources,
         };
 

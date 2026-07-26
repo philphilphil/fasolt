@@ -33,8 +33,8 @@ public class OverviewService(AppDbContext db)
             s => s,
             s => stateCounts.FirstOrDefault(x => x.State == s)?.Count ?? 0);
 
-        var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId)
-            + await db.DeckSubscriptions.CountAsync(s => s.UserId == userId);
+        var linkedDecks = await db.DeckSubscriptions.CountAsync(s => s.UserId == userId);
+        var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId) + linkedDecks;
 
         // Sources stay authored-only: a linked card's SourceFile belongs to its author.
         var totalSources = await activeCards
@@ -44,7 +44,7 @@ public class OverviewService(AppDbContext db)
             .Distinct()
             .CountAsync();
 
-        return new OverviewDto(totalCards, dueCards, cardsByState, totalDecks, totalSources);
+        return new OverviewDto(totalCards, dueCards, cardsByState, totalDecks, linkedDecks, totalSources);
     }
 
     public async Task<OverviewIdentityDto?> GetIdentity(string userId)
