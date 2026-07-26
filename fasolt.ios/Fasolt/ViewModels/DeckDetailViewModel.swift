@@ -12,8 +12,12 @@ final class DeckDetailViewModel {
 
     private let deckRepository: DeckRepository
     private let cardRepository: CardRepository
-    let deckId: String
+    /// Not constant: converting a linked deck to a copy replaces it with a new,
+    /// owned deck, and this screen follows it there.
+    private(set) var deckId: String
     var deckName: String
+
+    var isLinked: Bool { detail?.isLinked == true }
 
     init(deckRepository: DeckRepository, cardRepository: CardRepository, deckId: String, deckName: String) {
         self.deckRepository = deckRepository
@@ -48,6 +52,16 @@ final class DeckDetailViewModel {
             logger.error("Failed to toggle deck suspended state: \(error)")
             errorMessage = "Could not update deck status."
         }
+    }
+
+    /// Converts a linked deck into an owned copy. The copy is a different deck, so
+    /// this screen re-points at it — the caller's review progress came along with it.
+    func convertToCopy() async throws {
+        let copy = try await deckRepository.convertToCopy(id: deckId)
+        deckId = copy.id
+        deckName = copy.name
+        detail = nil
+        await loadDetail()
     }
 
     func deleteCard(id: String) async throws {

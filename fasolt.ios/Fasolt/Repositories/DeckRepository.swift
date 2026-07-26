@@ -245,6 +245,16 @@ final class DeckRepository {
         return deck
     }
 
+    /// Turns a linked deck into an owned copy. The caller's review progress carries
+    /// over to the new cards, and the subscription is dropped — so the returned deck
+    /// has a different id from the one passed in.
+    func convertToCopy(id: String) async throws -> DeckDTO {
+        let endpoint = Endpoint(path: "/api/decks/\(id)/convert-to-copy", method: .post)
+        let deck: DeckDTO = try await apiClient.request(endpoint)
+        logger.info("Converted linked deck \(id) to copy \(deck.id)")
+        return deck
+    }
+
     func deleteDeck(id: String, deleteCards: Bool) async throws {
         var queryItems: [URLQueryItem]? = nil
         if deleteCards {

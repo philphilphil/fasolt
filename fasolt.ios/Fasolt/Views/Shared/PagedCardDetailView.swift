@@ -8,6 +8,10 @@ struct PagedCardDetailView: View {
     let onToggleSuspended: (String, Bool) async throws -> Void
     let onLoadDeckIds: (String) async throws -> [String]
     let onDelete: (String) async throws -> Void
+    /// Cards reached through a linked deck belong to their author: readable, but not
+    /// editable or deletable. Suspending stays available — that is the caller's own
+    /// review state.
+    let isReadOnly: Bool
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedId: String
@@ -24,7 +28,8 @@ struct PagedCardDetailView: View {
         onSaveEdit: @escaping (String, UpdateCardRequest) async throws -> Void,
         onToggleSuspended: @escaping (String, Bool) async throws -> Void,
         onLoadDeckIds: @escaping (String) async throws -> [String],
-        onDelete: @escaping (String) async throws -> Void
+        onDelete: @escaping (String) async throws -> Void,
+        isReadOnly: Bool = false
     ) {
         self.cards = cards
         self.currentDeckId = currentDeckId
@@ -33,6 +38,7 @@ struct PagedCardDetailView: View {
         self.onToggleSuspended = onToggleSuspended
         self.onLoadDeckIds = onLoadDeckIds
         self.onDelete = onDelete
+        self.isReadOnly = isReadOnly
         _selectedId = State(initialValue: initialCardId)
     }
 
@@ -69,17 +75,19 @@ struct PagedCardDetailView: View {
                         .monospacedDigit()
                 }
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await openEditSheet() }
-                } label: {
-                    if isLoadingEdit {
-                        ProgressView()
-                    } else {
-                        Label("Edit", systemImage: "pencil")
+            if !isReadOnly {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        Task { await openEditSheet() }
+                    } label: {
+                        if isLoadingEdit {
+                            ProgressView()
+                        } else {
+                            Label("Edit", systemImage: "pencil")
+                        }
                     }
+                    .disabled(currentCard == nil || isLoadingEdit)
                 }
-                .disabled(currentCard == nil || isLoadingEdit)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -93,21 +101,23 @@ struct PagedCardDetailView: View {
                         )
                     }
 
-                    Button {
-                        if let id = currentCard?.id {
-                            UIPasteboard.general.string = id
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    if !isReadOnly {
+                        Button {
+                            if let id = currentCard?.id {
+                                UIPasteboard.general.string = id
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                        } label: {
+                            Label("Copy ID", systemImage: "doc.on.doc")
                         }
-                    } label: {
-                        Label("Copy ID", systemImage: "doc.on.doc")
-                    }
 
-                    Divider()
+                        Divider()
 
-                    Button(role: .destructive) {
-                        showDeleteAlert = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                        Button(role: .destructive) {
+                            showDeleteAlert = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")

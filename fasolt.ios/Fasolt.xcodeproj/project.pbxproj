@@ -70,6 +70,12 @@
 		FA5011120000000000000001 /* SnapshotsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011120000000000000002 /* SnapshotsView.swift */; };
 		FE0C0B350FD8E588CB2308F3 /* String+StripMarkdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 906491E8E4E7A3757F2331DB /* String+StripMarkdown.swift */; };
 		FE34695915FE433ECE4024E4 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B076BFAB05A25FB8E667D2F /* LibraryView.swift */; };
+		FA5011130000000000000001 /* PublicLibraryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011130000000000000002 /* PublicLibraryRepository.swift */; };
+		FA5011140000000000000001 /* ExploreViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011140000000000000002 /* ExploreViewModel.swift */; };
+		FA5011150000000000000001 /* ExploreDeckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011150000000000000002 /* ExploreDeckViewModel.swift */; };
+		FA5011160000000000000001 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011160000000000000002 /* ExploreView.swift */; };
+		FA5011170000000000000001 /* ExploreDeckDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011170000000000000002 /* ExploreDeckDetailView.swift */; };
+		FA5011180000000000000001 /* LinkedDeckChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5011180000000000000002 /* LinkedDeckChip.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -150,6 +156,12 @@
 		FA5011110000000000000002 /* FasoltTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FasoltTheme.swift; sourceTree = "<group>"; };
 		FA5011120000000000000002 /* SnapshotsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotsView.swift; sourceTree = "<group>"; };
 		FEFCB24046F998F4F8AA78BB /* AuthServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthServiceTests.swift; sourceTree = "<group>"; };
+		FA5011130000000000000002 /* PublicLibraryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicLibraryRepository.swift; sourceTree = "<group>"; };
+		FA5011140000000000000002 /* ExploreViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreViewModel.swift; sourceTree = "<group>"; };
+		FA5011150000000000000002 /* ExploreDeckViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreDeckViewModel.swift; sourceTree = "<group>"; };
+		FA5011160000000000000002 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		FA5011170000000000000002 /* ExploreDeckDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreDeckDetailView.swift; sourceTree = "<group>"; };
+		FA5011180000000000000002 /* LinkedDeckChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkedDeckChip.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,6 +206,7 @@
 				FE8B084DED433EFBAE5D318F /* Settings */,
 				F1D58078FC886E6E5A609771 /* Shared */,
 				266F47F88EA11B7BDC6F4D02 /* Study */,
+				FA5011190000000000000003 /* Explore */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -222,6 +235,8 @@
 				3ECAF3AF1BA6CBB897A682BA /* SettingsViewModel.swift */,
 				D7665BF816ACE732C7D17C84 /* SnapshotViewModel.swift */,
 				1C4BDFD7DFDB528C3939F94B /* StudyViewModel.swift */,
+				FA5011140000000000000002 /* ExploreViewModel.swift */,
+				FA5011150000000000000002 /* ExploreDeckViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -299,6 +314,7 @@
 			children = (
 				36B52198B8E5A1593EA701B5 /* CardRepository.swift */,
 				B91F8A14874A0AB49630A6AD /* DeckRepository.swift */,
+				FA5011130000000000000002 /* PublicLibraryRepository.swift */,
 			);
 			path = Repositories;
 			sourceTree = "<group>";
@@ -375,6 +391,7 @@
 				E2686816B7E21E3DB2171066 /* CardHelpers.swift */,
 				69E947CBD44E199505935FEF /* OfflineBanner.swift */,
 				33022DC5174C12EB77D96207 /* PagedCardDetailView.swift */,
+				FA5011180000000000000002 /* LinkedDeckChip.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -388,6 +405,15 @@
 				CFED4C5210AA3BBD3A602D20 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		FA5011190000000000000003 /* Explore */ = {
+			isa = PBXGroup;
+			children = (
+				FA5011160000000000000002 /* ExploreView.swift */,
+				FA5011170000000000000002 /* ExploreDeckDetailView.swift */,
+			);
+			path = Explore;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -500,6 +526,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA5011130000000000000001 /* PublicLibraryRepository.swift in Sources */,
+				FA5011140000000000000001 /* ExploreViewModel.swift in Sources */,
+				FA5011150000000000000001 /* ExploreDeckViewModel.swift in Sources */,
+				FA5011160000000000000001 /* ExploreView.swift in Sources */,
+				FA5011170000000000000001 /* ExploreDeckDetailView.swift in Sources */,
+				FA5011180000000000000001 /* LinkedDeckChip.swift in Sources */,
 				33A03487EA34451FC57B7ED7 /* APIClient.swift in Sources */,
 				EFE2618B4D743E5CF05D4B96 /* APIModels.swift in Sources */,
 				E50B3F152B8C3621E6E74FCF /* AuthService.swift in Sources */,

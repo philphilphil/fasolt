@@ -146,12 +146,16 @@ struct DeckListContent<Leading: View>: View {
                 .listRowBackground(FasoltTheme.paper1)
                 .listRowSeparatorTint(FasoltTheme.rule2)
                 .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                    Button {
-                        UIPasteboard.general.string = deck.id
-                    } label: {
-                        Label("Copy ID", systemImage: "doc.on.doc")
+                    // A linked deck's id belongs to its author — nothing the
+                    // subscriber can address by it.
+                    if !deck.isLinked {
+                        Button {
+                            UIPasteboard.general.string = deck.id
+                        } label: {
+                            Label("Copy ID", systemImage: "doc.on.doc")
+                        }
+                        .tint(.blue)
                     }
-                    .tint(.blue)
 
                     if !deck.isSuspended && deck.cardCount > 0 {
                         Button {
@@ -163,11 +167,15 @@ struct DeckListContent<Leading: View>: View {
                     }
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        deckToDelete = deck
-                        showDeleteConfirmation = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                    // Linked decks belong to their author; the subscriber can only
+                    // pause them (or convert them to a copy from the detail screen).
+                    if !deck.isLinked {
+                        Button(role: .destructive) {
+                            deckToDelete = deck
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                     Button {
                         Task {
@@ -182,7 +190,7 @@ struct DeckListContent<Leading: View>: View {
                         }
                     } label: {
                         Label(
-                            deck.isSuspended ? "Unsuspend" : "Suspend",
+                            suspendActionTitle(for: deck),
                             systemImage: deck.isSuspended ? "play.circle" : "pause.circle"
                         )
                     }
@@ -241,6 +249,13 @@ struct DeckListContent<Leading: View>: View {
         }
     }
 
+    /// A linked deck's pause is the subscriber's own, so it reads as pause/resume
+    /// rather than the owner-facing suspend/unsuspend.
+    private func suspendActionTitle(for deck: DeckDTO) -> String {
+        if deck.isLinked { return deck.isSuspended ? "Resume" : "Pause" }
+        return deck.isSuspended ? "Unsuspend" : "Suspend"
+    }
+
     private func deckRow(_ deck: DeckDTO) -> some View {
         HStack(spacing: 12) {
             DeckInitialsBadge(
@@ -254,8 +269,11 @@ struct DeckListContent<Leading: View>: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(FasoltTheme.ink0)
                         .lineLimit(1)
+                    if deck.isLinked {
+                        LinkedDeckChip(authorHandle: deck.authorHandle)
+                    }
                     if deck.isSuspended {
-                        Text("Suspended")
+                        Text(deck.isLinked ? "Paused" : "Suspended")
                             .font(.system(size: 10, weight: .medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)

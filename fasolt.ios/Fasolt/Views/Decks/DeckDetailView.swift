@@ -12,6 +12,7 @@ struct DeckDetailView: View {
     @State private var showDeleteDeckAlert = false
     @State private var availableDecks: [DeckDTO] = []
     @State private var showCreateCardSheet = false
+    @State private var showConvertAlert = false
     @State private var errorMessage: String?
     private let deckRepository: DeckRepository
 
@@ -49,8 +50,30 @@ struct DeckDetailView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 4)
 
+                            if detail.isLinked {
+                                HStack(spacing: 8) {
+                                    LinkedDeckChip(authorHandle: detail.authorHandle)
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(.top, 2)
+
+                                Text("This deck follows the author's updates. Its cards are read-only — your study progress is your own.")
+                                    .font(.caption)
+                                    .foregroundStyle(FasoltTheme.ink2)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 4)
+                            } else if let copiedFrom = detail.copiedFromHandle {
+                                Text("Copied from @\(copiedFrom).")
+                                    .font(.caption)
+                                    .foregroundStyle(FasoltTheme.ink2)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 4)
+                            }
+
                             if detail.isSuspended {
-                                Text("This deck is suspended. Cards are excluded from study.")
+                                Text(detail.isLinked
+                                     ? "You've paused this linked deck. Its cards are excluded from study."
+                                     : "This deck is suspended. Cards are excluded from study.")
                                     .font(.caption)
                                     .foregroundStyle(FasoltTheme.ink2)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -63,7 +86,9 @@ struct DeckDetailView: View {
                                 ContentUnavailableView(
                                     "No cards in this deck",
                                     systemImage: "rectangle.on.rectangle.slash",
-                                    description: Text("Tap + to add a card to this deck")
+                                    description: Text(detail.isLinked
+                                                      ? "The author hasn't added any cards yet."
+                                                      : "Tap + to add a card to this deck")
                                 )
                             }
                         } else {
@@ -75,21 +100,29 @@ struct DeckDetailView: View {
                                         DeckCardRow(card: card, showSourceFile: true)
                                     }
                                     .swipeActions(edge: .leading) {
-                                        Button {
-                                            UIPasteboard.general.string = card.id
-                                        } label: {
-                                            Label("Copy ID", systemImage: "doc.on.doc")
+                                        // Linked cards are the author's — their ids
+                                        // address nothing the subscriber can change.
+                                        if !detail.isLinked {
+                                            Button {
+                                                UIPasteboard.general.string = card.id
+                                            } label: {
+                                                Label("Copy ID", systemImage: "doc.on.doc")
+                                            }
+                                            .tint(.blue)
                                         }
-                                        .tint(.blue)
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        Button(role: .destructive) {
-                                            cardToDelete = card
-                                            showDeleteCardAlert = true
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
+                                        if !detail.isLinked {
+                                            Button(role: .destructive) {
+                                                cardToDelete = card
+                                                showDeleteCardAlert = true
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
                                         }
 
+                                        // Suspending is per-user review state, so it
+                                        // stays available on linked cards.
                                         Button {
                                             Task {
                                                 do {
@@ -144,19 +177,23 @@ struct DeckDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .offlineBanner()
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showCreateCardSheet = true
-                } label: {
-                    Label("New Card", systemImage: "plus")
+            if !viewModel.isLinked {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCreateCardSheet = true
+                    } label: {
+                        Label("New Card", systemImage: "plus")
+                    }
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button {
-                        showEditSheet = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
+                    if !viewModel.isLinked {
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            Label("Edit", systemImage: "pencil")
+                        }
                     }
 
                     Menu {
@@ -183,17 +220,25 @@ struct DeckDetailView: View {
                         Task { await viewModel.toggleSuspended() }
                     } label: {
                         Label(
-                            viewModel.detail?.isSuspended == true ? "Unsuspend" : "Suspend",
+                            suspendActionTitle,
                             systemImage: viewModel.detail?.isSuspended == true ? "play.circle" : "pause.circle"
                         )
                     }
 
                     Divider()
 
-                    Button(role: .destructive) {
-                        showDeleteDeckAlert = true
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                    if viewModel.isLinked {
+                        Button {
+                            showConvertAlert = true
+                        } label: {
+                            Label("Convert to copy", systemImage: "doc.on.doc")
+                        }
+                    } else {
+                        Button(role: .destructive) {
+                            showDeleteDeckAlert = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")
@@ -269,6 +314,20 @@ struct DeckDetailView: View {
                 Text("This cannot be undone.")
             }
         }
+        .alert("Convert to a copy?", isPresented: $showConvertAlert) {
+            Button("Convert") {
+                Task {
+                    do {
+                        try await viewModel.convertToCopy()
+                    } catch {
+                        errorMessage = "Could not convert this deck to a copy."
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(convertAlertMessage)
+        }
         .alert("Error", isPresented: .init(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") { errorMessage = nil }
         } message: {
@@ -292,6 +351,22 @@ struct DeckDetailView: View {
         }
     }
 
+    /// On a linked deck the pause is the subscriber's own, not the author's suspend.
+    private var suspendActionTitle: String {
+        let isSuspended = viewModel.detail?.isSuspended == true
+        if viewModel.isLinked { return isSuspended ? "Resume" : "Pause" }
+        return isSuspended ? "Unsuspend" : "Suspend"
+    }
+
+    private var convertAlertMessage: String {
+        let name = viewModel.detail?.name ?? viewModel.deckName
+        let count = viewModel.detail?.cardCount ?? 0
+        let author = viewModel.detail?.authorHandle.map { "@\($0)" } ?? "the author"
+        return "\"\(name)\" becomes your own deck: \(count) \(count == 1 ? "card is" : "cards are") "
+            + "copied into your account and your review progress comes with them. The copy stops "
+            + "following \(author), so their future changes won't reach it — but you can edit the cards yourself."
+    }
+
     @ViewBuilder
     private func pagedDestination(for card: DeckCardDTO, in detail: DeckDetailDTO) -> some View {
         PagedCardDetailView(
@@ -310,7 +385,8 @@ struct DeckDetailView: View {
             },
             onDelete: { id in
                 try await viewModel.deleteCard(id: id)
-            }
+            },
+            isReadOnly: detail.isLinked
         )
     }
 }
