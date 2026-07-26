@@ -278,6 +278,29 @@ const stateCounts = computed(() => {
           </RouterLink>
         </p>
       </div>
+      <div class="deck-actions-right">
+        <template v-if="isLinked">
+          <button class="fa-btn" @click="toggleSuspended">{{ deck.isSuspended ? 'Resume' : 'Pause' }}</button>
+          <button class="fa-btn" @click="convertOpen = true">Convert to copy</button>
+          <button class="fa-btn delete-btn" @click="unlinkOpen = true">Unlink</button>
+        </template>
+        <template v-else>
+          <DeckShareSection
+            :deck-id="deck.id"
+            :visibility="deck.visibility"
+            :copy-count="deck.copyCount"
+            @updated="onVisibilityUpdated"
+          />
+          <button class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
+            <History class="h-3.5 w-3.5" />Snapshots
+          </button>
+          <button class="fa-btn" @click="toggleSuspended">{{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}</button>
+          <!-- The deck id is the author's — nothing the subscriber can address by it. -->
+          <button class="fa-btn" @click="copyDeckId">{{ idCopied ? 'Copied!' : 'Copy ID' }}</button>
+          <button class="fa-btn" @click="openEdit">Edit</button>
+          <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
+        </template>
+      </div>
     </header>
 
     <div class="deck-action-row">
@@ -307,29 +330,6 @@ const stateCounts = computed(() => {
             <TooltipContent>Review any card in this deck on demand — doesn't affect spaced-repetition scheduling</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      </div>
-      <div class="deck-actions-right">
-        <template v-if="isLinked">
-          <button class="fa-btn" @click="toggleSuspended">{{ deck.isSuspended ? 'Resume' : 'Pause' }}</button>
-          <button class="fa-btn" @click="convertOpen = true">Convert to copy</button>
-          <button class="fa-btn delete-btn" @click="unlinkOpen = true">Unlink</button>
-        </template>
-        <template v-else>
-          <DeckShareSection
-            :deck-id="deck.id"
-            :visibility="deck.visibility"
-            :copy-count="deck.copyCount"
-            @updated="onVisibilityUpdated"
-          />
-          <button class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
-            <History class="h-3.5 w-3.5" />Snapshots
-          </button>
-          <button class="fa-btn" @click="toggleSuspended">{{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}</button>
-          <!-- The deck id is the author's — nothing the subscriber can address by it. -->
-          <button class="fa-btn" @click="copyDeckId">{{ idCopied ? 'Copied!' : 'Copy ID' }}</button>
-          <button class="fa-btn" @click="openEdit">Edit</button>
-          <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
-        </template>
       </div>
     </div>
 
@@ -526,6 +526,7 @@ const stateCounts = computed(() => {
 .deck-header {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 16px;
 }
 .deck-header-text { min-width: 0; }
@@ -571,7 +572,6 @@ const stateCounts = computed(() => {
 .deck-action-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
 }
