@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { History, Link2, MoreHorizontal } from 'lucide-vue-next'
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { History, Link2 } from 'lucide-vue-next'
 import CardTable from '@/components/CardTable.vue'
 import BulkActionBar from '@/components/BulkActionBar.vue'
 import AddToDeckDialog from '@/components/AddToDeckDialog.vue'
@@ -278,66 +278,60 @@ const stateCounts = computed(() => {
           </RouterLink>
         </p>
       </div>
-      <div class="deck-actions">
-        <button
-          v-if="deck.dueCount > 0 && !deck.isSuspended"
-          class="fa-btn fa-btn-primary"
-          @click="router.push(`/review?deckId=${deck.id}`)"
-        >
-          Study this deck
-        </button>
-        <button
-          v-if="deck.cardCount > 0 && !deck.isSuspended"
-          class="fa-btn"
-          data-testid="custom-study-button"
-          @click="router.push(`/review?deckId=${deck.id}&mode=cram`)"
-        >
-          Custom study
-        </button>
-
-        <DeckShareSection
-          v-if="!isLinked"
-          :deck-id="deck.id"
-          :visibility="deck.visibility"
-          :copy-count="deck.copyCount"
-          @updated="onVisibilityUpdated"
-        />
-
-        <button v-if="!isLinked" class="fa-btn" @click="openEdit">Edit</button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <button type="button" class="fa-btn fa-btn-icon" aria-label="More actions">
-              <MoreHorizontal :size="16" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-56">
-            <template v-if="isLinked">
-              <DropdownMenuItem class="cursor-pointer" @click="toggleSuspended">
-                {{ deck.isSuspended ? 'Resume' : 'Pause' }}
-              </DropdownMenuItem>
-              <DropdownMenuItem class="cursor-pointer" @click="convertOpen = true">Convert to copy</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem class="cursor-pointer menu-item-destructive" @click="unlinkOpen = true">Unlink</DropdownMenuItem>
-            </template>
-            <template v-else>
-              <DropdownMenuItem class="cursor-pointer" @click="router.push(`/decks/${deck.id}/snapshots`)">
-                <History class="h-3.5 w-3.5" />Snapshots
-              </DropdownMenuItem>
-              <DropdownMenuItem class="cursor-pointer" @click="toggleSuspended">
-                {{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}
-              </DropdownMenuItem>
-              <!-- The deck id is the author's — nothing the subscriber can address by it. -->
-              <DropdownMenuItem class="cursor-pointer" @click="copyDeckId">
-                {{ idCopied ? 'Copied!' : 'Copy ID' }}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem class="cursor-pointer menu-item-destructive" @click="openDelete">Delete</DropdownMenuItem>
-            </template>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
     </header>
+
+    <div class="deck-action-row">
+      <div class="deck-actions-left">
+        <TooltipProvider :delay-duration="300">
+          <Tooltip v-if="deck.dueCount > 0 && !deck.isSuspended">
+            <TooltipTrigger as-child>
+              <button
+                class="fa-btn fa-btn-primary"
+                @click="router.push(`/review?deckId=${deck.id}`)"
+              >
+                Study this deck
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Review the cards due now, scheduled by spaced repetition</TooltipContent>
+          </Tooltip>
+          <Tooltip v-if="deck.cardCount > 0 && !deck.isSuspended">
+            <TooltipTrigger as-child>
+              <button
+                class="fa-btn"
+                data-testid="custom-study-button"
+                @click="router.push(`/review?deckId=${deck.id}&mode=cram`)"
+              >
+                Custom study
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Review any card in this deck on demand — doesn't affect spaced-repetition scheduling</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      <div class="deck-actions-right">
+        <template v-if="isLinked">
+          <button class="fa-btn" @click="toggleSuspended">{{ deck.isSuspended ? 'Resume' : 'Pause' }}</button>
+          <button class="fa-btn" @click="convertOpen = true">Convert to copy</button>
+          <button class="fa-btn delete-btn" @click="unlinkOpen = true">Unlink</button>
+        </template>
+        <template v-else>
+          <DeckShareSection
+            :deck-id="deck.id"
+            :visibility="deck.visibility"
+            :copy-count="deck.copyCount"
+            @updated="onVisibilityUpdated"
+          />
+          <button class="fa-btn" @click="router.push(`/decks/${deck.id}/snapshots`)">
+            <History class="h-3.5 w-3.5" />Snapshots
+          </button>
+          <button class="fa-btn" @click="toggleSuspended">{{ deck.isSuspended ? 'Unsuspend' : 'Suspend' }}</button>
+          <!-- The deck id is the author's — nothing the subscriber can address by it. -->
+          <button class="fa-btn" @click="copyDeckId">{{ idCopied ? 'Copied!' : 'Copy ID' }}</button>
+          <button class="fa-btn" @click="openEdit">Edit</button>
+          <button class="fa-btn delete-btn" @click="openDelete">Delete</button>
+        </template>
+      </div>
+    </div>
 
     <div v-if="linkError" class="bulk-error">{{ linkError }}</div>
 
@@ -532,7 +526,6 @@ const stateCounts = computed(() => {
 .deck-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 16px;
 }
 .deck-header-text { min-width: 0; }
@@ -575,16 +568,22 @@ const stateCounts = computed(() => {
   font-size: 12.5px;
   color: var(--ink-2);
 }
-.deck-actions {
+.deck-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.deck-actions-left,
+.deck-actions-right {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
 }
-.fa-btn-icon { padding: 0; width: 32px; }
-
-.menu-item-destructive { color: var(--c-again) !important; }
+.delete-btn { color: var(--c-again); }
+.delete-btn:hover { color: var(--c-again); border-color: var(--c-again); }
 
 /* Suspended banner — quiet surface, hairline, no glow */
 .suspended-banner {
