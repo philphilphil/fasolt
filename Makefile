@@ -5,7 +5,7 @@ IOS_BUNDLE_ID := com.fasolt.app
 IOS_DERIVED   := fasolt.ios/build
 IOS_APP       := $(IOS_DERIVED)/Build/Products/Debug-iphonesimulator/Fasolt.app
 
-dev:
+run:
 	./scripts/dev.sh
 
 ios-run:
