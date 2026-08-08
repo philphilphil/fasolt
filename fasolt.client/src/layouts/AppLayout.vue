@@ -21,6 +21,7 @@ const tabs = computed<Tab[]>(() => {
     { label: 'Cards', value: '/cards' },
     { label: 'Decks', value: '/decks' },
     { label: 'Sources', value: '/sources' },
+    { label: 'Library', value: '/library' },
     { separator: true },
     { label: 'MCP', value: '/mcp-setup' },
     { label: 'Settings', value: '/settings' },

@@ -278,11 +278,11 @@ public class CardServiceTests : IAsyncLifetime
         var card = await svc.CreateCard(UserId, "Old front", "Old back", "notes.md");
 
         // Simulate some SRS state by updating directly
-        var entity = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
-        entity!.Stability = 5.0;
-        entity.Difficulty = 4.2;
-        entity.Step = 2;
-        entity.State = "review";
+        var state = await db.ReviewStateForPublicId(UserId, card.Id);
+        state.Stability = 5.0;
+        state.Difficulty = 4.2;
+        state.Step = 2;
+        state.State = "review";
         await db.SaveChangesAsync();
 
         var result = await svc.UpdateCardFields(UserId, card.Id,
@@ -294,8 +294,8 @@ public class CardServiceTests : IAsyncLifetime
 
         // Verify SRS state preserved
         await using var db2 = _db.CreateDbContext();
-        var reloaded = await db2.Cards.FirstOrDefaultAsync(c => c.PublicId == card.Id);
-        reloaded!.Stability.Should().Be(5.0);
+        var reloaded = await db2.ReviewStateForPublicId(UserId, card.Id);
+        reloaded.Stability.Should().Be(5.0);
         reloaded.Difficulty.Should().Be(4.2);
         reloaded.Step.Should().Be(2);
         reloaded.State.Should().Be("review");
@@ -341,13 +341,13 @@ public class CardServiceTests : IAsyncLifetime
         var card = await svc.CreateCard(UserId, "Reset Q", "Reset A", null);
 
         // Simulate SRS state
-        var entity = await db.Cards.FindAsync(db.Cards.First(c => c.PublicId == card.Id).Id);
-        entity!.Stability = 5.0;
-        entity.Difficulty = 4.2;
-        entity.Step = 3;
-        entity.State = "review";
-        entity.DueAt = DateTimeOffset.UtcNow;
-        entity.LastReviewedAt = DateTimeOffset.UtcNow;
+        var state = await db.ReviewStateForPublicId(UserId, card.Id);
+        state.Stability = 5.0;
+        state.Difficulty = 4.2;
+        state.Step = 3;
+        state.State = "review";
+        state.DueAt = DateTimeOffset.UtcNow;
+        state.LastReviewedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
 
         var result = await svc.ResetProgress(UserId, card.Id);
@@ -527,6 +527,110 @@ public class CardServiceTests : IAsyncLifetime
         (await svc.RenameSource(UserId, "", "new.md")).Renamed.Should().Be(0);
         (await svc.RenameSource(UserId, "x.md", "")).Renamed.Should().Be(0);
         (await svc.RenameSource(UserId, "x.md", "x.md")).Renamed.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ListCards_Pagination_ContinuesWhenTheCursorCardLeavesTheFilter()
+    {
+        // Resolving the cursor inside the deck filter found nothing once the cursor card
+        // had been reassigned, which skipped the keyset predicate and served page 1
+        // again — an agent paging a deck would loop over the same cards forever.
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+        var decks = new DeckService(db);
+
+        var deck = await decks.CreateDeck(UserId, "Paged", null);
+        var elsewhere = await decks.CreateDeck(UserId, "Elsewhere", null);
+        for (var i = 1; i <= 4; i++)
+            await svc.CreateCard(UserId, $"Deck Q{i}", $"A{i}", null, deckId: deck.Id);
+
+        var page1 = await svc.ListCards(UserId, sourceFile: null, deckId: deck.Id, limit: 2, after: null);
+        page1.Items.Should().HaveCount(2);
+
+        // The cursor card moves out of the deck between pages.
+        await svc.UpdateCard(UserId, page1.NextCursor!,
+            new UpdateCardRequest("Moved", "A", DeckIds: [elsewhere.Id]));
+
+        var page2 = await svc.ListCards(UserId, sourceFile: null, deckId: deck.Id, limit: 2, after: page1.NextCursor);
+
+        page2.Items.Should().NotBeEmpty();
+        page2.Items.Should().NotContain(c => page1.Items.Any(p => p.Id == c.Id));
+    }
+
+    [Fact]
+    public async Task ListCards_Pagination_UnresolvableCursorEndsTheListing()
+    {
+        // Better an empty page than silently restarting: a caller that cannot be
+        // positioned has nothing left to read, and replaying page 1 is what loops.
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+
+        await svc.CreateCard(UserId, "Q?", "A.", null);
+
+        var result = await svc.ListCards(UserId, sourceFile: null, deckId: null, limit: 2, after: "no-such-card");
+
+        result.Items.Should().BeEmpty();
+        result.HasMore.Should().BeFalse();
+        result.NextCursor.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateCard_WithTheSameDeckIdTwice_AssignsItOnce()
+    {
+        // Two DeckCard rows for one deck share a composite key: EF refuses to track the
+        // second, and the whole edit used to fail with a 500.
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+        var decks = new DeckService(db);
+
+        var deck = await decks.CreateDeck(UserId, "Doubled", null);
+        var card = await svc.CreateCard(UserId, "Q?", "A.", null);
+
+        var updated = await svc.UpdateCard(UserId, card.Id,
+            new UpdateCardRequest("New Q", "New A", DeckIds: [deck.Id, deck.Id]));
+
+        updated!.Front.Should().Be("New Q");
+        updated.Decks.Should().ContainSingle(d => d.Id == deck.Id);
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckCards.CountAsync(dc => dc.Deck.PublicId == deck.Id)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task UpdateCard_KeepingADeckLeavesTheMembershipInPlace()
+    {
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+        var decks = new DeckService(db);
+
+        var keep = await decks.CreateDeck(UserId, "Keep", null);
+        var drop = await decks.CreateDeck(UserId, "Drop", null);
+        var add = await decks.CreateDeck(UserId, "Add", null);
+        var card = await svc.CreateCard(UserId, "Q?", "A.", null, deckId: keep.Id);
+        await new DeckService(db).AddCards(UserId, drop.Id, [card.Id]);
+
+        var updated = await svc.UpdateCard(UserId, card.Id,
+            new UpdateCardRequest("Q?", "A.", DeckIds: [keep.Id, add.Id]));
+
+        updated!.Decks.Select(d => d.Id).Should().BeEquivalentTo([keep.Id, add.Id]);
+    }
+
+    [Fact]
+    public async Task AddCards_WithTheSameCardIdTwice_Succeeds()
+    {
+        // The count check compared the request against the rows the query returned, so
+        // a repeated id looked like a card that does not exist.
+        await using var db = _db.CreateDbContext();
+        var svc = new CardService(db);
+        var decks = new DeckService(db);
+
+        var deck = await decks.CreateDeck(UserId, "Target", null);
+        var card = await svc.CreateCard(UserId, "Q?", "A.", null);
+
+        var result = await decks.AddCards(UserId, deck.Id, [card.Id, card.Id]);
+
+        result.Should().Be(AddCardsResult.Success);
+        (await db.DeckCards.CountAsync(dc => dc.Deck.PublicId == deck.Id)).Should().Be(1);
     }
 
     [Fact]

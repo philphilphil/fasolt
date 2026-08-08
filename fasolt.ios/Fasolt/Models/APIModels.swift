@@ -44,6 +44,12 @@ struct CardDeckInfoDTO: Decodable, Sendable {
 
 // MARK: - Decks
 
+/// A deck in the caller's own list. When `isLinked` is true the deck belongs to
+/// `authorHandle`: the counts and `isSuspended` are still the caller's own, but the
+/// content is read-only.
+///
+/// The sharing fields arrived with the public library; servers older than that omit
+/// them, so they are decoded leniently (see `init(from:)` below).
 struct DeckDTO: Decodable, Sendable {
     let id: String
     let name: String
@@ -52,6 +58,32 @@ struct DeckDTO: Decodable, Sendable {
     let dueCount: Int
     let createdAt: String
     let isSuspended: Bool
+    var visibility: String = DeckVisibility.private_
+    var copiedFromHandle: String? = nil
+    var isLinked: Bool = false
+    var authorHandle: String? = nil
+}
+
+extension DeckDTO {
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, cardCount, dueCount, createdAt, isSuspended
+        case visibility, copiedFromHandle, isLinked, authorHandle
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        cardCount = try c.decode(Int.self, forKey: .cardCount)
+        dueCount = try c.decode(Int.self, forKey: .dueCount)
+        createdAt = try c.decode(String.self, forKey: .createdAt)
+        isSuspended = try c.decode(Bool.self, forKey: .isSuspended)
+        visibility = try c.decodeIfPresent(String.self, forKey: .visibility) ?? DeckVisibility.private_
+        copiedFromHandle = try c.decodeIfPresent(String.self, forKey: .copiedFromHandle)
+        isLinked = try c.decodeIfPresent(Bool.self, forKey: .isLinked) ?? false
+        authorHandle = try c.decodeIfPresent(String.self, forKey: .authorHandle)
+    }
 }
 
 struct DeckDetailDTO: Decodable, Sendable {
@@ -62,6 +94,39 @@ struct DeckDetailDTO: Decodable, Sendable {
     let dueCount: Int
     let isSuspended: Bool
     let cards: [DeckCardDTO]
+    var visibility: String = DeckVisibility.private_
+    var copiedFromHandle: String? = nil
+    var isLinked: Bool = false
+    var authorHandle: String? = nil
+}
+
+extension DeckDetailDTO {
+    private enum CodingKeys: String, CodingKey {
+        case id, name, description, cardCount, dueCount, isSuspended, cards
+        case visibility, copiedFromHandle, isLinked, authorHandle
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        cardCount = try c.decode(Int.self, forKey: .cardCount)
+        dueCount = try c.decode(Int.self, forKey: .dueCount)
+        isSuspended = try c.decode(Bool.self, forKey: .isSuspended)
+        cards = try c.decodeIfPresent([DeckCardDTO].self, forKey: .cards) ?? []
+        visibility = try c.decodeIfPresent(String.self, forKey: .visibility) ?? DeckVisibility.private_
+        copiedFromHandle = try c.decodeIfPresent(String.self, forKey: .copiedFromHandle)
+        isLinked = try c.decodeIfPresent(Bool.self, forKey: .isLinked) ?? false
+        authorHandle = try c.decodeIfPresent(String.self, forKey: .authorHandle)
+    }
+}
+
+/// Wire values of the server's deck visibility enum.
+enum DeckVisibility {
+    // `private` is a keyword; the trailing underscore keeps the wire value readable.
+    static let private_ = "private"
+    static let unlisted = "unlisted"
 }
 
 struct DeckCardDTO: Decodable, Sendable, Identifiable {
@@ -78,6 +143,58 @@ struct DeckCardDTO: Decodable, Sendable, Identifiable {
     let lastReviewedAt: String?
     let frontSvg: String?
     let backSvg: String?
+}
+
+// MARK: - Public library
+
+/// A public deck as served by `/api/library`. Carries no source-file provenance —
+/// nothing here may leak the author's vault.
+struct LibraryDeckDTO: Decodable, Sendable, Identifiable {
+    let id: String
+    let name: String
+    let description: String?
+    let authorHandle: String?
+    let cardCount: Int
+    let copyCount: Int
+    let publishedAt: String?
+}
+
+struct LibraryListResponse: Decodable, Sendable {
+    let items: [LibraryDeckDTO]
+    let totalCount: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct LibrarySampleCardDTO: Decodable, Sendable {
+    let front: String
+    let back: String
+    let frontSvg: String?
+    let backSvg: String?
+}
+
+struct LibraryDeckDetailDTO: Decodable, Sendable {
+    let id: String
+    let name: String
+    let description: String?
+    let authorHandle: String?
+    let cardCount: Int
+    let copyCount: Int
+    let visibility: String
+    let publishedAt: String?
+    let sampleCards: [LibrarySampleCardDTO]
+}
+
+enum LibrarySort: String, CaseIterable, Sendable {
+    case popular
+    case recent
+
+    var label: String {
+        switch self {
+        case .popular: return "Popular"
+        case .recent: return "Recent"
+        }
+    }
 }
 
 // MARK: - Review

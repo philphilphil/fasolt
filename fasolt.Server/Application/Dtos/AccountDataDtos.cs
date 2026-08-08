@@ -17,7 +17,8 @@ public record AccountExportProfile(
     string? ExternalProvider,
     double? DesiredRetention,
     int? MaximumInterval,
-    int NotificationIntervalHours
+    int NotificationIntervalHours,
+    string? Handle = null
 );
 
 public record AccountExportDeck(

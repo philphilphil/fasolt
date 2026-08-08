@@ -83,6 +83,10 @@ const stateCounts = computed(() => {
   return out
 })
 
+// This page lists authored cards only, and a linked deck never contains one — so
+// offering linked decks here could only ever filter the list down to nothing.
+const ownedDecks = computed(() => decks.decks.filter(d => !d.isLinked))
+
 const deckFilterLabel = computed(() => {
   if (deckFilter.value === '') return 'All decks'
   if (deckFilter.value === 'none') return 'No deck'
@@ -180,7 +184,7 @@ async function onDeckMembershipChanged() {
         <select v-model="deckFilter" class="pill-select">
           <option value="">All decks</option>
           <option value="none">No deck</option>
-          <option v-for="d in decks.decks" :key="d.id" :value="d.id">{{ d.name }}</option>
+          <option v-for="d in ownedDecks" :key="d.id" :value="d.id">{{ d.name }}</option>
         </select>
         <span class="pill-value">{{ deckFilterLabel }}</span>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ink-3);"><path d="m6 9 6 6 6-6"/></svg>

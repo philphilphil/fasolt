@@ -27,6 +27,11 @@ const props = withDefaults(defineProps<{
   deckContext?: { id: string; name: string } | null
   selectable?: boolean
   selectedIds?: string[]
+  /**
+   * Cards the caller doesn't own (a linked deck): no row actions, and no link to
+   * the card page, whose edit/delete affordances would only be rejected.
+   */
+  readOnly?: boolean
 }>(), {
   showDecks: false,
   showPagination: false,
@@ -34,6 +39,7 @@ const props = withDefaults(defineProps<{
   deckContext: null,
   selectable: false,
   selectedIds: () => [],
+  readOnly: false,
 })
 
 const emit = defineEmits<{
@@ -133,10 +139,12 @@ const columns = computed<ColumnDef<any>[]>(() => {
         : `/cards/${row.original.id}`
       return h('div', { class: 'cell-front' }, [
         h('div', { class: 'cell-front-row' }, [
-          h(RouterLink, {
-            to: cardLink,
-            class: 'cell-front-text',
-          }, () => display),
+          props.readOnly
+            ? h('span', { class: 'cell-front-text is-static' }, display)
+            : h(RouterLink, {
+                to: cardLink,
+                class: 'cell-front-text',
+              }, () => display),
           hasSvg ? h(Image, { class: 'cell-front-icon' }) : null,
         ]),
         source
@@ -204,7 +212,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
 
   // When selection mode is on, drop the per-row action cluster entirely — bulk
   // bar handles the actions, and the Front column's RouterLink opens the card.
-  if (!props.selectable) {
+  if (!props.selectable && !props.readOnly) {
     cols.push({
       id: 'actions',
       enableSorting: false,
@@ -399,6 +407,7 @@ const table = useVueTable({
   transition: color .12s;
 }
 :deep(.cell-front-text:hover) { color: var(--accent); }
+:deep(.cell-front-text.is-static:hover) { color: var(--ink-0); }
 :deep(.cell-front-icon) {
   width: 12px;
   height: 12px;

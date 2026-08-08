@@ -14,4 +14,13 @@ public class AppUser : IdentityUser
     public string? ExternalProviderId { get; set; }
     public int BestStreak { get; set; } = 0;
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Public author handle, shown on library listings. Null until claimed.
+    /// 3–30 chars, lowercase alphanumeric plus hyphen; unique across users.
+    /// </summary>
+    public string? Handle { get; set; }
+
+    /// <summary>False when an admin has banned the user from publishing decks.</summary>
+    public bool CanPublish { get; set; } = true;
 }

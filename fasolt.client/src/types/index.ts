@@ -14,6 +14,8 @@ export interface Card {
   lastReviewedAt: string | null
   isSuspended: boolean
   decks: { id: string; name: string; isSuspended: boolean }[]
+  /** True for a card reached through a linked deck: readable, but not editable or deletable. */
+  isLinked: boolean
 }
 
 export interface Stat {
@@ -24,6 +26,8 @@ export interface Stat {
 
 export type ReviewRating = 'again' | 'hard' | 'good' | 'easy'
 
+export type DeckVisibility = 'private' | 'unlisted' | 'public'
+
 export interface Deck {
   id: string
   name: string
@@ -32,6 +36,15 @@ export interface Deck {
   dueCount: number
   createdAt: string
   isSuspended: boolean
+  visibility: DeckVisibility
+  publishedAt: string | null
+  copyCount: number
+  copiedFromDeckPublicId: string | null
+  copiedFromHandle: string | null
+  /** True for a deck linked from the library: the author owns it, the content is read-only. */
+  isLinked: boolean
+  /** Handle of the author, for linked decks. */
+  authorHandle: string | null
 }
 
 export interface DeckDetail extends Deck {
@@ -101,6 +114,44 @@ export interface SourceItem {
   sourceFile: string
   cardCount: number
   dueCount: number
+}
+
+/** A public/unlisted deck as served by the anonymous library API. */
+export interface LibraryDeck {
+  id: string
+  name: string
+  description: string | null
+  authorHandle: string | null
+  cardCount: number
+  copyCount: number
+  publishedAt: string | null
+}
+
+export interface LibraryListResponse {
+  items: LibraryDeck[]
+  totalCount: number
+  page: number
+  pageSize: number
+}
+
+export interface LibrarySampleCard {
+  front: string
+  back: string
+  frontSvg: string | null
+  backSvg: string | null
+}
+
+export interface LibraryDeckDetail extends LibraryDeck {
+  visibility: DeckVisibility
+  sampleCards: LibrarySampleCard[]
+}
+
+export type LibrarySort = 'popular' | 'recent'
+
+/** Account-level publishing identity. */
+export interface HandleInfo {
+  handle: string | null
+  canPublish: boolean
 }
 
 export interface DeckSnapshot {

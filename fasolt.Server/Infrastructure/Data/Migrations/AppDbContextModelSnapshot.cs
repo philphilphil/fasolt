@@ -73,6 +73,11 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
 
+                    b.Property<bool>("CanPublish")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -97,6 +102,10 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.Property<string>("ExternalProviderId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Handle")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamp with time zone");
@@ -151,6 +160,10 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Handle")
+                        .IsUnique()
+                        .HasFilter("\"Handle\" IS NOT NULL");
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -182,12 +195,6 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<double?>("Difficulty")
-                        .HasColumnType("double precision");
-
-                    b.Property<DateTimeOffset?>("DueAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Front")
                         .IsRequired()
                         .HasMaxLength(10000)
@@ -195,12 +202,6 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
 
                     b.Property<string>("FrontSvg")
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsSuspended")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("LastReviewedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PublicId")
                         .IsRequired()
@@ -217,19 +218,6 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<double?>("Stability")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasDefaultValue("new");
-
-                    b.Property<int?>("Step")
-                        .HasColumnType("integer");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -244,8 +232,6 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "gin");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("UserId", "DueAt");
 
                     b.HasIndex("UserId", "SourceFile");
 
@@ -284,6 +270,19 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CopiedFromDeckPublicId")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("CopiedFromHandle")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("CopyCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -303,6 +302,9 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)");
 
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<NpgsqlTsVector>("SearchVector")
                         .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
@@ -312,6 +314,13 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Private");
 
                     b.HasKey("Id");
 
@@ -323,6 +332,10 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "gin");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("Visibility", "CopyCount");
+
+                    b.HasIndex("Visibility", "PublishedAt");
 
                     b.ToTable("Decks");
                 });
@@ -383,6 +396,27 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.HasIndex("UserId", "DeckId", "CreatedAt");
 
                     b.ToTable("DeckSnapshots");
+                });
+
+            modelBuilder.Entity("Fasolt.Server.Domain.Entities.DeckSubscription", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("DeckId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsSuspended")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("SubscribedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "DeckId");
+
+                    b.HasIndex("DeckId");
+
+                    b.ToTable("DeckSubscriptions");
                 });
 
             modelBuilder.Entity("Fasolt.Server.Domain.Entities.DeviceToken", b =>
@@ -504,7 +538,7 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid>("CardId")
+                    b.Property<Guid?>("CardId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Rating")
@@ -534,6 +568,48 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.HasIndex("UserId", "ReviewedAt");
 
                     b.ToTable("ReviewLogs");
+                });
+
+            modelBuilder.Entity("Fasolt.Server.Domain.Entities.ReviewState", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<double?>("Difficulty")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset?>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsSuspended")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Stability")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("new");
+
+                    b.Property<int?>("Step")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "CardId");
+
+                    b.HasIndex("CardId");
+
+                    b.HasIndex("UserId", "DueAt");
+
+                    b.ToTable("ReviewStates");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
@@ -965,6 +1041,25 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Fasolt.Server.Domain.Entities.DeckSubscription", b =>
+                {
+                    b.HasOne("Fasolt.Server.Domain.Entities.Deck", "Deck")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("DeckId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Fasolt.Server.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Deck");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Fasolt.Server.Domain.Entities.DeviceToken", b =>
                 {
                     b.HasOne("Fasolt.Server.Domain.Entities.AppUser", "User")
@@ -1002,6 +1097,24 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
                 {
                     b.HasOne("Fasolt.Server.Domain.Entities.Card", "Card")
                         .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Fasolt.Server.Domain.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Fasolt.Server.Domain.Entities.ReviewState", b =>
+                {
+                    b.HasOne("Fasolt.Server.Domain.Entities.Card", "Card")
+                        .WithMany("ReviewStates")
                         .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1095,11 +1208,15 @@ namespace Fasolt.Server.Infrastructure.Data.Migrations
             modelBuilder.Entity("Fasolt.Server.Domain.Entities.Card", b =>
                 {
                     b.Navigation("DeckCards");
+
+                    b.Navigation("ReviewStates");
                 });
 
             modelBuilder.Entity("Fasolt.Server.Domain.Entities.Deck", b =>
                 {
                     b.Navigation("Cards");
+
+                    b.Navigation("Subscriptions");
                 });
 
             modelBuilder.Entity("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreApplication", b =>

@@ -22,6 +22,8 @@ public static class AccountEndpoints
         group.MapPut("/email", ChangeEmail).RequireAuthorization("EmailVerified");
         group.MapPost("/confirm-email-change", ConfirmEmailChange).RequireAuthorization();
         group.MapPut("/password", ChangePassword).RequireAuthorization("EmailVerified");
+        group.MapGet("/handle", GetHandle).RequireAuthorization("EmailVerified").RequireRateLimiting("api");
+        group.MapPut("/handle", SetHandle).RequireAuthorization("EmailVerified").RequireRateLimiting("api");
         // Password reset lives at /oauth/forgot-password and /oauth/reset-password
         // as an OTP flow (see OAuthEndpoints) — no JSON API surface.
         group.MapGet("/github-login", GitHubLogin).RequireRateLimiting("auth");
@@ -152,6 +154,47 @@ public static class AccountEndpoints
         if (!result.Succeeded)
             return Results.ValidationProblem(result.Errors.ToDictionary(e => e.Code, e => new[] { e.Description }));
         return Results.Ok();
+    }
+
+    private static async Task<IResult> GetHandle(
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        PublishingService publishingService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var handle = await publishingService.GetHandle(user.Id);
+        return handle is null ? Results.Unauthorized() : Results.Ok(handle);
+    }
+
+    private static async Task<IResult> SetHandle(
+        SetHandleRequest request,
+        ClaimsPrincipal principal,
+        UserManager<AppUser> userManager,
+        PublishingService publishingService)
+    {
+        var user = await userManager.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var result = await publishingService.SetHandle(user.Id, request.Handle);
+
+        return result.Error switch
+        {
+            SetHandleError.UserNotFound => Results.Unauthorized(),
+            SetHandleError.Invalid => Results.BadRequest(new
+            {
+                error = "invalid_handle",
+                message = $"Handles are {PublishingService.MinHandleLength}–{PublishingService.MaxHandleLength} characters, "
+                    + "using lowercase letters, digits and hyphens only.",
+            }),
+            SetHandleError.Taken => Results.Json(new
+            {
+                error = "handle_taken",
+                message = "That handle is already taken.",
+            }, statusCode: StatusCodes.Status409Conflict),
+            _ => Results.Ok(result.Handle),
+        };
     }
 
     private static IResult GitHubLogin(HttpContext context, IConfiguration configuration)

@@ -18,7 +18,7 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         return JsonSerializer.Serialize(result, McpJson.Options);
     }
 
-    [McpServerTool, Description("List cards with slim metadata (id, front, back, sourceFile, isSuspended, decks, createdAt). To pull FSRS scheduling fields or SVG image content across many cards in one call, pass `include`. Do NOT loop over results calling get_card — use include instead. Supports cursor-based pagination via the `after` parameter.")]
+    [McpServerTool, Description("List cards with slim metadata (id, front, back, sourceFile, isSuspended, decks, createdAt). To pull FSRS scheduling fields or SVG image content across many cards in one call, pass `include`. Do NOT loop over results calling get_card — use include instead. Supports cursor-based pagination via the `after` parameter. Passing a linked deck's id returns that deck's cards with isLinked: true and no sourceFile — they belong to the author and are read-only.")]
     public async Task<string> ListCards(
         [Description("Filter by source file name")] string? sourceFile = null,
         [Description("Filter by deck ID")] string? deckId = null,
@@ -66,6 +66,10 @@ public class CardTools(CardService cardService, SearchService searchService, IHt
         var result = await cardService.BulkCreateCards(userId, cards, sourceFile, deckId);
         if (result.IsDeckNotFound)
             return JsonSerializer.Serialize(new { error = "Deck not found" }, McpJson.Options);
+        if (result.IsPublishedDeckFull)
+            return McpErrors.Structured("deck_full",
+                $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                + "Unpublish the deck before adding more.");
 
         var response = result.Response!;
         if (deckId is not null)

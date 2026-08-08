@@ -24,11 +24,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -90,6 +92,7 @@ fun DeckDetailScreen(
     RefreshOnResume { viewModel.load() }
     var showEditSheet by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showUnlinkDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -117,14 +120,19 @@ fun DeckDetailScreen(
                             Icon(Icons.Default.MoreVert, contentDescription = "More")
                         }
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            DropdownMenuItem(
-                                text = { Text("Edit deck") },
-                                leadingIcon = { Icon(Icons.Default.Edit, null) },
-                                onClick = {
-                                    menuExpanded = false
-                                    showEditSheet = true
-                                },
-                            )
+                            // A linked deck is read-only content owned by another account —
+                            // editing/deleting it always 403s server-side, so those actions
+                            // are hidden rather than left to fail. Unlink is the way out.
+                            if (!loaded.detail.isLinked) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit deck") },
+                                    leadingIcon = { Icon(Icons.Default.Edit, null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        showEditSheet = true
+                                    },
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text("Copy deck ID") },
                                 leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) },
@@ -134,14 +142,25 @@ fun DeckDetailScreen(
                                     Toast.makeText(context, "Deck ID copied", Toast.LENGTH_SHORT).show()
                                 },
                             )
-                            DropdownMenuItem(
-                                text = { Text("Delete deck") },
-                                leadingIcon = { Icon(Icons.Default.Delete, null) },
-                                onClick = {
-                                    menuExpanded = false
-                                    showDeleteDialog = true
-                                },
-                            )
+                            if (loaded.detail.isLinked) {
+                                DropdownMenuItem(
+                                    text = { Text("Remove from my decks") },
+                                    leadingIcon = { Icon(Icons.Default.LinkOff, null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        showUnlinkDialog = true
+                                    },
+                                )
+                            } else {
+                                DropdownMenuItem(
+                                    text = { Text("Delete deck") },
+                                    leadingIcon = { Icon(Icons.Default.Delete, null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        showDeleteDialog = true
+                                    },
+                                )
+                            }
                         }
                     }
                 },
@@ -244,6 +263,25 @@ fun DeckDetailScreen(
                 },
             )
         }
+
+        if (showUnlinkDialog) {
+            AlertDialog(
+                onDismissRequest = { showUnlinkDialog = false },
+                title = { Text("Remove this deck?") },
+                text = { Text("You'll stop seeing this deck and its cards. The original deck is unaffected.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.unlinkDeck { success ->
+                            showUnlinkDialog = false
+                            if (success) onNavigateBack()
+                        }
+                    }) { Text("Remove") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showUnlinkDialog = false }) { Text("Cancel") }
+                },
+            )
+        }
     }
 }
 
@@ -285,6 +323,13 @@ private fun DeckDetailBody(
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+
+        if (detail.isLinked) {
+            LinkedBadge(
+                authorHandle = detail.authorHandle,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
         }
 
         // Description as header subtitle (above the list)
@@ -433,6 +478,36 @@ private fun DeckDetailCardRow(
 private fun copyToClipboard(context: Context, label: String, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
+}
+
+@Composable
+private fun LinkedBadge(
+    authorHandle: String?,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Outlined.Link,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(14.dp),
+            )
+            Text(
+                text = if (authorHandle != null) "Linked from @$authorHandle" else "Linked",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+            )
+        }
+    }
 }
 
 @Composable

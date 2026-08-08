@@ -39,7 +39,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 UserId = UserId,
                 Front = "Gone?",
                 Back = "Gone.",
-                State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Cards.Add(card);
@@ -115,7 +114,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 Front = "What is X?",
                 Back = "X is Y.",
                 SourceFile = "notes.md",
-                State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Cards.Add(card);
@@ -232,7 +230,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 UserId = otherUserId,
                 Front = "Other Q",
                 Back = "Other A",
-                State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             db.Cards.Add(otherCard);
@@ -245,7 +242,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 UserId = UserId,
                 Front = "Delete me",
                 Back = "Gone",
-                State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
 
@@ -288,7 +284,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 UserId = otherUser.Id,
                 Front = "Other user's card",
                 Back = "Should not appear",
-                State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
 
@@ -300,7 +295,6 @@ public class AccountDataServiceTests : IAsyncLifetime
                 UserId = UserId,
                 Front = "My card",
                 Back = "Should appear",
-                State = "new",
                 CreatedAt = DateTimeOffset.UtcNow,
             });
 

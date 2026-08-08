@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Fasolt.Server.Api.McpTools;
+using Fasolt.Server.Application.Services;
 using FluentAssertions;
 using ModelContextProtocol.Protocol;
 
@@ -45,5 +47,39 @@ public class McpErrorTranslatorTests
         text.Should().Contain("InvalidOperationException");
         text.Should().NotContain("password");
         text.Should().NotContain("secret");
+    }
+
+    [Fact]
+    public void Linked_content_is_a_caller_error_not_a_server_fault()
+    {
+        McpErrorTranslator.IsCallerError(LinkedContentException.Deck()).Should().BeTrue();
+        McpErrorTranslator.IsCallerError(new ArgumentException("boom")).Should().BeTrue();
+        McpErrorTranslator.IsCallerError(new InvalidOperationException("boom")).Should().BeFalse();
+
+        // Only the classification changed — a linked-content refusal is not a bad
+        // argument, so the "Invalid arguments" phrasing must not apply to it.
+        McpErrorTranslator.IsInputError(LinkedContentException.Deck()).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("update_cards")]
+    [InlineData("delete_cards")]
+    [InlineData("update_deck")]
+    [InlineData("delete_deck")]
+    [InlineData("assign_cards_to_deck")]
+    [InlineData("add_svg_to_card")]
+    [InlineData("publish_deck")]
+    public void Linked_content_gets_a_structured_error_instead_of_the_generic_internal_message(string toolName)
+    {
+        var result = McpErrorTranslator.ToErrorResult(LinkedContentException.Card(), toolName);
+
+        result.IsError.Should().BeTrue();
+        var text = result.Content.OfType<TextContentBlock>().Single().Text;
+        text.Should().NotContain("Internal error");
+
+        var payload = JsonDocument.Parse(text).RootElement;
+        payload.GetProperty("error").GetString().Should().Be("linked_content");
+        payload.GetProperty("message").GetString().Should().Contain("linked from another account");
+        payload.GetProperty("hint").GetString().Should().Contain("convert the deck to a copy");
     }
 }

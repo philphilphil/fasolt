@@ -34,6 +34,11 @@ public class AccountDataService(AppDbContext db, IOpenIddictTokenManager tokenMa
             .OrderBy(c => c.CreatedAt)
             .ToListAsync();
 
+        var reviewStates = await db.ReviewStates
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .ToDictionaryAsync(r => r.CardId);
+
         var decks = await db.Decks
             .AsNoTracking()
             .Where(d => d.UserId == userId)
@@ -67,7 +72,8 @@ public class AccountDataService(AppDbContext db, IOpenIddictTokenManager tokenMa
                 ExternalProvider: user.ExternalProvider,
                 DesiredRetention: user.DesiredRetention,
                 MaximumInterval: user.MaximumInterval,
-                NotificationIntervalHours: user.NotificationIntervalHours
+                NotificationIntervalHours: user.NotificationIntervalHours,
+                Handle: user.Handle
             ),
             Decks: decks.Select(d => new AccountExportDeck(
                 Name: d.Name,
@@ -76,22 +82,27 @@ public class AccountDataService(AppDbContext db, IOpenIddictTokenManager tokenMa
                 CreatedAt: d.CreatedAt,
                 Cards: d.Cards.Select(dc => cardPublicIdMap.GetValueOrDefault(dc.CardId, "")).Where(id => id != "").ToList()
             )).ToList(),
-            Cards: cards.Select(c => new AccountExportCard(
-                PublicId: c.PublicId,
-                Front: c.Front,
-                Back: c.Back,
-                FrontSvg: c.FrontSvg,
-                BackSvg: c.BackSvg,
-                SourceFile: c.SourceFile,
-                State: c.State,
-                Stability: c.Stability,
-                Difficulty: c.Difficulty,
-                Step: c.Step,
-                DueAt: c.DueAt,
-                LastReviewedAt: c.LastReviewedAt,
-                IsSuspended: c.IsSuspended,
-                CreatedAt: c.CreatedAt
-            )).ToList(),
+            Cards: cards.Select(c =>
+            {
+                // No ReviewState row means the card is still "new" for this user.
+                var rs = reviewStates.GetValueOrDefault(c.Id);
+                return new AccountExportCard(
+                    PublicId: c.PublicId,
+                    Front: c.Front,
+                    Back: c.Back,
+                    FrontSvg: c.FrontSvg,
+                    BackSvg: c.BackSvg,
+                    SourceFile: c.SourceFile,
+                    State: rs?.State ?? "new",
+                    Stability: rs?.Stability,
+                    Difficulty: rs?.Difficulty,
+                    Step: rs?.Step,
+                    DueAt: rs?.DueAt,
+                    LastReviewedAt: rs?.LastReviewedAt,
+                    IsSuspended: rs?.IsSuspended ?? false,
+                    CreatedAt: c.CreatedAt
+                );
+            }).ToList(),
             Sources: cards.Where(c => c.SourceFile != null).Select(c => c.SourceFile!).Distinct().OrderBy(s => s).ToList(),
             Snapshots: snapshots.Select(s => new AccountExportSnapshot(
                 DeckName: s.Deck?.Name,

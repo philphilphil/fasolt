@@ -18,7 +18,10 @@ public record CardDto(
     DateTimeOffset? DueAt = null, double? Stability = null,
     double? Difficulty = null, int? Step = null,
     DateTimeOffset? LastReviewedAt = null,
-    string? FrontSvg = null, string? BackSvg = null);
+    string? FrontSvg = null, string? BackSvg = null,
+    // True when the card belongs to a deck the caller links rather than owns:
+    // readable, but not editable or deletable by them.
+    bool IsLinked = false);
 public record CardDeckInfoDto(string Id, string Name, bool IsSuspended);
 
 public record SetCardSuspendedRequest(bool IsSuspended);

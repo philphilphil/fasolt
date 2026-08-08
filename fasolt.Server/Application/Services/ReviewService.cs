@@ -51,40 +51,80 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
         return (scheduler, dayStartHour, tz);
     }
 
+    /// <summary>
+    /// Resolves a deck the caller studies — their own or one they have linked — along
+    /// with whichever pause flag applies to them.
+    /// </summary>
+    private async Task<(Deck Deck, bool IsPaused)?> ResolveStudyDeck(string userId, string deckPublicId)
+    {
+        var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
+        if (deck is not null) return (deck, deck.IsSuspended);
+
+        var subscription = await db.DeckSubscriptions
+            .Include(s => s.Deck)
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.Deck.PublicId == deckPublicId);
+
+        // The owner's own deck pause does not reach subscribers — only their own does.
+        return subscription is null ? null : (subscription.Deck, subscription.IsSuspended);
+    }
+
     public async Task<List<DueCardDto>> GetDueCards(string userId, int limit = 50, string? deckId = null)
     {
         var take = Math.Clamp(limit, 1, 200);
         var now = timeProvider.GetUtcNow();
-        var query = db.Cards
-            .Where(c => c.UserId == userId && (c.DueAt == null || c.DueAt <= now));
+        var query = LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(ReviewStateQuery.DueBy(userId, now));
 
-        query = query.Where(c => !c.IsSuspended);
-        query = query.Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+        query = query.Where(ReviewStateQuery.NotSuspendedBy(userId));
+        query = query.Where(LinkedDeckQuery.NotDeckPausedFor(userId));
 
         if (deckId is not null)
         {
-            var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckId && d.UserId == userId);
-            if (deck is null) return null!; // endpoint returns NotFound
-            if (deck.IsSuspended) return [];
-            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deck.Id));
+            var resolved = await ResolveStudyDeck(userId, deckId);
+            if (resolved is null) return null!; // endpoint returns NotFound
+            if (resolved.Value.IsPaused) return [];
+            var deckGuid = resolved.Value.Deck.Id;
+            query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
         }
 
-        return await query
-            .OrderBy(c => c.DueAt ?? DateTimeOffset.MaxValue)
-            .ThenBy(c => c.CreatedAt)
+        // LEFT JOIN the user's review state; no row means the card is still "new".
+        var joined =
+            from c in query
+            join r in db.ReviewStates.Where(r => r.UserId == userId) on c.Id equals r.CardId into g
+            from rs in g.DefaultIfEmpty()
+            select new { Card = c, State = rs };
+
+        return await joined
+            .OrderBy(x => x.State.DueAt ?? DateTimeOffset.MaxValue)
+            .ThenBy(x => x.Card.CreatedAt)
             .Take(take)
-            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.State, c.FrontSvg, c.BackSvg))
+            .Select(x => new DueCardDto(
+                x.Card.PublicId, x.Card.Front, x.Card.Back,
+                // A linked card's SourceFile is the author's vault path — never shown.
+                x.Card.UserId == userId ? x.Card.SourceFile : null,
+                x.State.State ?? "new", x.Card.FrontSvg, x.Card.BackSvg))
             .ToListAsync();
     }
 
     public async Task<List<DueCardDto>?> GetCustomStudyCards(string userId, string deckPublicId)
     {
-        var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
-        if (deck is null) return null;
+        var resolved = await ResolveStudyDeck(userId, deckPublicId);
+        if (resolved is null) return null;
 
-        var cards = await db.Cards
-            .Where(c => c.UserId == userId && !c.IsSuspended && c.DeckCards.Any(dc => dc.DeckId == deck.Id))
-            .Select(c => new DueCardDto(c.PublicId, c.Front, c.Back, c.SourceFile, c.State, c.FrontSvg, c.BackSvg))
+        var deckGuid = resolved.Value.Deck.Id;
+
+        var eligible = LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid))
+            .Where(ReviewStateQuery.NotSuspendedBy(userId));
+
+        var cards = await (
+            from c in eligible
+            join r in db.ReviewStates.Where(r => r.UserId == userId) on c.Id equals r.CardId into g
+            from rs in g.DefaultIfEmpty()
+            select new DueCardDto(
+                c.PublicId, c.Front, c.Back,
+                c.UserId == userId ? c.SourceFile : null,
+                rs.State ?? "new", c.FrontSvg, c.BackSvg))
             .ToListAsync();
 
         for (var i = cards.Count - 1; i > 0; i--)
@@ -101,19 +141,25 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
         if (!ValidRatings.TryGetValue(request.Rating, out var fsrsRating))
             return null; // endpoint returns ValidationProblem
 
-        var card = await db.Cards.FirstOrDefaultAsync(c => c.PublicId == request.CardId && c.UserId == userId);
+        // Linked cards are rated too — the review writes the caller's own ReviewState,
+        // never the author's.
+        var card = await LinkedDeckQuery.StudyableCards(db, userId)
+            .FirstOrDefaultAsync(c => c.PublicId == request.CardId);
         if (card is null) return null;
 
-        var fsrsCard = card.State == "new"
-            ? new FsrsCard { Due = card.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime }
+        // Lazy creation point: the first review of a card materializes its ReviewState row.
+        var state = await ReviewStateQuery.GetOrCreateAsync(db, userId, card.Id);
+
+        var fsrsCard = state.State == "new"
+            ? new FsrsCard { Due = state.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime }
             : new FsrsCard
             {
-                State = ParseState(card.State),
-                Stability = card.Stability,
-                Difficulty = card.Difficulty,
-                Step = card.Step,
-                Due = card.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime,
-                LastReview = card.LastReviewedAt?.UtcDateTime,
+                State = ParseState(state.State),
+                Stability = state.Stability,
+                Difficulty = state.Difficulty,
+                Step = state.Step,
+                Due = state.DueAt?.UtcDateTime ?? card.CreatedAt.UtcDateTime,
+                LastReview = state.LastReviewedAt?.UtcDateTime,
             };
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
@@ -122,12 +168,12 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
 
         var roundedDue = DueTimeRounder.RoundDueUtc(updated.Due, now, dayStartHour, tz);
 
-        card.Stability = updated.Stability;
-        card.Difficulty = updated.Difficulty;
-        card.Step = updated.Step;
-        card.State = MapState(updated.State);
-        card.DueAt = new DateTimeOffset(roundedDue, TimeSpan.Zero);
-        card.LastReviewedAt = timeProvider.GetUtcNow();
+        state.Stability = updated.Stability;
+        state.Difficulty = updated.Difficulty;
+        state.Step = updated.Step;
+        state.State = MapState(updated.State);
+        state.DueAt = new DateTimeOffset(roundedDue, TimeSpan.Zero);
+        state.LastReviewedAt = timeProvider.GetUtcNow();
 
         db.ReviewLogs.Add(new ReviewLog
         {
@@ -135,29 +181,28 @@ public class ReviewService(AppDbContext db, TimeProvider timeProvider, StudyStat
             CardId = card.Id,
             Rating = request.Rating.ToLowerInvariant(),
             ReviewedAt = timeProvider.GetUtcNow(),
-            ScheduledDueAfter = card.DueAt,
-            StateAfter = card.State,
+            ScheduledDueAfter = state.DueAt,
+            StateAfter = state.State,
         });
 
         await db.SaveChangesAsync();
         await studyStatsService.UpdateBestStreakIfNeeded(userId);
 
-        return new RateCardResponse(card.PublicId, card.Stability, card.Difficulty, card.DueAt, card.State);
+        return new RateCardResponse(card.PublicId, state.Stability, state.Difficulty, state.DueAt, state.State);
     }
 
     public async Task<ReviewStatsDto> GetStats(string userId)
     {
         var now = timeProvider.GetUtcNow();
-        var activeCards = db.Cards
-            .Where(c => c.UserId == userId)
-            .Where(c => !c.IsSuspended)
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+        var activeCards = LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(ReviewStateQuery.NotSuspendedBy(userId))
+            .Where(LinkedDeckQuery.NotDeckPausedFor(userId));
 
-        var dueCount = await activeCards.CountAsync(c => c.DueAt == null || c.DueAt <= now);
+        var dueCount = await activeCards.CountAsync(ReviewStateQuery.DueBy(userId, now));
         var totalCards = await activeCards.CountAsync();
         var todayStart = new DateTimeOffset(now.Date, TimeSpan.Zero);
         var studiedToday = await activeCards.CountAsync(c =>
-            c.LastReviewedAt != null && c.LastReviewedAt >= todayStart);
+            c.ReviewStates.Any(r => r.UserId == userId && r.LastReviewedAt >= todayStart));
 
         return new ReviewStatsDto(dueCount, totalCards, studiedToday);
     }

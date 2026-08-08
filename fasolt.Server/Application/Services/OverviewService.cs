@@ -12,35 +12,39 @@ public class OverviewService(AppDbContext db)
     {
         var now = DateTimeOffset.UtcNow;
 
-        // Study-active cards: no decks OR at least one active deck
-        var activeCards = db.Cards
-            .Where(c => c.UserId == userId)
-            .Where(c => !c.IsSuspended)
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+        // Study-active cards: authored or linked, minus everything the user paused
+        var activeCards = LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(ReviewStateQuery.NotSuspendedBy(userId))
+            .Where(LinkedDeckQuery.NotDeckPausedFor(userId));
 
         var totalCards = await activeCards.CountAsync();
 
-        var dueCards = await activeCards.CountAsync(c =>
-            c.DueAt == null || c.DueAt <= now);
+        var dueCards = await activeCards.CountAsync(ReviewStateQuery.DueBy(userId, now));
 
-        var stateCounts = await activeCards
-            .GroupBy(c => c.State)
-            .Select(g => new { State = g.Key, Count = g.Count() })
+        var stateCounts = await (
+                from c in activeCards
+                join r in db.ReviewStates.Where(r => r.UserId == userId) on c.Id equals r.CardId into g
+                from rs in g.DefaultIfEmpty()
+                group c by rs.State ?? "new" into grouped
+                select new { State = grouped.Key, Count = grouped.Count() })
             .ToListAsync();
 
         var cardsByState = AllStates.ToDictionary(
             s => s,
             s => stateCounts.FirstOrDefault(x => x.State == s)?.Count ?? 0);
 
-        var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId);
+        var linkedDecks = await db.DeckSubscriptions.CountAsync(s => s.UserId == userId);
+        var totalDecks = await db.Decks.CountAsync(d => d.UserId == userId) + linkedDecks;
 
+        // Sources stay authored-only: a linked card's SourceFile belongs to its author.
         var totalSources = await activeCards
+            .Where(c => c.UserId == userId)
             .Where(c => c.SourceFile != null)
             .Select(c => c.SourceFile)
             .Distinct()
             .CountAsync();
 
-        return new OverviewDto(totalCards, dueCards, cardsByState, totalDecks, totalSources);
+        return new OverviewDto(totalCards, dueCards, cardsByState, totalDecks, linkedDecks, totalSources);
     }
 
     public async Task<OverviewIdentityDto?> GetIdentity(string userId)

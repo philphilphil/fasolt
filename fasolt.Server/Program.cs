@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Api.Endpoints;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Api.Middleware;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
@@ -315,6 +316,10 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
             }));
 
+    // Anonymous library browsing: keyed by IP. Shared with SeoMiddleware, which meters
+    // the anonymous HTML routes itself.
+    options.AddPolicy("library", LibraryRateLimit.Partition);
+
     options.AddPolicy("api", context =>
     {
         var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
@@ -343,6 +348,9 @@ builder.Services.AddScoped<SchedulingSettingsService>();
 builder.Services.AddScoped<DeckSnapshotService>();
 builder.Services.AddScoped<AccountDataService>();
 builder.Services.AddScoped<McpResourceService>();
+builder.Services.AddScoped<LibraryService>();
+builder.Services.AddScoped<PublishingService>();
+builder.Services.AddScoped<DeckSubscriptionService>();
 
 var apnsKeyId = builder.Configuration["APNS_KEY_ID"];
 var apnsKeyBase64 = builder.Configuration["APNS_KEY_BASE64"];
@@ -442,9 +450,10 @@ builder.Services.AddMcpServer(options =>
                 // The MCP SDK's default behaviour swallows non-McpException
                 // messages, returning a generic "An error occurred invoking 'X'."
                 // to the LLM. For argument/format/JSON errors the inner message
-                // is exactly what the LLM needs to self-correct its next call.
-                if (Fasolt.Server.Api.McpTools.McpErrorTranslator.IsInputError(ex))
-                    logger?.LogWarning(ex, "MCP tool {Tool} rejected bad arguments for user {UserId}", toolName, userId ?? "(anonymous)");
+                // is exactly what the LLM needs to self-correct its next call, and
+                // a refusal to touch linked content is likewise the caller's doing.
+                if (Fasolt.Server.Api.McpTools.McpErrorTranslator.IsCallerError(ex))
+                    logger?.LogWarning(ex, "MCP tool {Tool} rejected the call ({Reason}) for user {UserId}", toolName, ex.GetType().Name, userId ?? "(anonymous)");
                 else
                     logger?.LogError(ex, "MCP tool {Tool} threw for user {UserId}", toolName, userId ?? "(anonymous)");
                 return Fasolt.Server.Api.McpTools.McpErrorTranslator.ToErrorResult(ex, toolName);
@@ -630,6 +639,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Before the static-file middleware: it owns /sitemap.xml, and the library routes
+// need index.html rewritten rather than served verbatim.
+app.UseMiddleware<SeoMiddleware>();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors();
@@ -696,6 +708,7 @@ app.MapAccountEndpoints();
 app.MapCardEndpoints();
 app.MapReviewEndpoints();
 app.MapDeckEndpoints();
+app.MapLibraryEndpoints();
 app.MapSearchEndpoints();
 app.MapSourceEndpoints();
 app.MapOAuthEndpoints();

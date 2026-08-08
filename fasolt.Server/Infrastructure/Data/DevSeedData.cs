@@ -89,12 +89,6 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is the capital of France?",
             Back = "Paris",
-            State = "review",
-            Stability = 15.5,
-            Difficulty = 4.2,
-            Step = null,
-            DueAt = now.AddDays(5),
-            LastReviewedAt = now.AddDays(-2),
             CreatedAt = now.AddDays(-10),
         };
 
@@ -105,12 +99,6 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is the capital of Germany?",
             Back = "Berlin",
-            State = "learning",
-            Stability = 2.1,
-            Difficulty = 5.0,
-            Step = 1,
-            DueAt = now.AddMinutes(10),
-            LastReviewedAt = now,
             CreatedAt = now.AddDays(-3),
         };
 
@@ -121,7 +109,6 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is the capital of Spain?",
             Back = "Madrid",
-            State = "new",
             CreatedAt = now.AddDays(-1),
         };
 
@@ -132,7 +119,6 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is the capital of Italy?",
             Back = "Rome",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -169,7 +155,6 @@ public static class DevSeedData
             Front = "What is a linked list?",
             Back = "A linear data structure where each element (node) contains a value and a pointer to the next node. Unlike arrays, elements are not stored contiguously in memory.",
             FrontSvg = linkedListSvg,
-            State = "new",
             CreatedAt = now.AddDays(-2),
         };
 
@@ -198,12 +183,6 @@ public static class DevSeedData
             Front = "What is Big O notation?",
             Back = "A mathematical notation that describes the upper bound of an algorithm's time or space complexity as the input size grows. Common complexities: O(1), O(log n), O(n), O(n log n), O(n²).",
             BackSvg = bigOSvg,
-            State = "review",
-            Stability = 22.0,
-            Difficulty = 5.5,
-            Step = null,
-            DueAt = now.AddDays(7),
-            LastReviewedAt = now.AddDays(-1),
             CreatedAt = now.AddDays(-14),
         };
 
@@ -243,7 +222,6 @@ public static class DevSeedData
             Back = "A tree data structure where each node has at most two children, referred to as left and right. Binary search trees maintain the property: left < parent < right.",
             FrontSvg = treeFrontSvg,
             BackSvg = treeBackSvg,
-            State = "new",
             CreatedAt = now.AddDays(-2),
         };
 
@@ -262,7 +240,6 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What is recursion?",
             Back = "A technique where a function calls itself to solve a problem by breaking it into smaller subproblems. Requires a base case to terminate.",
-            State = "new",
             CreatedAt = now.AddDays(-5),
         };
 
@@ -277,7 +254,6 @@ public static class DevSeedData
             UserId = adminUser.Id,
             Front = "What year was the moon landing?",
             Back = "1969 — Apollo 11, with astronauts Neil Armstrong and Buzz Aldrin.",
-            State = "new",
             CreatedAt = now.AddDays(-7),
         };
 
@@ -289,7 +265,6 @@ public static class DevSeedData
             Front = "What is the speed of light?",
             Back = "Approximately 300,000 km/s (299,792,458 m/s) in a vacuum.",
             SourceFile = "physics-notes.md",
-            State = "new",
             CreatedAt = now.AddDays(-4),
         };
 
@@ -302,7 +277,6 @@ public static class DevSeedData
             Front = "What is photosynthesis?",
             Back = "The process by which plants convert sunlight, water, and carbon dioxide into glucose and oxygen. Occurs primarily in chloroplasts.",
             SourceFile = "biology-notes.md",
-            State = "new",
             CreatedAt = now.AddDays(-6),
         };
 
@@ -329,7 +303,6 @@ public static class DevSeedData
             Front = "What does **bold** text look like?",
             Back = "**Bold text** is rendered with a heavier font weight.\n\nYou can also use __double underscores__ for bold.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -341,7 +314,6 @@ public static class DevSeedData
             Front = "How do you write *italic* text?",
             Back = "Use *single asterisks* or _single underscores_ for _italic_ text.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -353,7 +325,6 @@ public static class DevSeedData
             Front = "What does `inline code` look like in markdown?",
             Back = "Wrap text in `backticks` to render it as inline code, e.g. `console.log()` or `git status`.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -365,7 +336,6 @@ public static class DevSeedData
             Front = "## Code Blocks\n\nHow do you write a fenced code block?",
             Back = "Use triple backticks with an optional language:\n\n```python\ndef hello():\n    print(\"Hello, world!\")\n```\n\nThis enables syntax highlighting.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -377,7 +347,6 @@ public static class DevSeedData
             Front = "# Heading Levels\n\nHow many heading levels does markdown support?",
             Back = "Six levels:\n\n# Heading 1\n## Heading 2\n### Heading 3\n#### Heading 4\n##### Heading 5\n###### Heading 6",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -389,7 +358,6 @@ public static class DevSeedData
             Front = "### Unordered Lists\n\nName three **benefits** of spaced repetition",
             Back = "- Improved long-term retention\n- Efficient use of study time\n- Reduced cramming before exams\n- Builds on the spacing effect from cognitive psychology",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -401,7 +369,6 @@ public static class DevSeedData
             Front = "What are the steps to create a **pull request**?",
             Back = "1. Create a feature branch\n2. Make your changes and commit\n3. Push the branch to the remote\n4. Open a PR on GitHub\n5. Request reviews and address feedback\n6. Merge when approved",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -413,7 +380,6 @@ public static class DevSeedData
             Front = "How do you create a [link](https://example.com) in markdown?",
             Back = "Use `[text](url)` syntax:\n\n[Fasolt on GitHub](https://github.com/fasolt)\n\nThe text in brackets is displayed, the URL in parentheses is the target.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -425,7 +391,6 @@ public static class DevSeedData
             Front = "How do you write a blockquote?",
             Back = "> The only way to do great work is to love what you do.\n>\n> — Steve Jobs\n\nPrefix lines with `>` to create a blockquote.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -437,7 +402,6 @@ public static class DevSeedData
             Front = "How do you ~~cross out~~ text?",
             Back = "Wrap text in ~~double tildes~~ to render ~~strikethrough~~ text.",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -449,7 +413,6 @@ public static class DevSeedData
             Front = "## Mixed **Markdown** with `code`\n\nWhat happens when you _combine_ formats?",
             Back = "You can **freely** combine:\n\n- **Bold** and *italic* and ~~strikethrough~~\n- `Inline code` within **bold text**\n- Links like [this one](https://example.com) in lists\n\n> Even **blockquotes** can contain *formatted* text and `code`.\n\n```\nAnd code blocks stand alone\n```",
             SourceFile = "markdown-guide.md",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -489,7 +452,6 @@ public static class DevSeedData
             UserId = regularUser.Id,
             Front = "What is 2+2?",
             Back = "4",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -500,7 +462,6 @@ public static class DevSeedData
             UserId = regularUser.Id,
             Front = "What is the square root of 144?",
             Back = "12",
-            State = "new",
             CreatedAt = now,
         };
 
@@ -511,12 +472,6 @@ public static class DevSeedData
             UserId = regularUser.Id,
             Front = "What is pi to 2 decimal places?",
             Back = "3.14",
-            State = "review",
-            Stability = 18.0,
-            Difficulty = 4.5,
-            Step = null,
-            DueAt = now.AddDays(4),
-            LastReviewedAt = now.AddDays(-3),
             CreatedAt = now.AddDays(-8),
         };
 
@@ -527,13 +482,62 @@ public static class DevSeedData
             new DeckCard { DeckId = mathDeck.Id, CardId = pi.Id }
         );
 
+        // === SRS state — only for cards that have actually been reviewed.
+        // Cards without a ReviewState row are "new".
+        db.ReviewStates.AddRange(
+            new ReviewState
+            {
+                UserId = adminUser.Id,
+                CardId = france.Id,
+                State = "review",
+                Stability = 15.5,
+                Difficulty = 4.2,
+                Step = null,
+                DueAt = now.AddDays(5),
+                LastReviewedAt = now.AddDays(-2),
+            },
+            new ReviewState
+            {
+                UserId = adminUser.Id,
+                CardId = germany.Id,
+                State = "learning",
+                Stability = 2.1,
+                Difficulty = 5.0,
+                Step = 1,
+                DueAt = now.AddMinutes(10),
+                LastReviewedAt = now,
+            },
+            new ReviewState
+            {
+                UserId = adminUser.Id,
+                CardId = bigO.Id,
+                State = "review",
+                Stability = 22.0,
+                Difficulty = 5.5,
+                Step = null,
+                DueAt = now.AddDays(7),
+                LastReviewedAt = now.AddDays(-1),
+            },
+            new ReviewState
+            {
+                UserId = regularUser.Id,
+                CardId = pi.Id,
+                State = "review",
+                Stability = 18.0,
+                Difficulty = 4.5,
+                Step = null,
+                DueAt = now.AddDays(4),
+                LastReviewedAt = now.AddDays(-3),
+            });
+
         // === Bulk content + synthetic 60-day review history (admin user only) ===
-        var (bulkDecks, bulkCards, bulkDeckCards, reviewLogs, bestStreak) =
+        var (bulkDecks, bulkCards, bulkDeckCards, reviewLogs, bulkStates, bestStreak) =
             DevSeedHistory.Build(adminUser.Id, now);
         db.Decks.AddRange(bulkDecks);
         db.Cards.AddRange(bulkCards);
         db.DeckCards.AddRange(bulkDeckCards);
         db.ReviewLogs.AddRange(reviewLogs);
+        db.ReviewStates.AddRange(bulkStates);
         adminUser.BestStreak = bestStreak;
 
         await db.SaveChangesAsync();

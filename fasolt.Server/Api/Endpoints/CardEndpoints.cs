@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using Fasolt.Server.Api.Helpers;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
@@ -10,7 +11,10 @@ public static class CardEndpoints
 {
     public static void MapCardEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/cards").RequireAuthorization("EmailVerified").RequireRateLimiting("api");
+        var group = app.MapGroup("/api/cards")
+            .RequireAuthorization("EmailVerified")
+            .RequireRateLimiting("api")
+            .AddLinkedContentGuard();
 
         group.MapPost("/", Create);
         group.MapPost("/bulk", BulkCreate);
@@ -49,6 +53,10 @@ public static class CardEndpoints
         catch (KeyNotFoundException ex)
         {
             return Results.BadRequest(new { error = "validation_error", message = ex.Message });
+        }
+        catch (PublishedDeckFullException ex)
+        {
+            return Results.BadRequest(new { error = "deck_full", message = ex.Message });
         }
     }
 
@@ -97,8 +105,15 @@ public static class CardEndpoints
                 [""] = ["Front and back are required."]
             });
 
-        var dto = await cardService.UpdateCard(user.Id, id, request);
-        return dto is null ? Results.NotFound() : Results.Ok(dto);
+        try
+        {
+            var dto = await cardService.UpdateCard(user.Id, id, request);
+            return dto is null ? Results.NotFound() : Results.Ok(dto);
+        }
+        catch (PublishedDeckFullException ex)
+        {
+            return Results.BadRequest(new { error = "deck_full", message = ex.Message });
+        }
     }
 
     private static async Task<IResult> Delete(
@@ -211,6 +226,14 @@ public static class CardEndpoints
 
         if (result.IsDeckNotFound)
             return Results.BadRequest(new { error = "validation_error", message = "Deck not found or does not belong to you" });
+
+        if (result.IsPublishedDeckFull)
+            return Results.BadRequest(new
+            {
+                error = "deck_full",
+                message = $"Published decks are limited to {PublishingService.MaxCardsInPublicDeck} cards. "
+                    + "Unpublish the deck before adding more.",
+            });
 
         return Results.Created("/api/cards/bulk", result.Response);
     }

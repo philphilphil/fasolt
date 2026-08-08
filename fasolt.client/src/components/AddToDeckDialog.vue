@@ -30,7 +30,11 @@ watch(() => props.open, (next) => {
 
 const filteredDecks = computed(() => {
   const q = query.value.trim().toLowerCase()
-  const all = [...decks.decks].sort((a, b) => a.name.localeCompare(b.name))
+  // Linked decks belong to their author — pushing cards into one always 403s, so
+  // they are not offered as targets at all.
+  const all = decks.decks
+    .filter(d => !d.isLinked)
+    .sort((a, b) => a.name.localeCompare(b.name))
   if (!q) return all
   return all.filter(d => d.name.toLowerCase().includes(q))
 })

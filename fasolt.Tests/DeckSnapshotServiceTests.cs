@@ -1,7 +1,10 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Dtos;
 using Fasolt.Server.Application.Services;
+using Fasolt.Server.Domain.Entities;
+using Fasolt.Server.Infrastructure;
 using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests;
@@ -106,15 +109,16 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var card = await cardSvc.CreateCard(UserId, "Front", "Back", "source.md");
         await deckSvc.AddCards(UserId, deck.Id, [card.Id]);
 
-        // Set FSRS and suspension state on the card entity directly
+        // Set FSRS and suspension state on the card's review state directly
         var theCard = db.Cards.First(c => c.UserId == UserId);
-        theCard.Stability = 12.5;
-        theCard.Difficulty = 0.3;
-        theCard.Step = 2;
-        theCard.DueAt = DateTimeOffset.Parse("2026-04-01T00:00:00Z");
-        theCard.State = "review";
-        theCard.LastReviewedAt = DateTimeOffset.Parse("2026-03-20T00:00:00Z");
-        theCard.IsSuspended = true;
+        var theState = await db.ReviewStateFor(UserId, theCard.Id);
+        theState.Stability = 12.5;
+        theState.Difficulty = 0.3;
+        theState.Step = 2;
+        theState.DueAt = DateTimeOffset.Parse("2026-04-01T00:00:00Z");
+        theState.State = "review";
+        theState.LastReviewedAt = DateTimeOffset.Parse("2026-03-20T00:00:00Z");
+        theState.IsSuspended = true;
         await db.SaveChangesAsync();
 
         var svc = new DeckSnapshotService(db);
@@ -372,8 +376,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Stability = 8.5;
-            card.DueAt = DateTimeOffset.Parse("2026-04-15T00:00:00Z");
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 8.5;
+            state.DueAt = DateTimeOffset.Parse("2026-04-15T00:00:00Z");
             await db.SaveChangesAsync();
 
             var svc = new DeckSnapshotService(db);
@@ -478,9 +483,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Stability = 99.9;
-            card.Difficulty = 0.8;
-            card.State = "review";
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 99.9;
+            state.Difficulty = 0.8;
+            state.State = "review";
             await db.SaveChangesAsync();
         }
 
@@ -507,7 +513,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed front";
-            card.Stability = 50.0;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 50.0;
             await db.SaveChangesAsync();
         }
 
@@ -840,9 +847,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed front";
-            card.Stability = 42.0;
-            card.State = "review";
-            card.DueAt = DateTimeOffset.Parse("2026-05-01T00:00:00Z");
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 42.0;
+            state.State = "review";
+            state.DueAt = DateTimeOffset.Parse("2026-05-01T00:00:00Z");
             await db.SaveChangesAsync();
         }
 
@@ -858,10 +866,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        var restoredState = await checkDb.ReviewStateFor(UserId, restored.Id);
         restored.Front.Should().Be("Restore NoFsrs Q0", "content should be reverted");
-        restored.Stability.Should().Be(42.0, "FSRS should NOT be reverted");
-        restored.State.Should().Be("review", "FSRS should NOT be reverted");
-        restored.DueAt.Should().NotBeNull("FSRS should NOT be reverted");
+        restoredState.Stability.Should().Be(42.0, "FSRS should NOT be reverted");
+        restoredState.State.Should().Be("review", "FSRS should NOT be reverted");
+        restoredState.DueAt.Should().NotBeNull("FSRS should NOT be reverted");
     }
 
     [Fact]
@@ -1305,7 +1314,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         {
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Changed";
-            card.IsSuspended = true;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.IsSuspended = true;
             await db.SaveChangesAsync();
         }
 
@@ -1320,8 +1330,9 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        var restoredState = await checkDb.ReviewStateFor(UserId, restored.Id);
         restored.Front.Should().Be("Restore KeepSuspend Q0", "content reverted");
-        restored.IsSuspended.Should().BeTrue("suspension state should NOT be reverted");
+        restoredState.IsSuspended.Should().BeTrue("suspension state should NOT be reverted");
     }
 
     [Fact]
@@ -1357,7 +1368,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
             var result = await svc.Restore(UserId, snapshotPublicId,
                 new RestoreRequest(diff.Deleted.Select(d => d.CardId).ToList(), []));
-            result.Should().BeTrue();
+            result.Should().Be(RestoreResult.Success);
         }
 
         await using var checkDb = _db.CreateDbContext();
@@ -1375,7 +1386,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.IsSuspended = true;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.IsSuspended = true;
             await db.SaveChangesAsync();
 
             var svc = new DeckSnapshotService(db);
@@ -1406,7 +1418,8 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restoredCard = checkDb.Cards.First(c => c.UserId == UserId);
-        restoredCard.IsSuspended.Should().BeTrue();
+        var restoredState = await checkDb.ReviewStateFor(UserId, restoredCard.Id);
+        restoredState.IsSuspended.Should().BeTrue();
     }
 
     #endregion
@@ -1421,9 +1434,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         await using (var db = _db.CreateDbContext())
         {
             var card = db.Cards.First(c => c.UserId == UserId);
-            card.Stability = 10.0;
-            card.State = "review";
-            card.IsSuspended = true;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 10.0;
+            state.State = "review";
+            state.IsSuspended = true;
             await db.SaveChangesAsync();
 
             var svc = new DeckSnapshotService(db);
@@ -1435,9 +1449,10 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var card = db.Cards.First(c => c.UserId == UserId);
             card.Front = "Modified front";
             card.Back = "Modified back";
-            card.Stability = 99.0;
-            card.State = "learning";
-            card.IsSuspended = false;
+            var state = await db.ReviewStateFor(UserId, card.Id);
+            state.Stability = 99.0;
+            state.State = "learning";
+            state.IsSuspended = false;
             await db.SaveChangesAsync();
         }
 
@@ -1454,11 +1469,12 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
 
         await using var checkDb = _db.CreateDbContext();
         var restored = checkDb.Cards.First(c => c.UserId == UserId);
+        var restoredState = await checkDb.ReviewStateFor(UserId, restored.Id);
         restored.Front.Should().Be("Restore Revert Q0");
         restored.Back.Should().Be("Restore Revert A0");
         // FSRS state should NOT be reverted — only content is restored
-        restored.Stability.Should().Be(99.0, "FSRS state should be preserved");
-        restored.State.Should().Be("learning", "FSRS state should be preserved");
+        restoredState.Stability.Should().Be(99.0, "FSRS state should be preserved");
+        restoredState.State.Should().Be("learning", "FSRS state should be preserved");
     }
 
     #endregion
@@ -1482,12 +1498,93 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var snapshots = await svc.ListByDeck(UserId, deckId);
             var result = await svc.Restore(UserId, snapshots[0].Id,
                 new RestoreRequest([Guid.NewGuid()], [Guid.NewGuid()]));
-            result.Should().BeTrue("restore should succeed even with unknown card IDs");
+            result.Should().Be(RestoreResult.Success, "restore should succeed even with unknown card IDs");
         }
     }
 
     [Fact]
-    public async Task Restore_SnapshotNotFound_ReturnsFalse()
+    public async Task Restore_CannotPushAPublishedDeckOverTheCardCap()
+    {
+        // Restore is an add path like any other: publishing only sees the deck as it
+        // stood at that moment, so a restore has to re-check the ceiling.
+        Guid deckId;
+        string deckPublicId;
+
+        await using (var db = _db.CreateDbContext())
+        {
+            // Seeded directly — a cap-sized deck through CardService is one round-trip
+            // per card.
+            var deck = new Deck
+            {
+                Id = Guid.NewGuid(),
+                PublicId = NanoIdGenerator.New(),
+                UserId = UserId,
+                Name = "Cap Restore",
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Decks.Add(deck);
+
+            for (var i = 0; i <= PublishingService.MaxCardsInPublicDeck; i++)
+            {
+                var card = new Card
+                {
+                    Id = Guid.NewGuid(),
+                    PublicId = NanoIdGenerator.New(),
+                    UserId = UserId,
+                    Front = $"Q{i}",
+                    Back = $"A{i}",
+                    CreatedAt = DateTimeOffset.UtcNow,
+                };
+                db.Cards.Add(card);
+                db.DeckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
+            }
+
+            await db.SaveChangesAsync();
+            deckId = deck.Id;
+            deckPublicId = deck.PublicId;
+        }
+
+        string snapshotPublicId;
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+            snapshotPublicId = (await svc.ListByDeck(UserId, deckPublicId))[0].Id;
+        }
+
+        // Drop one card so the deck fits the cap exactly, then publish it.
+        Guid deletedCardId;
+        await using (var db = _db.CreateDbContext())
+        {
+            deletedCardId = await db.DeckCards
+                .Where(dc => dc.DeckId == deckId)
+                .Select(dc => dc.CardId)
+                .FirstAsync();
+            await db.Cards.Where(c => c.Id == deletedCardId).ExecuteDeleteAsync();
+
+            var publishing = new PublishingService(db);
+            await publishing.SetHandle(UserId, "cap-restorer");
+            (await publishing.SetVisibility(UserId, deckPublicId, DeckVisibility.Public))
+                .Error.Should().Be(SetVisibilityError.None);
+        }
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var result = await new DeckSnapshotService(db).Restore(UserId, snapshotPublicId,
+                new RestoreRequest([deletedCardId], []));
+
+            result.Should().Be(RestoreResult.PublishedDeckFull);
+        }
+
+        await using var verify = _db.CreateDbContext();
+        (await verify.DeckCards.CountAsync(dc => dc.DeckId == deckId))
+            .Should().Be(PublishingService.MaxCardsInPublicDeck);
+        (await verify.Cards.AnyAsync(c => c.Id == deletedCardId))
+            .Should().BeFalse("a rejected restore must not recreate the card either");
+    }
+
+    [Fact]
+    public async Task Restore_SnapshotNotFound_ReturnsNotFound()
     {
         await using var db = _db.CreateDbContext();
         var svc = new DeckSnapshotService(db);
@@ -1495,11 +1592,11 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         var result = await svc.Restore(UserId, "nonexistent123",
             new RestoreRequest([], []));
 
-        result.Should().BeFalse();
+        result.Should().Be(RestoreResult.NotFound);
     }
 
     [Fact]
-    public async Task Restore_DeletedDeck_ReturnsFalse()
+    public async Task Restore_DeletedDeck_ReturnsNotFound()
     {
         var (deckId, _) = await SeedDeck("Restore Deleted Deck", 1);
 
@@ -1528,7 +1625,7 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
             var svc = new DeckSnapshotService(db);
             var result = await svc.Restore(UserId, snapshotPublicId,
                 new RestoreRequest([], []));
-            result.Should().BeFalse();
+            result.Should().Be(RestoreResult.NotFound);
         }
     }
 
@@ -1675,6 +1772,54 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         detail!.Cards.Should().HaveCount(2);
         detail.Cards.Should().Contain(c => c.Front == "Restore Mixed Q0");
         detail.Cards.Should().Contain(c => c.Front == "Restore Mixed Q1");
+    }
+
+    [Fact]
+    public async Task Restore_RepeatedCardIds_RestoreEachCardOnce()
+    {
+        // Nothing is saved until the end of the restore, so a repeated id came round a
+        // second time still finding no card and added another with the same primary key.
+        // EF then failed the whole restore, losing the cards the user did want back.
+        var (deckId, cardIds) = await SeedDeck("Restore Repeated", 2);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Delete one card outright and modify the other.
+        await using (var db = _db.CreateDbContext())
+        {
+            await new CardService(db).DeleteCards(UserId, [cardIds[0]]);
+
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.Front = "Changed front";
+            await db.SaveChangesAsync();
+        }
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var snapshots = await svc.ListByDeck(UserId, deckId);
+            var diff = await svc.ComputeDiff(UserId, snapshots[0].Id);
+
+            var deleted = diff!.Deleted.Select(d => d.CardId).ToList();
+            var modified = diff.Modified.Select(m => m.CardId).ToList();
+            deleted.Should().NotBeEmpty();
+            modified.Should().NotBeEmpty();
+
+            var result = await svc.Restore(UserId, snapshots[0].Id,
+                new RestoreRequest([.. deleted, .. deleted], [.. modified, .. modified]));
+
+            result.Should().Be(RestoreResult.Success);
+        }
+
+        await using var checkDb = _db.CreateDbContext();
+        var detail = await new DeckService(checkDb).GetDeck(UserId, deckId);
+        detail!.Cards.Should().HaveCount(2);
+        detail.Cards.Should().Contain(c => c.Front == "Restore Repeated Q0");
+        detail.Cards.Should().Contain(c => c.Front == "Restore Repeated Q1");
     }
 
     #endregion

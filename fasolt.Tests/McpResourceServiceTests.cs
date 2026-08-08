@@ -122,8 +122,8 @@ public class McpResourceServiceTests : IAsyncLifetime
         await deckSvc.AddCards(UserId, deck.Id, [kept.Id, suspended.Id]);
 
         // Suspend the second card via direct DB mutation (no service method needed for the test)
-        var card = await db.Cards.FirstAsync(c => c.PublicId == suspended.Id);
-        card.IsSuspended = true;
+        var state = await db.ReviewStateForPublicId(UserId, suspended.Id);
+        state.IsSuspended = true;
         await db.SaveChangesAsync();
 
         var svc = CreateService(db);
@@ -317,7 +317,7 @@ public class McpResourceServiceTests : IAsyncLifetime
 
         var kept = await cardSvc.CreateCard(UserId, "kept", "ok", null);
         var sus = await cardSvc.CreateCard(UserId, "suspended", "no", null);
-        var susEntity = await db.Cards.FirstAsync(c => c.PublicId == sus.Id);
+        var susEntity = await db.ReviewStateForPublicId(UserId, sus.Id);
         susEntity.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -429,7 +429,7 @@ public class McpResourceServiceTests : IAsyncLifetime
 
         var kept = await cardSvc.CreateCard(UserId, "kept-recent", "back", null);
         var sus = await cardSvc.CreateCard(UserId, "suspended-recent", "back", null);
-        var susEntity = await db.Cards.FirstAsync(c => c.PublicId == sus.Id);
+        var susEntity = await db.ReviewStateForPublicId(UserId, sus.Id);
         susEntity.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -529,7 +529,7 @@ public class McpResourceServiceTests : IAsyncLifetime
         var c = await cardSvc.CreateCard(UserId, "c-front", "c-back", null);
         await deckSvc.AddCards(UserId, deck.Id, [a.Id, b.Id, c.Id]);
 
-        var susEntity = await db.Cards.FirstAsync(x => x.PublicId == c.Id);
+        var susEntity = await db.ReviewStateForPublicId(UserId, c.Id);
         susEntity.IsSuspended = true;
         await db.SaveChangesAsync();
 
@@ -559,7 +559,7 @@ public class McpResourceServiceTests : IAsyncLifetime
                 Front = $"due-{i:000}",
                 Back = "back",
                 CreatedAt = DateTimeOffset.UtcNow,
-                DueAt = null, // new => due today
+                // No ReviewState row => new => due today
             });
         }
         db.Cards.AddRange(cards);
@@ -599,5 +599,84 @@ public class McpResourceServiceTests : IAsyncLifetime
 
         md.Should().Contain("205 cards created since");    // header reflects the true total, not the cap
         md.Should().Contain("Showing 100 of 205 cards");   // footer reflects the true total
+    }
+
+    // ---- linked decks ------------------------------------------------------
+    // The resources must describe the same collection the tools do: a linked deck is
+    // in list_decks and its cards are in the review queue, so they belong here too.
+
+    private async Task<(Deck Deck, Card Card)> SeedLinkedDeck(AppDbContext db)
+    {
+        var authorId = await LinkedDeckTestData.AddUser(db, "the-author");
+        var deck = await LinkedDeckTestData.AddDeck(db, authorId, name: "Author's Deck");
+        var card = LinkedDeckTestData.AddCard(db, deck, "Author Q", "Author A", "vault/author.md");
+        await db.SaveChangesAsync();
+        await LinkedDeckTestData.Subscribe(db, UserId, deck);
+        return (deck, card);
+    }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_IncludesLinkedDecks()
+    {
+        await using var db = _db.CreateDbContext();
+        var (deck, _) = await SeedLinkedDeck(db);
+
+        var entries = await CreateService(db).ListUserResourcesAsync(UserId);
+
+        var entry = entries.Should().ContainSingle(e => e.Uri == $"fasolt://deck/{deck.PublicId}").Subject;
+        entry.Name.Should().Be("Author's Deck");
+        entry.Description.Should().Contain("1 cards");
+    }
+
+    [Fact]
+    public async Task ListUserResourcesAsync_PausedLinkedDeck_IsHidden()
+    {
+        await using var db = _db.CreateDbContext();
+        var (deck, _) = await SeedLinkedDeck(db);
+        await new DeckService(db).SetSuspended(UserId, deck.PublicId, true);
+
+        var entries = await CreateService(db).ListUserResourcesAsync(UserId);
+
+        entries.Should().NotContain(e => e.Uri == $"fasolt://deck/{deck.PublicId}");
+    }
+
+    [Fact]
+    public async Task RenderDeckAsync_LinkedDeck_RendersCardsWithoutTheAuthorsSourceFile()
+    {
+        await using var db = _db.CreateDbContext();
+        var (deck, _) = await SeedLinkedDeck(db);
+
+        var md = await CreateService(db).RenderDeckAsync(UserId, deck.PublicId);
+
+        md.Should().NotBeNull();
+        md.Should().Contain("# Deck: Author's Deck");
+        md.Should().Contain("**Front:** Author Q");
+        md.Should().NotContain("vault/author.md");
+    }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_IncludesLinkedDeckCards()
+    {
+        await using var db = _db.CreateDbContext();
+        await SeedLinkedDeck(db);
+
+        var md = await CreateService(db).RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("1 card across 1 deck");
+        md.Should().Contain("## Author's Deck (1 card)");
+        md.Should().Contain("**Front:** Author Q");
+        md.Should().NotContain("vault/author.md");
+    }
+
+    [Fact]
+    public async Task RenderDueTodayAsync_PausedLinkedDeck_IsExcluded()
+    {
+        await using var db = _db.CreateDbContext();
+        var (deck, _) = await SeedLinkedDeck(db);
+        await new DeckService(db).SetSuspended(UserId, deck.PublicId, true);
+
+        var md = await CreateService(db).RenderDueTodayAsync(UserId);
+
+        md.Should().Contain("No cards.");
     }
 }

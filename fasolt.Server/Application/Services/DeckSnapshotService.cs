@@ -22,6 +22,11 @@ public class DeckSnapshotService(AppDbContext db)
             .Include(d => d.Cards).ThenInclude(dc => dc.Card)
             .ToListAsync();
 
+        // SRS state lives in ReviewStates now — load the owner's rows for every card
+        // in one go so snapshots keep capturing scheduling data.
+        var allCardIds = decks.SelectMany(d => d.Cards).Select(dc => dc.CardId).Distinct().ToList();
+        var states = await ReviewStateQuery.LoadForCardsAsync(db, userId, allCardIds);
+
         var createdDecks = new List<string>();
         var skippedDecks = new List<string>();
         foreach (var deck in decks)
@@ -44,12 +49,16 @@ public class DeckSnapshotService(AppDbContext db)
             var data = new SnapshotData(
                 deck.Name,
                 deck.Description,
-                cards.Select(c => new SnapshotCardData(
-                    c.Id, c.PublicId, c.Front, c.Back, c.FrontSvg, c.BackSvg,
-                    c.SourceFile, c.CreatedAt,
-                    c.Stability, c.Difficulty, c.Step, c.DueAt, c.State, c.LastReviewedAt,
-                    c.IsSuspended
-                )).ToList());
+                cards.Select(c =>
+                {
+                    var rs = states.GetValueOrDefault(c.Id);
+                    return new SnapshotCardData(
+                        c.Id, c.PublicId, c.Front, c.Back, c.FrontSvg, c.BackSvg,
+                        c.SourceFile, c.CreatedAt,
+                        rs?.Stability, rs?.Difficulty, rs?.Step, rs?.DueAt,
+                        rs?.State ?? "new", rs?.LastReviewedAt,
+                        rs?.IsSuspended ?? false);
+                }).ToList());
 
             var snapshot = new DeckSnapshot
             {
@@ -212,18 +221,29 @@ public class DeckSnapshotService(AppDbContext db)
         return new SnapshotDiffDto(deleted, modified, added);
     }
 
-    public async Task<bool> Restore(string userId, string snapshotPublicId, RestoreRequest request)
+    public async Task<RestoreResult> Restore(string userId, string snapshotPublicId, RestoreRequest request)
     {
         var snapshot = await db.DeckSnapshots
             .FirstOrDefaultAsync(s => s.PublicId == snapshotPublicId && s.UserId == userId);
-        if (snapshot?.DeckId is null) return false;
+        if (snapshot?.DeckId is null) return RestoreResult.NotFound;
 
         var data = JsonSerializer.Deserialize<SnapshotData>(snapshot.Data, JsonOptions)!;
         var snapshotById = data.Cards.ToDictionary(c => c.CardId);
         var deckId = snapshot.DeckId.Value;
 
+        // De-duplicated once, up front, and every path below works off these lists.
+        // Nothing is saved until the end, so a repeated id would come round a second
+        // time still finding no card and add another with the same primary key — EF
+        // then fails the whole restore, including the cards the user did want back.
+        var restoreDeletedCardIds = request.RestoreDeletedCardIds.Distinct().ToList();
+        var revertModifiedCardIds = request.RevertModifiedCardIds.Distinct().ToList();
+
+        var adding = await CountDeckCardsToAdd(deckId, restoreDeletedCardIds, snapshotById);
+        if (await PublishingService.WouldExceedPublicCardCap(db, deckId, adding))
+            return RestoreResult.PublishedDeckFull;
+
         // Restore deleted cards
-        foreach (var cardId in request.RestoreDeletedCardIds)
+        foreach (var cardId in restoreDeletedCardIds)
         {
             if (!snapshotById.TryGetValue(cardId, out var sc)) continue;
 
@@ -249,6 +269,16 @@ public class DeckSnapshotService(AppDbContext db)
                     BackSvg = sc.BackSvg,
                     SourceFile = sc.SourceFile,
                     CreatedAt = sc.CreatedAt,
+                };
+                db.Cards.Add(newCard);
+                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = sc.CardId });
+
+                // Restore the SRS state alongside the card. A pristine-new snapshot
+                // needs no row — absence of a row already means "new".
+                var restoredState = new ReviewState
+                {
+                    UserId = userId,
+                    CardId = sc.CardId,
                     Stability = sc.Stability,
                     Difficulty = sc.Difficulty,
                     Step = sc.Step,
@@ -257,13 +287,13 @@ public class DeckSnapshotService(AppDbContext db)
                     LastReviewedAt = sc.LastReviewedAt,
                     IsSuspended = sc.IsSuspended,
                 };
-                db.Cards.Add(newCard);
-                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = sc.CardId });
+                if (!restoredState.IsPristine)
+                    db.ReviewStates.Add(restoredState);
             }
         }
 
         // Revert modified cards
-        foreach (var cardId in request.RevertModifiedCardIds)
+        foreach (var cardId in revertModifiedCardIds)
         {
             if (!snapshotById.TryGetValue(cardId, out var sc)) continue;
             var card = await db.Cards.FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
@@ -272,7 +302,30 @@ public class DeckSnapshotService(AppDbContext db)
         }
 
         await db.SaveChangesAsync();
-        return true;
+        return RestoreResult.Success;
+    }
+
+    /// <summary>
+    /// How many <see cref="DeckCard"/> rows the restore would add — the same number
+    /// every other add path hands to <see cref="PublishingService.WouldExceedPublicCardCap"/>.
+    /// Reverting a modified card only rewrites content, so it never counts.
+    /// </summary>
+    /// <param name="restoreDeletedCardIds">Already de-duplicated by the caller.</param>
+    private async Task<int> CountDeckCardsToAdd(
+        Guid deckId, List<Guid> restoreDeletedCardIds, Dictionary<Guid, SnapshotCardData> snapshotById)
+    {
+        var candidates = restoreDeletedCardIds
+            .Where(snapshotById.ContainsKey)
+            .ToList();
+
+        if (candidates.Count == 0) return 0;
+
+        var alreadyInDeck = await db.DeckCards
+            .Where(dc => dc.DeckId == deckId && candidates.Contains(dc.CardId))
+            .Select(dc => dc.CardId)
+            .ToListAsync();
+
+        return candidates.Count - alreadyInDeck.Count;
     }
 
     public async Task<bool> Delete(string userId, string snapshotPublicId)
@@ -334,3 +387,5 @@ public class DeckSnapshotService(AppDbContext db)
         await db.SaveChangesAsync();
     }
 }
+
+public enum RestoreResult { Success, NotFound, PublishedDeckFull }

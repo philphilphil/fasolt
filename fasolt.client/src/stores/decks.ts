@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Deck, DeckDetail } from '@/types'
+import type { Deck, DeckDetail, DeckVisibility } from '@/types'
 import { apiFetch } from '@/api/client'
 
 export const useDecksStore = defineStore('decks', () => {
@@ -75,5 +75,29 @@ export const useDecksStore = defineStore('decks', () => {
     return result
   }
 
-  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, removeCards, setSuspended }
+  async function setVisibility(id: string, visibility: DeckVisibility): Promise<Deck> {
+    const result = await apiFetch<Deck>(`/decks/${id}/visibility`, {
+      method: 'PUT',
+      body: JSON.stringify({ visibility }),
+    })
+    const idx = decks.value.findIndex(d => d.id === id)
+    if (idx !== -1) decks.value[idx] = result
+    return result
+  }
+
+  /**
+   * Turns a linked deck into an owned copy: the cards are cloned into the caller's
+   * account and their review progress moves with them. The link is dropped, so the
+   * copy stops following the author.
+   */
+  async function convertToCopy(id: string): Promise<Deck> {
+    const result = await apiFetch<Deck>(`/decks/${id}/convert-to-copy`, { method: 'POST' })
+    // The link is gone and the copy is a different deck — swap it in place so the
+    // list doesn't show both until the next fetch.
+    const idx = decks.value.findIndex(d => d.id === id)
+    if (idx !== -1) decks.value[idx] = result
+    return result
+  }
+
+  return { decks, loading, fetchDecks, createDeck, updateDeck, deleteDeck, getDeckDetail, addCards, removeCard, removeCards, setSuspended, setVisibility, convertToCopy }
 })

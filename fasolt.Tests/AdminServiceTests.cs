@@ -337,37 +337,56 @@ public class AdminServiceTests : IAsyncLifetime
         });
 
         var now = DateTimeOffset.UtcNow;
-        db.Cards.AddRange(
-            new Card
+        var dueCard = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "due1",
+            UserId = SeededUserId,
+            Front = "f1",
+            Back = "b1",
+            CreatedAt = now,
+        };
+        var futureCard = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "future1",
+            UserId = SeededUserId,
+            Front = "f2",
+            Back = "b2",
+            CreatedAt = now,
+        };
+        var suspendedDueCard = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "suspdue1",
+            UserId = SeededUserId,
+            Front = "f3",
+            Back = "b3",
+            CreatedAt = now,
+        };
+        db.Cards.AddRange(dueCard, futureCard, suspendedDueCard);
+        db.ReviewStates.AddRange(
+            new ReviewState
             {
-                Id = Guid.NewGuid(),
-                PublicId = "due1",
                 UserId = SeededUserId,
-                Front = "f1",
-                Back = "b1",
+                CardId = dueCard.Id,
+                State = "review",
                 DueAt = now.AddMinutes(-5),
-                CreatedAt = now,
             },
-            new Card
+            new ReviewState
             {
-                Id = Guid.NewGuid(),
-                PublicId = "future1",
                 UserId = SeededUserId,
-                Front = "f2",
-                Back = "b2",
+                CardId = futureCard.Id,
+                State = "review",
                 DueAt = now.AddDays(2),
-                CreatedAt = now,
             },
-            new Card
+            new ReviewState
             {
-                Id = Guid.NewGuid(),
-                PublicId = "suspdue1",
                 UserId = SeededUserId,
-                Front = "f3",
-                Back = "b3",
+                CardId = suspendedDueCard.Id,
+                State = "review",
                 DueAt = now.AddMinutes(-5),
                 IsSuspended = true,
-                CreatedAt = now,
             });
         db.Decks.Add(new Deck
         {
@@ -391,6 +410,48 @@ public class AdminServiceTests : IAsyncLifetime
         stats.TotalDecks.Should().Be(1);
         // suspended cards are excluded even if due
         stats.DueCards.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetStats_CountsASharedDueCardOnce_NotOncePerSubscriber()
+    {
+        // A card in a popular shared deck carries one ReviewState row per subscriber.
+        // Counting rows put the figure on a different scale from TotalCards — "Due
+        // cards: 4,200" beside "Total cards: 900" reads as corrupt.
+        await using var db = _db.CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+
+        var subscriberOne = MakeUser("sub1@fasolt.test");
+        var subscriberTwo = MakeUser("sub2@fasolt.test");
+        db.Users.AddRange(subscriberOne, subscriberTwo);
+
+        var shared = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "shareddue",
+            UserId = SeededUserId,
+            Front = "f",
+            Back = "b",
+            CreatedAt = now,
+        };
+        db.Cards.Add(shared);
+
+        foreach (var userId in new[] { SeededUserId, subscriberOne.Id, subscriberTwo.Id })
+        {
+            db.ReviewStates.Add(new ReviewState
+            {
+                UserId = userId,
+                CardId = shared.Id,
+                State = "review",
+                DueAt = now.AddMinutes(-5),
+            });
+        }
+        await db.SaveChangesAsync();
+
+        var stats = await new AdminService(db).GetStats();
+
+        stats.TotalCards.Should().Be(1);
+        stats.DueCards.Should().Be(1, "three subscribers owe a review, but only one card is due");
     }
 
     [Fact]

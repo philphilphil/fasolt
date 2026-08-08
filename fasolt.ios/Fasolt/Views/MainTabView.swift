@@ -10,6 +10,7 @@ struct MainTabView: View {
     @State private var cardRepository: CardRepository?
     @State private var deckRepository: DeckRepository?
     @State private var notificationService: NotificationService?
+    @State private var publicLibraryRepository: PublicLibraryRepository?
     @State private var deckListViewModel: DeckListViewModel?
     @State private var cardListViewModel: CardListViewModel?
     @State private var studySession: StudySession?
@@ -19,7 +20,7 @@ struct MainTabView: View {
     var body: some View {
         Group {
             if let cardRepository, let deckRepository, let notificationService,
-               let deckListViewModel, let cardListViewModel {
+               let publicLibraryRepository, let deckListViewModel, let cardListViewModel {
                 let studyViewModelFactory: () -> StudyViewModel = {
                     let vm = StudyViewModel(cardRepository: cardRepository)
                     vm.notificationService = notificationService
@@ -41,7 +42,8 @@ struct MainTabView: View {
                         cardListViewModel: cardListViewModel,
                         deckRepository: deckRepository,
                         cardRepository: cardRepository,
-                        snapshotViewModel: snapshotViewModel
+                        snapshotViewModel: snapshotViewModel,
+                        publicLibraryRepository: publicLibraryRepository
                     )
                     .tabItem {
                         Label("Library", systemImage: "books.vertical.fill")
@@ -98,8 +100,10 @@ struct MainTabView: View {
                 networkMonitor: networkMonitor,
                 modelContext: modelContext
             )
+            let publicLibrary = PublicLibraryRepository(apiClient: apiClient)
             cardRepository = cards
             deckRepository = decks
+            publicLibraryRepository = publicLibrary
             notificationService = NotificationService(apiClient: apiClient)
 
             // Persist long-lived viewModels in @State so they survive MainTabView body

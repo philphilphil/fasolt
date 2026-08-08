@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Fasolt.Server.Domain.Entities;
 using Fasolt.Server.Infrastructure.Data;
 
@@ -24,6 +26,26 @@ public class TestDb : IAsyncDisposable
             .Options;
 
     public AppDbContext CreateDbContext() => new(Options);
+
+    /// <summary>
+    /// Builds the schema by running EF migrations the way production does, optionally
+    /// stopping at <paramref name="targetMigration"/>. Use instead of
+    /// <see cref="InitializeAsync"/> when the migrations themselves are under test;
+    /// no user is seeded.
+    /// </summary>
+    public async Task MigrateAsync(string? targetMigration = null)
+    {
+        // UseOpenIddict, as Program.cs does: the migrations include the OpenIddict
+        // tables, so without it the runtime model does not match the migration
+        // snapshot and EF refuses to migrate.
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(ConnectionString)
+            .UseOpenIddict()
+            .Options;
+
+        await using var db = new AppDbContext(options);
+        await db.Database.GetService<IMigrator>().MigrateAsync(targetMigration);
+    }
 
     public async Task InitializeAsync()
     {

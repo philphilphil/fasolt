@@ -20,11 +20,31 @@ public class McpResourceService(
 
     public async Task<List<McpResourceEntry>> ListUserResourcesAsync(string userId)
     {
-        var decks = await db.Decks
+        var owned = await db.Decks
             .Where(d => d.UserId == userId && !d.IsSuspended)
-            .OrderBy(d => d.Name)
-            .Select(d => new { d.PublicId, d.Name, d.Description, Count = d.Cards.Count(dc => !dc.Card.IsSuspended) })
+            .Select(d => new
+            {
+                d.PublicId,
+                d.Name,
+                d.Description,
+                Count = d.Cards.Count(dc => !dc.Card.ReviewStates.Any(r => r.UserId == userId && r.IsSuspended)),
+            })
             .ToListAsync();
+
+        // Linked decks are part of the caller's deck list (list_decks advertises them),
+        // so they get a resource too. The pause that hides one is the subscriber's own.
+        var linked = await db.DeckSubscriptions
+            .Where(s => s.UserId == userId && !s.IsSuspended)
+            .Select(s => new
+            {
+                s.Deck.PublicId,
+                s.Deck.Name,
+                s.Deck.Description,
+                Count = s.Deck.Cards.Count(dc => !dc.Card.ReviewStates.Any(r => r.UserId == userId && r.IsSuspended)),
+            })
+            .ToListAsync();
+
+        var decks = owned.Concat(linked).OrderBy(d => d.Name).ToList();
 
         var entries = new List<McpResourceEntry>();
 
@@ -59,20 +79,37 @@ public class McpResourceService(
     {
         var deck = await db.Decks
             .FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
+
+        // A linked deck resolves through the subscription instead: the deck row
+        // belongs to its author, but the caller studies it like any other.
+        var isLinked = false;
+        if (deck is null)
+        {
+            deck = await db.DeckSubscriptions
+                .Where(s => s.UserId == userId && s.Deck.PublicId == deckPublicId)
+                .Select(s => s.Deck)
+                .FirstOrDefaultAsync();
+            isLinked = deck is not null;
+        }
+
         if (deck is null) return null;
 
         var now = timeProvider.GetUtcNow();
 
-        var cards = await db.DeckCards
-            .Where(dc => dc.DeckId == deck.Id && !dc.Card.IsSuspended)
-            .OrderBy(dc => dc.Card.CreatedAt)
-            .Select(dc => new RenderableCard(
+        var cards = await (
+            from dc in db.DeckCards.Where(dc => dc.DeckId == deck.Id)
+            where !dc.Card.ReviewStates.Any(r => r.UserId == userId && r.IsSuspended)
+            join r in db.ReviewStates.Where(r => r.UserId == userId) on dc.CardId equals r.CardId into g
+            from rs in g.DefaultIfEmpty()
+            orderby dc.Card.CreatedAt
+            select new RenderableCard(
                 dc.Card.Front,
                 dc.Card.Back,
-                dc.Card.SourceFile,
+                // The author's vault path is never shown to a subscriber.
+                isLinked ? null : dc.Card.SourceFile,
                 dc.Card.FrontSvg != null || dc.Card.BackSvg != null,
                 dc.Card.CreatedAt,
-                dc.Card.DueAt,
+                rs.DueAt,
                 null))
             .ToListAsync();
 
@@ -167,19 +204,25 @@ public class McpResourceService(
     {
         var now = timeProvider.GetUtcNow();
 
-        // Cards that are due (DueAt null = new, or DueAt <= now), not suspended,
-        // and whose decks (if any) are not all suspended.
-        var dueCards = db.Cards
-            .Where(c => c.UserId == userId && !c.IsSuspended)
-            .Where(c => c.DueAt == null || c.DueAt <= now)
-            .Where(c => !c.DeckCards.Any() || c.DeckCards.Any(dc => !dc.Deck.IsSuspended));
+        // Cards that are due (DueAt null = new, or DueAt <= now), not suspended, and
+        // not paused through a deck. Same set the review queue and get_overview use —
+        // authored cards plus the cards of every linked deck.
+        var dueCards = LinkedDeckQuery.StudyableCards(db, userId)
+            .Where(ReviewStateQuery.NotSuspendedBy(userId))
+            .Where(ReviewStateQuery.DueBy(userId, now))
+            .Where(LinkedDeckQuery.NotDeckPausedFor(userId));
 
         // Counts come from the full set so the summary/footer stay accurate
         // independent of the rendered-page cap below.
         var totalCards = await dueCards.CountAsync();
         var totalDecks = await db.Decks
             .CountAsync(d => d.UserId == userId && !d.IsSuspended
-                && d.Cards.Any(dc => !dc.Card.IsSuspended && (dc.Card.DueAt == null || dc.Card.DueAt <= now)));
+                && d.Cards.Any(dc => !dc.Card.ReviewStates.Any(r =>
+                    r.UserId == userId && (r.IsSuspended || r.DueAt > now))))
+            + await db.DeckSubscriptions
+                .CountAsync(s => s.UserId == userId && !s.IsSuspended
+                    && s.Deck.Cards.Any(dc => !dc.Card.ReviewStates.Any(r =>
+                        r.UserId == userId && (r.IsSuspended || r.DueAt > now))));
 
         var sb = new System.Text.StringBuilder();
         sb.Append("# Due Today\n\n");
@@ -191,27 +234,50 @@ public class McpResourceService(
         }
 
         // Materialize only a bounded page; rendering caps further at SoftCardCap / size budget.
-        var raw = await dueCards
-            .OrderBy(c => c.DueAt) // soonest-due first so the cap keeps the most-due cards
-            .Select(c => new
+        var raw = await (
+            from c in dueCards
+            join r in db.ReviewStates.Where(r => r.UserId == userId) on c.Id equals r.CardId into g
+            from rs in g.DefaultIfEmpty()
+            orderby rs.DueAt // soonest-due first so the cap keeps the most-due cards
+            select new
             {
                 c.Front,
                 c.Back,
-                c.SourceFile,
+                // The author's vault path is never shown to a subscriber.
+                SourceFile = c.UserId == userId ? c.SourceFile : null,
                 HasSvg = c.FrontSvg != null || c.BackSvg != null,
                 c.CreatedAt,
-                c.DueAt,
-                DeckNames = c.DeckCards.Where(dc => !dc.Deck.IsSuspended).Select(dc => dc.Deck.Name).ToList(),
+                rs.DueAt,
+                c.Id,
             })
             .Take(QueryHardCap)
             .ToListAsync();
+
+        // Deck names come from a second query rather than a correlated collection in
+        // the projection above: that cannot be translated over a set operation, and
+        // StudyableCards is one.
+        //
+        // Owned cards group under the owner's active decks, linked ones under the
+        // decks the caller subscribes to and has not paused.
+        var cardIds = raw.Select(c => c.Id).ToList();
+        var deckNamesByCard = (await db.DeckCards
+                .Where(dc => cardIds.Contains(dc.CardId)
+                    && ((dc.Card.UserId == userId && !dc.Deck.IsSuspended)
+                        || (dc.Card.UserId != userId
+                            && dc.Deck.Subscriptions.Any(s => s.UserId == userId && !s.IsSuspended))))
+                .Select(dc => new { dc.CardId, dc.Deck.Name })
+                .ToListAsync())
+            .GroupBy(x => x.CardId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.Name).ToList());
 
         // Group by first (alphabetical) active deck name, or "(no deck)".
         var groups = raw
             .Select(c => new
             {
                 Card = new RenderableCard(c.Front, c.Back, c.SourceFile, c.HasSvg, c.CreatedAt, c.DueAt, null),
-                GroupName = c.DeckNames.Count == 0 ? "(no deck)" : c.DeckNames.OrderBy(n => n).First(),
+                GroupName = deckNamesByCard.TryGetValue(c.Id, out var names) && names.Count > 0
+                    ? names.OrderBy(n => n).First()
+                    : "(no deck)",
             })
             .GroupBy(x => x.GroupName)
             .OrderBy(g => g.Key == "(no deck)") // "(no deck)" last
@@ -271,7 +337,8 @@ public class McpResourceService(
         var cutoff = now.AddDays(-7);
 
         var recentCards = db.Cards
-            .Where(c => c.UserId == userId && !c.IsSuspended && c.CreatedAt >= cutoff);
+            .Where(c => c.UserId == userId && c.CreatedAt >= cutoff)
+            .Where(ReviewStateQuery.NotSuspendedBy(userId));
 
         // Count from the full set so the header stays accurate independent of the page cap.
         var totalCards = await recentCards.CountAsync();
@@ -286,16 +353,19 @@ public class McpResourceService(
         }
 
         // Materialize only a bounded page; rendering caps further at SoftCardCap / size budget.
-        var raw = await recentCards
-            .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new
+        var raw = await (
+            from c in recentCards
+            join r in db.ReviewStates.Where(r => r.UserId == userId) on c.Id equals r.CardId into g
+            from rs in g.DefaultIfEmpty()
+            orderby c.CreatedAt descending
+            select new
             {
                 c.Front,
                 c.Back,
                 c.SourceFile,
                 HasSvg = c.FrontSvg != null || c.BackSvg != null,
                 c.CreatedAt,
-                c.DueAt,
+                rs.DueAt,
                 DeckName = c.DeckCards
                     .Where(dc => !dc.Deck.IsSuspended)
                     .OrderBy(dc => dc.Deck.Name)

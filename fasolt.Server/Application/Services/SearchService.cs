@@ -16,7 +16,9 @@ public class SearchService(AppDbContext db)
             .Select(t => "%" + t.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%")
             .ToList();
 
-        var cardsQuery = db.Cards.Where(c => c.UserId == userId);
+        // Linked decks are part of the user's collection, so their cards are searchable
+        // too. CardSearchResult carries no SourceFile, so nothing leaks from them.
+        var cardsQuery = LinkedDeckQuery.StudyableCards(db, userId);
         foreach (var term in terms)
             cardsQuery = cardsQuery.Where(c =>
                 EF.Functions.ILike(c.Front, term, "\\") || EF.Functions.ILike(c.Back, term, "\\"));
@@ -24,10 +26,14 @@ public class SearchService(AppDbContext db)
         var cards = await cardsQuery
             .OrderByDescending(c => c.CreatedAt)
             .Take(10)
-            .Select(c => new CardSearchResult(c.PublicId, c.Front, c.State))
+            .Select(c => new CardSearchResult(
+                c.PublicId,
+                c.Front,
+                c.ReviewStates.Where(r => r.UserId == userId).Select(r => r.State).FirstOrDefault() ?? "new"))
             .ToListAsync();
 
-        var decksQuery = db.Decks.Where(d => d.UserId == userId);
+        var decksQuery = db.Decks.Where(d =>
+            d.UserId == userId || d.Subscriptions.Any(s => s.UserId == userId));
         foreach (var term in terms)
             decksQuery = decksQuery.Where(d => EF.Functions.ILike(d.Name, term, "\\"));
 
