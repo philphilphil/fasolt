@@ -222,7 +222,12 @@ public class CardService(AppDbContext db)
         var includeSrs = include is null || include.Contains("srs");
         var includeSvg = include is null || include.Contains("svg");
 
-        IQueryable<Card> query = db.Cards.Where(c => c.UserId == userId);
+        // Everything the caller may read on this request, before the deck and source
+        // filters narrow it: their own cards, or — for a linked deck — that deck's
+        // cards. The cursor resolves against this rather than against the narrowed
+        // query, so a cursor card that has left the filter still positions the page.
+        IQueryable<Card> readable = db.Cards.Where(c => c.UserId == userId);
+        var query = readable;
 
         // True when deckId names a deck the caller links rather than owns: its cards
         // belong to the author, so they are readable but carry no source metadata.
@@ -248,9 +253,15 @@ public class CardService(AppDbContext db)
             // deck rather than through the caller's own collection. An unresolvable
             // deck still filters everything out rather than silently widening the
             // result to the caller's whole collection.
-            query = linkedDeck
-                ? db.Cards.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid))
-                : query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
+            if (linkedDeck)
+            {
+                readable = db.Cards.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
+                query = readable;
+            }
+            else
+            {
+                query = query.Where(c => c.DeckCards.Any(dc => dc.DeckId == deckGuid));
+            }
         }
 
         // A linked card reports no sourceFile, so filtering on one matches nothing —
@@ -260,13 +271,23 @@ public class CardService(AppDbContext db)
 
         if (after is not null)
         {
-            // Scoped to the same set the page came from, so a linked deck's cursor
-            // resolves without reaching outside what the caller may read.
-            var cursor = await query.Where(c => c.PublicId == after)
+            // Resolved against the readable set, not the filtered one: a card that left
+            // the filter between pages (reassigned to another deck, say) must still
+            // position the page. Resolving it inside the filter would find nothing,
+            // skip the keyset predicate and hand the caller page 1 again — an agent
+            // paging a deck would loop forever. The set is still bounded by what the
+            // caller may read, so a cursor into someone else's cards resolves to
+            // nothing here just as it did before.
+            var cursor = await readable.Where(c => c.PublicId == after)
                 .Select(c => new { c.CreatedAt, c.Id }).FirstOrDefaultAsync();
-            if (cursor is not null)
-                query = query.Where(c => c.CreatedAt < cursor.CreatedAt ||
-                    (c.CreatedAt == cursor.CreatedAt && c.Id.CompareTo(cursor.Id) > 0));
+
+            // A cursor that resolves to nothing readable ends the pagination instead of
+            // restarting it: the caller cannot be positioned, and silently replaying
+            // page 1 is the failure mode above.
+            if (cursor is null) return new PaginatedResponse<CardDto>([], false, null);
+
+            query = query.Where(c => c.CreatedAt < cursor.CreatedAt ||
+                (c.CreatedAt == cursor.CreatedAt && c.Id.CompareTo(cursor.Id) > 0));
         }
 
         var cards = await (
@@ -348,13 +369,16 @@ public class CardService(AppDbContext db)
         {
             var currentDeckIds = card.DeckCards.Select(dc => dc.DeckId).ToHashSet();
 
-            var targetDecks = new List<Deck>();
-            foreach (var deckPublicId in request.DeckIds)
+            // Keyed by deck, so a public id the caller repeated resolves to one target.
+            // Two DeckCard rows for the same deck share a composite key and EF would
+            // refuse to track the second one, failing the whole edit.
+            var targetDecks = new Dictionary<Guid, Deck>();
+            foreach (var deckPublicId in request.DeckIds.Distinct())
             {
                 var deck = await db.Decks.FirstOrDefaultAsync(d => d.PublicId == deckPublicId && d.UserId == userId);
                 if (deck is not null)
                 {
-                    targetDecks.Add(deck);
+                    targetDecks[deck.Id] = deck;
                     continue;
                 }
 
@@ -365,16 +389,19 @@ public class CardService(AppDbContext db)
 
             // Check before mutating anything: decks the card is already in are a no-op,
             // the rest have to fit under the published-deck cap.
-            foreach (var deck in targetDecks.Where(d => !currentDeckIds.Contains(d.Id)))
+            foreach (var deckId in targetDecks.Keys.Where(id => !currentDeckIds.Contains(id)))
             {
-                if (await PublishingService.WouldExceedPublicCardCap(db, deck.Id, 1))
+                if (await PublishingService.WouldExceedPublicCardCap(db, deckId, 1))
                     throw new PublishedDeckFullException();
             }
 
-            db.DeckCards.RemoveRange(card.DeckCards);
-            foreach (var deck in targetDecks)
+            // Only the memberships that actually change are touched — a deck the card
+            // stays in keeps its row rather than being deleted and re-inserted under
+            // the same key.
+            db.DeckCards.RemoveRange(card.DeckCards.Where(dc => !targetDecks.ContainsKey(dc.DeckId)).ToList());
+            foreach (var deckId in targetDecks.Keys.Where(id => !currentDeckIds.Contains(id)))
             {
-                db.DeckCards.Add(new DeckCard { DeckId = deck.Id, CardId = card.Id });
+                db.DeckCards.Add(new DeckCard { DeckId = deckId, CardId = card.Id });
             }
         }
 

@@ -1774,5 +1774,53 @@ public class DeckSnapshotServiceTests : IAsyncLifetime
         detail.Cards.Should().Contain(c => c.Front == "Restore Mixed Q1");
     }
 
+    [Fact]
+    public async Task Restore_RepeatedCardIds_RestoreEachCardOnce()
+    {
+        // Nothing is saved until the end of the restore, so a repeated id came round a
+        // second time still finding no card and added another with the same primary key.
+        // EF then failed the whole restore, losing the cards the user did want back.
+        var (deckId, cardIds) = await SeedDeck("Restore Repeated", 2);
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            await svc.CreateAll(UserId);
+        }
+
+        // Delete one card outright and modify the other.
+        await using (var db = _db.CreateDbContext())
+        {
+            await new CardService(db).DeleteCards(UserId, [cardIds[0]]);
+
+            var card = db.Cards.First(c => c.UserId == UserId);
+            card.Front = "Changed front";
+            await db.SaveChangesAsync();
+        }
+
+        await using (var db = _db.CreateDbContext())
+        {
+            var svc = new DeckSnapshotService(db);
+            var snapshots = await svc.ListByDeck(UserId, deckId);
+            var diff = await svc.ComputeDiff(UserId, snapshots[0].Id);
+
+            var deleted = diff!.Deleted.Select(d => d.CardId).ToList();
+            var modified = diff.Modified.Select(m => m.CardId).ToList();
+            deleted.Should().NotBeEmpty();
+            modified.Should().NotBeEmpty();
+
+            var result = await svc.Restore(UserId, snapshots[0].Id,
+                new RestoreRequest([.. deleted, .. deleted], [.. modified, .. modified]));
+
+            result.Should().Be(RestoreResult.Success);
+        }
+
+        await using var checkDb = _db.CreateDbContext();
+        var detail = await new DeckService(checkDb).GetDeck(UserId, deckId);
+        detail!.Cards.Should().HaveCount(2);
+        detail.Cards.Should().Contain(c => c.Front == "Restore Repeated Q0");
+        detail.Cards.Should().Contain(c => c.Front == "Restore Repeated Q1");
+    }
+
     #endregion
 }

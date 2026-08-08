@@ -231,12 +231,19 @@ public class DeckSnapshotService(AppDbContext db)
         var snapshotById = data.Cards.ToDictionary(c => c.CardId);
         var deckId = snapshot.DeckId.Value;
 
-        var adding = await CountDeckCardsToAdd(deckId, request, snapshotById);
+        // De-duplicated once, up front, and every path below works off these lists.
+        // Nothing is saved until the end, so a repeated id would come round a second
+        // time still finding no card and add another with the same primary key — EF
+        // then fails the whole restore, including the cards the user did want back.
+        var restoreDeletedCardIds = request.RestoreDeletedCardIds.Distinct().ToList();
+        var revertModifiedCardIds = request.RevertModifiedCardIds.Distinct().ToList();
+
+        var adding = await CountDeckCardsToAdd(deckId, restoreDeletedCardIds, snapshotById);
         if (await PublishingService.WouldExceedPublicCardCap(db, deckId, adding))
             return RestoreResult.PublishedDeckFull;
 
         // Restore deleted cards
-        foreach (var cardId in request.RestoreDeletedCardIds)
+        foreach (var cardId in restoreDeletedCardIds)
         {
             if (!snapshotById.TryGetValue(cardId, out var sc)) continue;
 
@@ -286,7 +293,7 @@ public class DeckSnapshotService(AppDbContext db)
         }
 
         // Revert modified cards
-        foreach (var cardId in request.RevertModifiedCardIds)
+        foreach (var cardId in revertModifiedCardIds)
         {
             if (!snapshotById.TryGetValue(cardId, out var sc)) continue;
             var card = await db.Cards.FirstOrDefaultAsync(c => c.Id == cardId && c.UserId == userId);
@@ -303,12 +310,12 @@ public class DeckSnapshotService(AppDbContext db)
     /// every other add path hands to <see cref="PublishingService.WouldExceedPublicCardCap"/>.
     /// Reverting a modified card only rewrites content, so it never counts.
     /// </summary>
+    /// <param name="restoreDeletedCardIds">Already de-duplicated by the caller.</param>
     private async Task<int> CountDeckCardsToAdd(
-        Guid deckId, RestoreRequest request, Dictionary<Guid, SnapshotCardData> snapshotById)
+        Guid deckId, List<Guid> restoreDeletedCardIds, Dictionary<Guid, SnapshotCardData> snapshotById)
     {
-        var candidates = request.RestoreDeletedCardIds
+        var candidates = restoreDeletedCardIds
             .Where(snapshotById.ContainsKey)
-            .Distinct()
             .ToList();
 
         if (candidates.Count == 0) return 0;

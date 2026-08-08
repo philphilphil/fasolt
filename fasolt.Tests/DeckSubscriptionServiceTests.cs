@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Fasolt.Server.Application.Services;
 using Fasolt.Server.Domain.Entities;
-using Fasolt.Server.Infrastructure.Data;
 using Fasolt.Tests.Helpers;
 
 namespace Fasolt.Tests;
@@ -388,6 +387,46 @@ public class DeckSubscriptionServiceTests : IAsyncLifetime
         var listed = (await new DeckService(verify).ListDecks(SubscriberId))
             .Single(d => d.Id == result.Deck.Id);
         listed.DueCount.Should().Be(result.Deck.DueCount);
+    }
+
+    [Fact]
+    public async Task ConvertToCopy_DatesEachCardFromWhenItBecameTheSubscribersToStudy()
+    {
+        // The SRS state and the review history move onto the clones, so their CreatedAt
+        // has to keep meaning what it meant while the deck was linked — the later of the
+        // author's creation date and the subscription. Stamping the conversion time
+        // instead would put every carried-over review before its own card existed and
+        // rewrite the streak; keeping the author's date on a years-old deck would
+        // repaint days the subscriber never had the card as days they missed.
+        await using var db = _db.CreateDbContext();
+        var author = await LinkedDeckTestData.AddUser(db, "author-dates");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Dated", cardCount: 0);
+        var ancient = LinkedDeckTestData.AddCard(db, deck, "Ancient", "A");
+        ancient.CreatedAt = DateTimeOffset.UtcNow.AddDays(-400);
+        await db.SaveChangesAsync();
+
+        var subscription = await LinkedDeckTestData.Subscribe(db, SubscriberId, deck);
+
+        // The author adds a card after the link exists — that one keeps its own date.
+        var later = LinkedDeckTestData.AddCard(db, deck, "Later", "B");
+        later.CreatedAt = subscription.SubscribedAt.AddDays(3);
+        await db.SaveChangesAsync();
+
+        var result = await new DeckSubscriptionService(db).ConvertToCopy(SubscriberId, deck.PublicId);
+        result.Error.Should().Be(ConvertToCopyError.None);
+
+        await using var verify = _db.CreateDbContext();
+        var copied = await verify.DeckCards
+            .Where(dc => dc.Deck.PublicId == result.Deck!.Id)
+            .Select(dc => dc.Card)
+            .ToListAsync();
+
+        copied.Single(c => c.Front == "Ancient").CreatedAt
+            .Should().BeCloseTo(subscription.SubscribedAt, TimeSpan.FromMilliseconds(1),
+                "the subscription is when this card became the subscriber's to study");
+        copied.Single(c => c.Front == "Later").CreatedAt
+            .Should().BeCloseTo(later.CreatedAt, TimeSpan.FromMilliseconds(1),
+                "a card added while linked was only studyable from its own creation");
     }
 
     [Fact]

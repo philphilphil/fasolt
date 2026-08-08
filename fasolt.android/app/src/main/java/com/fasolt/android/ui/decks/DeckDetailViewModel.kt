@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fasolt.android.FasoltApplication
+import com.fasolt.android.data.api.apiMessage
 import com.fasolt.android.data.api.models.DeckDetailDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,7 +52,7 @@ class DeckDetailViewModel(
         viewModelScope.launch {
             runCatching { app.deckRepository.setSuspended(current.id, !current.isSuspended) }
                 .onSuccess { load() }
-                .onFailure { _actionError.value = it.message ?: "Failed to update deck" }
+                .onFailure { _actionError.value = it.apiMessage("Failed to update deck") }
         }
     }
 
@@ -60,7 +61,7 @@ class DeckDetailViewModel(
             runCatching { app.deckRepository.update(deckId, name, description) }
                 .onSuccess { onDone(true); load() }
                 .onFailure {
-                    _actionError.value = it.message ?: "Failed to update deck"
+                    _actionError.value = it.apiMessage("Failed to update deck")
                     onDone(false)
                 }
         }
@@ -71,7 +72,19 @@ class DeckDetailViewModel(
             runCatching { app.deckRepository.delete(deckId, deleteCards) }
                 .onSuccess { onDone(true) }
                 .onFailure {
-                    _actionError.value = it.message ?: "Failed to delete deck"
+                    _actionError.value = it.apiMessage("Failed to delete deck")
+                    onDone(false)
+                }
+        }
+    }
+
+    /** Removes a linked deck from the caller's account. Owned decks use [deleteDeck]. */
+    fun unlinkDeck(onDone: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            runCatching { app.deckRepository.unlink(deckId) }
+                .onSuccess { onDone(true) }
+                .onFailure {
+                    _actionError.value = it.apiMessage("Failed to remove deck")
                     onDone(false)
                 }
         }

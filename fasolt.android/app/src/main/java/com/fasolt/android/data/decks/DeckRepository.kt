@@ -18,4 +18,5 @@ class DeckRepository(private val api: FasoltApi) {
         api.deleteDeck(id, deleteCards)
     suspend fun setSuspended(id: String, isSuspended: Boolean): DeckDto =
         api.setDeckSuspended(id, SetSuspendedRequest(isSuspended))
+    suspend fun unlink(id: String) = api.unsubscribeDeck(id)
 }

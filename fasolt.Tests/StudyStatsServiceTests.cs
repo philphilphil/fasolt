@@ -430,4 +430,100 @@ public class StudyStatsServiceTests : IAsyncLifetime
         var progress = await CreateStatsService(db).GetProgress(UserId, 14);
         progress.DailyActivity[^2].HadDue.Should().BeFalse("day 2 was a rest day before the link and stays one");
     }
+
+    // --- Converting a linked deck to a copy is invisible to the streak ---
+
+    /// <summary>
+    /// Convert-to-copy carries the user's SRS state and review history onto the cloned
+    /// cards, so the clones have to keep the date the originals became studyable. Dating
+    /// them from the conversion makes every missed day since look like a rest day and
+    /// resurrects a streak the user actually broke.
+    /// </summary>
+    [Fact]
+    public async Task ConvertingALinkedDeck_DoesNotResurrectABrokenStreak()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        // Day 1: an own card, studied "easy" so it is scheduled well past day 2. It also
+        // keeps the streak walk from stopping at the converted cards' creation day.
+        var day1 = _time.GetUtcNow();
+        var own = await CreateCardAt(db, day1.AddHours(-1), "Own Q", "A");
+        await reviewSvc.RateCard(UserId, new RateCardRequest(own, "easy"));
+
+        // A deck written a year ago, linked on day 1, with one card never studied — so
+        // day 2 is a day with a due card.
+        var author = await LinkedDeckTestData.AddUser(db, "author-convert-streak");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Linked", cardCount: 0);
+        var missed = LinkedDeckTestData.AddCard(db, deck, "Missed Q", "B");
+        missed.CreatedAt = day1.AddDays(-365);
+        await db.SaveChangesAsync();
+        db.DeckSubscriptions.Add(new DeckSubscription
+        {
+            UserId = UserId,
+            DeckId = deck.Id,
+            SubscribedAt = day1.AddHours(-1),
+        });
+        await db.SaveChangesAsync();
+
+        // Day 2 is missed. Day 3: study the card that was due all along.
+        _time.SetUtcNow(day1.AddDays(2));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(missed.PublicId, "good"));
+
+        var before = await CreateStatsService(db).GetStats(UserId);
+        before.CurrentStreak.Should().Be(1, "day 2 had a due card and no review");
+
+        await new DeckSubscriptionService(db).ConvertToCopy(UserId, deck.PublicId);
+
+        await using var verify = _db.CreateDbContext();
+        var after = await CreateStatsService(verify).GetStats(UserId);
+        after.CurrentStreak.Should().Be(1, "owning the cards outright does not undo a missed day");
+    }
+
+    /// <summary>
+    /// The other direction of the same rule: converting a deck the author wrote years
+    /// ago must not backdate the clones to the author's dates either, or every rest day
+    /// since would turn into a day the user missed a card they did not yet have.
+    /// </summary>
+    [Fact]
+    public async Task ConvertingAnOldLinkedDeck_DoesNotRetroactivelyBreakTheStreak()
+    {
+        await using var db = _db.CreateDbContext();
+        var reviewSvc = CreateReviewService(db);
+
+        // Day 1: own card studied "easy", so day 2 has nothing due — a rest day.
+        var day1 = _time.GetUtcNow();
+        var own = await CreateCardAt(db, day1.AddHours(-1));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(own, "easy"));
+
+        // Day 3: study again. Streak 2 across a preserved rest day.
+        _time.SetUtcNow(day1.AddDays(2));
+        var second = await CreateCardAt(db, _time.GetUtcNow().AddMinutes(-5));
+        await reviewSvc.RateCard(UserId, new RateCardRequest(second, "good"));
+
+        (await CreateStatsService(db).GetStats(UserId)).CurrentStreak.Should().Be(2);
+
+        // Today: link a year-old deck and immediately convert it to a copy.
+        var author = await LinkedDeckTestData.AddUser(db, "author-old-convert");
+        var deck = await LinkedDeckTestData.AddDeck(db, author, name: "Ancient", cardCount: 0);
+        var old = LinkedDeckTestData.AddCard(db, deck, "Old Q", "A");
+        old.CreatedAt = day1.AddDays(-365);
+        await db.SaveChangesAsync();
+        db.DeckSubscriptions.Add(new DeckSubscription
+        {
+            UserId = UserId,
+            DeckId = deck.Id,
+            SubscribedAt = _time.GetUtcNow(),
+        });
+        await db.SaveChangesAsync();
+
+        await new DeckSubscriptionService(db).ConvertToCopy(UserId, deck.PublicId);
+
+        await using var verify = _db.CreateDbContext();
+        var after = await CreateStatsService(verify).GetStats(UserId);
+        after.CurrentStreak.Should().Be(2, "the deck's age is the author's history, not the copier's");
+
+        var progress = await CreateStatsService(verify).GetProgress(UserId, 14);
+        progress.DailyActivity[^2].HadDue.Should().BeFalse("day 2 was a rest day before the copy and stays one");
+    }
 }

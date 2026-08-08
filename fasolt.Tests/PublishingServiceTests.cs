@@ -333,6 +333,49 @@ public class PublishingServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SetVisibility_UnlistedThenPublicRestampsPublishedAt()
+    {
+        // PublishedAt is the "shared since" date: the library's recent sort, the public
+        // page's Shared date and the sitemap's lastmod all read it. A deck unlisted in
+        // January and made public in August would otherwise enter the library backdated
+        // to January and sort as if it had been there all along.
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "relister");
+        var deck = await AddDeck(db, userId, cardCount: 1, visibility: DeckVisibility.Unlisted);
+        var unlistedAt = DateTimeOffset.UtcNow.AddDays(-200);
+        deck.PublishedAt = unlistedAt;
+        await db.SaveChangesAsync();
+        var svc = new PublishingService(db);
+
+        var published = await svc.SetVisibility(userId, deck.PublicId, DeckVisibility.Public);
+
+        published.Error.Should().Be(SetVisibilityError.None);
+        published.Deck!.PublishedAt.Should().BeAfter(unlistedAt.AddDays(1));
+
+        // Re-applying Public is not a fresh share, so the date stands.
+        var again = await svc.SetVisibility(userId, deck.PublicId, DeckVisibility.Public);
+        again.Deck!.PublishedAt.Should().BeCloseTo(published.Deck.PublishedAt!.Value, TimeSpan.FromMilliseconds(1));
+    }
+
+    [Fact]
+    public async Task SetVisibility_PublicThenUnlistedKeepsPublishedAt()
+    {
+        // Hiding a deck and re-listing it must not reset its age in the library.
+        await using var db = _db.CreateDbContext();
+        var userId = await AddUser(db, handle: "hider");
+        var deck = await AddDeck(db, userId, cardCount: 1, visibility: DeckVisibility.Public);
+        var publishedAt = DateTimeOffset.UtcNow.AddDays(-30);
+        deck.PublishedAt = publishedAt;
+        await db.SaveChangesAsync();
+        var svc = new PublishingService(db);
+
+        var result = await svc.SetVisibility(userId, deck.PublicId, DeckVisibility.Unlisted);
+
+        result.Error.Should().Be(SetVisibilityError.None);
+        result.Deck!.PublishedAt.Should().BeCloseTo(publishedAt, TimeSpan.FromMilliseconds(1));
+    }
+
+    [Fact]
     public async Task SetVisibility_OtherUsersDeckIsNotFound()
     {
         await using var db = _db.CreateDbContext();

@@ -295,17 +295,22 @@ public class DeckService(AppDbContext db)
             return AddCardsResult.DeckNotFound;
         }
 
+        // De-duplicated first: the count check below compares against the rows the
+        // query returns, so a card id the caller repeated would otherwise look like a
+        // card that does not exist.
+        var requestedCardIds = cardPublicIds.Distinct().ToList();
+
         var userCards = await db.Cards
-            .Where(c => c.UserId == userId && cardPublicIds.Contains(c.PublicId))
+            .Where(c => c.UserId == userId && requestedCardIds.Contains(c.PublicId))
             .Select(c => new { c.Id, c.PublicId })
             .ToListAsync();
 
-        if (userCards.Count != cardPublicIds.Count)
+        if (userCards.Count != requestedCardIds.Count)
         {
             // A card the caller only reaches through a subscription is not missing —
             // it belongs to the author and cannot be filed into a deck of the caller's
             // own. Saying so beats reporting a card they can read as non-existent.
-            await ThrowIfAnyLinkedCard(userId, cardPublicIds);
+            await ThrowIfAnyLinkedCard(userId, requestedCardIds);
             return AddCardsResult.CardsNotFound;
         }
 

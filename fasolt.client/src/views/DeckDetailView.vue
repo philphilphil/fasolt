@@ -4,6 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useDecksStore } from '@/stores/decks'
 import { useCardsStore } from '@/stores/cards'
 import { useLibraryStore } from '@/stores/library'
+import { isApiError } from '@/api/client'
 import type { Deck, DeckDetail } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +29,7 @@ const library = useLibraryStore()
 
 const deck = ref<DeckDetail | null>(null)
 const loading = ref(true)
+const loadError = ref('')
 
 /** A linked deck belongs to its author: read-only content, but our own SRS state. */
 const isLinked = computed(() => deck.value?.isLinked === true)
@@ -74,11 +76,19 @@ async function load(id: string) {
   loading.value = true
   selectedIds.value = []
   linkError.value = ''
+  loadError.value = ''
   try {
     deck.value = await decks.getDeckDetail(id)
-  } catch {
-    // Gone (deleted, or a linked deck the author unpublished) — back to the list.
-    router.replace('/decks')
+  } catch (e) {
+    // Only a 404 means the deck is really gone (deleted, or a linked deck the
+    // author unpublished). Rate limiting (429), a 5xx or a dropped connection
+    // must not throw the user off a deck that still exists.
+    if (isApiError(e) && e.status === 404) {
+      router.replace('/decks')
+    } else {
+      deck.value = null
+      loadError.value = 'Could not load this deck right now. Please try again.'
+    }
   } finally {
     loading.value = false
   }
@@ -246,6 +256,11 @@ const stateCounts = computed(() => {
 
 <template>
   <div v-if="loading" class="loading-state">Loading…</div>
+
+  <div v-else-if="loadError" class="load-error-state">
+    <p>{{ loadError }}</p>
+    <button type="button" class="fa-btn" @click="load(route.params.id as string)">Try again</button>
+  </div>
 
   <div v-else-if="deck" class="deck-page">
     <RouterLink to="/decks" class="fa-back">
@@ -526,6 +541,14 @@ const stateCounts = computed(() => {
   font-size: 14px;
   color: var(--ink-2);
 }
+
+.load-error-state {
+  padding: 48px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.load-error-state p { margin: 0 0 12px; }
 
 /* Header */
 .deck-header {

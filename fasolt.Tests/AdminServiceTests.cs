@@ -413,6 +413,48 @@ public class AdminServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task GetStats_CountsASharedDueCardOnce_NotOncePerSubscriber()
+    {
+        // A card in a popular shared deck carries one ReviewState row per subscriber.
+        // Counting rows put the figure on a different scale from TotalCards — "Due
+        // cards: 4,200" beside "Total cards: 900" reads as corrupt.
+        await using var db = _db.CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+
+        var subscriberOne = MakeUser("sub1@fasolt.test");
+        var subscriberTwo = MakeUser("sub2@fasolt.test");
+        db.Users.AddRange(subscriberOne, subscriberTwo);
+
+        var shared = new Card
+        {
+            Id = Guid.NewGuid(),
+            PublicId = "shareddue",
+            UserId = SeededUserId,
+            Front = "f",
+            Back = "b",
+            CreatedAt = now,
+        };
+        db.Cards.Add(shared);
+
+        foreach (var userId in new[] { SeededUserId, subscriberOne.Id, subscriberTwo.Id })
+        {
+            db.ReviewStates.Add(new ReviewState
+            {
+                UserId = userId,
+                CardId = shared.Id,
+                State = "review",
+                DueAt = now.AddMinutes(-5),
+            });
+        }
+        await db.SaveChangesAsync();
+
+        var stats = await new AdminService(db).GetStats();
+
+        stats.TotalCards.Should().Be(1);
+        stats.DueCards.Should().Be(1, "three subscribers owe a review, but only one card is due");
+    }
+
+    [Fact]
     public async Task GetStats_RegistrationsCountedByWindow()
     {
         await using var db = _db.CreateDbContext();

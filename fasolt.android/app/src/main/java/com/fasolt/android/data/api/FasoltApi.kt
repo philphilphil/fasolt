@@ -79,6 +79,11 @@ interface FasoltApi {
     @PUT("api/decks/{id}/suspended")
     suspend fun setDeckSuspended(@Path("id") id: String, @Body request: SetSuspendedRequest): DeckDto
 
+    // Removes a linked deck from the caller's account. Owned decks use deleteDeck
+    // instead — this only ever targets a subscription.
+    @DELETE("api/library/decks/{publicId}/subscribe")
+    suspend fun unsubscribeDeck(@Path("publicId") publicId: String)
+
     // Cards
     @GET("api/cards")
     suspend fun listCards(

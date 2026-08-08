@@ -351,4 +351,39 @@ public class LinkedDeckStudyTests : IAsyncLifetime
         summary.TotalDue.Should().Be(0);
         summary.Breakdown.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task DueCardSummary_BreakdownPartsSumToTheHeadline()
+    {
+        // A card in two decks used to be counted in both buckets, so the notification
+        // read "3 cards due — 3 in Alpha, 3 in Beta": the parts outgrew the whole. Each
+        // due card is now attributed to one deck, the alphabetically first it sits in.
+        await using var db = _db.CreateDbContext();
+        var cards = new CardService(db);
+        var decks = new DeckService(db);
+
+        var beta = await decks.CreateDeck(UserId, "Beta", null);
+        var alpha = await decks.CreateDeck(UserId, "Alpha", null);
+
+        var shared = await cards.CreateCard(UserId, "In both", "A", null);
+        await decks.AddCards(UserId, alpha.Id, [shared.Id]);
+        await decks.AddCards(UserId, beta.Id, [shared.Id]);
+
+        var betaOnly = await cards.CreateCard(UserId, "Beta only", "A", null, deckId: beta.Id);
+        await cards.CreateCard(UserId, "Loose", "A", null);
+
+        var summary = await DueCardQuery.GetDueCardSummary(db, UserId, _time.GetUtcNow());
+
+        summary.TotalDue.Should().Be(3);
+
+        // The shared card lands in Alpha, so Beta is left with the card that is only
+        // there, and the card in no deck is Unsorted — which stays last on a tie.
+        betaOnly.Decks.Should().ContainSingle(d => d.Id == beta.Id);
+        var parts = summary.Breakdown.Split(", ");
+        parts.Should().HaveCount(3);
+        parts.Should().Contain(["1 in Alpha", "1 in Beta"]);
+        parts[^1].Should().Be("1 in Unsorted");
+
+        parts.Sum(p => int.Parse(p.Split(' ')[0])).Should().Be(summary.TotalDue);
+    }
 }

@@ -208,10 +208,17 @@ public partial class PublishingService(AppDbContext db)
 
     private static void ApplyVisibility(Deck deck, DeckVisibility visibility)
     {
+        // PublishedAt is the "shared since" date the library sorts and the public page
+        // shows. Going private clears it; the first step out of private stamps it. It is
+        // re-stamped when a deck first becomes public, because a deck that sat unlisted
+        // for months would otherwise enter the library backdated to the unlisting and
+        // sort as if it had been there all along. Public -> Unlisted keeps the date, so
+        // hiding a deck and re-listing it does not reset its age.
         if (visibility == DeckVisibility.Private)
             deck.PublishedAt = null;
-        else
-            deck.PublishedAt ??= DateTimeOffset.UtcNow;
+        else if (deck.PublishedAt is null
+                 || (visibility == DeckVisibility.Public && deck.Visibility != DeckVisibility.Public))
+            deck.PublishedAt = DateTimeOffset.UtcNow;
 
         deck.Visibility = visibility;
     }

@@ -109,19 +109,22 @@ async function loadMyDecks() {
 }
 
 onMounted(async () => {
-  const myDecks = loadMyDecks()
-  await load()
+  // Both must resolve before the auto-import branch reads isOwner/linkedDeck —
+  // deciding on a half-loaded deck list is what let a link silently convert
+  // without navigating, and let owners clone their own deck (see PR review).
+  await Promise.all([loadMyDecks(), load()])
   const mode = parseImportMode(route.query.import)
   if (mode) {
     // Strip the flag first so a refresh (or the back button) can't import twice.
     const { import: _flag, ...rest } = route.query
     await router.replace({ query: rest })
     applyTitle()
-    if (auth.isAuthenticated && deck.value) {
+    // The owner CTA row never offers copy/link (only "Manage this deck"), so the
+    // auto-import path must skip it too rather than cloning the author's own deck.
+    if (auth.isAuthenticated && deck.value && !isOwner.value) {
       await (mode === 'link' ? linkDeck() : copyToMyDecks())
     }
   }
-  await myDecks
 })
 
 watch(publicId, () => {

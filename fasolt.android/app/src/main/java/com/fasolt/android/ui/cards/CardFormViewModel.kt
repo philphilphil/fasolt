@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.fasolt.android.FasoltApplication
+import com.fasolt.android.data.api.apiMessage
 import com.fasolt.android.data.api.models.CardDto
 import com.fasolt.android.data.api.models.DeckDto
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +57,9 @@ class CardFormViewModel(
         _loadState.value = CardFormLoadState.Loading
         viewModelScope.launch {
             runCatching {
-                val decks = app.deckRepository.list()
+                // A linked deck is read-only content owned by another account — assigning
+                // a card to one always 403s server-side, so it's left out of the picker.
+                val decks = app.deckRepository.list().filter { !it.isLinked }
                 val card = cardId?.let { app.cardRepository.get(it) }
                 decks to card
             }.onSuccess { (decks, card) ->
@@ -102,7 +105,7 @@ class CardFormViewModel(
             _isSaving.value = false
             result.onSuccess { onDone(true) }
                 .onFailure {
-                    _error.value = it.message ?: "Failed to save card"
+                    _error.value = it.apiMessage("Failed to save card")
                     onDone(false)
                 }
         }

@@ -143,6 +143,7 @@ public class DeckSubscriptionService(AppDbContext db)
                 dc.Card.Back,
                 dc.Card.FrontSvg,
                 dc.Card.BackSvg,
+                dc.Card.CreatedAt,
             })
             .ToListAsync();
 
@@ -182,7 +183,16 @@ public class DeckSubscriptionService(AppDbContext db)
                 Back = sourceCard.Back,
                 FrontSvg = sourceCard.FrontSvg,
                 BackSvg = sourceCard.BackSvg,
-                CreatedAt = now,
+                // Exactly the moment the card became this user's to study while it was
+                // linked (see StudyStatsService.LoadStudyableCardStarts), so converting
+                // moves no due day in either direction. Stamping today would make the
+                // carried-over review logs older than their own card and repaint every
+                // missed day since as a rest day — a broken streak comes back to life.
+                // Keeping the author's date on a deck written years ago is the mirror
+                // image: days before the link existed were never this user's to miss.
+                CreatedAt = sourceCard.CreatedAt > subscription.SubscribedAt
+                    ? sourceCard.CreatedAt
+                    : subscription.SubscribedAt,
             };
             newCardIdBySourceId[sourceCard.CardId] = card.Id;
             db.Cards.Add(card);

@@ -34,6 +34,10 @@ data class DeckDto(
     val dueCount: Int,
     val createdAt: String,
     val isSuspended: Boolean,
+    // A linked deck belongs to authorHandle and is read-only for us — see
+    // DeckService.ListDecks on the server.
+    val isLinked: Boolean = false,
+    val authorHandle: String? = null,
 )
 
 @Serializable
@@ -45,6 +49,8 @@ data class DeckDetailDto(
     val dueCount: Int,
     val isSuspended: Boolean,
     val cards: List<DeckCardDto>,
+    val isLinked: Boolean = false,
+    val authorHandle: String? = null,
 )
 
 @Serializable

@@ -88,6 +88,8 @@ private fun DeckRowContent(deck: DeckDto) {
                 cardCount = deck.cardCount,
                 dueCount = deck.dueCount,
                 isSuspended = deck.isSuspended,
+                isLinked = deck.isLinked,
+                authorHandle = deck.authorHandle,
             )
         }
     }
@@ -98,6 +100,8 @@ private fun DeckMetadataRow(
     cardCount: Int,
     dueCount: Int,
     isSuspended: Boolean,
+    isLinked: Boolean,
+    authorHandle: String?,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -132,6 +136,20 @@ private fun DeckMetadataRow(
                 text = "Suspended",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.tertiary,
+            )
+        }
+        if (isLinked) {
+            Text(
+                text = "·",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = if (authorHandle != null) "Linked from @$authorHandle" else "Linked",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
